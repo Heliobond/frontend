@@ -9,7 +9,13 @@
     "portfolio": "Votre portefeuille",
     "switchToDark": "Passer en sombre",
     "switchToLight": "Passer en clair",
-    "language": "Langue"
+    "language": "Langue",
+    "account": "Compte",
+    "copyAddress": "Copier l'adresse",
+    "copied": "Copié",
+    "viewOnExplorer": "Voir sur Stellar Expert",
+    "disconnect": "Se déconnecter",
+    "demoSession": "Session démo"
   },
   "Footer": {
     "verify": "Tout vérifier",

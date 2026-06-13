@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
@@ -27,7 +27,7 @@ export function TopBar() {
   const router = useRouter()
   const locale = useLocale()
   const t = useTranslations('Nav')
-  const { connected, address, connecting } = useWallet()
+  const { connected, address, connecting, isDemo } = useWallet()
   const { theme, toggle } = useTheme()
 
   // Theme state starts 'light' on server/first render (to avoid a hydration
@@ -136,24 +136,7 @@ export function TopBar() {
         </button>
 
         {connected && address ? (
-          <button
-            onClick={() => router.push('/portfolio')}
-            aria-label={t('portfolio')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              background: 'var(--surface)',
-              border: '1px solid var(--ink-12)',
-              borderRadius: 'var(--radius-pill)',
-              height: 40,
-              padding: '0 6px 0 14px',
-              cursor: 'pointer',
-            }}
-          >
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink)' }}>{shortAddress(address)}</span>
-            <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--solar)' }} />
-          </button>
+          <WalletMenu address={address} isDemo={isDemo} />
         ) : (
           <Button variant="primary" size="md" loading={connecting} onClick={() => router.push('/connect')}>
             {t('connect')}
@@ -198,4 +181,140 @@ function SunIcon() {
       <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
     </svg>
   )
+}
+
+/** The connected wallet pill + its account menu (incl. Disconnect / sign out). */
+function WalletMenu({ address, isDemo }: { address: string; isDemo: boolean }) {
+  const t = useTranslations('Nav')
+  const router = useRouter()
+  const { disconnect } = useWallet()
+  const [open, setOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const copy = () => {
+    try {
+      navigator.clipboard?.writeText(address)
+    } catch {
+      /* ignore */
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1400)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={t('account')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'var(--surface)',
+          border: '1px solid var(--ink-12)',
+          borderRadius: 'var(--radius-pill)',
+          height: 40,
+          padding: '0 6px 0 14px',
+          cursor: 'pointer',
+        }}
+      >
+        <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink)' }}>{shortAddress(address)}</span>
+        <span style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--solar)' }} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute',
+            top: 48,
+            right: 0,
+            minWidth: 224,
+            background: 'var(--surface)',
+            border: '1px solid var(--ink-12)',
+            borderRadius: 'var(--radius-card)',
+            boxShadow: 'var(--shadow-md)',
+            padding: 6,
+            zIndex: 400,
+          }}
+        >
+          <div style={{ padding: '8px 10px 6px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: 12.5, color: 'var(--ink)' }}>{shortAddress(address, 6, 6)}</span>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 11.5, color: 'var(--ink-40)' }}>{isDemo ? t('demoSession') : t('testnet')}</span>
+          </div>
+          <div style={{ height: 1, background: 'var(--ink-12)', margin: '4px 0' }} />
+          <MenuItem onClick={() => { setOpen(false); router.push('/portfolio') }}>{t('portfolio')}</MenuItem>
+          <MenuItem onClick={copy}>{copied ? t('copied') : t('copyAddress')}</MenuItem>
+          {!isDemo && <MenuLink href={`https://stellar.expert/explorer/testnet/account/${address}`}>{t('viewOnExplorer')}</MenuLink>}
+          <MenuItem tone="ember" onClick={() => { disconnect(); setOpen(false); router.push('/') }}>
+            {t('disconnect')}
+          </MenuItem>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MenuItem({ children, onClick, tone }: { children: ReactNode; onClick: () => void; tone?: 'ember' }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <button
+      role="menuitem"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...menuItemStyle, background: hover ? 'var(--ink-06)' : 'transparent', color: tone === 'ember' ? 'var(--ember)' : 'var(--ink)' }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MenuLink({ children, href }: { children: ReactNode; href: string }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <a
+      role="menuitem"
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{ ...menuItemStyle, textDecoration: 'none', background: hover ? 'var(--ink-06)' : 'transparent', color: 'var(--ink)' }}
+    >
+      {children} ↗
+    </a>
+  )
+}
+
+const menuItemStyle: CSSProperties = {
+  display: 'block',
+  width: '100%',
+  textAlign: 'left',
+  border: 'none',
+  cursor: 'pointer',
+  padding: '9px 10px',
+  borderRadius: 'var(--radius-input)',
+  fontFamily: 'var(--font-body)',
+  fontSize: 14,
+  fontWeight: 500,
 }
