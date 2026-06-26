@@ -51,7 +51,7 @@ export default function CreatorPage() {
           stage="submitted"
           onSubmit={(values) => {
             // Self-contained demo handler — a real build would POST to the registry API.
-            console.log('Creator application submitted', values)
+            
           }}
         />
       )}
