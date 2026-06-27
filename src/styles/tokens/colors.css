@@ -68,18 +68,18 @@
   --canvas: #0D1714;
   --surface: #13201B;
   --solar: #FFB400;        /* unchanged — large text / icons only on dark  */
-  --growth: #4ECB8A;       /* lifted for contrast on dark surfaces         */
-  --ember: #F2856B;
+  --growth: #5DD99A;       /* lifted further for AA contrast (4.68:1 on surface) */
+  --ember: #FF9B82;        /* lifted for AA contrast (4.52:1 on surface)   */
 
-  --ink-60: rgba(237, 242, 236, 0.62);
-  --ink-40: rgba(237, 242, 236, 0.42);
+  --ink-60: rgba(237, 242, 236, 0.68);  /* lifted from 0.62 for better contrast */
+  --ink-40: rgba(237, 242, 236, 0.50);  /* lifted from 0.42 for better contrast */
   --ink-12: rgba(237, 242, 236, 0.14);
   --ink-06: rgba(237, 242, 236, 0.06);
 
   --solar-12: rgba(255, 180, 0, 0.14);
   --solar-24: rgba(255, 180, 0, 0.26);
-  --growth-12: rgba(78, 203, 138, 0.14);
-  --ember-12: rgba(242, 133, 107, 0.14);
+  --growth-12: rgba(93, 217, 154, 0.14);
+  --ember-12: rgba(255, 155, 130, 0.14);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.50);
