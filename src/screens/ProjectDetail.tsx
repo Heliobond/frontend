@@ -37,7 +37,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             color: 'var(--ink-60)',
           }}
         >
-          ← Back to projects
+          <span aria-hidden="true">←</span> Back to projects
         </button>
       )}
 
@@ -244,7 +244,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 color: 'var(--ink-60)',
               }}
             >
-              ← Back to projects
+              <span aria-hidden="true">←</span> Back to projects
             </button>
           </div>
         )}
