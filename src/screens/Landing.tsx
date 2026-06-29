@@ -22,7 +22,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
   const intensity = Math.min(1, d.pool.totalAssets / 6_000_000)
 
   return (
-    <main>
+    <main id="main-content">
       {/* Hero */}
       <section
         className="hb-hero-grid hb-rise"

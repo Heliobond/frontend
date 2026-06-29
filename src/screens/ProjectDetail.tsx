@@ -23,7 +23,7 @@ export interface ProjectDetailProps {
 export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
+    <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       {onBack && (
         <button
           type="button"
