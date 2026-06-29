@@ -123,6 +123,25 @@
     "activityTitle": "Activité",
     "activityNote": "chaque entrée → Stellar Expert"
   },
+  "ProjectDetail": {
+    "backToProjects": "← Retour aux projets",
+    "verifiedCreator": "Créateur vérifié · depuis {since}",
+    "builtBy": "Construit par <b>{name}</b>",
+    "scoresTitle": "Scores vérifiés par l'oracle",
+    "creditLabel": "Qualité de crédit",
+    "greenLabel": "Impact vert",
+    "creditSparkLabel": "Score de crédit dans le temps",
+    "greenSparkLabel": "Score vert dans le temps",
+    "fundingTitle": "Calendrier de financement",
+    "contributionTitle": "Contribution de ce projet",
+    "contributionBody": "Votre rendement est façonné par chaque projet soutenu par le pool. Celui-ci a une qualité de crédit de <b>{credit}</b> et un impact vert de <b>{green}</b>, tous deux actualisés sur la chaîne par l'oracle.",
+    "formulaToggle": "Comment est-ce calculé ?",
+    "formulaBody": "rendement attendu = investissement × (crédit + vert) ÷ 200 — lisez le contrat ↗",
+    "investCta": "Investir dans le pool qui finance ce projet",
+    "investNote": "Vous investissez dans le pool mutualisé, qui finance ce projet aux côtés d'autres — pas de paiement par projet.",
+    "oracleUpdate": "chaque mise à jour de l'oracle est sur la chaîne ↗",
+    "verifiedAgo": "vérifié il y a {time} ↗"
+  },
   "Withdraw": {
     "h1": "Retirer du pool",
     "yourValue": "Votre valeur",

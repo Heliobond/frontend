@@ -123,6 +123,25 @@
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert"
   },
+  "ProjectDetail": {
+    "backToProjects": "← Back to projects",
+    "verifiedCreator": "Verified creator · since {since}",
+    "builtBy": "Built by <b>{name}</b>",
+    "scoresTitle": "Oracle-verified scores",
+    "creditLabel": "Credit quality",
+    "greenLabel": "Green impact",
+    "creditSparkLabel": "Credit score over time",
+    "greenSparkLabel": "Green score over time",
+    "fundingTitle": "Funding timeline",
+    "contributionTitle": "This project&rsquo;s contribution",
+    "contributionBody": "Your return is shaped by every project the pool backs. This one carries a credit quality of <b>{credit}</b> and a green impact of <b>{green}</b>, both refreshed on-chain by the oracle.",
+    "formulaToggle": "How is this calculated?",
+    "formulaBody": "expected return = investment × (credit + green) ÷ 200 — read it in the contract ↗",
+    "investCta": "Invest in the pool that funds this",
+    "investNote": "You invest in the shared pool, which funds this project alongside others — not a per-project checkout.",
+    "oracleUpdate": "every oracle update is on-chain ↗",
+    "verifiedAgo": "verified {time} ago ↗"
+  },
   "Withdraw": {
     "h1": "Withdraw from the pool",
     "yourValue": "Your value",

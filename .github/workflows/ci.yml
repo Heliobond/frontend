@@ -24,6 +24,14 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
       # `next build` runs the TypeScript type-checker and fails on any type error,
       # so this is the load-bearing correctness gate. The explicit typecheck step
       # below makes the failure mode obvious in the logs.
