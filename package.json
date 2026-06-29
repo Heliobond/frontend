@@ -28,7 +28,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "npm run typecheck"
+      "bash -c 'npm run typecheck'"
     ]
   },
   "dependencies": {

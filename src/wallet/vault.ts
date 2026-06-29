@@ -13,8 +13,6 @@
 
 import { HB_DATA } from '../data'
 
-
-
 export interface WithdrawPreview {
   assets: number
   sharePrice: number
@@ -148,7 +146,9 @@ export async function submitDeposit(
   if (!CONTRACT_ID) {
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
-        resolve(`demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`)
+        resolve(
+          `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`,
+        )
       }, 2000)
       if (signal) {
         signal.addEventListener('abort', () => {
@@ -214,7 +214,9 @@ export async function submitWithdraw(
   if (!CONTRACT_ID) {
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
-        resolve(`demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`)
+        resolve(
+          `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`,
+        )
       }, 2000)
       if (signal) {
         signal.addEventListener('abort', () => {

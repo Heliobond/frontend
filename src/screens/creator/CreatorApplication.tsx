@@ -84,7 +84,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
                     color: 'var(--ink)',
                   }}
                 >
-                  {t(`criteria${i}` as any)}
+                  {t(`criteria${i}` as Parameters<typeof t>[0])}
                 </span>
               </li>
             ))}
@@ -181,8 +181,8 @@ function Stepper({ activeStage }: { activeStage: ApplicationStage }) {
     const hintKey = `step${id.charAt(0).toUpperCase() + id.slice(1)}Hint`
     return {
       id,
-      label: t(labelKey as any),
-      hint: t(hintKey as any),
+      label: t(labelKey as Parameters<typeof t>[0]),
+      hint: t(hintKey as Parameters<typeof t>[0]),
     }
   })
 
