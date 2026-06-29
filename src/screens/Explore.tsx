@@ -107,22 +107,63 @@ export function Explore({ onOpen }: ExploreProps) {
         )}
       </div>
 
-      <div className="hb-projects-grid">
-        {loading
-          ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-          : shown.map((p) => (
-              <ProjectCard
-                key={p.id}
-                name={p.name}
-                location={p.location}
-                credit={p.credit}
-                green={p.green}
-                funded={p.funded}
-                verifiedAgo="2h ago"
-                onOpen={() => onOpen(p)}
-              />
-            ))}
-      </div>
+      {!loading && shown.length === 0 ? (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            padding: '80px 24px',
+            background: 'var(--surface)',
+            border: '1px solid var(--ink-12)',
+            borderRadius: 'var(--radius-modal)',
+            boxShadow: 'var(--shadow-sm)',
+            margin: '20px 0',
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 20,
+              color: 'var(--ink)',
+              margin: '0 0 8px',
+            }}
+          >
+            {t('emptyTitle')}
+          </h2>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 14.5,
+              color: 'var(--ink-60)',
+              maxWidth: 400,
+              margin: 0,
+            }}
+          >
+            {t('emptySub', { filter: filter === 'All' ? t('filterAll') : filter })}
+          </p>
+        </div>
+      ) : (
+        <div className="hb-projects-grid">
+          {loading
+            ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
+            : shown.map((p) => (
+                <ProjectCard
+                  key={p.id}
+                  name={p.name}
+                  location={p.location}
+                  credit={p.credit}
+                  green={p.green}
+                  funded={p.funded}
+                  verifiedAgo="2h ago"
+                  onOpen={() => onOpen(p)}
+                />
+              ))}
+        </div>
+      )}
     </main>
   )
 }

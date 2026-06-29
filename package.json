@@ -28,7 +28,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "bun run typecheck"
+      "npm run typecheck"
     ]
   },
   "dependencies": {

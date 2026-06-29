@@ -79,7 +79,9 @@
     "title": "Là où le pool agit",
     "sub": "Chaque projet financé par le pool, avec des scores vérifiés par l'oracle. Explorez librement — la connexion du portefeuille vient plus tard.",
     "filterAll": "Tous",
-    "countSorted": "{count} projets · triés par date"
+    "countSorted": "{count} projets",
+    "emptyTitle": "Aucun projet trouvé",
+    "emptySub": "Il n'y a aucun projet correspondant à la catégorie \"{filter}\" dans le pool en ce moment."
   },
   "Deposit": {
     "stepAmount": "Montant",

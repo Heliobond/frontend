@@ -79,7 +79,9 @@
     "title": "Where the pool works",
     "sub": "Every project the pool funds, with oracle-verified scores. Explore freely — connecting a wallet comes later.",
     "filterAll": "All",
-    "countSorted": "{count} projects · sorted by most recent"
+    "countSorted": "{count} projects",
+    "emptyTitle": "No projects found",
+    "emptySub": "There are no projects matching the \"{filter}\" category in the pool right now."
   },
   "Deposit": {
     "stepAmount": "Amount",

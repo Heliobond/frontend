@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, AmountInput } from '../components'
 import { Helio } from '../brand/Helio'
@@ -34,6 +34,29 @@ export function Deposit({ onDone }: DepositProps) {
   const [amount, setAmount] = useState('100')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
+
+  const mountedRef = useRef(true)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
+  const changeStep = (newStep: DepositStep) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    if (mountedRef.current) {
+      setStep(newStep)
+    }
+  }
 
   const n = parseFloat(amount) || 0
   const price = livePrice
@@ -114,7 +137,7 @@ export function Deposit({ onDone }: DepositProps) {
             style={{ width: '100%', marginTop: 20 }}
             disabled={n < 1}
             reason={n < 1 ? t('reasonMin') : undefined}
-            onClick={() => setStep('review')}
+            onClick={() => changeStep('review')}
           >
             {n >= 1 ? t('investCta', { amount: n }) : t('investCtaEmpty')}
           </Button>
@@ -152,7 +175,7 @@ export function Deposit({ onDone }: DepositProps) {
             {t('reviewBody')}
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
-            <Button variant="ghost" onClick={() => setStep('amount')}>
+            <Button variant="ghost" onClick={() => changeStep('amount')}>
               {t('back')}
             </Button>
             <Button
@@ -160,17 +183,30 @@ export function Deposit({ onDone }: DepositProps) {
               size="lg"
               style={{ flex: 1 }}
               onClick={async () => {
-                setStep('pending')
+                changeStep('pending')
                 setTxError(null)
+                const controller = new AbortController()
+                abortControllerRef.current = controller
                 try {
-                  const hash = await submitDeposit(n, address ?? '', sign)
-                  setTxHash(hash)
-                  setStep('success')
+                  const hash = await submitDeposit(n, address ?? '', sign, controller.signal)
+                  if (mountedRef.current) {
+                    setTxHash(hash)
+                    changeStep('success')
+                  }
                 } catch (e) {
-                  setTxError(
-                    e instanceof Error ? e.message : 'Transaction failed — please try again.',
-                  )
-                  setStep('amount')
+                  if (mountedRef.current) {
+                    if (e instanceof Error && e.message === 'Aborted') {
+                      return
+                    }
+                    setTxError(
+                      e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                    )
+                    changeStep('amount')
+                  }
+                } finally {
+                  if (abortControllerRef.current === controller) {
+                    abortControllerRef.current = null
+                  }
                 }
               }}
             >

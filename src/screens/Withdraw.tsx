@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, AmountInput, LiquidityMeter } from '../components'
 import { submitWithdraw } from '../wallet/vault'
@@ -23,9 +23,32 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const { address, sign } = useWallet()
   const liquid = 236 // your liquid share, $
   const [step, setStep] = useState<WithdrawStep>('amount')
-  const [amount, setAmount] = useState('300')
+  const [amount, setAmount] = useState('')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
+
+  const mountedRef = useRef(true)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
+  const changeStep = (newStep: WithdrawStep) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    if (mountedRef.current) {
+      setStep(newStep)
+    }
+  }
   const n = parseFloat(amount) || 0
 
   return (
@@ -70,17 +93,30 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
             disabled={n < 1 || n > liquid}
             reason={n > liquid ? t('reasonExceeds') : n < 1 ? t('reasonMin') : undefined}
             onClick={async () => {
-              setStep('pending')
+              changeStep('pending')
               setTxError(null)
+              const controller = new AbortController()
+              abortControllerRef.current = controller
               try {
-                const hash = await submitWithdraw(n, address ?? '', sign)
-                setTxHash(hash)
-                setStep('success')
+                const hash = await submitWithdraw(n, address ?? '', sign, controller.signal)
+                if (mountedRef.current) {
+                  setTxHash(hash)
+                  changeStep('success')
+                }
               } catch (e) {
-                setTxError(
-                  e instanceof Error ? e.message : 'Transaction failed — please try again.',
-                )
-                setStep('amount')
+                if (mountedRef.current) {
+                  if (e instanceof Error && e.message === 'Aborted') {
+                    return
+                  }
+                  setTxError(
+                    e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                  )
+                  changeStep('amount')
+                }
+              } finally {
+                if (abortControllerRef.current === controller) {
+                  abortControllerRef.current = null
+                }
               }
             }}
           >
