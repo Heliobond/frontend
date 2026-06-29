@@ -63,6 +63,7 @@ export function IconButton({
       }}
       onMouseDown={() => setActive(true)}
       onMouseUp={() => setActive(false)}
+      className="hb-icon-btn"
       style={{
         width: dim,
         height: dim,

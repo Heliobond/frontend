@@ -22,14 +22,12 @@ export interface VaultStats {
   projectsFunded: number
 }
 
-export type WhitelistStatus = 'approved' | 'pending'
-
 /** A creator the ProjectRegistry may (or may not yet) accept new projects from. */
 export interface Creator {
   name: string
   /** Stellar G-address. */
   address: string
-  status: WhitelistStatus
+  status: 'approved' | 'pending'
   /** Projects this creator has live in the registry. */
   projects: number
 }

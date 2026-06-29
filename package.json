@@ -3,6 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "description": "Heliobond — sunlight made financial. Investor app for a green-bond pool on Stellar.",
+  "license": "Apache-2.0",
+  "author": "Heliobond (https://heliobond.vercel.app)",
+  "homepage": "https://heliobond.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Heliobond/frontend.git"
+  },
   "engines": {
     "node": ">=18.18.0"
   },
@@ -17,8 +24,6 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
-    "lint": "tsc --noEmit",
-    "format": "echo 'No formatter configured yet; install one and update lint-staged'",
     "prepare": "husky"
   },
   "lint-staged": {

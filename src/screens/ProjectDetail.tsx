@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode } from 'react'
+import { type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, Button, ScoreGauge } from '../components'
 import { Sparkline } from '../components/Sparkline'
@@ -23,7 +23,7 @@ export interface ProjectDetailProps {
 export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
+    <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       {onBack && (
         <button
           type="button"
@@ -41,7 +41,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             color: 'var(--ink-60)',
           }}
         >
-          {t('backToProjects')}
+          <span aria-hidden="true">{t('backAriaHidden')}</span> {t('backLabel')}
         </button>
       )}
 
@@ -70,7 +70,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
           }}
         >
           <Badge tone="growth" icon={<ShieldCheckIcon />}>
-            {t('verifiedCreator', { since: detail.creator.since })}
+            {t('verifiedSince', { since: detail.creator.since })}
           </Badge>
         </div>
 
@@ -128,7 +128,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             marginBottom: 10,
           }}
         >
-          {t.rich('builtBy', { name: detail.creator.name, b: strong })}
+          {t('builtBy')} <b style={{ color: 'var(--ink)' }}>{detail.creator.name}</b>
         </div>
         <p
           style={{
@@ -152,13 +152,17 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             value={project.credit}
             label={t('creditLabel')}
             history={detail.scoreHistory.credit.map((p) => p.value)}
-            sparkLabel={t('creditSparkLabel')}
+            sparkLabel={t('creditHistory')}
+            onChainNote={t('onChainNote')}
+            verifiedAgo={t('verifiedAgo')}
           />
           <ScoreColumn
             value={project.green}
             label={t('greenLabel')}
             history={detail.scoreHistory.green.map((p) => p.value)}
-            sparkLabel={t('greenSparkLabel')}
+            sparkLabel={t('greenHistory')}
+            onChainNote={t('onChainNote')}
+            verifiedAgo={t('verifiedAgo')}
           />
         </div>
       </section>
@@ -242,7 +246,11 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
               margin: '0 0 14px',
             }}
           >
-            {t.rich('contributionBody', { credit: project.credit, green: project.green, b: strong })}
+            {t.rich('contributionBody', {
+              b: (c) => <b style={{ color: 'var(--ink)' }}>{c}</b>,
+              credit: project.credit,
+              green: project.green,
+            })}
           </p>
           <details style={{ borderTop: '1px solid var(--ink-12)', paddingTop: 14 }}>
             <summary
@@ -255,7 +263,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 color: 'var(--ink)',
               }}
             >
-              {t('formulaToggle')}
+              {t('calcSummary')}
             </summary>
             <p
               style={{
@@ -269,7 +277,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 margin: '12px 0 0',
               }}
             >
-              {t('formulaBody')}
+              {t('calcFormula')}
             </p>
           </details>
         </div>
@@ -308,7 +316,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 color: 'var(--ink-60)',
               }}
             >
-              {t('backToProjects')}
+              <span aria-hidden="true">{t('backAriaHidden')}</span> {t('backLabel')}
             </button>
           </div>
         )}
@@ -322,11 +330,15 @@ function ScoreColumn({
   label,
   history,
   sparkLabel,
+  onChainNote,
+  verifiedAgo,
 }: {
   value: number
   label: string
   history: number[]
   sparkLabel: string
+  onChainNote: string
+  verifiedAgo: string
 }) {
   const t = useTranslations('ProjectDetail')
   return (
@@ -355,7 +367,7 @@ function ScoreColumn({
             whiteSpace: 'nowrap',
           }}
         >
-          {t('oracleUpdate')}
+          {onChainNote}
         </span>
         <span
           style={{
@@ -365,7 +377,7 @@ function ScoreColumn({
             whiteSpace: 'nowrap',
           }}
         >
-          {t('verifiedAgo', { time: '2h' })}
+          {verifiedAgo}
         </span>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Button } from '../../../components'
 import { ProjectDetail } from '../../../screens/ProjectDetail'
 import { getProject, type ProjectWithDetail } from '../../../lib/api'
@@ -9,6 +10,7 @@ import { getProject, type ProjectWithDetail } from '../../../lib/api'
 export default function ProjectDetailPage() {
   const router = useRouter()
   const params = useParams<{ id: string }>()
+  const t = useTranslations('ProjectDetail')
   const id = Number(params?.id)
 
   const [data, setData] = useState<ProjectWithDetail | null | 'loading'>('loading')
@@ -31,6 +33,7 @@ export default function ProjectDetailPage() {
   if (!data) {
     return (
       <main
+        id="main-content"
         style={{
           maxWidth: 480,
           margin: '0 auto',
@@ -51,7 +54,7 @@ export default function ProjectDetailPage() {
             margin: 0,
           }}
         >
-          Project not found
+          {t('notFoundTitle')}
         </h1>
         <p
           style={{
@@ -61,10 +64,10 @@ export default function ProjectDetailPage() {
             margin: 0,
           }}
         >
-          That project is not in the registry. It may have been moved.
+          {t('notFoundBody')}
         </p>
         <Button variant="primary" onClick={() => router.push('/explore')}>
-          Back to projects
+          {t('notFoundCta')}
         </Button>
       </main>
     )
@@ -83,6 +86,7 @@ export default function ProjectDetailPage() {
 function ProjectDetailSkeleton() {
   return (
     <main
+      id="main-content"
       style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}
       aria-busy="true"
       aria-label="Loading project"

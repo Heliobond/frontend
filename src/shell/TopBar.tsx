@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Button } from '../components'
 import { Mark } from '../brand/Mark'
+import { useLocaleSwitcher } from '../i18n/LocaleProvider'
 import { useWallet, shortAddress } from '../wallet/WalletProvider'
 import { useTheme } from '../theme/ThemeProvider'
 
@@ -25,8 +26,8 @@ const NAV = [
 export function TopBar() {
   const pathname = usePathname()
   const router = useRouter()
-  const locale = useLocale()
   const t = useTranslations('Nav')
+  const { locale, switchLocale } = useLocaleSwitcher()
   const { connected, address, connecting, isDemo } = useWallet()
   const { theme, toggle } = useTheme()
 
@@ -62,12 +63,6 @@ export function TopBar() {
     sections.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [pathname])
-
-  const switchLocale = () => {
-    const next = locale === 'en' ? 'fr' : 'en'
-    document.cookie = `NEXT_LOCALE=${next};path=/;max-age=31536000;samesite=lax`
-    router.refresh()
-  }
 
   return (
     <header
@@ -133,6 +128,8 @@ export function TopBar() {
 
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
         <span
+          role="status"
+          aria-label={t('networkStatus')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -143,6 +140,7 @@ export function TopBar() {
           }}
         >
           <span
+            aria-hidden="true"
             style={{
               width: 8,
               height: 8,

@@ -20,7 +20,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
   const edu = [1, 2, 3] as const
 
   return (
-    <main style={{ maxWidth: 920, margin: '0 auto', padding: '56px 24px 80px' }}>
+    <main id="main-content" style={{ maxWidth: 920, margin: '0 auto', padding: '56px 24px 80px' }}>
       <div style={{ textAlign: 'center', marginBottom: 36 }}>
         <h1
           style={{

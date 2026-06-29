@@ -15,6 +15,7 @@ export function Tag({ selected = false, onClick, children, style, ...rest }: Tag
   return (
     <button
       type="button"
+      className="hb-tag"
       aria-pressed={interactive ? selected : undefined}
       onClick={onClick}
       onMouseEnter={() => setHover(true)}

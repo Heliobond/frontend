@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
 
@@ -20,6 +21,7 @@ export interface OracleFormsProps {
 }
 
 export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFormsProps) {
+  const t = useTranslations('Admin')
   const first = projects[0]?.id ?? 0
 
   // Push-scores form state.
@@ -69,19 +71,19 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
       }}
     >
       {/* Push score update */}
-      <Panel title="Push score update" hint="Writes a new oracle reading to the ProjectRegistry.">
-        <Field label="Project">
+      <Panel title={t('panelPushTitle')} hint={t('panelPushHint')}>
+        <Field label={t('fieldProject')}>
           <Select value={scoreId} onChange={setScoreId} projects={projects} />
         </Field>
         <div style={{ display: 'flex', gap: 12 }}>
-          <Field label="Credit quality" style={{ flex: 1 }}>
+          <Field label={t('fieldCredit')} style={{ flex: 1 }}>
             <NumberInput
               value={credit}
               onChange={setCredit}
               placeholder={target ? String(target.credit) : '0'}
             />
           </Field>
-          <Field label="Green impact" style={{ flex: 1 }}>
+          <Field label={t('fieldGreen')} style={{ flex: 1 }}>
             <NumberInput
               value={green}
               onChange={setGreen}
@@ -91,26 +93,26 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
         </div>
         <p style={helpText}>
           {target
-            ? `Current on-chain: credit ${target.credit}, green ${target.green}. Scores are 0–100.`
-            : 'Scores are 0–100.'}
+            ? t('scoresHint', { credit: target.credit, green: target.green })
+            : t('scoresHintShort')}
         </p>
         <Button
           size="sm"
           variant="primary"
           disabled={!scoresValid}
-          reason="Enter both scores (0–100) first."
+          reason={t('scoresReason')}
           onClick={submitScores}
         >
-          Update on-chain scores
+          {t('submitScores')}
         </Button>
       </Panel>
 
       {/* Fund a project */}
-      <Panel title="Fund a project" hint="Deploys idle vault USDC into a project.">
-        <Field label="Project">
+      <Panel title={t('panelFundTitle')} hint={t('panelFundHint')}>
+        <Field label={t('fieldProject')}>
           <Select value={fundId} onChange={setFundId} projects={projects} />
         </Field>
-        <Field label="Amount (USDC)">
+        <Field label={t('fieldAmount')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input
               inputMode="decimal"
@@ -125,7 +127,7 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
           </div>
         </Field>
         <p style={helpText}>
-          Liquid in vault:{' '}
+          {t('liquidHint')}{' '}
           <span
             style={{
               fontFamily: 'var(--font-data)',
@@ -136,22 +138,16 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
             ${liquid.toLocaleString('en-US')}
           </span>
           .{' '}
-          {amountN > liquid
-            ? 'That is more than is liquid right now — lower the amount.'
-            : 'Funding lowers liquid USDC by the same amount.'}
+          {amountN > liquid ? t('fundExceeds') : t('fundOk')}
         </p>
         <Button
           size="sm"
           variant="primary"
           disabled={!fundValid}
-          reason={
-            amountN > liquid
-              ? 'Amount exceeds liquid USDC.'
-              : 'Enter an amount within the liquid balance.'
-          }
+          reason={amountN > liquid ? t('fundReasonExceeds') : t('fundReasonEmpty')}
           onClick={submitFund}
         >
-          Fund from the vault
+          {t('submitFund')}
         </Button>
       </Panel>
     </div>

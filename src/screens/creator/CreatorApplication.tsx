@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button, Tag } from '@/components'
 import {
   PROJECT_TYPES,
-  APPLICATION_STEPS,
   WHITELIST_CRITERIA,
   type ApplicationStage,
   type ProjectType,
@@ -30,6 +30,7 @@ export interface ApplicationFormValues {
 }
 
 export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApplicationProps) {
+  const t = useTranslations('Creator')
   const [orgName, setOrgName] = useState('')
   const [projectType, setProjectType] = useState<ProjectType>(PROJECT_TYPES[0])
   const [location, setLocation] = useState('')
@@ -48,6 +49,12 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
     setSubmitted(true)
   }
 
+  const typeLabel = (type: ProjectType): string => {
+    const key = `type${type}` as const
+    const label = t(key)
+    return label !== key ? label : type
+  }
+
   return (
     <div
       style={{
@@ -60,9 +67,9 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
       {/* Left — criteria + tracker */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card>
-          <h3 style={cardTitle}>What we look for</h3>
+          <h3 style={cardTitle}>{t('lookForTitle')}</h3>
           <p style={{ ...subtle, margin: '0 0 16px' }}>
-            Clear, public criteria. Meet these and your application moves quickly.
+            {t('lookForSub')}
           </p>
           <ul
             style={{
@@ -74,8 +81,8 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
               gap: 12,
             }}
           >
-            {WHITELIST_CRITERIA.map((c) => (
-              <li key={c} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            {WHITELIST_CRITERIA.map((_, i) => (
+              <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <CheckMark />
                 <span
                   style={{
@@ -85,7 +92,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
                     color: 'var(--ink)',
                   }}
                 >
-                  {c}
+                  {t(`criteria${i}` as any)}
                 </span>
               </li>
             ))}
@@ -93,19 +100,19 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
         </Card>
 
         <Card>
-          <h3 style={cardTitle}>Where your application stands</h3>
+          <h3 style={cardTitle}>{t('standTitle')}</h3>
           <Stepper activeStage={activeStage} />
         </Card>
       </div>
 
       {/* Right — the form */}
       <Card>
-        <h3 style={cardTitle}>Apply for the whitelist</h3>
+        <h3 style={cardTitle}>{t('applyTitle')}</h3>
         <p style={{ ...subtle, margin: '0 0 20px' }}>
-          Applications are usually reviewed within 3 business days.
+          {t('applySub')}
         </p>
 
-        <Field label="Organization name" htmlFor="hb-org">
+        <Field label={t('fieldOrg')} htmlFor="hb-org">
           <input
             id="hb-org"
             type="text"
@@ -126,7 +133,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
           </div>
         </div>
 
-        <Field label="Location" htmlFor="hb-loc">
+        <Field label={t('fieldLocation')} htmlFor="hb-loc">
           <input
             id="hb-loc"
             type="text"
@@ -136,7 +143,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
           />
         </Field>
 
-        <Field label="Links — website, registry, or proof of presence" htmlFor="hb-links">
+        <Field label={t('fieldLinks')} htmlFor="hb-links">
           <input
             id="hb-links"
             type="url"
@@ -155,17 +162,18 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
             disabled={!canSubmit || submitted}
             reason={
               submitted
-                ? 'Your application is in.'
-                : 'Add your organization name and location first.'
+                ? t('submitAppReasonDone')
+                : t('submitAppReason')
             }
             style={{ width: '100%' }}
           >
-            {submitted ? 'Application submitted' : 'Submit application'}
+            {submitted ? t('submitAppDone') : t('submitApp')}
           </Button>
           {submitted && (
             <p style={{ ...subtle, margin: '12px 0 0', textAlign: 'center' }}>
-              Thanks — we will be in touch{' '}
-              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>within 3 business days.</span>
+              {t.rich('submitAppThanks', {
+                b: (c: ReactNode) => <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{c}</span>,
+              })}
             </p>
           )}
         </div>
@@ -175,8 +183,20 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
 }
 
 function Stepper({ activeStage }: { activeStage: ApplicationStage }) {
+  const t = useTranslations('Creator')
   const order: ApplicationStage[] = ['submitted', 'in_review', 'approved']
   const activeIndex = order.indexOf(activeStage)
+
+  // We use the ordered ids but get labels/hints from the catalog
+  const stepMeta = order.map((id) => {
+    const labelKey = `step${id.charAt(0).toUpperCase() + id.slice(1)}Label`
+    const hintKey = `step${id.charAt(0).toUpperCase() + id.slice(1)}Hint`
+    return {
+      id,
+      label: t(labelKey as any),
+      hint: t(hintKey as any),
+    }
+  })
 
   return (
     <ol
@@ -188,9 +208,9 @@ function Stepper({ activeStage }: { activeStage: ApplicationStage }) {
         alignItems: 'flex-start',
       }}
     >
-      {APPLICATION_STEPS.map((step, i) => {
+      {stepMeta.map((step, i) => {
         const done = i <= activeIndex
-        const last = i === APPLICATION_STEPS.length - 1
+        const last = i === stepMeta.length - 1
         return (
           <li
             key={step.id}

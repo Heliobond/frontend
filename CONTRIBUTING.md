@@ -41,17 +41,17 @@ bun install
 bun run dev        # http://localhost:3000
 ```
 
-Useful scripts:
+Useful scripts — run these before opening a PR:
 
 ```bash
-bun run build         # production build — also runs the TypeScript type-checker
+bun run build         # production build (must pass)
 bun run typecheck     # tsc --noEmit
-bun run lint          # ESLint (next/core-web-vitals + TypeScript rules)
-bun run format        # Prettier — rewrite files in place
+bun run lint          # ESLint
 bun run format:check  # Prettier — check only (used in CI)
+bun run format        # Prettier — rewrite files in place
+bun run test          # Vitest unit + component test suite
+bun run test:e2e      # Playwright end-to-end tests
 bun run start         # serve the production build
-bun run test          # run the Vitest unit + component test suite
-bun run test:e2e      # run Playwright end-to-end tests (starts dev server automatically)
 ```
 
 ## Running tests
@@ -91,17 +91,63 @@ E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
 
 1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/withdraw-max-chip`, `fix/helio-glow`, `i18n/creator-screens`).
 2. Make focused changes — one issue per PR.
-3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, and **`bun run format:check`**.
+3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, **`bun run format:check`**, and **`bun run test`**.
 4. Open a PR using the template; link the issue with `Closes #123`.
 5. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
+## Internationalization
+
+Heliobond uses [`next-intl`](https://next-intl.dev) with cookie-based locale
+selection. Message catalogs live at `messages/en.json` and `messages/fr.json`;
+the request config in `src/i18n/request.ts` loads the matching catalog for the
+current locale.
+
+When you add or change user-facing copy:
+
+1. Pick the namespace that matches the surface using the copy, such as `Nav`,
+   `Footer`, `Landing`, `Deposit`, or `ProjectDetail`.
+2. Add the same key path to **both** `messages/en.json` and `messages/fr.json`.
+   The catalogs must stay in parity: every namespace and key in English must
+   also exist in French, and vice versa.
+3. Translate the value in each catalog. Do not leave English placeholder text in
+   `fr.json` unless the issue explicitly calls for a temporary fallback.
+4. Read the key from code with `useTranslations('<Namespace>')`, then call
+   `t('<key>')`. For example:
+
+```tsx
+import { useTranslations } from 'next-intl'
+
+export function Example() {
+  const t = useTranslations('Creator')
+  return <h1>{t('title')}</h1>
+}
+```
+
+To add a new namespace for a new screen or surface:
+
+1. Create the namespace object in **both** catalogs with identical keys:
+
+```json
+{
+  "Creator": {
+    "title": "Build your project"
+  }
+}
+```
+
+2. Add the translated French values under the same namespace and key names in
+   `messages/fr.json`.
+3. Use that namespace from the component with `useTranslations('Creator')`.
+4. Run `bun run build` or `bun run typecheck` before opening the PR so missing or
+   misspelled message keys are caught with the rest of the app checks.
+
 ## Quality bar
 
 - **Builds and type-checks clean.** `bun run build` is the gate; no `any` to paper over types, no `@ts-ignore` without a comment.
 - **Follow the design system.** Use the CSS custom properties (`var(--ink)`, `var(--solar)`, …) — never hardcode colours. Honour the brand rules: sentence case (no all-caps headlines), mono tabular numerals for figures, every delta carries a +/− sign and arrow (colour is never the sole carrier), solar is never text on a light background and never the only carrier of meaning, no emoji in the product, no exclamation marks on financial copy. See `README.md` and `src/styles/tokens/`.
-- **User-facing strings are translated.** If you add or change copy in the shell or the six investor screens, add the key to **both** `messages/en.json` and `messages/fr.json` (they must stay in parity).
+- **User-facing strings are translated.** If you add or change copy in the shell or translated screens, add the key to **both** `messages/en.json` and `messages/fr.json` (they must stay in parity).
 - **Accessibility is not optional.** Keyboard operable, visible focus, semantic landmarks, `prefers-reduced-motion` respected, touch targets ≥ 44px.
 - **No secrets** in the repo or in client code.
 

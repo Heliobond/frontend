@@ -8,7 +8,7 @@ import { StatBlock, Badge } from '@/components'
  */
 export default function ContrastTestPage() {
   return (
-    <main style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px' }}>
+    <main id="main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px' }}>
       <h1
         style={{
           fontFamily: 'var(--font-display)',

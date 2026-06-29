@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
 
@@ -26,6 +27,7 @@ function fundedNum(s: string): number {
 }
 
 export function RegistryTable({ rows, onSave }: RegistryTableProps) {
+  const t = useTranslations('Admin')
   const [sortKey, setSortKey] = useState<SortKey>('credit')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [editing, setEditing] = useState<number | null>(null)
@@ -65,42 +67,46 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
       <table style={tableStyle}>
         <thead>
           <tr>
-            <Th label="Project" k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-            <Th label="Type" k="type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
+            <Th label={t('colProject')} k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} sortLabel={t('sortBy', { col: t('colProject') })} />
+            <Th label={t('colType')} k="type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} sortLabel={t('sortBy', { col: t('colType') })} />
             <Th
-              label="Credit"
+              label={t('colCredit')}
               k="credit"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colCredit') })}
               align="right"
             />
             <Th
-              label="Green"
+              label={t('colGreen')}
               k="green"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colGreen') })}
               align="right"
             />
             <Th
-              label="Funded"
+              label={t('colFunded')}
               k="funded"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colFunded') })}
               align="right"
             />
             <Th
-              label="Last verified"
+              label={t('colLastVerified')}
               k="lastVerified"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colLastVerified') })}
               align="right"
             />
             <th style={{ ...thBase, textAlign: 'right' }}>
-              <span className="hb-eyebrow">Actions</span>
+              <span className="hb-eyebrow">{t('colActions')}</span>
             </th>
           </tr>
         </thead>
@@ -116,6 +122,12 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
                 onSave(r.id, credit, green)
                 setEditing(null)
               }}
+              updateLabel={t('updateScores')}
+              reVerifyLabel={t('reVerify', { name: r.name })}
+              creditFieldLabel={t('scoreFieldCredit')}
+              greenFieldLabel={t('scoreFieldGreen')}
+              cancelLabel={t('actionCancel')}
+              saveLabel={t('actionSave')}
             />
           ))}
         </tbody>
@@ -130,6 +142,7 @@ function Th({
   sortKey,
   sortDir,
   onSort,
+  sortLabel,
   align = 'left',
 }: {
   label: string
@@ -137,11 +150,14 @@ function Th({
   sortKey: SortKey
   sortDir: SortDir
   onSort: (k: SortKey) => void
+  sortLabel: string
   align?: 'left' | 'right'
 }) {
   const active = k === sortKey
+  const ariaSort = active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+
   return (
-    <th style={{ ...thBase, textAlign: align }}>
+    <th aria-sort={ariaSort} style={{ ...thBase, textAlign: align }}>
       <button
         type="button"
         onClick={() => onSort(k)}
@@ -156,7 +172,7 @@ function Th({
           cursor: 'pointer',
           color: active ? 'var(--ink)' : 'var(--ink-60)',
         }}
-        aria-label={`Sort by ${label}`}
+        aria-label={sortLabel}
       >
         <span className="hb-eyebrow" style={{ color: 'inherit' }}>
           {label}
@@ -182,12 +198,24 @@ function Row({
   onEdit,
   onCancel,
   onSave,
+  updateLabel,
+  reVerifyLabel,
+  creditFieldLabel,
+  greenFieldLabel,
+  cancelLabel,
+  saveLabel,
 }: {
   row: RegistryEntry
   editing: boolean
   onEdit: () => void
   onCancel: () => void
   onSave: (credit: number, green: number) => void
+  updateLabel: string
+  reVerifyLabel: string
+  creditFieldLabel: string
+  greenFieldLabel: string
+  cancelLabel: string
+  saveLabel: string
 }) {
   const [credit, setCredit] = useState(String(row.credit))
   const [green, setGreen] = useState(String(row.green))
@@ -222,7 +250,7 @@ function Row({
         <td style={{ ...tdStyle, textAlign: 'right' }}>
           {!editing && (
             <Button size="sm" variant="ghost" onClick={open}>
-              Update scores
+              {updateLabel}
             </Button>
           )}
         </td>
@@ -239,20 +267,20 @@ function Row({
                   alignSelf: 'center',
                 }}
               >
-                Re-verify {row.name}
+                {reVerifyLabel}
               </span>
-              <ScoreField label="Credit quality" value={credit} onChange={setCredit} />
-              <ScoreField label="Green impact" value={green} onChange={setGreen} />
+              <ScoreField label={creditFieldLabel} value={credit} onChange={setCredit} />
+              <ScoreField label={greenFieldLabel} value={green} onChange={setGreen} />
               <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                 <Button size="sm" variant="ghost" onClick={onCancel}>
-                  Cancel
+                  {cancelLabel}
                 </Button>
                 <Button
                   size="sm"
                   variant="primary"
                   onClick={() => onSave(clamp(credit), clamp(green))}
                 >
-                  Save
+                  {saveLabel}
                 </Button>
               </div>
             </div>

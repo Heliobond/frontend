@@ -96,7 +96,15 @@
   }
 }
 
-/* --- Quiet link hover, pointer-fine only ---------------------------------- */
+/* Pill-shaped focus rings for IconButton and Tag — override base radius */
+.hb-icon-btn:focus-visible,
+.hb-tag:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--focus-offset);
+  border-radius: var(--radius-pill);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .hb-textlink:hover {
     color: var(--ink);

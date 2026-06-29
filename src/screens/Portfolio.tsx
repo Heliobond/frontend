@@ -21,7 +21,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const d = HB_DATA
 
   return (
-    <main style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
+    <main id="main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
       <div
         style={{
           display: 'flex',

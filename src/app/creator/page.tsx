@@ -20,7 +20,7 @@ export default function CreatorPage() {
   ]
 
   return (
-    <main style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
+    <main id="main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
       <div style={{ marginBottom: 24 }}>
         <h1
           style={{

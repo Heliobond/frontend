@@ -38,7 +38,7 @@ export function Explore({ onOpen }: ExploreProps) {
   const shown = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
 
   return (
-    <main style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
+    <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
       <div style={{ marginBottom: 28 }}>
         <h1
           style={{
