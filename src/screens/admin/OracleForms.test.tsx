@@ -7,15 +7,12 @@ const mockProjects: RegistryEntry[] = [
   {
     id: 1,
     name: 'Solar Alpha',
+    type: 'Solar',
+    location: 'Kenya',
     credit: 85,
     green: 72,
     funded: '$100,000',
     lastVerified: '2 days ago',
-    apy: '8.2%',
-    category: 'solar',
-    description: 'Test project',
-    risk: 'low',
-    location: 'Kenya',
   },
 ]
 
