@@ -112,11 +112,25 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
           <div style={{ display: 'flex', gap: 20, justifyContent: 'center', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <ScoreGauge value={data.creditScore} label="Credit quality" size={96} stroke={8} />
-              <Sparkline points={data.creditHistory} aria-label="Credit trend" width={96} height={26} color="var(--ink)" style={{ opacity: 0.55 }} />
+              <Sparkline
+                points={data.creditHistory}
+                aria-label="Credit trend"
+                width={96}
+                height={26}
+                color="var(--ink)"
+                style={{ opacity: 0.55 }}
+              />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <ScoreGauge value={data.greenScore} label="Green impact" size={96} stroke={8} />
-              <Sparkline points={data.greenHistory} aria-label="Green trend" width={96} height={26} color="var(--ink)" style={{ opacity: 0.55 }} />
+              <Sparkline
+                points={data.greenHistory}
+                aria-label="Green trend"
+                width={96}
+                height={26}
+                color="var(--ink)"
+                style={{ opacity: 0.55 }}
+              />
             </div>
           </div>
         </Card>
@@ -256,7 +270,6 @@ function UpdateRow({ update, first }: { update: OracleUpdate; first: boolean }) 
     </div>
   )
 }
-
 
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',

@@ -311,7 +311,6 @@ function Label({ htmlFor, children }: { htmlFor?: string; children: ReactNode })
   )
 }
 
-
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,

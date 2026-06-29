@@ -106,9 +106,7 @@ export function AdminConsole() {
           >
             {t('h1')}
           </h1>
-          <p style={{ ...subtext, marginTop: 6 }}>
-            {t('subtitle')}
-          </p>
+          <p style={{ ...subtext, marginTop: 6 }}>{t('subtitle')}</p>
         </div>
         <Badge tone="testnet">{t('badgeInternal')}</Badge>
       </header>
@@ -117,7 +115,11 @@ export function AdminConsole() {
       <section style={{ ...sectionCard, padding: 0, marginBottom: 20 }}>
         <div style={statRow}>
           <StatCell label={t('statTotalAssets')} value={`$${formatMoney(totalAssets)}`} />
-          <StatCell label={t('statSharePrice')} value={VAULT_STATS.sharePrice.toFixed(4)} unit="USDC/HBS" />
+          <StatCell
+            label={t('statSharePrice')}
+            value={VAULT_STATS.sharePrice.toFixed(4)}
+            unit="USDC/HBS"
+          />
           <StatCell label={t('statHbsSupply')} value={formatMoney(VAULT_STATS.hbsSupply)} />
           <StatCell label={t('statLiquid')} value={`$${formatMoney(liquid)}`} />
           <StatCell label={t('statDeployed')} value={`$${formatMoney(deployed)}`} />
@@ -126,10 +128,7 @@ export function AdminConsole() {
       </section>
 
       {/* Project registry table */}
-      <Section
-        title={t('sectionRegistry')}
-        caption={t('sectionRegistryCaption')}
-      >
+      <Section title={t('sectionRegistry')} caption={t('sectionRegistryCaption')}>
         <RegistryTable rows={registry} onSave={updateScores} />
       </Section>
 
@@ -144,10 +143,7 @@ export function AdminConsole() {
       </Section>
 
       {/* Whitelist management */}
-      <Section
-        title={t('sectionWhitelist')}
-        caption={t('sectionWhitelistCaption')}
-      >
+      <Section title={t('sectionWhitelist')} caption={t('sectionWhitelistCaption')}>
         <div>
           {whitelist.map((c, i) => (
             <div

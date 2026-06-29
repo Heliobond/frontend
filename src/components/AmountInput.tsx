@@ -41,9 +41,10 @@ export function AmountInput({
   // Announce the cap message only once when overCap first becomes true,
   // not on every keystroke while already over cap (fixes #76).
   const [prevOverCap, setPrevOverCap] = useState(false)
-  const liveMsg = overCap && !prevOverCap
-    ? (capMessage || `You can withdraw up to ${cap} ${currency} today, or any part of it.`)
-    : ''
+  const liveMsg =
+    overCap && !prevOverCap
+      ? capMessage || `You can withdraw up to ${cap} ${currency} today, or any part of it.`
+      : ''
 
   if (overCap !== prevOverCap) {
     setPrevOverCap(overCap)
@@ -190,7 +191,14 @@ export function AmountInput({
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}
+        style={{
+          position: 'absolute',
+          width: 1,
+          height: 1,
+          overflow: 'hidden',
+          clip: 'rect(0,0,0,0)',
+          whiteSpace: 'nowrap',
+        }}
       >
         {liveMsg}
       </div>

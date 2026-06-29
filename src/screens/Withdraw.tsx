@@ -145,11 +145,25 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       {step === 'pending' && (
         <div style={panel}>
           {/* Announce pending state to screen readers (#80) */}
-          <div role="status" aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {t('pendingH1')}. {t('pendingSub')}
           </div>
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <h1 style={hw} aria-hidden="true">{t('pendingH1')}</h1>
+            <h1 style={hw} aria-hidden="true">
+              {t('pendingH1')}
+            </h1>
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -168,7 +182,19 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       {step === 'success' && (
         <div style={panel}>
           {/* Announce success to screen readers (#80) */}
-          <div role="status" aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {t('successH1')}
           </div>
           <h1 style={{ ...hw, textAlign: 'center' }}>{t('successH1')}</h1>

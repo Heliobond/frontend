@@ -169,7 +169,6 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   )
 }
 
-
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,

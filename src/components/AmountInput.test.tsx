@@ -67,7 +67,9 @@ describe('AmountInput', () => {
     })
 
     it('shows alert when value exceeds cap', () => {
-      const { queryAllByText } = render(<AmountInput value="150" cap={100} capMessage="Over limit" />)
+      const { queryAllByText } = render(
+        <AmountInput value="150" cap={100} capMessage="Over limit" />,
+      )
 
       expect(queryAllByText('Over limit').length).toBeGreaterThan(0)
     })
@@ -75,11 +77,15 @@ describe('AmountInput', () => {
     it('shows alert with default message when cap is exceeded and no custom message', () => {
       const { queryAllByText } = render(<AmountInput value="200" cap={100} currency="USDC" />)
 
-      expect(queryAllByText('You can withdraw up to 100 USDC today, or any part of it.').length).toBeGreaterThan(0)
+      expect(
+        queryAllByText('You can withdraw up to 100 USDC today, or any part of it.').length,
+      ).toBeGreaterThan(0)
     })
 
     it('does not show alert when value equals cap', () => {
-      const { queryAllByText } = render(<AmountInput value="100" cap={100} capMessage="Limit reached" />)
+      const { queryAllByText } = render(
+        <AmountInput value="100" cap={100} capMessage="Limit reached" />,
+      )
       expect(queryAllByText('Limit reached').length).toBe(0)
     })
 

@@ -67,8 +67,22 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
       <table style={tableStyle}>
         <thead>
           <tr>
-            <Th label={t('colProject')} k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} sortLabel={t('sortBy', { col: t('colProject') })} />
-            <Th label={t('colType')} k="type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} sortLabel={t('sortBy', { col: t('colType') })} />
+            <Th
+              label={t('colProject')}
+              k="name"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colProject') })}
+            />
+            <Th
+              label={t('colType')}
+              k="type"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              sortLabel={t('sortBy', { col: t('colType') })}
+            />
             <Th
               label={t('colCredit')}
               k="credit"

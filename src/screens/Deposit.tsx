@@ -228,11 +228,25 @@ export function Deposit({ onDone }: DepositProps) {
             }}
           >
             {/* aria-live region announces pending state to screen readers (#80) */}
-            <div role="status" aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+                clip: 'rect(0,0,0,0)',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {t('pendingH1')}. {t('pendingSub')}
             </div>
             <PendingDot />
-            <h1 style={{ ...h1Style, textAlign: 'center', marginTop: 18 }} aria-hidden="true">{t('pendingH1')}</h1>
+            <h1 style={{ ...h1Style, textAlign: 'center', marginTop: 18 }} aria-hidden="true">
+              {t('pendingH1')}
+            </h1>
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -256,7 +270,19 @@ export function Deposit({ onDone }: DepositProps) {
       {step === 'success' && (
         <Panel>
           {/* Announce success to screen readers (#80) */}
-          <div role="status" aria-live="polite" aria-atomic="true" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {t('successH1')}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 6px' }}>

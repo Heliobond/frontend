@@ -62,9 +62,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card>
           <h3 style={cardTitle}>{t('lookForTitle')}</h3>
-          <p style={{ ...subtle, margin: '0 0 16px' }}>
-            {t('lookForSub')}
-          </p>
+          <p style={{ ...subtle, margin: '0 0 16px' }}>{t('lookForSub')}</p>
           <ul
             style={{
               listStyle: 'none',
@@ -102,9 +100,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
       {/* Right — the form */}
       <Card>
         <h3 style={cardTitle}>{t('applyTitle')}</h3>
-        <p style={{ ...subtle, margin: '0 0 20px' }}>
-          {t('applySub')}
-        </p>
+        <p style={{ ...subtle, margin: '0 0 20px' }}>{t('applySub')}</p>
 
         <Field label={t('fieldOrg')} htmlFor="hb-org">
           <input
@@ -154,11 +150,7 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
             size="lg"
             onClick={handleSubmit}
             disabled={!canSubmit || submitted}
-            reason={
-              submitted
-                ? t('submitAppReasonDone')
-                : t('submitAppReason')
-            }
+            reason={submitted ? t('submitAppReasonDone') : t('submitAppReason')}
             style={{ width: '100%' }}
           >
             {submitted ? t('submitAppDone') : t('submitApp')}
@@ -166,7 +158,9 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
           {submitted && (
             <p style={{ ...subtle, margin: '12px 0 0', textAlign: 'center' }}>
               {t.rich('submitAppThanks', {
-                b: (c: ReactNode) => <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{c}</span>,
+                b: (c: ReactNode) => (
+                  <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{c}</span>
+                ),
               })}
             </p>
           )}
@@ -363,7 +357,6 @@ function Label({ htmlFor, children }: { htmlFor: string; children: ReactNode }) 
     </label>
   )
 }
-
 
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',

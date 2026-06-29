@@ -137,8 +137,7 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
           >
             ${liquid.toLocaleString('en-US')}
           </span>
-          .{' '}
-          {amountN > liquid ? t('fundExceeds') : t('fundOk')}
+          . {amountN > liquid ? t('fundExceeds') : t('fundOk')}
         </p>
         <Button
           size="sm"

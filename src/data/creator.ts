@@ -5,7 +5,6 @@
 
 export type ApplicationStage = 'submitted' | 'in_review' | 'approved'
 
-
 export interface DraftProject {
   name: string
   location: string
@@ -46,7 +45,6 @@ export interface CreatorApplication {
   /** Stated, honest review window shown to the applicant. */
   reviewWindow: string
 }
-
 
 /** Ordered stepper model: Submitted → In review → Decision. */
 export const APPLICATION_STEPS: readonly ApplicationStep[] = [

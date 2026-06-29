@@ -36,8 +36,6 @@ export interface ScorePoint {
   hash: string
 }
 
-
-
 export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
   1: {
     story:
