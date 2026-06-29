@@ -276,6 +276,9 @@
     "dashMetricCreditLabel": "credit"
   },
   "ProjectDetail": {
+    "notFoundTitle": "Project not found",
+    "notFoundBody": "That project is not in the registry. It may have been moved.",
+    "notFoundCta": "Back to projects",
     "back": "← Back to projects",
     "backAriaHidden": "←",
     "backLabel": "Back to projects",

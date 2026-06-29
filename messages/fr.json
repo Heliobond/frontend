@@ -276,6 +276,9 @@
     "dashMetricCreditLabel": "crédit"
   },
   "ProjectDetail": {
+    "notFoundTitle": "Projet introuvable",
+    "notFoundBody": "Ce projet n'est pas dans le registre. Il a peut-être été déplacé.",
+    "notFoundCta": "Retour aux projets",
     "back": "← Retour aux projets",
     "backAriaHidden": "←",
     "backLabel": "Retour aux projets",
