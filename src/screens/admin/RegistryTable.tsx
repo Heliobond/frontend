@@ -154,8 +154,10 @@ function Th({
   align?: 'left' | 'right'
 }) {
   const active = k === sortKey
+  const ariaSort = active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'
+
   return (
-    <th style={{ ...thBase, textAlign: align }}>
+    <th aria-sort={ariaSort} style={{ ...thBase, textAlign: align }}>
       <button
         type="button"
         onClick={() => onSort(k)}

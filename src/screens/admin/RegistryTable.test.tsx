@@ -143,3 +143,29 @@ describe('RegistryTable sort direction indicator', () => {
     expect(screen.getAllByText('↑').length).toBeGreaterThan(0)
   })
 })
+
+describe('RegistryTable aria-sort', () => {
+  it('announces the active sort column and direction', () => {
+    render(<RegistryTable rows={rows} onSave={() => {}} />)
+
+    expect(screen.getByRole('columnheader', { name: /credit/i })).toHaveAttribute(
+      'aria-sort',
+      'descending',
+    )
+    expect(screen.getByRole('columnheader', { name: /project/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /sort by project/i }))
+
+    expect(screen.getByRole('columnheader', { name: /project/i })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    )
+    expect(screen.getByRole('columnheader', { name: /credit/i })).toHaveAttribute(
+      'aria-sort',
+      'none',
+    )
+  })
+})

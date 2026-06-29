@@ -4,16 +4,16 @@
  * @testing-library/react render so component tests get a realistic context.
  */
 import { render, type RenderOptions } from '@testing-library/react'
-import { NextIntlClientProvider } from 'next-intl'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import type { ReactNode } from 'react'
 import en from '../../messages/en.json'
 
 function AllProviders({ children }: { children: ReactNode }) {
   return (
-    <NextIntlClientProvider locale="en" messages={en}>
+    <LocaleProvider initialLocale="en" initialMessages={en}>
       <ThemeProvider>{children}</ThemeProvider>
-    </NextIntlClientProvider>
+    </LocaleProvider>
   )
 }
 

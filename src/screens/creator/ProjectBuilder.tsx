@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useId, useState, type CSSProperties, type ReactNode } from 'react'
 import { ProjectCard, Tag } from '@/components'
 import { PROJECT_TYPES, DRAFT_PROJECT, type ProjectType } from '@/data/creator'
 
@@ -121,8 +121,12 @@ export function ProjectBuilder() {
 
         <Label>Media and documents</Label>
         <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
-          <DropZone label="Cover photo" hint="PNG or JPG, shown on your card" />
-          <DropZone label="Verification docs" hint="Permits, PPAs, metering plan" />
+          <DropZone
+            label="Cover photo"
+            hint="PNG or JPG, shown on your card"
+            accept="image/png,image/jpeg"
+          />
+          <DropZone label="Verification docs" hint="Permits, PPAs, metering plan" multiple />
         </div>
       </Card>
 
@@ -174,11 +178,27 @@ export function ProjectBuilder() {
   )
 }
 
-/** A dashed, non-functional upload affordance — a labelled invitation, not a control. */
-function DropZone({ label, hint }: { label: string; hint: string }) {
+function DropZone({
+  label,
+  hint,
+  accept,
+  multiple = false,
+}: {
+  label: string
+  hint: string
+  accept?: string
+  multiple?: boolean
+}) {
+  const inputId = useId()
+  const hintId = `${inputId}-hint`
+  const [isFocused, setIsFocused] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState('')
+
   return (
-    <div
+    <label
+      htmlFor={inputId}
       style={{
+        position: 'relative',
         border: '1px dashed var(--ink-12)',
         borderRadius: 'var(--radius-card)',
         background: 'var(--ink-06)',
@@ -188,8 +208,38 @@ function DropZone({ label, hint }: { label: string; hint: string }) {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 6,
+        cursor: 'pointer',
+        outline: isFocused ? '2px solid var(--solar)' : 'none',
+        outlineOffset: 3,
       }}
     >
+      <input
+        id={inputId}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        aria-describedby={hintId}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        onChange={(event) => {
+          const files = Array.from(event.target.files ?? [])
+          setSelectedFiles(
+            files.length === 0
+              ? ''
+              : files.length === 1
+                ? files[0].name
+                : `${files.length} files selected`,
+          )
+        }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          opacity: 0,
+          cursor: 'pointer',
+        }}
+      />
       <svg
         viewBox="0 0 24 24"
         width="22"
@@ -216,6 +266,7 @@ function DropZone({ label, hint }: { label: string; hint: string }) {
         {label}
       </div>
       <div
+        id={hintId}
         style={{
           fontFamily: 'var(--font-body)',
           fontSize: 11.5,
@@ -223,9 +274,9 @@ function DropZone({ label, hint }: { label: string; hint: string }) {
           lineHeight: 1.4,
         }}
       >
-        {hint}
+        {selectedFiles || hint}
       </div>
-    </div>
+    </label>
   )
 }
 

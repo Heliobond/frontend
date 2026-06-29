@@ -97,11 +97,57 @@ E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
+## Internationalization
+
+Heliobond uses [`next-intl`](https://next-intl.dev) with cookie-based locale
+selection. Message catalogs live at `messages/en.json` and `messages/fr.json`;
+the request config in `src/i18n/request.ts` loads the matching catalog for the
+current locale.
+
+When you add or change user-facing copy:
+
+1. Pick the namespace that matches the surface using the copy, such as `Nav`,
+   `Footer`, `Landing`, `Deposit`, or `ProjectDetail`.
+2. Add the same key path to **both** `messages/en.json` and `messages/fr.json`.
+   The catalogs must stay in parity: every namespace and key in English must
+   also exist in French, and vice versa.
+3. Translate the value in each catalog. Do not leave English placeholder text in
+   `fr.json` unless the issue explicitly calls for a temporary fallback.
+4. Read the key from code with `useTranslations('<Namespace>')`, then call
+   `t('<key>')`. For example:
+
+```tsx
+import { useTranslations } from 'next-intl'
+
+export function Example() {
+  const t = useTranslations('Creator')
+  return <h1>{t('title')}</h1>
+}
+```
+
+To add a new namespace for a new screen or surface:
+
+1. Create the namespace object in **both** catalogs with identical keys:
+
+```json
+{
+  "Creator": {
+    "title": "Build your project"
+  }
+}
+```
+
+2. Add the translated French values under the same namespace and key names in
+   `messages/fr.json`.
+3. Use that namespace from the component with `useTranslations('Creator')`.
+4. Run `bun run build` or `bun run typecheck` before opening the PR so missing or
+   misspelled message keys are caught with the rest of the app checks.
+
 ## Quality bar
 
 - **Builds and type-checks clean.** `bun run build` is the gate; no `any` to paper over types, no `@ts-ignore` without a comment.
 - **Follow the design system.** Use the CSS custom properties (`var(--ink)`, `var(--solar)`, …) — never hardcode colours. Honour the brand rules: sentence case (no all-caps headlines), mono tabular numerals for figures, every delta carries a +/− sign and arrow (colour is never the sole carrier), solar is never text on a light background and never the only carrier of meaning, no emoji in the product, no exclamation marks on financial copy. See `README.md` and `src/styles/tokens/`.
-- **User-facing strings are translated.** If you add or change copy in the shell or the six investor screens, add the key to **both** `messages/en.json` and `messages/fr.json` (they must stay in parity).
+- **User-facing strings are translated.** If you add or change copy in the shell or translated screens, add the key to **both** `messages/en.json` and `messages/fr.json` (they must stay in parity).
 - **Accessibility is not optional.** Keyboard operable, visible focus, semantic landmarks, `prefers-reduced-motion` respected, touch targets ≥ 44px.
 - **No secrets** in the repo or in client code.
 
