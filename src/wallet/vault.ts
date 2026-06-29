@@ -13,6 +13,13 @@
 
 import { HB_DATA } from '../data'
 
+
+
+export interface WithdrawPreview {
+  assets: number
+  sharePrice: number
+  networkFee: number
+}
 /** total_assets / total_supply. Constant in the mock; a live read on-chain. */
 export const SHARE_PRICE = HB_DATA.pool.sharePrice
 
@@ -20,12 +27,6 @@ export interface DepositPreview {
   shares: number
   sharePrice: number
   /** USDC; sub-cent on Stellar. */
-  networkFee: number
-}
-
-export interface WithdrawPreview {
-  assets: number
-  sharePrice: number
   networkFee: number
 }
 

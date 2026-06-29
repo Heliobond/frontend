@@ -5,6 +5,8 @@ import { Sparkline } from '../components/Sparkline'
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
 
+const strong = (chunks: ReactNode) => <b style={{ color: 'var(--ink)' }}>{chunks}</b>
+
 /**
  * ProjectDetail — the full story of one project the pool funds. Hero, the
  * creator's verification, two large sun-arc scores with their on-chain history,
@@ -338,6 +340,7 @@ function ScoreColumn({
   onChainNote: string
   verifiedAgo: string
 }) {
+  const t = useTranslations('ProjectDetail')
   return (
     <div
       style={{

@@ -3,14 +3,6 @@
 // Stellar. Keyed by project id (1..6), matching HB_DATA.projects. Static and
 // deterministic — no Math.random — so the click-through reads the same every
 // time and the on-chain story stays honest.
-
-/** A single oracle score update, anchored by its on-chain tx hash. */
-export interface ScorePoint {
-  date: string
-  value: number
-  hash: string
-}
-
 /** A capital event — funding drawn from the pool to this project. */
 export interface FundingEvent {
   date: string
@@ -37,6 +29,14 @@ export interface ProjectDetail {
   /** A tasteful CSS gradient for the hero photo placeholder. */
   heroGradient: string
 }
+/** A single oracle score update, anchored by its on-chain tx hash. */
+export interface ScorePoint {
+  date: string
+  value: number
+  hash: string
+}
+
+
 
 export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
   1: {

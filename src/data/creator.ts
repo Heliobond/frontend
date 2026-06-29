@@ -5,6 +5,23 @@
 
 export type ApplicationStage = 'submitted' | 'in_review' | 'approved'
 
+
+export interface DraftProject {
+  name: string
+  location: string
+  type: ProjectType
+  /** The narrative a creator tells — shown in the builder textarea. */
+  story: string
+  /** Capital the creator is asking the pool to deploy, as a plain number. */
+  fundingGoal: number
+}
+
+/** A single named stage in the application tracker. */
+export interface ApplicationStep {
+  id: ApplicationStage
+  label: string
+  hint: string
+}
 export type ProjectType = 'Solar' | 'Wind' | 'Hydro' | 'Geothermal' | 'Storage'
 
 /** The ordered project types offered to creators as selectable pills. */
@@ -30,22 +47,6 @@ export interface CreatorApplication {
   reviewWindow: string
 }
 
-export interface DraftProject {
-  name: string
-  location: string
-  type: ProjectType
-  /** The narrative a creator tells — shown in the builder textarea. */
-  story: string
-  /** Capital the creator is asking the pool to deploy, as a plain number. */
-  fundingGoal: number
-}
-
-/** A single named stage in the application tracker. */
-export interface ApplicationStep {
-  id: ApplicationStage
-  label: string
-  hint: string
-}
 
 /** Ordered stepper model: Submitted → In review → Decision. */
 export const APPLICATION_STEPS: readonly ApplicationStep[] = [

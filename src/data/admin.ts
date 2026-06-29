@@ -54,6 +54,34 @@ export const VAULT_STATS: VaultStats = {
   projectsFunded: HB_DATA.pool.projectsFunded,
 }
 
+/** Vault accounting, ERC-4626-style. `totalAssets = liquid + deployed`. */
+export interface VaultStats {
+  /** USDC value of all assets the vault controls. */
+  totalAssets: number
+  /** total assets ÷ HBS supply. */
+  sharePrice: number
+  /** HBS shares outstanding. */
+  hbsSupply: number
+  /** USDC sitting idle in the vault, available to deploy or honour withdrawals. */
+  liquid: number
+  /** USDC currently working in funded projects. */
+  deployed: number
+  /** count of projects with capital deployed. */
+  projectsFunded: number
+}
+
+export type WhitelistStatus = 'approved' | 'pending'
+
+/** A creator the ProjectRegistry may (or may not yet) accept new projects from. */
+export interface Creator {
+  name: string
+  /** Stellar G-address. */
+  address: string
+  status: WhitelistStatus
+  /** Projects this creator has live in the registry. */
+  projects: number
+}
+
 // Last-verified stamps, paired to the registry projects in order. Fixed strings.
 const VERIFIED_AT: string[] = [
   '2 days ago',
