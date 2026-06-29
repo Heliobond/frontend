@@ -42,8 +42,23 @@ export function AmountInput({
 
   return (
     <div style={{ ...style }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <label htmlFor={id} style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, fontWeight: 600, color: 'var(--ink)' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 8,
+        }}
+      >
+        <label
+          htmlFor={id}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 13.5,
+            fontWeight: 600,
+            color: 'var(--ink)',
+          }}
+        >
           {label}
         </label>
         {balance != null && (
@@ -85,7 +100,16 @@ export function AmountInput({
             fontFeatureSettings: '"tnum" 1',
           }}
         />
-        <span style={{ fontFamily: 'var(--font-data)', fontSize: 15, color: 'var(--ink-60)', fontWeight: 500 }}>{currency}</span>
+        <span
+          style={{
+            fontFamily: 'var(--font-data)',
+            fontSize: 15,
+            color: 'var(--ink-60)',
+            fontWeight: 500,
+          }}
+        >
+          {currency}
+        </span>
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -95,7 +119,12 @@ export function AmountInput({
           </button>
         ))}
         {cap != null && (
-          <button key="max" type="button" onClick={() => set(cap)} style={{ ...chipStyle, borderColor: 'var(--ink)' }}>
+          <button
+            key="max"
+            type="button"
+            onClick={() => set(cap)}
+            style={{ ...chipStyle, borderColor: 'var(--ink)' }}
+          >
             Max
           </button>
         )}
@@ -112,7 +141,15 @@ export function AmountInput({
           }}
           role="alert"
         >
-          <p style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink)' }}>
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-body)',
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: 'var(--ink)',
+            }}
+          >
             {capMessage || `You can withdraw up to ${cap} ${currency} today, or any part of it.`}
           </p>
           <button
@@ -140,7 +177,12 @@ export function AmountInput({
       {preview && (
         <div
           aria-live="polite"
-          style={{ marginTop: 12, padding: '14px 16px', background: 'var(--ink-06)', borderRadius: 'var(--radius-input)' }}
+          style={{
+            marginTop: 12,
+            padding: '14px 16px',
+            background: 'var(--ink-06)',
+            borderRadius: 'var(--radius-input)',
+          }}
         >
           {preview}
         </div>

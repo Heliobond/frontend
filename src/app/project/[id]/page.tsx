@@ -15,6 +15,7 @@ export default function ProjectDetailPage() {
 
   useEffect(() => {
     if (!Number.isFinite(id)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setData(null)
       return
     }
@@ -41,10 +42,25 @@ export default function ProjectDetailPage() {
           textAlign: 'center',
         }}
       >
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: 'var(--ink)', margin: 0 }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800,
+            fontSize: 24,
+            color: 'var(--ink)',
+            margin: 0,
+          }}
+        >
           Project not found
         </h1>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--ink-60)', margin: 0 }}>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 15,
+            color: 'var(--ink-60)',
+            margin: 0,
+          }}
+        >
           That project is not in the registry. It may have been moved.
         </p>
         <Button variant="primary" onClick={() => router.push('/explore')}>
@@ -66,7 +82,11 @@ export default function ProjectDetailPage() {
 
 function ProjectDetailSkeleton() {
   return (
-    <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }} aria-busy="true" aria-label="Loading project">
+    <main
+      style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}
+      aria-busy="true"
+      aria-label="Loading project"
+    >
       {/* Hero band placeholder */}
       <div
         aria-hidden="true"
@@ -80,13 +100,43 @@ function ProjectDetailSkeleton() {
         }}
       />
       {/* Story placeholder */}
-      <div aria-hidden="true" style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ height: 14, width: '30%', borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out infinite' }} />
-        <div style={{ height: 17, width: '90%', borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out 0.1s infinite' }} />
-        <div style={{ height: 17, width: '75%', borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out 0.2s infinite' }} />
+      <div
+        aria-hidden="true"
+        style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 8 }}
+      >
+        <div
+          style={{
+            height: 14,
+            width: '30%',
+            borderRadius: 6,
+            background: 'var(--ink-06)',
+            animation: 'hb-pulse 1.4s ease-in-out infinite',
+          }}
+        />
+        <div
+          style={{
+            height: 17,
+            width: '90%',
+            borderRadius: 6,
+            background: 'var(--ink-06)',
+            animation: 'hb-pulse 1.4s ease-in-out 0.1s infinite',
+          }}
+        />
+        <div
+          style={{
+            height: 17,
+            width: '75%',
+            borderRadius: 6,
+            background: 'var(--ink-06)',
+            animation: 'hb-pulse 1.4s ease-in-out 0.2s infinite',
+          }}
+        />
       </div>
       {/* Score cards placeholder */}
-      <div aria-hidden="true" style={{ display: 'flex', gap: 32, marginBottom: 40, flexWrap: 'wrap' }}>
+      <div
+        aria-hidden="true"
+        style={{ display: 'flex', gap: 32, marginBottom: 40, flexWrap: 'wrap' }}
+      >
         {[0, 1].map((i) => (
           <div
             key={i}

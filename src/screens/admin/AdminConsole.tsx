@@ -33,7 +33,9 @@ export function AdminConsole() {
   const fundedCount = VAULT_STATS.projectsFunded
 
   const updateScores = (id: number, credit: number, green: number) => {
-    setRegistry((rows) => rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)))
+    setRegistry((rows) =>
+      rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)),
+    )
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     setToast({
       tone: 'success',
@@ -45,7 +47,9 @@ export function AdminConsole() {
   const fundProject = (id: number, amount: number) => {
     const safe = Math.min(amount, liquid)
     setRegistry((rows) =>
-      rows.map((r) => (r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r)),
+      rows.map((r) =>
+        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r,
+      ),
     )
     setLiquid((l) => l - safe)
     setDeployed((d) => d + safe)
@@ -89,11 +93,20 @@ export function AdminConsole() {
           <div className="hb-eyebrow" style={{ marginBottom: 8 }}>
             Heliobond internal
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, margin: 0, color: 'var(--ink)' }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 28,
+              margin: 0,
+              color: 'var(--ink)',
+            }}
+          >
             Admin · oracle console
           </h1>
           <p style={{ ...subtext, marginTop: 6 }}>
-            Verify scores, deploy vault capital, and manage the creator whitelist. Every write is on-chain.
+            Verify scores, deploy vault capital, and manage the creator whitelist. Every write is
+            on-chain.
           </p>
         </div>
         <Badge tone="testnet">Internal · testnet</Badge>
@@ -112,17 +125,28 @@ export function AdminConsole() {
       </section>
 
       {/* Project registry table */}
-      <Section title="Project registry" caption="Oracle-verified credit & green scores. Click a header to reorder; update inline.">
+      <Section
+        title="Project registry"
+        caption="Oracle-verified credit & green scores. Click a header to reorder; update inline."
+      >
         <RegistryTable rows={registry} onSave={updateScores} />
       </Section>
 
       {/* Oracle actions */}
       <Section title="Oracle actions" caption="Privileged writes to the registry and the vault.">
-        <OracleForms projects={registry} liquid={liquid} onPushScores={updateScores} onFund={fundProject} />
+        <OracleForms
+          projects={registry}
+          liquid={liquid}
+          onPushScores={updateScores}
+          onFund={fundProject}
+        />
       </Section>
 
       {/* Whitelist management */}
-      <Section title="Creator whitelist" caption="Only approved creators can register projects in the ProjectRegistry.">
+      <Section
+        title="Creator whitelist"
+        caption="Only approved creators can register projects in the ProjectRegistry."
+      >
         <div>
           {whitelist.map((c, i) => (
             <div
@@ -139,8 +163,10 @@ export function AdminConsole() {
               <div style={{ minWidth: 180, flex: '1 1 200px' }}>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</div>
                 <div style={{ ...subtext, fontSize: 12 }}>
-                  <span style={{ fontFamily: 'var(--font-data)', fontFeatureSettings: '"tnum" 1' }}>{c.projects}</span> live{' '}
-                  {c.projects === 1 ? 'project' : 'projects'}
+                  <span style={{ fontFamily: 'var(--font-data)', fontFeatureSettings: '"tnum" 1' }}>
+                    {c.projects}
+                  </span>{' '}
+                  live {c.projects === 1 ? 'project' : 'projects'}
                 </div>
               </div>
               <AddressChip value={c.address} label="creator address" />
@@ -149,11 +175,19 @@ export function AdminConsole() {
               </Badge>
               <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
                 {c.status === 'approved' ? (
-                  <Button size="sm" variant="ghost" onClick={() => setCreatorStatus(c.address, 'pending')}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setCreatorStatus(c.address, 'pending')}
+                  >
                     Revoke
                   </Button>
                 ) : (
-                  <Button size="sm" variant="ghost" onClick={() => setCreatorStatus(c.address, 'approved')}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setCreatorStatus(c.address, 'approved')}
+                  >
                     Approve
                   </Button>
                 )}
@@ -166,18 +200,41 @@ export function AdminConsole() {
       {/* Transient confirmation */}
       {toast && (
         <div style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 50 }}>
-          <Toast tone={toast.tone} title={toast.title} message={toast.message} onDismiss={() => setToast(null)} />
+          <Toast
+            tone={toast.tone}
+            title={toast.title}
+            message={toast.message}
+            onDismiss={() => setToast(null)}
+          />
         </div>
       )}
     </div>
   )
 }
 
-function Section({ title, caption, children }: { title: string; caption: string; children: ReactNode }) {
+function Section({
+  title,
+  caption,
+  children,
+}: {
+  title: string
+  caption: string
+  children: ReactNode
+}) {
   return (
     <section style={{ ...sectionCard, marginBottom: 20 }}>
       <div style={{ marginBottom: 14 }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: 0, color: 'var(--ink)' }}>{title}</h2>
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: 18,
+            margin: 0,
+            color: 'var(--ink)',
+          }}
+        >
+          {title}
+        </h2>
         <p style={{ ...subtext, marginTop: 4 }}>{caption}</p>
       </div>
       {children}
@@ -185,7 +242,17 @@ function Section({ title, caption, children }: { title: string; caption: string;
   )
 }
 
-function StatCell({ label, value, unit, last }: { label: string; value: string; unit?: string; last?: boolean }) {
+function StatCell({
+  label,
+  value,
+  unit,
+  last,
+}: {
+  label: string
+  value: string
+  unit?: string
+  last?: boolean
+}) {
   return (
     <div
       style={{
@@ -211,7 +278,11 @@ function StatCell({ label, value, unit, last }: { label: string; value: string; 
         >
           {value}
         </span>
-        {unit && <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--ink-60)' }}>{unit}</span>}
+        {unit && (
+          <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--ink-60)' }}>
+            {unit}
+          </span>
+        )}
       </div>
     </div>
   )

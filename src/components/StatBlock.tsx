@@ -76,7 +76,11 @@ export function StatBlock({
         >
           {value}
           {decimals != null && <span style={{ color: 'var(--ink-60)' }}>{decimals}</span>}
-          {unit && <span style={{ fontSize: '0.55em', color: 'var(--ink-60)', marginLeft: 4 }}>{unit}</span>}
+          {unit && (
+            <span style={{ fontSize: '0.55em', color: 'var(--ink-60)', marginLeft: 4 }}>
+              {unit}
+            </span>
+          )}
         </span>
         {delta && (
           <span

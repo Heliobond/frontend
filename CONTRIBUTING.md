@@ -32,7 +32,7 @@ We don't merge unsolicited PRs that aren't tied to an accepted issue — it keep
 
 ## Local setup
 
-Prerequisites: [**bun**](https://bun.sh) (the package manager / runner) and Node 18.18+.
+Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 18.18+.
 
 ```bash
 git clone https://github.com/Heliobond/frontend.git
@@ -44,11 +44,14 @@ bun run dev        # http://localhost:3000
 Useful scripts:
 
 ```bash
-bun run build      # production build — also runs the TypeScript type-checker
-bun run typecheck  # tsc --noEmit
-bun run start      # serve the production build
-bun run test       # run the Vitest unit + component test suite
-bun run test:e2e   # run Playwright end-to-end tests (starts dev server automatically)
+bun run build         # production build — also runs the TypeScript type-checker
+bun run typecheck     # tsc --noEmit
+bun run lint          # ESLint (next/core-web-vitals + TypeScript rules)
+bun run format        # Prettier — rewrite files in place
+bun run format:check  # Prettier — check only (used in CI)
+bun run start         # serve the production build
+bun run test          # run the Vitest unit + component test suite
+bun run test:e2e      # run Playwright end-to-end tests (starts dev server automatically)
 ```
 
 ## Running tests
@@ -88,9 +91,9 @@ E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
 
 1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/withdraw-max-chip`, `fix/helio-glow`, `i18n/creator-screens`).
 2. Make focused changes — one issue per PR.
-3. Run the checks locally: **`bun run build`** (must pass) and **`bun run typecheck`**.
+3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, and **`bun run format:check`**.
 4. Open a PR using the template; link the issue with `Closes #123`.
-5. CI runs build + typecheck on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
+5. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 

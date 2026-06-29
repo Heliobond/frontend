@@ -49,7 +49,14 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
   }
 
   return (
-    <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', alignItems: 'start' }}>
+    <div
+      style={{
+        display: 'grid',
+        gap: 24,
+        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+        alignItems: 'start',
+      }}
+    >
       {/* Left — criteria + tracker */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card>
@@ -57,11 +64,29 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
           <p style={{ ...subtle, margin: '0 0 16px' }}>
             Clear, public criteria. Meet these and your application moves quickly.
           </p>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <ul
+            style={{
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
             {WHITELIST_CRITERIA.map((c) => (
               <li key={c} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <CheckMark />
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.5, color: 'var(--ink)' }}>{c}</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 14,
+                    lineHeight: 1.5,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {c}
+                </span>
               </li>
             ))}
           </ul>
@@ -76,7 +101,9 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
       {/* Right — the form */}
       <Card>
         <h3 style={cardTitle}>Apply for the whitelist</h3>
-        <p style={{ ...subtle, margin: '0 0 20px' }}>Applications are usually reviewed within 3 business days.</p>
+        <p style={{ ...subtle, margin: '0 0 20px' }}>
+          Applications are usually reviewed within 3 business days.
+        </p>
 
         <Field label="Organization name" htmlFor="hb-org">
           <input
@@ -90,7 +117,11 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
 
         <div style={{ marginBottom: 18 }}>
           <Label htmlFor="">Project type</Label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }} role="radiogroup" aria-label="Project type">
+          <div
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+            role="radiogroup"
+            aria-label="Project type"
+          >
             {PROJECT_TYPES.map((t) => (
               <Tag key={t} selected={projectType === t} onClick={() => setProjectType(t)}>
                 {t}
@@ -126,14 +157,18 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
             size="lg"
             onClick={handleSubmit}
             disabled={!canSubmit || submitted}
-            reason={submitted ? 'Your application is in.' : 'Add your organization name and location first.'}
+            reason={
+              submitted
+                ? 'Your application is in.'
+                : 'Add your organization name and location first.'
+            }
             style={{ width: '100%' }}
           >
             {submitted ? 'Application submitted' : 'Submit application'}
           </Button>
           {submitted && (
             <p style={{ ...subtle, margin: '12px 0 0', textAlign: 'center' }}>
-              Thanks — we will be in touch {' '}
+              Thanks — we will be in touch{' '}
               <span style={{ color: 'var(--ink)', fontWeight: 600 }}>within 3 business days.</span>
             </p>
           )}
@@ -148,19 +183,50 @@ function Stepper({ activeStage }: { activeStage: ApplicationStage }) {
   const activeIndex = order.indexOf(activeStage)
 
   return (
-    <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', alignItems: 'flex-start' }}>
+    <ol
+      style={{
+        listStyle: 'none',
+        margin: 0,
+        padding: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+      }}
+    >
       {APPLICATION_STEPS.map((step, i) => {
         const done = i <= activeIndex
         const last = i === APPLICATION_STEPS.length - 1
         return (
-          <li key={step.id} style={{ flex: last ? '0 0 auto' : 1, display: 'flex', alignItems: 'flex-start', minWidth: 0 }}>
+          <li
+            key={step.id}
+            style={{
+              flex: last ? '0 0 auto' : 1,
+              display: 'flex',
+              alignItems: 'flex-start',
+              minWidth: 0,
+            }}
+          >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
               <Dot done={done} />
               <div style={{ minWidth: 0, paddingRight: 8 }}>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, fontWeight: 600, color: done ? 'var(--ink)' : 'var(--ink-40)' }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 13.5,
+                    fontWeight: 600,
+                    color: done ? 'var(--ink)' : 'var(--ink-40)',
+                  }}
+                >
                   {step.label}
                 </div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink-60)', lineHeight: 1.45, marginTop: 2 }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 12,
+                    color: 'var(--ink-60)',
+                    lineHeight: 1.45,
+                    marginTop: 2,
+                  }}
+                >
                   {step.hint}
                 </div>
               </div>
@@ -203,7 +269,16 @@ function Dot({ done }: { done: boolean }) {
       }}
     >
       {done && (
-        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          width="12"
+          height="12"
+          fill="none"
+          stroke="var(--ink)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M5 13l4 4L19 7" />
         </svg>
       )}
@@ -228,14 +303,31 @@ function CheckMark() {
         flexShrink: 0,
       }}
     >
-      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <svg
+        viewBox="0 0 24 24"
+        width="11"
+        height="11"
+        fill="none"
+        stroke="var(--ink)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         <path d="M5 13l4 4L19 7" />
       </svg>
     </span>
   )
 }
 
-function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string
+  htmlFor: string
+  children: ReactNode
+}) {
   return (
     <div style={{ marginBottom: 18 }}>
       <Label htmlFor={htmlFor}>{label}</Label>
@@ -248,7 +340,14 @@ function Label({ htmlFor, children }: { htmlFor: string; children: ReactNode }) 
   return (
     <label
       htmlFor={htmlFor || undefined}
-      style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}
+      style={{
+        display: 'block',
+        fontFamily: 'var(--font-body)',
+        fontSize: 13,
+        fontWeight: 600,
+        color: 'var(--ink)',
+        marginBottom: 8,
+      }}
     >
       {children}
     </label>
@@ -257,14 +356,34 @@ function Label({ htmlFor, children }: { htmlFor: string; children: ReactNode }) 
 
 function Card({ children }: { children: ReactNode }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--ink-12)', borderRadius: 'var(--radius-card)', padding: 24, boxShadow: 'var(--shadow-sm)' }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--ink-12)',
+        borderRadius: 'var(--radius-card)',
+        padding: 24,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       {children}
     </div>
   )
 }
 
-const cardTitle: CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: '0 0 8px', color: 'var(--ink)', letterSpacing: '-0.01em' }
-const subtle: CSSProperties = { fontFamily: 'var(--font-body)', fontSize: 13.5, lineHeight: 1.5, color: 'var(--ink-60)' }
+const cardTitle: CSSProperties = {
+  fontFamily: 'var(--font-display)',
+  fontWeight: 700,
+  fontSize: 18,
+  margin: '0 0 8px',
+  color: 'var(--ink)',
+  letterSpacing: '-0.01em',
+}
+const subtle: CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: 13.5,
+  lineHeight: 1.5,
+  color: 'var(--ink-60)',
+}
 const inputStyle: CSSProperties = {
   width: '100%',
   height: 44,

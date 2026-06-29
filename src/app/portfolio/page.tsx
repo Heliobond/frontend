@@ -5,5 +5,10 @@ import { Portfolio } from '../../screens/Portfolio'
 
 export default function PortfolioPage() {
   const router = useRouter()
-  return <Portfolio onWithdraw={() => router.push('/withdraw')} onDeposit={() => router.push('/deposit')} />
+  return (
+    <Portfolio
+      onWithdraw={() => router.push('/withdraw')}
+      onDeposit={() => router.push('/deposit')}
+    />
+  )
 }

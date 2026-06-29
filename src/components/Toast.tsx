@@ -43,14 +43,42 @@ export function Toast({ tone = 'neutral', title, message, action, onDismiss, sty
         ...style,
       }}
     >
-      <span style={{ width: 4, alignSelf: 'stretch', borderRadius: 'var(--radius-pill)', background: accent, flex: '0 0 auto' }} aria-hidden="true" />
+      <span
+        style={{
+          width: 4,
+          alignSelf: 'stretch',
+          borderRadius: 'var(--radius-pill)',
+          background: accent,
+          flex: '0 0 auto',
+        }}
+        aria-hidden="true"
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
         {title && (
-          <div style={{ fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', marginBottom: message ? 2 : 0 }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              fontSize: 14.5,
+              color: 'var(--ink)',
+              marginBottom: message ? 2 : 0,
+            }}
+          >
             {title}
           </div>
         )}
-        {message && <div style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, lineHeight: 1.45, color: 'var(--ink-60)' }}>{message}</div>}
+        {message && (
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 13.5,
+              lineHeight: 1.45,
+              color: 'var(--ink-60)',
+            }}
+          >
+            {message}
+          </div>
+        )}
         {action && <div style={{ marginTop: 10 }}>{action}</div>}
       </div>
       {onDismiss && (
@@ -72,7 +100,16 @@ export function Toast({ tone = 'neutral', title, message, action, onDismiss, sty
             justifyContent: 'center',
           }}
         >
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>

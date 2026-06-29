@@ -20,7 +20,7 @@ describe('Button', () => {
     render(
       <Button disabled reason="Wallet not connected" onClick={handleClick}>
         Connect
-      </Button>
+      </Button>,
     )
     const btn = screen.getByRole('button')
     fireEvent.click(btn)
@@ -36,7 +36,7 @@ describe('Button', () => {
     render(
       <Button disabled reason="Minimum deposit is $1">
         Invest
-      </Button>
+      </Button>,
     )
     expect(screen.getByRole('button')).toHaveAttribute('title', 'Minimum deposit is $1')
   })

@@ -32,15 +32,34 @@ export default function CreatorPage() {
         >
           Creator space
         </h1>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16.5, lineHeight: 1.5, color: 'var(--ink-60)', margin: 0, maxWidth: 640 }}>
-          Apply for the whitelist, build your project page, and watch the pool fund it. The oracle scores your credit quality and
-          green impact, and we show you exactly what moves them.
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 16.5,
+            lineHeight: 1.5,
+            color: 'var(--ink-60)',
+            margin: 0,
+            maxWidth: 640,
+          }}
+        >
+          Apply for the whitelist, build your project page, and watch the pool fund it. The oracle
+          scores your credit quality and green impact, and we show you exactly what moves them.
         </p>
       </div>
 
-      <div role="tablist" aria-label="Creator space sections" style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
+      <div
+        role="tablist"
+        aria-label="Creator space sections"
+        style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}
+      >
         {TABS.map((t) => (
-          <Tag key={t.id} selected={tab === t.id} onClick={() => setTab(t.id)} role="tab" aria-selected={tab === t.id}>
+          <Tag
+            key={t.id}
+            selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            role="tab"
+            aria-selected={tab === t.id}
+          >
             {t.label}
           </Tag>
         ))}
@@ -49,9 +68,8 @@ export default function CreatorPage() {
       {tab === 'apply' && (
         <CreatorApplication
           stage="submitted"
-          onSubmit={(values) => {
+          onSubmit={() => {
             // Self-contained demo handler — a real build would POST to the registry API.
-            
           }}
         />
       )}

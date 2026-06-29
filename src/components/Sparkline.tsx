@@ -64,7 +64,14 @@ export function Sparkline({
         />
       )}
       {last && (
-        <circle cx={last.x} cy={last.y} r={3} fill="#FFB400" stroke="var(--surface)" strokeWidth={1.5} />
+        <circle
+          cx={last.x}
+          cy={last.y}
+          r={3}
+          fill="#FFB400"
+          stroke="var(--surface)"
+          strokeWidth={1.5}
+        />
       )}
     </svg>
   )

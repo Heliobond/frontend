@@ -31,6 +31,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const current = (document.documentElement.dataset.theme as Theme) || 'light'
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(current)
   }, [])
 
@@ -57,5 +58,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  return <ThemeContext.Provider value={{ theme, toggle, setTheme }}>{children}</ThemeContext.Provider>
+  return (
+    <ThemeContext.Provider value={{ theme, toggle, setTheme }}>{children}</ThemeContext.Provider>
+  )
 }

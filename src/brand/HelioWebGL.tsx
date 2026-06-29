@@ -67,7 +67,11 @@ function buildMotes(count: number): MoteSpec[] {
     const radius = 1.55 * (0.82 + ((i * 7) % 11) / 40)
     // A small deterministic tilt so motes don't all sit in one flat ring.
     const tilt = (((i * 5) % 7) / 7 - 0.5) * 0.7
-    const base = new THREE.Vector3(Math.cos(a), Math.sin(a) * Math.cos(tilt), Math.sin(a) * Math.sin(tilt))
+    const base = new THREE.Vector3(
+      Math.cos(a),
+      Math.sin(a) * Math.cos(tilt),
+      Math.sin(a) * Math.sin(tilt),
+    )
     out.push({
       base,
       radius,
@@ -255,7 +259,15 @@ function Mote({ spec, animate }: { spec: MoteSpec; animate: boolean }) {
 /* ------------------------------------------------------------------------- *
  * Scene — lights + the three pieces. Lives inside <Canvas>.
  * ------------------------------------------------------------------------- */
-function Scene({ specs, animate, intensity }: { specs: MoteSpec[]; animate: boolean; intensity: number }) {
+function Scene({
+  specs,
+  animate,
+  intensity,
+}: {
+  specs: MoteSpec[]
+  animate: boolean
+  intensity: number
+}) {
   return (
     <>
       {/* Low ambient so the orb keeps its form; a warm upper-left key gives the
@@ -300,6 +312,7 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWebgl(detectWebGL())
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)')

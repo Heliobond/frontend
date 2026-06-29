@@ -40,10 +40,29 @@ export function Explore({ onOpen }: ExploreProps) {
   return (
     <main style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(2rem,3.6vw,3rem)', letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--ink)' }}>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 800,
+            fontSize: 'clamp(2rem,3.6vw,3rem)',
+            letterSpacing: '-0.02em',
+            margin: '0 0 8px',
+            color: 'var(--ink)',
+          }}
+        >
           {t('title')}
         </h1>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--ink-60)', margin: 0, maxWidth: 560 }}>{t('sub')}</p>
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 16,
+            color: 'var(--ink-60)',
+            margin: 0,
+            maxWidth: 560,
+          }}
+        >
+          {t('sub')}
+        </p>
       </div>
 
       {apiError && (
@@ -64,7 +83,16 @@ export function Explore({ onOpen }: ExploreProps) {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+          flexWrap: 'wrap',
+          gap: 12,
+        }}
+      >
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {TYPES.map((ty) => (
             <Tag key={ty} selected={filter === ty} onClick={() => setFilter(ty)}>
@@ -112,16 +140,54 @@ function ProjectCardSkeleton() {
       }}
     >
       {/* Hero image placeholder */}
-      <div style={{ height: 160, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out infinite' }} />
+      <div
+        style={{
+          height: 160,
+          background: 'var(--ink-06)',
+          animation: 'hb-pulse 1.4s ease-in-out infinite',
+        }}
+      />
       <div style={{ padding: '16px 18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* Title line */}
-        <div style={{ height: 18, width: '70%', borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out infinite' }} />
+        <div
+          style={{
+            height: 18,
+            width: '70%',
+            borderRadius: 6,
+            background: 'var(--ink-06)',
+            animation: 'hb-pulse 1.4s ease-in-out infinite',
+          }}
+        />
         {/* Location line */}
-        <div style={{ height: 13, width: '45%', borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out 0.1s infinite' }} />
+        <div
+          style={{
+            height: 13,
+            width: '45%',
+            borderRadius: 6,
+            background: 'var(--ink-06)',
+            animation: 'hb-pulse 1.4s ease-in-out 0.1s infinite',
+          }}
+        />
         {/* Score bars */}
         <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <div style={{ height: 13, width: 60, borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out 0.2s infinite' }} />
-          <div style={{ height: 13, width: 60, borderRadius: 6, background: 'var(--ink-06)', animation: 'hb-pulse 1.4s ease-in-out 0.3s infinite' }} />
+          <div
+            style={{
+              height: 13,
+              width: 60,
+              borderRadius: 6,
+              background: 'var(--ink-06)',
+              animation: 'hb-pulse 1.4s ease-in-out 0.2s infinite',
+            }}
+          />
+          <div
+            style={{
+              height: 13,
+              width: 60,
+              borderRadius: 6,
+              background: 'var(--ink-06)',
+              animation: 'hb-pulse 1.4s ease-in-out 0.3s infinite',
+            }}
+          />
         </div>
       </div>
     </div>

@@ -45,7 +45,8 @@ export function Button({
 
   const palette: Record<ButtonVariant, CSSProperties> = {
     primary: {
-      background: hover && !disabled ? 'color-mix(in srgb, var(--solar) 92%, var(--ink))' : 'var(--solar)',
+      background:
+        hover && !disabled ? 'color-mix(in srgb, var(--solar) 92%, var(--ink))' : 'var(--solar)',
       color: 'var(--ink)',
       border: '1px solid transparent',
     },
@@ -77,7 +78,8 @@ export function Button({
     cursor: disabled ? 'not-allowed' : 'pointer',
     opacity: disabled ? 0.45 : 1,
     transform: active && !disabled ? 'scale(0.97)' : 'scale(1)',
-    transition: 'transform var(--dur-press) var(--ease-out), background var(--dur-press) var(--ease-out)',
+    transition:
+      'transform var(--dur-press) var(--ease-out), background var(--dur-press) var(--ease-out)',
     userSelect: 'none',
     whiteSpace: 'nowrap',
     ...palette[variant],
@@ -92,7 +94,10 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={disabled ? undefined : onClick}
       onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => { setHover(false); setActive(false) }}
+      onMouseLeave={() => {
+        setHover(false)
+        setActive(false)
+      }}
       onMouseDown={() => setActive(true)}
       onMouseUp={() => setActive(false)}
       style={base}

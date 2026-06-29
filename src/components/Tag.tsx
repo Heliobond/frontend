@@ -29,7 +29,11 @@ export function Tag({ selected = false, onClick, children, style, ...rest }: Tag
         fontWeight: 500,
         fontSize: 13.5,
         color: 'var(--ink)',
-        background: selected ? 'var(--solar-12)' : hover && interactive ? 'var(--ink-06)' : 'transparent',
+        background: selected
+          ? 'var(--solar-12)'
+          : hover && interactive
+            ? 'var(--ink-06)'
+            : 'transparent',
         border: selected ? '1px solid var(--solar)' : '1px solid var(--ink-12)',
         borderRadius: 'var(--radius-pill)',
         cursor: interactive ? 'pointer' : 'default',

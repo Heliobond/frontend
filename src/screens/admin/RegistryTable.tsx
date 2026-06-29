@@ -67,10 +67,38 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
           <tr>
             <Th label="Project" k="name" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
             <Th label="Type" k="type" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} />
-            <Th label="Credit" k="credit" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
-            <Th label="Green" k="green" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
-            <Th label="Funded" k="funded" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
-            <Th label="Last verified" k="lastVerified" sortKey={sortKey} sortDir={sortDir} onSort={toggleSort} align="right" />
+            <Th
+              label="Credit"
+              k="credit"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              align="right"
+            />
+            <Th
+              label="Green"
+              k="green"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              align="right"
+            />
+            <Th
+              label="Funded"
+              k="funded"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              align="right"
+            />
+            <Th
+              label="Last verified"
+              k="lastVerified"
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={toggleSort}
+              align="right"
+            />
             <th style={{ ...thBase, textAlign: 'right' }}>
               <span className="hb-eyebrow">Actions</span>
             </th>
@@ -133,7 +161,14 @@ function Th({
         <span className="hb-eyebrow" style={{ color: 'inherit' }}>
           {label}
         </span>
-        <span aria-hidden="true" style={{ fontFamily: 'var(--font-data)', fontSize: 10, color: active ? 'var(--ink)' : 'var(--ink-40)' }}>
+        <span
+          aria-hidden="true"
+          style={{
+            fontFamily: 'var(--font-data)',
+            fontSize: 10,
+            color: active ? 'var(--ink)' : 'var(--ink-40)',
+          }}
+        >
           {active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
         </span>
       </button>
@@ -196,7 +231,14 @@ function Row({
         <tr style={{ background: 'var(--ink-06)' }}>
           <td colSpan={7} style={{ padding: '12px 14px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)', alignSelf: 'center' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 12.5,
+                  color: 'var(--ink-60)',
+                  alignSelf: 'center',
+                }}
+              >
                 Re-verify {row.name}
               </span>
               <ScoreField label="Credit quality" value={credit} onChange={setCredit} />
@@ -205,7 +247,11 @@ function Row({
                 <Button size="sm" variant="ghost" onClick={onCancel}>
                   Cancel
                 </Button>
-                <Button size="sm" variant="primary" onClick={() => onSave(clamp(credit), clamp(green))}>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => onSave(clamp(credit), clamp(green))}
+                >
                   Save
                 </Button>
               </div>
@@ -217,7 +263,15 @@ function Row({
   )
 }
 
-function ScoreField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function ScoreField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+}) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <span className="hb-eyebrow">{label}</span>

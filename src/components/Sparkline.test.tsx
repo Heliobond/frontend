@@ -112,14 +112,12 @@ describe('Sparkline', () => {
     })
 
     it('maps values correctly to y-coordinates', () => {
-      const { container } = render(
-        <Sparkline points={[10, 20, 30]} width={100} height={40} />
-      )
+      const { container } = render(<Sparkline points={[10, 20, 30]} width={100} height={40} />)
       const polyline = container.querySelector('polyline')
       const pointsStr = polyline?.getAttribute('points')
       expect(pointsStr).toBeTruthy()
       // Higher values should have lower y coordinates (SVG coordinates)
-      const coords = pointsStr?.split(' ').map(p => p.split(',').map(Number))
+      const coords = pointsStr?.split(' ').map((p) => p.split(',').map(Number))
       if (coords && coords.length >= 2) {
         expect(coords[0][1]).toBeGreaterThan(coords[2][1]) // First point y > last point y
       }
@@ -160,9 +158,7 @@ describe('Sparkline', () => {
     })
 
     it('sets aria-label when provided', () => {
-      const { container } = render(
-        <Sparkline points={[1, 2, 3]} aria-label="Price trend" />
-      )
+      const { container } = render(<Sparkline points={[1, 2, 3]} aria-label="Price trend" />)
       const svg = container.querySelector('svg')
       expect(svg?.getAttribute('aria-label')).toBe('Price trend')
     })

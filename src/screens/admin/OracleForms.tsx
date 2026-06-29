@@ -61,7 +61,13 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: 16,
+      }}
+    >
       {/* Push score update */}
       <Panel title="Push score update" hint="Writes a new oracle reading to the ProjectRegistry.">
         <Field label="Project">
@@ -69,10 +75,18 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
         </Field>
         <div style={{ display: 'flex', gap: 12 }}>
           <Field label="Credit quality" style={{ flex: 1 }}>
-            <NumberInput value={credit} onChange={setCredit} placeholder={target ? String(target.credit) : '0'} />
+            <NumberInput
+              value={credit}
+              onChange={setCredit}
+              placeholder={target ? String(target.credit) : '0'}
+            />
           </Field>
           <Field label="Green impact" style={{ flex: 1 }}>
-            <NumberInput value={green} onChange={setGreen} placeholder={target ? String(target.green) : '0'} />
+            <NumberInput
+              value={green}
+              onChange={setGreen}
+              placeholder={target ? String(target.green) : '0'}
+            />
           </Field>
         </div>
         <p style={helpText}>
@@ -80,7 +94,13 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
             ? `Current on-chain: credit ${target.credit}, green ${target.green}. Scores are 0–100.`
             : 'Scores are 0–100.'}
         </p>
-        <Button size="sm" variant="primary" disabled={!scoresValid} reason="Enter both scores (0–100) first." onClick={submitScores}>
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!scoresValid}
+          reason="Enter both scores (0–100) first."
+          onClick={submitScores}
+        >
           Update on-chain scores
         </Button>
       </Panel>
@@ -99,21 +119,36 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
               style={{ ...textInput, flex: 1, fontSize: 18 }}
             />
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink-60)' }}>USDC</span>
+            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink-60)' }}>
+              USDC
+            </span>
           </div>
         </Field>
         <p style={helpText}>
           Liquid in vault:{' '}
-          <span style={{ fontFamily: 'var(--font-data)', fontFeatureSettings: '"tnum" 1', color: 'var(--ink)' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontFeatureSettings: '"tnum" 1',
+              color: 'var(--ink)',
+            }}
+          >
             ${liquid.toLocaleString('en-US')}
           </span>
-          . {amountN > liquid ? 'That is more than is liquid right now — lower the amount.' : 'Funding lowers liquid USDC by the same amount.'}
+          .{' '}
+          {amountN > liquid
+            ? 'That is more than is liquid right now — lower the amount.'
+            : 'Funding lowers liquid USDC by the same amount.'}
         </p>
         <Button
           size="sm"
           variant="primary"
           disabled={!fundValid}
-          reason={amountN > liquid ? 'Amount exceeds liquid USDC.' : 'Enter an amount within the liquid balance.'}
+          reason={
+            amountN > liquid
+              ? 'Amount exceeds liquid USDC.'
+              : 'Enter an amount within the liquid balance.'
+          }
           onClick={submitFund}
         >
           Fund from the vault
@@ -127,7 +162,17 @@ function Panel({ title, hint, children }: { title: string; hint: string; childre
   return (
     <div style={panelStyle}>
       <div style={{ marginBottom: 12 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15.5, margin: 0, color: 'var(--ink)' }}>{title}</h3>
+        <h3
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: 15.5,
+            margin: 0,
+            color: 'var(--ink)',
+          }}
+        >
+          {title}
+        </h3>
         <p style={{ ...helpText, marginTop: 4 }}>{hint}</p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
@@ -135,7 +180,15 @@ function Panel({ title, hint, children }: { title: string; hint: string; childre
   )
 }
 
-function Field({ label, children, style }: { label: string; children: ReactNode; style?: CSSProperties }) {
+function Field({
+  label,
+  children,
+  style,
+}: {
+  label: string
+  children: ReactNode
+  style?: CSSProperties
+}) {
   return (
     <label style={{ display: 'flex', flexDirection: 'column', gap: 6, ...style }}>
       <span className="hb-eyebrow">{label}</span>
@@ -164,7 +217,15 @@ function Select({
   )
 }
 
-function NumberInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function NumberInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
   return (
     <input
       type="number"

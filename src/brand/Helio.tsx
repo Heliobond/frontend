@@ -59,7 +59,13 @@ export function Helio({ size = 360, motes = 14, breathe = true }: HelioProps) {
           }}
         >
           <circle cx={cx} cy={cx} r={r} fill={`url(#${coreId})`} />
-          <ellipse cx={cx - r * 0.32} cy={cx - r * 0.36} rx={r * 0.42} ry={r * 0.3} fill="rgba(255,255,255,0.5)" />
+          <ellipse
+            cx={cx - r * 0.32}
+            cy={cx - r * 0.36}
+            rx={r * 0.42}
+            ry={r * 0.3}
+            fill="rgba(255,255,255,0.5)"
+          />
         </g>
       </svg>
     </div>

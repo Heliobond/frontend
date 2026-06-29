@@ -22,10 +22,27 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
 
   return (
     <main style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap', marginBottom: 8 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 24,
+          flexWrap: 'wrap',
+          marginBottom: 8,
+        }}
+      >
         <div>
-          <div className="hb-eyebrow" style={{ marginBottom: 14 }}>{t('eyebrow')}</div>
-          <StatBlock label={t('currentValue')} value="$24,180" decimals=".45" delta={`+$612.18 (2.6%) ${t('sinceDeposit')}`} size="lg" />
+          <div className="hb-eyebrow" style={{ marginBottom: 14 }}>
+            {t('eyebrow')}
+          </div>
+          <StatBlock
+            label={t('currentValue')}
+            value="$24,180"
+            decimals=".45"
+            delta={`+$612.18 (2.6%) ${t('sinceDeposit')}`}
+            size="lg"
+          />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Helio size={108} motes={d.you.backed} />
@@ -50,7 +67,16 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
         </Card>
         <Card>
           <LiquidityMeter liquid={236} total={482} currency="$" showExplanation={false} />
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink-60)', margin: '8px 0 0' }}>{t('liquidCaption')}</p>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 12,
+              color: 'var(--ink-60)',
+              margin: '8px 0 0',
+            }}
+          >
+            {t('liquidCaption')}
+          </p>
         </Card>
       </div>
 
@@ -58,8 +84,18 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
         {/* Impact */}
         <Card>
           <h3 style={cardTitle}>{t('impactTitle')}</h3>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, lineHeight: 1.55, color: 'var(--ink-60)', margin: '0 0 16px' }}>
-            {t.rich('impactBody', { b: (c: ReactNode) => <b style={{ color: 'var(--ink)' }}>{c}</b> })}
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: 'var(--ink-60)',
+              margin: '0 0 16px',
+            }}
+          >
+            {t.rich('impactBody', {
+              b: (c: ReactNode) => <b style={{ color: 'var(--ink)' }}>{c}</b>,
+            })}
           </p>
           <div style={{ display: 'flex', gap: 24 }}>
             <StatBlock label={t('projectsBacked')} value="14" size="sm" />
@@ -69,25 +105,61 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
 
         {/* Activity */}
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={cardTitle}>{t('activityTitle')}</h3>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-40)' }}>{t('activityNote')}</span>
+            <span
+              style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-40)' }}
+            >
+              {t('activityNote')}
+            </span>
           </div>
           {d.activity.map((a, i) => (
             <div
               key={a.hash}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderTop: i ? '1px solid var(--ink-12)' : 'none' }}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 0',
+                borderTop: i ? '1px solid var(--ink-12)' : 'none',
+              }}
             >
               <div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{a.kind}</div>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {a.kind}
+                </div>
+                <div
+                  style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}
+                >
                   {a.amount}
                   {a.shares ? ` · ${a.shares}` : ''}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}>{a.when}</div>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 12, color: 'var(--ink-40)' }}>{a.hash} ↗</div>
+                <div
+                  style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}
+                >
+                  {a.when}
+                </div>
+                <div
+                  style={{ fontFamily: 'var(--font-data)', fontSize: 12, color: 'var(--ink-40)' }}
+                >
+                  {a.hash} ↗
+                </div>
               </div>
             </div>
           ))}
@@ -99,10 +171,24 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
 
 function Card({ children }: { children: ReactNode }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--ink-12)', borderRadius: 'var(--radius-card)', padding: 22, boxShadow: 'var(--shadow-sm)' }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--ink-12)',
+        borderRadius: 'var(--radius-card)',
+        padding: 22,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       {children}
     </div>
   )
 }
 
-const cardTitle: CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 17, margin: '0 0 10px', color: 'var(--ink)' }
+const cardTitle: CSSProperties = {
+  fontFamily: 'var(--font-display)',
+  fontWeight: 700,
+  fontSize: 17,
+  margin: '0 0 10px',
+  color: 'var(--ink)',
+}

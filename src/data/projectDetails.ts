@@ -63,7 +63,12 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     },
     fundingTimeline: [
       { date: '12 Jan 2026', label: 'Funded from the pool', amount: '$180,000', hash: '7c1e…b8f5' },
-      { date: '04 Mar 2026', label: 'Milestone draw released', amount: '$140,000', hash: '9a2d…1e07' },
+      {
+        date: '04 Mar 2026',
+        label: 'Milestone draw released',
+        amount: '$140,000',
+        hash: '9a2d…1e07',
+      },
       { date: '21 May 2026', label: 'Funded from the pool', amount: '$100,000', hash: 'a91f…3c0d' },
     ],
     heroGradient:
@@ -93,8 +98,18 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     },
     fundingTimeline: [
       { date: '08 Dec 2025', label: 'Funded from the pool', amount: '$520,000', hash: '1f3a…c90b' },
-      { date: '19 Feb 2026', label: 'Turbine expansion funded', amount: '$360,000', hash: 'bd72…4e15' },
-      { date: '02 Apr 2026', label: 'Milestone draw released', amount: '$200,000', hash: '7e90…a3c1' },
+      {
+        date: '19 Feb 2026',
+        label: 'Turbine expansion funded',
+        amount: '$360,000',
+        hash: 'bd72…4e15',
+      },
+      {
+        date: '02 Apr 2026',
+        label: 'Milestone draw released',
+        amount: '$200,000',
+        hash: '7e90…a3c1',
+      },
       { date: '27 May 2026', label: 'Funded from the pool', amount: '$100,000', hash: '04cd…62f8' },
     ],
     heroGradient:
@@ -124,7 +139,12 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     },
     fundingTimeline: [
       { date: '15 Jan 2026', label: 'Funded from the pool', amount: '$300,000', hash: '6a2f…d18c' },
-      { date: '10 Mar 2026', label: 'Irrigation milestone funded', amount: '$220,000', hash: 'f471…9b05' },
+      {
+        date: '10 Mar 2026',
+        label: 'Irrigation milestone funded',
+        amount: '$220,000',
+        hash: 'f471…9b05',
+      },
       { date: '30 Apr 2026', label: 'Funded from the pool', amount: '$120,000', hash: '0e93…a6d2' },
     ],
     heroGradient:
@@ -155,7 +175,12 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     fundingTimeline: [
       { date: '20 Dec 2025', label: 'Funded from the pool', amount: '$440,000', hash: '2a3f…1b9c' },
       { date: '14 Feb 2026', label: 'Third turbine funded', amount: '$300,000', hash: 'cd92…7e05' },
-      { date: '06 Apr 2026', label: 'Milestone draw released', amount: '$140,000', hash: '7f10…a2d8' },
+      {
+        date: '06 Apr 2026',
+        label: 'Milestone draw released',
+        amount: '$140,000',
+        hash: '7f10…a2d8',
+      },
       { date: '22 May 2026', label: 'Funded from the pool', amount: '$80,000', hash: '0b4d…63e1' },
     ],
     heroGradient:
@@ -185,7 +210,12 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     },
     fundingTimeline: [
       { date: '28 Jan 2026', label: 'Funded from the pool', amount: '$140,000', hash: '5b2f…c81c' },
-      { date: '18 Mar 2026', label: 'Powerhouse milestone funded', amount: '$110,000', hash: 'f981…4b05' },
+      {
+        date: '18 Mar 2026',
+        label: 'Powerhouse milestone funded',
+        amount: '$110,000',
+        hash: 'f981…4b05',
+      },
       { date: '11 May 2026', label: 'Funded from the pool', amount: '$60,000', hash: '0a73…e6d2' },
     ],
     heroGradient:
@@ -215,7 +245,12 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     },
     fundingTimeline: [
       { date: '05 Jan 2026', label: 'Funded from the pool', amount: '$240,000', hash: '3c2f…b18c' },
-      { date: '02 Mar 2026', label: 'Second cluster funded', amount: '$180,000', hash: 'f271…6b05' },
+      {
+        date: '02 Mar 2026',
+        label: 'Second cluster funded',
+        amount: '$180,000',
+        hash: 'f271…6b05',
+      },
       { date: '25 Apr 2026', label: 'Funded from the pool', amount: '$100,000', hash: '0c93…46d2' },
     ],
     heroGradient:

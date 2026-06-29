@@ -1,0 +1,5 @@
+.next
+node_modules
+public
+bun.lock
+package-lock.json

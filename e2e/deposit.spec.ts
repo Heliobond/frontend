@@ -7,10 +7,13 @@ const DEMO_ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
  * end-to-end without requiring a real Stellar wallet extension.
  */
 async function seedDemoWallet(page: import('@playwright/test').Page) {
-  await page.addInitScript(({ address }) => {
-    localStorage.setItem('hb-address', address)
-    localStorage.setItem('hb-wallet', 'demo')
-  }, { address: DEMO_ADDRESS })
+  await page.addInitScript(
+    ({ address }) => {
+      localStorage.setItem('hb-address', address)
+      localStorage.setItem('hb-wallet', 'demo')
+    },
+    { address: DEMO_ADDRESS },
+  )
 }
 
 test.describe('Deposit flow — demo mode smoke test', () => {
@@ -19,10 +22,13 @@ test.describe('Deposit flow — demo mode smoke test', () => {
     await page.goto('/deposit')
 
     // ── Step 1: Amount ────────────────────────────────────────────────────
-    await expect(page.getByRole('heading', { name: 'How much would you like to invest?' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'How much would you like to invest?' }),
+    ).toBeVisible()
 
     // Clear the default amount and type a new one.
-    const amountInput = page.locator('input[type="text"], input:not([type="number"])')
+    const amountInput = page
+      .locator('input[type="text"], input:not([type="number"])')
       .or(page.locator('input'))
       .first()
     await amountInput.fill('50')
@@ -54,7 +60,9 @@ test.describe('Deposit flow — demo mode smoke test', () => {
     await seedDemoWallet(page)
     await page.goto('/deposit')
 
-    await expect(page.getByRole('heading', { name: 'How much would you like to invest?' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'How much would you like to invest?' }),
+    ).toBeVisible()
 
     const input = page.locator('input').first()
     await input.fill('25')
@@ -63,7 +71,9 @@ test.describe('Deposit flow — demo mode smoke test', () => {
     await expect(page.getByRole('heading', { name: /investing 25 usdc/i })).toBeVisible()
     await page.getByRole('button', { name: /back/i }).click()
 
-    await expect(page.getByRole('heading', { name: 'How much would you like to invest?' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'How much would you like to invest?' }),
+    ).toBeVisible()
   })
 
   test('invest button is disabled when amount is below 1 USDC', async ({ page }) => {

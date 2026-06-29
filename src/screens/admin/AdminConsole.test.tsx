@@ -28,9 +28,7 @@ function fundProject(
       liquid: state.liquid - safe,
       deployed: state.deployed + safe,
     },
-    projects: projects.map((p) =>
-      p.id === id ? { ...p, funded: p.funded + safe } : p,
-    ),
+    projects: projects.map((p) => (p.id === id ? { ...p, funded: p.funded + safe } : p)),
   }
 }
 

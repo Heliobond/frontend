@@ -26,9 +26,27 @@ export function LiquidityMeter({
 
   return (
     <div style={{ ...style }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, color: 'var(--ink-60)' }}>Available to withdraw now</span>
-        <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600, fontSize: 16, color: 'var(--ink)' }}>{fmt(liquid)}</span>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 8,
+        }}
+      >
+        <span style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, color: 'var(--ink-60)' }}>
+          Available to withdraw now
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-data)',
+            fontWeight: 600,
+            fontSize: 16,
+            color: 'var(--ink)',
+          }}
+        >
+          {fmt(liquid)}
+        </span>
       </div>
       <div
         role="meter"
@@ -36,7 +54,13 @@ export function LiquidityMeter({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Share of pool liquid now"
-        style={{ position: 'relative', height: 10, borderRadius: 'var(--radius-pill)', background: 'var(--ink-06)', overflow: 'hidden' }}
+        style={{
+          position: 'relative',
+          height: 10,
+          borderRadius: 'var(--radius-pill)',
+          background: 'var(--ink-06)',
+          overflow: 'hidden',
+        }}
       >
         <div
           style={{
@@ -49,9 +73,17 @@ export function LiquidityMeter({
         />
       </div>
       {showExplanation && (
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink-60)', margin: '8px 0 0' }}>
-          The pool holds {fmt(liquid)} liquid; the rest ({fmt(Math.max(0, total - liquid))}) is working in projects. You can
-          withdraw up to {fmt(liquid)} today, or any part of it.
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 12.5,
+            lineHeight: 1.5,
+            color: 'var(--ink-60)',
+            margin: '8px 0 0',
+          }}
+        >
+          The pool holds {fmt(liquid)} liquid; the rest ({fmt(Math.max(0, total - liquid))}) is
+          working in projects. You can withdraw up to {fmt(liquid)} today, or any part of it.
         </p>
       )}
     </div>

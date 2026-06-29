@@ -77,7 +77,9 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 setTxHash(hash)
                 setStep('success')
               } catch (e) {
-                setTxError(e instanceof Error ? e.message : 'Transaction failed — please try again.')
+                setTxError(
+                  e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                )
                 setStep('amount')
               }
             }}
@@ -87,7 +89,17 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
           <button
             onClick={onBack}
             className="hb-textlink"
-            style={{ display: 'block', width: '100%', marginTop: 12, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-60)' }}
+            style={{
+              display: 'block',
+              width: '100%',
+              marginTop: 12,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              color: 'var(--ink-60)',
+            }}
           >
             {t('cancel')}
           </button>
@@ -98,7 +110,16 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
         <div style={panel}>
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <h1 style={hw}>{t('pendingH1')}</h1>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, color: 'var(--ink-60)', margin: 0 }}>{t('pendingSub')}</p>
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 14.5,
+                color: 'var(--ink-60)',
+                margin: 0,
+              }}
+            >
+              {t('pendingSub')}
+            </p>
           </div>
         </div>
       )}
@@ -106,7 +127,16 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       {step === 'success' && (
         <div style={panel}>
           <h1 style={{ ...hw, textAlign: 'center' }}>{t('successH1')}</h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, lineHeight: 1.55, color: 'var(--ink-60)', textAlign: 'center', margin: '0 0 22px' }}>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: 'var(--ink-60)',
+              textAlign: 'center',
+              margin: '0 0 22px',
+            }}
+          >
             {t.rich('successBody', {
               amount: n.toFixed(2),
               num: (c: ReactNode) => (

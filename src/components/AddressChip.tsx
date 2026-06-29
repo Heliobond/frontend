@@ -26,7 +26,9 @@ export function AddressChip({
   const [hover, setHover] = useState(false)
 
   const truncated =
-    value && value.length > lead + tail + 1 ? `${value.slice(0, lead)}…${value.slice(-tail)}` : value
+    value && value.length > lead + tail + 1
+      ? `${value.slice(0, lead)}…${value.slice(-tail)}`
+      : value
 
   const copy = () => {
     if (navigator.clipboard) navigator.clipboard.writeText(value)
@@ -51,14 +53,33 @@ export function AddressChip({
         ...style,
       }}
     >
-      <span title={value} style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink)', letterSpacing: '0.01em' }}>
+      <span
+        title={value}
+        style={{
+          fontFamily: 'var(--font-data)',
+          fontSize: 13,
+          color: 'var(--ink)',
+          letterSpacing: '0.01em',
+        }}
+      >
         {truncated}
       </span>
-      <button type="button" aria-label={copied ? 'Copied' : `Copy ${label}`} onClick={copy} style={iconBtn}>
+      <button
+        type="button"
+        aria-label={copied ? 'Copied' : `Copy ${label}`}
+        onClick={copy}
+        style={iconBtn}
+      >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </button>
       {explorerUrl && (
-        <a href={explorerUrl} target="_blank" rel="noreferrer" aria-label={`View ${label} on Stellar Expert`} style={iconBtn}>
+        <a
+          href={explorerUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`View ${label} on Stellar Expert`}
+          style={iconBtn}
+        >
           <ExternalIcon />
         </a>
       )}

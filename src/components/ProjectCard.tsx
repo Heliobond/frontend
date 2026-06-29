@@ -45,7 +45,8 @@ export function ProjectCard({
         overflow: 'hidden',
         cursor: onOpen ? 'pointer' : 'default',
         transform: hover && onOpen ? 'translateY(-2px)' : 'none',
-        transition: 'box-shadow var(--dur-modal) var(--ease-out), transform var(--dur-modal) var(--ease-out)',
+        transition:
+          'box-shadow var(--dur-modal) var(--ease-out), transform var(--dur-modal) var(--ease-out)',
         ...style,
       }}
     >
@@ -82,7 +83,16 @@ export function ProjectCard({
       </div>
 
       <div style={{ padding: 20 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, lineHeight: 1.2, margin: '0 0 14px', letterSpacing: '-0.01em' }}>
+        <h3
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: 20,
+            lineHeight: 1.2,
+            margin: '0 0 14px',
+            letterSpacing: '-0.01em',
+          }}
+        >
           {name}
         </h3>
 
@@ -91,12 +101,45 @@ export function ProjectCard({
           <ScoreGauge value={green} label="Green" size={84} stroke={7} />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid var(--ink-12)' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            paddingTop: 14,
+            borderTop: '1px solid var(--ink-12)',
+          }}
+        >
           <div>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--ink-60)', marginBottom: 2 }}>Funded from the pool</div>
-            <div style={{ fontFamily: 'var(--font-data)', fontWeight: 600, fontSize: 17, color: 'var(--ink)' }}>{funded}</div>
+            <div
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 12,
+                color: 'var(--ink-60)',
+                marginBottom: 2,
+              }}
+            >
+              Funded from the pool
+            </div>
+            <div
+              style={{
+                fontFamily: 'var(--font-data)',
+                fontWeight: 600,
+                fontSize: 17,
+                color: 'var(--ink)',
+              }}
+            >
+              {funded}
+            </div>
           </div>
-          <span style={{ fontFamily: 'var(--font-data)', fontSize: 11.5, color: 'var(--ink-40)', whiteSpace: 'nowrap' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontSize: 11.5,
+              color: 'var(--ink-40)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             verified {verifiedAgo} ↗
           </span>
         </div>
@@ -107,7 +150,17 @@ export function ProjectCard({
 
 function PinIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
       <circle cx="12" cy="10" r="3" />
     </svg>

@@ -61,14 +61,8 @@ const HORIZON_URL = 'https://horizon-testnet.stellar.org'
 
 /** Call a Soroban view function (no state mutation) and return the raw ScVal. */
 async function sorobanSimulate(sourceAddress: string, method: string, args: unknown[] = []) {
-  const {
-    rpc,
-    Contract,
-    TransactionBuilder,
-    Networks,
-    Account,
-    nativeToScVal,
-  } = await import('@stellar/stellar-sdk')
+  const { rpc, Contract, TransactionBuilder, Networks, Account, nativeToScVal } =
+    await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false })
   const contract = new Contract(CONTRACT_ID!)
@@ -154,15 +148,8 @@ export async function submitDeposit(
     return `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`
   }
 
-  const {
-    rpc,
-    Contract,
-    TransactionBuilder,
-    Networks,
-    Horizon,
-    nativeToScVal,
-    Transaction,
-  } = await import('@stellar/stellar-sdk')
+  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction } =
+    await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false })
   const horizon = new Horizon.Server(HORIZON_URL)
@@ -187,7 +174,8 @@ export async function submitDeposit(
   const signedTx = new Transaction(signedXdr, Networks.TESTNET)
 
   const sendResult = await server.sendTransaction(signedTx)
-  if (sendResult.status === 'ERROR') throw new Error(`Send failed: ${JSON.stringify(sendResult.errorResult)}`)
+  if (sendResult.status === 'ERROR')
+    throw new Error(`Send failed: ${JSON.stringify(sendResult.errorResult)}`)
 
   await waitForTransaction(sendResult.hash)
   return sendResult.hash
@@ -212,15 +200,8 @@ export async function submitWithdraw(
     return `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`
   }
 
-  const {
-    rpc,
-    Contract,
-    TransactionBuilder,
-    Networks,
-    Horizon,
-    nativeToScVal,
-    Transaction,
-  } = await import('@stellar/stellar-sdk')
+  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction } =
+    await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false })
   const horizon = new Horizon.Server(HORIZON_URL)
@@ -243,7 +224,8 @@ export async function submitWithdraw(
   const signedTx = new Transaction(signedXdr, Networks.TESTNET)
 
   const sendResult = await server.sendTransaction(signedTx)
-  if (sendResult.status === 'ERROR') throw new Error(`Send failed: ${JSON.stringify(sendResult.errorResult)}`)
+  if (sendResult.status === 'ERROR')
+    throw new Error(`Send failed: ${JSON.stringify(sendResult.errorResult)}`)
 
   await waitForTransaction(sendResult.hash)
   return sendResult.hash

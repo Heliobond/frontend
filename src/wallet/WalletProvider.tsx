@@ -1,6 +1,14 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 
 /**
  * Wallet state for Heliobond. Wraps the Stellar Wallets Kit (Freighter, xBull,
@@ -35,7 +43,9 @@ export function useWallet(): WalletContextValue {
 
 /** Stellar address / hash, truncated in the middle (never the end). */
 export function shortAddress(address: string, lead = 4, tail = 3): string {
-  return address.length > lead + tail + 1 ? `${address.slice(0, lead)}…${address.slice(-tail)}` : address
+  return address.length > lead + tail + 1
+    ? `${address.slice(0, lead)}…${address.slice(-tail)}`
+    : address
 }
 
 const DEMO_ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
@@ -74,6 +84,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     if (!saved) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAddress(saved)
     setIsDemo(savedWallet === 'demo')
 
@@ -122,16 +133,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     persist(DEMO_ADDRESS, 'demo')
   }, [persist])
 
-  const sign = useCallback(async (xdr: string): Promise<string> => {
-    if (isDemo) throw new Error('demo')
-    await ensureInit()
-    const { StellarWalletsKit, Networks } = await import('@creit.tech/stellar-wallets-kit')
-    const result = await StellarWalletsKit.signTransaction(xdr, {
-      networkPassphrase: Networks.TESTNET,
-      address: address ?? undefined,
-    })
-    return result.signedTxXdr
-  }, [isDemo, ensureInit, address])
+  const sign = useCallback(
+    async (xdr: string): Promise<string> => {
+      if (isDemo) throw new Error('demo')
+      await ensureInit()
+      const { StellarWalletsKit, Networks } = await import('@creit.tech/stellar-wallets-kit')
+      const result = await StellarWalletsKit.signTransaction(xdr, {
+        networkPassphrase: Networks.TESTNET,
+        address: address ?? undefined,
+      })
+      return result.signedTxXdr
+    },
+    [isDemo, ensureInit, address],
+  )
 
   const disconnect = useCallback(() => {
     setAddress(null)
@@ -150,7 +164,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   return (
     <WalletContext.Provider
-      value={{ address, connected: address !== null, connecting, isDemo, connect, connectDemo, disconnect, sign, network: 'TESTNET' }}
+      value={{
+        address,
+        connected: address !== null,
+        connecting,
+        isDemo,
+        connect,
+        connectDemo,
+        disconnect,
+        sign,
+        network: 'TESTNET',
+      }}
     >
       {children}
     </WalletContext.Provider>

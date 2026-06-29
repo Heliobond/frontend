@@ -14,5 +14,11 @@ export default function ConnectPage() {
     if (connected) router.push('/deposit')
   }, [connected, router])
 
-  return <Connect onWallet={() => void connect()} onNew={() => connectDemo()} onCancel={() => router.push('/explore')} />
+  return (
+    <Connect
+      onWallet={() => void connect()}
+      onNew={() => connectDemo()}
+      onCancel={() => router.push('/explore')}
+    />
+  )
 }

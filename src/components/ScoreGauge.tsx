@@ -43,7 +43,9 @@ export function ScoreGauge({
   const dotY = cy + r * Math.sin(angle)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, ...style }}>
+    <div
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, ...style }}
+    >
       <div style={{ position: 'relative', width: size, height: size }}>
         <svg
           width={size}
@@ -74,7 +76,14 @@ export function ScoreGauge({
             strokeDasharray={`${valueLen} ${C - valueLen}`}
             transform={`rotate(135 ${cx} ${cy})`}
           />
-          <circle cx={dotX} cy={dotY} r={stroke * 0.78} fill="var(--solar)" stroke="var(--ink)" strokeWidth={2} />
+          <circle
+            cx={dotX}
+            cy={dotY}
+            r={stroke * 0.78}
+            fill="var(--solar)"
+            stroke="var(--ink)"
+            strokeWidth={2}
+          />
         </svg>
         {showValue && (
           <div
@@ -95,7 +104,16 @@ export function ScoreGauge({
         )}
       </div>
       {label && (
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--ink-60)', whiteSpace: 'nowrap' }}>{label}</div>
+        <div
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+            color: 'var(--ink-60)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {label}
+        </div>
       )}
       {verifiedAgo &&
         (explorerUrl ? (
@@ -103,12 +121,25 @@ export function ScoreGauge({
             href={explorerUrl}
             target="_blank"
             rel="noreferrer"
-            style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--ink-40)', whiteSpace: 'nowrap', textDecoration: 'none' }}
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontSize: 11,
+              color: 'var(--ink-40)',
+              whiteSpace: 'nowrap',
+              textDecoration: 'none',
+            }}
           >
             verified {verifiedAgo} ↗
           </a>
         ) : (
-          <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--ink-40)', whiteSpace: 'nowrap' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontSize: 11,
+              color: 'var(--ink-40)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             verified {verifiedAgo}
           </span>
         ))}

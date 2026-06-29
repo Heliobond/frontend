@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { AmountInput } from './AmountInput'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 
 describe('AmountInput', () => {
   describe('Input sanitization', () => {
@@ -38,7 +38,7 @@ describe('AmountInput', () => {
   describe('Cap behavior', () => {
     it('does not show alert when value is below cap', () => {
       const { container, queryByRole } = render(
-        <AmountInput value="50" cap={100} capMessage="Limit reached" />
+        <AmountInput value="50" cap={100} capMessage="Limit reached" />,
       )
 
       expect(queryByRole('alert')).not.toBeInTheDocument()
@@ -46,9 +46,7 @@ describe('AmountInput', () => {
     })
 
     it('shows alert when value exceeds cap', () => {
-      const { container, queryByRole } = render(
-        <AmountInput value="150" cap={100} capMessage="Over limit" />
-      )
+      const { queryByRole } = render(<AmountInput value="150" cap={100} capMessage="Over limit" />)
 
       const alert = queryByRole('alert')
       expect(alert).toBeInTheDocument()
@@ -117,13 +115,14 @@ describe('AmountInput', () => {
 
   describe('Balance display', () => {
     it('displays balance when provided', () => {
-      const { getByText } = render(<AmountInput balance="1000" balanceLabel="Available" currency="USDC" />)
+      const { getByText } = render(
+        <AmountInput balance="1000" balanceLabel="Available" currency="USDC" />,
+      )
       expect(getByText(/Available 1000 USDC/)).toBeInTheDocument()
     })
 
     it('does not display balance when not provided', () => {
       const { container } = render(<AmountInput />)
-      const balanceText = container.textContent?.match(/Balance/)
       // Balance label should not appear without balance prop
       expect(container.querySelector('span')).toBeFalsy()
     })

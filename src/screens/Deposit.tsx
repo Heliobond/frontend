@@ -82,9 +82,23 @@ export function Deposit({ onDone }: DepositProps) {
                   }}
                 />
               ) : (
-                <span style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, lineHeight: 1.55, color: 'var(--ink-60)' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 13.5,
+                    lineHeight: 1.55,
+                    color: 'var(--ink-60)',
+                  }}
+                >
                   {vaultError && (
-                    <span style={{ display: 'block', fontSize: 12, color: 'var(--ink-40)', marginBottom: 2 }}>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontSize: 12,
+                        color: 'var(--ink-40)',
+                        marginBottom: 2,
+                      }}
+                    >
                       Using estimated rate
                     </span>
                   )}
@@ -110,13 +124,33 @@ export function Deposit({ onDone }: DepositProps) {
       {step === 'review' && (
         <Panel>
           <h1 style={h1Style}>{t('reviewH1', { amount: n })}</h1>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--ink-12)', borderRadius: 'var(--radius-input)', overflow: 'hidden', margin: '6px 0 20px' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              background: 'var(--ink-12)',
+              borderRadius: 'var(--radius-input)',
+              overflow: 'hidden',
+              margin: '6px 0 20px',
+            }}
+          >
             <Row k={t('rowPay')} v={`${n.toFixed(2)} USDC`} />
             <Row k={t('rowReceive')} v={`≈ ${(n / price).toFixed(4)} HBS`} />
             <Row k={t('rowPrice')} v={`${price}`} />
             <Row k={t('rowFee')} v="< $0.01" />
           </div>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, lineHeight: 1.55, color: 'var(--ink-60)', margin: '0 0 20px' }}>{t('reviewBody')}</p>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 13.5,
+              lineHeight: 1.55,
+              color: 'var(--ink-60)',
+              margin: '0 0 20px',
+            }}
+          >
+            {t('reviewBody')}
+          </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="ghost" onClick={() => setStep('amount')}>
               {t('back')}
@@ -133,7 +167,9 @@ export function Deposit({ onDone }: DepositProps) {
                   setTxHash(hash)
                   setStep('success')
                 } catch (e) {
-                  setTxError(e instanceof Error ? e.message : 'Transaction failed — please try again.')
+                  setTxError(
+                    e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                  )
                   setStep('amount')
                 }
               }}
@@ -146,11 +182,32 @@ export function Deposit({ onDone }: DepositProps) {
 
       {step === 'pending' && (
         <Panel>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '12px 0' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              padding: '12px 0',
+            }}
+          >
             <PendingDot />
             <h1 style={{ ...h1Style, textAlign: 'center', marginTop: 18 }}>{t('pendingH1')}</h1>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, color: 'var(--ink-60)', margin: '0 0 14px' }}>{t('pendingSub')}</p>
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: 12.5, color: 'var(--ink-40)' }}>{t('pendingTx')}</span>
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 14.5,
+                color: 'var(--ink-60)',
+                margin: '0 0 14px',
+              }}
+            >
+              {t('pendingSub')}
+            </p>
+            <span
+              style={{ fontFamily: 'var(--font-data)', fontSize: 12.5, color: 'var(--ink-40)' }}
+            >
+              {t('pendingTx')}
+            </span>
           </div>
         </Panel>
       )}
@@ -161,7 +218,16 @@ export function Deposit({ onDone }: DepositProps) {
             <Helio size={160} motes={14} />
           </div>
           <h1 style={{ ...h1Style, textAlign: 'center' }}>{t('successH1')}</h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, lineHeight: 1.55, color: 'var(--ink-60)', textAlign: 'center', margin: '0 0 22px' }}>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: 'var(--ink-60)',
+              textAlign: 'center',
+              margin: '0 0 22px',
+            }}
+          >
             {t.rich('successBody', { shares: (n / price).toFixed(4), num, b: strong })}
           </p>
           <div style={{ display: 'flex', gap: 10 }}>
@@ -212,9 +278,27 @@ function Stepper({ step }: { step: DepositStep }) {
     <div style={{ display: 'flex', gap: 8, marginBottom: 24, justifyContent: 'center' }}>
       {order.map((s, i) => (
         <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: i <= idx ? 'var(--solar)' : 'var(--ink-12)' }} />
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, fontWeight: 600, color: i <= idx ? 'var(--ink)' : 'var(--ink-40)' }}>{labels[s]}</span>
-          {i < order.length - 1 && <span style={{ width: 20, height: 1, background: 'var(--ink-12)' }} />}
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: i <= idx ? 'var(--solar)' : 'var(--ink-12)',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: i <= idx ? 'var(--ink)' : 'var(--ink-40)',
+            }}
+          >
+            {labels[s]}
+          </span>
+          {i < order.length - 1 && (
+            <span style={{ width: 20, height: 1, background: 'var(--ink-12)' }} />
+          )}
         </div>
       ))}
     </div>
@@ -223,7 +307,15 @@ function Stepper({ step }: { step: DepositStep }) {
 
 function Panel({ children }: { children: ReactNode }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--ink-12)', borderRadius: 'var(--radius-modal)', padding: 28, boxShadow: 'var(--shadow-sm)' }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--ink-12)',
+        borderRadius: 'var(--radius-modal)',
+        padding: 28,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       {children}
     </div>
   )
@@ -231,9 +323,27 @@ function Panel({ children }: { children: ReactNode }) {
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--surface)', padding: '13px 16px' }}>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-60)' }}>{k}</span>
-      <span style={{ fontFamily: 'var(--font-data)', fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{v}</span>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        background: 'var(--surface)',
+        padding: '13px 16px',
+      }}
+    >
+      <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-60)' }}>
+        {k}
+      </span>
+      <span
+        style={{
+          fontFamily: 'var(--font-data)',
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'var(--ink)',
+        }}
+      >
+        {v}
+      </span>
     </div>
   )
 }
@@ -241,7 +351,13 @@ function Row({ k, v }: { k: string; v: string }) {
 function PendingDot() {
   return (
     <div style={{ position: 'relative', width: 56, height: 56 }}>
-      <svg width="56" height="56" viewBox="0 0 56 56" className="hb-orbit" style={{ animation: 'hb-orbit 1.2s linear infinite', transformOrigin: '28px 28px' }}>
+      <svg
+        width="56"
+        height="56"
+        viewBox="0 0 56 56"
+        className="hb-orbit"
+        style={{ animation: 'hb-orbit 1.2s linear infinite', transformOrigin: '28px 28px' }}
+      >
         <circle cx="28" cy="28" r="22" fill="none" stroke="var(--ink-12)" strokeWidth="3" />
         <circle cx="28" cy="6" r="5" fill="var(--solar)" />
       </svg>
@@ -258,4 +374,9 @@ const h1Style: CSSProperties = {
   margin: '0 0 18px',
   color: 'var(--ink)',
 }
-const liqLine: CSSProperties = { fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--ink-60)', margin: '14px 0 0' }
+const liqLine: CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: 13,
+  color: 'var(--ink-60)',
+  margin: '14px 0 0',
+}
