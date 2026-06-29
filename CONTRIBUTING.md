@@ -47,7 +47,42 @@ Useful scripts:
 bun run build      # production build — also runs the TypeScript type-checker
 bun run typecheck  # tsc --noEmit
 bun run start      # serve the production build
+bun run test       # run the Vitest unit + component test suite
+bun run test:e2e   # run Playwright end-to-end tests (starts dev server automatically)
 ```
+
+## Running tests
+
+### Unit and component tests (Vitest)
+
+The project uses [Vitest](https://vitest.dev) with a jsdom environment and
+[@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
+for component rendering.
+
+```bash
+bun run test        # run all tests once and exit
+bun run test:ui     # open the Vitest browser UI
+```
+
+A shared render helper lives in `src/test/render.tsx`. It wraps components in
+the i18n and theme providers the app uses, so component tests get a realistic
+context. Import from there instead of `@testing-library/react` directly:
+
+```ts
+import { render, screen, fireEvent } from '@/test/render'
+```
+
+### End-to-end tests (Playwright)
+
+[Playwright](https://playwright.dev) drives a real Chromium browser against the
+running Next.js dev server.
+
+```bash
+bun run test:e2e    # headless Chromium (starts dev server automatically)
+```
+
+E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
+`localStorage` so no real Stellar wallet extension is required.
 
 ## Development workflow
 
