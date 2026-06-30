@@ -130,29 +130,6 @@
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert"
   },
-  "ProjectDetail": {
-    "notFoundTitle": "Project not found",
-    "notFoundBody": "This project isn't in the registry. It may have been moved.",
-    "notFoundCta": "Back to projects",
-    "back": "← Back to projects",
-    "backAriaHidden": "←",
-    "backLabel": "Back to projects",
-    "verifiedSince": "Verified creator · since {since}",
-    "builtBy": "Built by",
-    "scoresTitle": "Oracle-verified scores",
-    "creditLabel": "Credit quality",
-    "greenLabel": "Green impact",
-    "creditSparkLabel": "Credit score over time",
-    "greenSparkLabel": "Green score over time",
-    "scoreGaugeAria": "{label}: {value} out of {max}",
-    "fundingTitle": "Funding timeline",
-    "contributionTitle": "This project’s contribution",
-    "contributionBody": "Your return is shaped by every project the pool backs. This one carries a credit quality of <b>{credit}</b> and a green impact of <b>{green}</b>, both refreshed on-chain by the oracle.",
-    "calcSummary": "How is this calculated?",
-    "calcFormula": "expected return = investment × (credit + green) ÷ 200 — read it in the contract ↗",
-    "investCta": "Invest in the pool that funds this",
-    "investNote": "You invest in the shared pool, which funds this project alongside others — not a per-project checkout."
-  },
   "Withdraw": {
     "h1": "Withdraw from the pool",
     "amountLabel": "Amount",
@@ -235,6 +212,8 @@
     "actionSave": "Save"
   },
   "Creator": {
+    "title": "Creator space",
+    "description": "Apply for the whitelist, build your project page, and watch the pool fund it. The oracle scores your credit quality and green impact, and we show you exactly what moves them.",
     "h1": "Creator space",
     "subtitle": "Apply for the whitelist, build your project page, and watch the pool fund it. The oracle scores your credit quality and green impact, and we show you exactly what moves them.",
     "tabApply": "Apply",
@@ -318,6 +297,7 @@
     "greenLabel": "Green impact",
     "creditHistory": "Credit score over time",
     "greenHistory": "Green score over time",
+    "scoreGaugeAria": "{label}: {value} out of {max}",
     "onChainNote": "every oracle update is on-chain ↗",
     "verifiedAgo": "verified 2h ago ↗",
     "fundingTitle": "Funding timeline",

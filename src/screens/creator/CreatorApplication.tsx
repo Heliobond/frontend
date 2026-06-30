@@ -177,8 +177,12 @@ function Stepper({ activeStage }: { activeStage: ApplicationStage }) {
 
   // We use the ordered ids but get labels/hints from the catalog
   const stepMeta = order.map((id) => {
-    const labelKey = `step${id.charAt(0).toUpperCase() + id.slice(1)}Label`
-    const hintKey = `step${id.charAt(0).toUpperCase() + id.slice(1)}Hint`
+    const pascalId = id
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('')
+    const labelKey = `step${pascalId}Label`
+    const hintKey = `step${pascalId}Hint`
     return {
       id,
       label: t(labelKey as Parameters<typeof t>[0]),
