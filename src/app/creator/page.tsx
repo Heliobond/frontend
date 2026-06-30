@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Tag } from '@/components'
 import { CreatorApplication } from '@/screens/creator/CreatorApplication'
@@ -9,9 +10,38 @@ import { CreatorDashboard } from '@/screens/creator/CreatorDashboard'
 
 type CreatorTab = 'apply' | 'build' | 'dashboard'
 
-export default function CreatorPage() {
+const VALID_TABS = new Set<CreatorTab>(['apply', 'build', 'dashboard'])
+
+function toTab(value: string | null): CreatorTab {
+  if (value && VALID_TABS.has(value as CreatorTab)) return value as CreatorTab
+  return 'apply'
+}
+
+/**
+ * Inner component — holds useSearchParams so the Suspense boundary in the
+ * default export can provide a fallback during static prerendering, satisfying
+ * Next.js's requirement without deopting the whole route.
+ */
+function CreatorPageInner() {
   const t = useTranslations('Creator')
-  const [tab, setTab] = useState<CreatorTab>('apply')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const tab = toTab(searchParams.get('tab'))
+
+  /**
+   * Write the new tab into ?tab= using replace so tab switches don't push
+   * entries onto the history stack — back/forward navigates between pages,
+   * not between tabs on the same page.
+   */
+  const setTab = useCallback(
+    (next: CreatorTab) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('tab', next)
+      router.replace(`/creator?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams],
+  )
 
   const TABS: { id: CreatorTab; label: string }[] = [
     { id: 'apply', label: t('tabApply') },
@@ -50,18 +80,18 @@ export default function CreatorPage() {
 
       <div
         role="tablist"
-        aria-label="Creator space sections"
+        aria-label={t('tabsLabel')}
         style={{ display: 'flex', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}
       >
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <Tag
-            key={t.id}
-            selected={tab === t.id}
-            onClick={() => setTab(t.id)}
+            key={tb.id}
+            selected={tab === tb.id}
+            onClick={() => setTab(tb.id)}
             role="tab"
-            aria-selected={tab === t.id}
+            aria-selected={tab === tb.id}
           >
-            {t.label}
+            {tb.label}
           </Tag>
         ))}
       </div>
@@ -77,5 +107,18 @@ export default function CreatorPage() {
       {tab === 'build' && <ProjectBuilder />}
       {tab === 'dashboard' && <CreatorDashboard />}
     </main>
+  )
+}
+
+/**
+ * Creator page — wraps the inner component in Suspense so Next.js can
+ * statically prerender the shell while useSearchParams resolves on the client.
+ * The fallback is a minimal height reservation to avoid layout shift.
+ */
+export default function CreatorPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: 'calc(100dvh - 140px)' }} />}>
+      <CreatorPageInner />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { ProjectCard, Tag } from '../components'
 import { HB_DATA, type Project, type ProjectType } from '../data'
@@ -169,7 +169,28 @@ export function Explore({ onOpen }: ExploreProps) {
   )
 }
 
+/**
+ * ProjectCardSkeleton — pixel-for-pixel placeholder for ProjectCard.
+ *
+ * Mirrors the real card's DOM structure so the layout doesn't shift when
+ * live data replaces the skeleton:
+ *   • 168 px hero with a location-badge pill ghost in the bottom-left
+ *   • 20 px display-weight title line (h3 equivalent)
+ *   • Two 84 px circular score-gauge ghosts (matching ScoreGauge size)
+ *   • Footer row: funded block on the left, verified chip on the right,
+ *     separated by a 1 px top border — identical to the real card footer
+ *
+ * aria-hidden — all content is presentational; screen readers skip it.
+ * Animation delays are staggered by 100 ms per row so the shimmer
+ * cascades top-to-bottom rather than flashing all at once.
+ */
 function ProjectCardSkeleton() {
+  const pulse = (delay = '0s'): CSSProperties => ({
+    background: 'var(--ink-06)',
+    animation: `hb-pulse 1.4s ease-in-out ${delay} infinite`,
+    borderRadius: 6,
+  })
+
   return (
     <div
       aria-hidden="true"
@@ -181,55 +202,73 @@ function ProjectCardSkeleton() {
         boxShadow: 'var(--shadow-sm)',
       }}
     >
-      {/* Hero image placeholder */}
+      {/* ── Hero (168 px — matches ProjectCard image area) ─────────────── */}
       <div
         style={{
-          height: 160,
-          background: 'var(--ink-06)',
-          animation: 'hb-pulse 1.4s ease-in-out infinite',
+          height: 168,
+          position: 'relative',
+          ...pulse(),
+          borderRadius: 0,
         }}
-      />
-      <div style={{ padding: '16px 18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {/* Title line */}
+      >
+        {/* Location badge ghost — bottom-left pill, same as real card */}
         <div
           style={{
-            height: 18,
-            width: '70%',
-            borderRadius: 6,
-            background: 'var(--ink-06)',
-            animation: 'hb-pulse 1.4s ease-in-out infinite',
+            position: 'absolute',
+            left: 12,
+            bottom: 12,
+            height: 26,
+            width: 90,
+            borderRadius: 'var(--radius-pill)',
+            background: 'var(--surface)',
+            opacity: 0.6,
           }}
         />
-        {/* Location line */}
+      </div>
+
+      <div style={{ padding: 20 }}>
+        {/* ── Title (h3 — font-display 20 px, matches real card) ──────── */}
         <div
           style={{
-            height: 13,
-            width: '45%',
-            borderRadius: 6,
-            background: 'var(--ink-06)',
-            animation: 'hb-pulse 1.4s ease-in-out 0.1s infinite',
+            height: 22,
+            width: '68%',
+            marginBottom: 14,
+            ...pulse('0.05s'),
           }}
         />
-        {/* Score bars */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-          <div
-            style={{
-              height: 13,
-              width: 60,
-              borderRadius: 6,
-              background: 'var(--ink-06)',
-              animation: 'hb-pulse 1.4s ease-in-out 0.2s infinite',
-            }}
-          />
-          <div
-            style={{
-              height: 13,
-              width: 60,
-              borderRadius: 6,
-              background: 'var(--ink-06)',
-              animation: 'hb-pulse 1.4s ease-in-out 0.3s infinite',
-            }}
-          />
+
+        {/* ── Score gauges (two 84 px circles — matches ScoreGauge size) ─ */}
+        <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              style={{
+                width: 84,
+                height: 84,
+                borderRadius: '50%',
+                ...pulse(`${0.1 + i * 0.1}s`),
+              }}
+            />
+          ))}
+        </div>
+
+        {/* ── Footer row (funded + verified — matches real card footer) ── */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            paddingTop: 14,
+            borderTop: '1px solid var(--ink-12)',
+          }}
+        >
+          {/* Funded block: label line + value line */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ height: 11, width: 80, ...pulse('0.2s') }} />
+            <div style={{ height: 18, width: 64, ...pulse('0.25s') }} />
+          </div>
+          {/* Verified chip */}
+          <div style={{ height: 11, width: 56, ...pulse('0.3s') }} />
         </div>
       </div>
     </div>
