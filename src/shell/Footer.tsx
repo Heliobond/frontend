@@ -66,21 +66,19 @@ export function Footer() {
               {l}
             </button>
           ))}
-          <button
+          <a
+            href="mailto:hello@heliobond.io"
             className="hb-textlink"
             style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
               fontFamily: 'inherit',
               fontSize: 'inherit',
               color: 'var(--ink)',
               fontWeight: 600,
+              textDecoration: 'none',
             }}
           >
             {t('talk')}
-          </button>
+          </a>
           <Link
             href="/admin"
             className="hb-textlink"
