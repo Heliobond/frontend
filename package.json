@@ -24,6 +24,7 @@
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
+    "bundle:check": "node scripts/check-bundle-size.js",
     "prepare": "husky"
   },
   "lint-staged": {

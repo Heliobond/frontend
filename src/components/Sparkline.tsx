@@ -68,8 +68,8 @@ export function Sparkline({
           cx={last.x}
           cy={last.y}
           r={3}
-          fill="#FFB400"
-          stroke="var(--surface)"
+          fill="var(--solar)"
+          stroke="var(--canvas)"
           strokeWidth={1.5}
         />
       )}

@@ -33,6 +33,7 @@
   --type-caption: 0.8125rem;
   --type-eyebrow: 0.75rem; /* small-caps        */
   --type-data-l: 2.25rem; /* hero numbers      */
+  --type-data-display: 1.875rem; /* amount input numeral */
   --type-data: 0.9375rem; /* inline numbers    */
 
   /* --- Line heights --------------------------------------------------- */

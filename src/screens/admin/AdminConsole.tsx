@@ -30,9 +30,7 @@ export function AdminConsole() {
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  // The vault funds more projects than the 6 demo registry rows; show the pool's
-  // own count so it agrees with the deployed-capital figure beside it.
-  const fundedCount = VAULT_STATS.projectsFunded
+  const fundedCount = registry.filter((r) => parseFundedNum(r.funded) > 0).length
 
   const updateScores = (id: number, credit: number, green: number) => {
     setRegistry((rows) =>
@@ -290,12 +288,12 @@ function formatMoney(n: number): string {
   return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
-function parseFundedNum(s: string): number {
+export function parseFundedNum(s: string): number {
   const n = Number(s.replace(/[^0-9.]/g, ''))
   return Number.isFinite(n) ? n : 0
 }
 
-function formatFunded(n: number): string {
+export function formatFunded(n: number): string {
   return `$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
 }
 

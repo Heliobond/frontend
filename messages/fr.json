@@ -6,7 +6,7 @@
     "creator": "Créateurs",
     "connect": "Se connecter",
     "testnet": "Testnet (actif)",
-    "networkStatus": "Réseau\u00a0: Testnet actif",
+    "networkStatus": "Réseau : Testnet actif",
     "portfolio": "Votre portefeuille",
     "switchToDark": "Passer en sombre",
     "switchToLight": "Passer en clair",
@@ -224,6 +224,8 @@
     "actionSave": "Enregistrer"
   },
   "Creator": {
+    "title": "Espace créateur",
+    "description": "Postulez à la liste blanche, construisez votre page de projet et regardez le pool le financer. L'oracle note votre qualité de crédit et votre impact vert, et nous vous montrons exactement ce qui les fait évoluer.",
     "h1": "Espace créateur",
     "subtitle": "Postulez à la liste blanche, construisez votre page de projet et regardez le pool le financer. L'oracle note votre qualité de crédit et votre impact vert, et nous vous montrons exactement ce qui les fait évoluer.",
     "tabApply": "Postuler",
@@ -292,29 +294,5 @@
     "criteria2": "Un emplacement nommé et un contact pouvant répondre aux questions du réviseur.",
     "criteria3": "Volonté de partager les données de comptage ou de production pour la notation de l'oracle.",
     "criteria4": "Aucune action réglementaire en cours contre l'organisation."
-  },
-  "ProjectDetail": {
-    "notFoundTitle": "Projet introuvable",
-    "notFoundBody": "Ce projet n'est pas dans le registre. Il a peut-être été déplacé.",
-    "notFoundCta": "Retour aux projets",
-    "back": "← Retour aux projets",
-    "backAriaHidden": "←",
-    "backLabel": "Retour aux projets",
-    "verifiedSince": "Créateur vérifié · depuis {since}",
-    "builtBy": "Construit par",
-    "scoresTitle": "Scores vérifiés par l'oracle",
-    "creditLabel": "Qualité de crédit",
-    "greenLabel": "Impact vert",
-    "creditHistory": "Score de crédit au fil du temps",
-    "greenHistory": "Score vert au fil du temps",
-    "onChainNote": "chaque mise à jour oracle est sur la chaîne ↗",
-    "verifiedAgo": "vérifié il y a 2h ↗",
-    "fundingTitle": "Chronologie de financement",
-    "contributionTitle": "Contribution de ce projet",
-    "contributionBody": "Votre rendement est façonné par chaque projet soutenu par le pool. Celui-ci porte une qualité de crédit de <b>{credit}</b> et un impact vert de <b>{green}</b>, tous deux mis à jour sur la chaîne par l'oracle.",
-    "calcSummary": "Comment cela est-il calculé ?",
-    "calcFormula": "rendement attendu = investissement × (crédit + vert) ÷ 200 — lisez-le dans le contrat ↗",
-    "investCta": "Investir dans le pool qui finance cela",
-    "investNote": "Vous investissez dans le pool commun, qui finance ce projet parmi d'autres — pas une caisse par projet."
   }
 }

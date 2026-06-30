@@ -107,7 +107,7 @@ export function AmountInput({
             background: 'transparent',
             fontFamily: 'var(--font-data)',
             fontWeight: 600,
-            fontSize: 30,
+            fontSize: 'var(--type-data-display)',
             color: 'var(--ink)',
             fontFeatureSettings: '"tnum" 1',
           }}
