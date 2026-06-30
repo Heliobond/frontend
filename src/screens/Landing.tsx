@@ -49,7 +49,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 19,
+              fontSize: 'var(--type-h4)',
               lineHeight: 1.5,
               color: 'var(--ink-60)',
               maxWidth: 520,
@@ -103,7 +103,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
+            fontSize: 'var(--type-caption)',
             color: 'var(--ink-40)',
             margin: '14px 0 0',
             textAlign: 'center',
@@ -139,7 +139,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 16,
+              fontSize: 'var(--type-body)',
               color: 'var(--ink-60)',
               margin: '0 0 36px',
               maxWidth: 560,
@@ -153,7 +153,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
                 <div
                   style={{
                     fontFamily: 'var(--font-data)',
-                    fontSize: 13,
+                    fontSize: 'var(--type-caption)',
                     color: 'var(--solar)',
                     marginBottom: 10,
                   }}
@@ -164,7 +164,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
                   style={{
                     fontFamily: 'var(--font-display)',
                     fontWeight: 700,
-                    fontSize: 18,
+                    fontSize: 'var(--type-h5)',
                     margin: '0 0 6px',
                     color: 'var(--ink)',
                   }}
@@ -174,7 +174,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
                 <p
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 14,
+                    fontSize: 'var(--type-small)',
                     lineHeight: 1.5,
                     color: 'var(--ink-60)',
                     margin: 0,
@@ -210,7 +210,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 16,
+              fontSize: 'var(--type-body)',
               lineHeight: 1.6,
               color: 'var(--ink-60)',
               margin: '0 0 16px',
@@ -221,7 +221,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
           <div
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 14,
+              fontSize: 'var(--type-small)',
               color: 'var(--ink)',
               background: 'var(--ink-06)',
               borderRadius: 'var(--radius-input)',
@@ -259,11 +259,21 @@ export function Landing({ onConnect, onNav }: LandingProps) {
               }}
             >
               <span
-                style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, color: 'var(--ink-60)' }}
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-data)',
+                  color: 'var(--ink-60)',
+                }}
               >
                 {k}
               </span>
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 13.5, color: 'var(--ink)' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-small)',
+                  color: 'var(--ink)',
+                }}
+              >
                 {v}
               </span>
             </div>

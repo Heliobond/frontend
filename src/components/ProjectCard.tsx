@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react'
 import { ScoreGauge } from './ScoreGauge'
+import { PinIcon } from './icons'
 
 /**
  * Heliobond ProjectCard — a project in the living atlas. Photo, name, location,
@@ -78,7 +79,7 @@ export function ProjectCard({
             background: 'var(--surface)',
             border: '1px solid var(--ink-12)',
             fontFamily: 'var(--font-body)',
-            fontSize: 12.5,
+            fontSize: 'var(--type-caption)',
             fontWeight: 600,
             color: 'var(--ink)',
           }}
@@ -92,7 +93,7 @@ export function ProjectCard({
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 20,
+            fontSize: 'var(--type-h4)',
             lineHeight: 1.2,
             margin: '0 0 14px',
             letterSpacing: '-0.01em',
@@ -119,7 +120,7 @@ export function ProjectCard({
             <div
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 12,
+                fontSize: 'var(--type-eyebrow)',
                 color: 'var(--ink-60)',
                 marginBottom: 2,
               }}
@@ -130,7 +131,7 @@ export function ProjectCard({
               style={{
                 fontFamily: 'var(--font-data)',
                 fontWeight: 600,
-                fontSize: 17,
+                fontSize: 'var(--type-body-lg)',
                 color: 'var(--ink)',
               }}
             >
@@ -152,24 +153,5 @@ export function ProjectCard({
         </div>
       </div>
     </article>
-  )
-}
-
-function PinIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="14"
-      height="14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
   )
 }

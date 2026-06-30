@@ -78,7 +78,7 @@ export function Deposit({ onDone }: DepositProps) {
                 background: 'rgba(179,54,27,0.07)',
                 border: '1px solid rgba(179,54,27,0.18)',
                 fontFamily: 'var(--font-body)',
-                fontSize: 13.5,
+                fontSize: 'var(--type-small)',
                 color: 'var(--ember)',
               }}
             >
@@ -110,7 +110,7 @@ export function Deposit({ onDone }: DepositProps) {
                 <span
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 13.5,
+                    fontSize: 'var(--type-small)',
                     lineHeight: 1.55,
                     color: 'var(--ink-60)',
                   }}
@@ -119,7 +119,7 @@ export function Deposit({ onDone }: DepositProps) {
                     <span
                       style={{
                         display: 'block',
-                        fontSize: 12,
+                        fontSize: 'var(--type-eyebrow)',
                         color: 'var(--ink-40)',
                         marginBottom: 2,
                       }}
@@ -168,7 +168,7 @@ export function Deposit({ onDone }: DepositProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 13.5,
+              fontSize: 'var(--type-small)',
               lineHeight: 1.55,
               color: 'var(--ink-60)',
               margin: '0 0 20px',
@@ -252,7 +252,7 @@ export function Deposit({ onDone }: DepositProps) {
             <p
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 14.5,
+                fontSize: 'var(--type-data)',
                 color: 'var(--ink-60)',
                 margin: '0 0 14px',
               }}
@@ -261,7 +261,11 @@ export function Deposit({ onDone }: DepositProps) {
               {t('pendingSub')}
             </p>
             <span
-              style={{ fontFamily: 'var(--font-data)', fontSize: 12.5, color: 'var(--ink-40)' }}
+              style={{
+                fontFamily: 'var(--font-data)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-40)',
+              }}
             >
               {t('pendingTx')}
             </span>
@@ -294,7 +298,7 @@ export function Deposit({ onDone }: DepositProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 15,
+              fontSize: 'var(--type-data)',
               lineHeight: 1.55,
               color: 'var(--ink-60)',
               textAlign: 'center',
@@ -318,7 +322,7 @@ export function Deposit({ onDone }: DepositProps) {
                 border: '1px solid var(--ink-12)',
                 background: 'transparent',
                 fontFamily: 'var(--font-body)',
-                fontSize: 15,
+                fontSize: 'var(--type-data)',
                 fontWeight: 500,
                 color: 'var(--ink)',
                 textDecoration: 'none',
@@ -362,7 +366,7 @@ function Stepper({ step }: { step: DepositStep }) {
           <span
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
+              fontSize: 'var(--type-caption)',
               fontWeight: 600,
               color: i <= idx ? 'var(--ink)' : 'var(--ink-40)',
             }}
@@ -404,13 +408,19 @@ function Row({ k, v }: { k: string; v: string }) {
         padding: '13px 16px',
       }}
     >
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--ink-60)' }}>
+      <span
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--type-small)',
+          color: 'var(--ink-60)',
+        }}
+      >
         {k}
       </span>
       <span
         style={{
           fontFamily: 'var(--font-data)',
-          fontSize: 14,
+          fontSize: 'var(--type-small)',
           fontWeight: 600,
           color: 'var(--ink)',
         }}
@@ -441,7 +451,7 @@ function PendingDot() {
 const h1Style: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,
-  fontSize: 23,
+  fontSize: 'var(--type-h3)',
   lineHeight: 1.2,
   letterSpacing: '-0.01em',
   margin: '0 0 18px',
@@ -449,7 +459,7 @@ const h1Style: CSSProperties = {
 }
 const liqLine: CSSProperties = {
   fontFamily: 'var(--font-body)',
-  fontSize: 13,
+  fontSize: 'var(--type-caption)',
   color: 'var(--ink-60)',
   margin: '14px 0 0',
 }

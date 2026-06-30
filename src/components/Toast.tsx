@@ -1,4 +1,5 @@
 import { type CSSProperties, type ReactNode } from 'react'
+import { CloseIcon } from './icons'
 
 /**
  * Heliobond Toast — enters and exits from the same edge, swipe-to-dismiss in
@@ -59,7 +60,7 @@ export function Toast({ tone = 'neutral', title, message, action, onDismiss, sty
             style={{
               fontFamily: 'var(--font-body)',
               fontWeight: 600,
-              fontSize: 14.5,
+              fontSize: 'var(--type-data)',
               color: 'var(--ink)',
               marginBottom: message ? 2 : 0,
             }}
@@ -71,7 +72,7 @@ export function Toast({ tone = 'neutral', title, message, action, onDismiss, sty
           <div
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 13.5,
+              fontSize: 'var(--type-small)',
               lineHeight: 1.45,
               color: 'var(--ink-60)',
             }}
@@ -100,18 +101,7 @@ export function Toast({ tone = 'neutral', title, message, action, onDismiss, sty
             justifyContent: 'center',
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
+          <CloseIcon />
         </button>
       )}
     </div>

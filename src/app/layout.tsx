@@ -51,7 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 color: 'var(--ink)',
                 fontFamily: 'var(--font-body)',
                 fontWeight: 600,
-                fontSize: 14,
+                fontSize: 'var(--type-small)',
                 borderRadius: 'var(--radius-pill)',
                 border: '2px solid var(--solar)',
                 textDecoration: 'none',

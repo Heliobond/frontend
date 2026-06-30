@@ -48,7 +48,7 @@ export function Badge({ tone = 'neutral', icon = null, children, style, ...rest 
         padding: '0 10px',
         fontFamily: 'var(--font-body)',
         fontWeight: 600,
-        fontSize: 12.5,
+        fontSize: 'var(--type-caption)',
         letterSpacing: tone === 'testnet' ? '0.04em' : 0,
         textTransform: tone === 'testnet' ? 'uppercase' : 'none',
         borderRadius: 'var(--radius-pill)',

@@ -34,14 +34,20 @@ export function LiquidityMeter({
           marginBottom: 8,
         }}
       >
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, color: 'var(--ink-60)' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-small)',
+            color: 'var(--ink-60)',
+          }}
+        >
           Available to withdraw now
         </span>
         <span
           style={{
             fontFamily: 'var(--font-data)',
             fontWeight: 600,
-            fontSize: 16,
+            fontSize: 'var(--type-body)',
             color: 'var(--ink)',
           }}
         >
@@ -76,7 +82,7 @@ export function LiquidityMeter({
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 12.5,
+            fontSize: 'var(--type-caption)',
             lineHeight: 1.5,
             color: 'var(--ink-60)',
             margin: '8px 0 0',

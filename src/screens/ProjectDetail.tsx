@@ -1,6 +1,6 @@
 import { type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
-import { Badge, Button, ScoreGauge } from '../components'
+import { Badge, Button, PinIcon, ScoreGauge, ShieldCheckIcon } from '../components'
 import { Sparkline } from '../components/Sparkline'
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
@@ -34,7 +34,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             margin: '0 0 20px',
             cursor: 'pointer',
             fontFamily: 'var(--font-body)',
-            fontSize: 14,
+            fontSize: 'var(--type-small)',
             fontWeight: 600,
             color: 'var(--ink-60)',
           }}
@@ -107,7 +107,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             background: 'var(--surface)',
             border: '1px solid var(--ink-12)',
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
+            fontSize: 'var(--type-caption)',
             fontWeight: 600,
             color: 'var(--ink)',
           }}
@@ -121,7 +121,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
         <div
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 13.5,
+            fontSize: 'var(--type-small)',
             color: 'var(--ink-60)',
             marginBottom: 10,
           }}
@@ -131,7 +131,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 17,
+            fontSize: 'var(--type-body-lg)',
             lineHeight: 1.6,
             color: 'var(--ink-60)',
             margin: 0,
@@ -185,7 +185,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 <div
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 14.5,
+                    fontSize: 'var(--type-data)',
                     fontWeight: 600,
                     color: 'var(--ink)',
                   }}
@@ -195,7 +195,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 <div
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 12.5,
+                    fontSize: 'var(--type-caption)',
                     color: 'var(--ink-60)',
                     marginTop: 2,
                   }}
@@ -208,7 +208,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                   style={{
                     fontFamily: 'var(--font-data)',
                     fontWeight: 600,
-                    fontSize: 15,
+                    fontSize: 'var(--type-data)',
                     color: 'var(--ink)',
                     fontFeatureSettings: '"tnum" 1',
                   }}
@@ -218,7 +218,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 <div
                   style={{
                     fontFamily: 'var(--font-data)',
-                    fontSize: 12,
+                    fontSize: 'var(--type-eyebrow)',
                     color: 'var(--ink-40)',
                     marginTop: 2,
                   }}
@@ -238,7 +238,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 14.5,
+              fontSize: 'var(--type-data)',
               lineHeight: 1.6,
               color: 'var(--ink-60)',
               margin: '0 0 14px',
@@ -256,7 +256,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 cursor: 'pointer',
                 listStyle: 'none',
                 fontFamily: 'var(--font-body)',
-                fontSize: 14,
+                fontSize: 'var(--type-small)',
                 fontWeight: 600,
                 color: 'var(--ink)',
               }}
@@ -266,7 +266,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
             <p
               style={{
                 fontFamily: 'var(--font-data)',
-                fontSize: 13,
+                fontSize: 'var(--type-caption)',
                 lineHeight: 1.6,
                 color: 'var(--ink-60)',
                 background: 'var(--ink-06)',
@@ -289,7 +289,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
+            fontSize: 'var(--type-caption)',
             color: 'var(--ink-60)',
             textAlign: 'center',
             margin: 0,
@@ -309,7 +309,7 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                 padding: '6px 0',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-body)',
-                fontSize: 14,
+                fontSize: 'var(--type-small)',
                 fontWeight: 600,
                 color: 'var(--ink-60)',
               }}
@@ -365,7 +365,7 @@ function ScoreColumn({
         <span
           style={{
             fontFamily: 'var(--font-data)',
-            fontSize: 11,
+            fontSize: 'var(--type-fine)',
             color: 'var(--ink-40)',
             whiteSpace: 'nowrap',
           }}
@@ -375,7 +375,7 @@ function ScoreColumn({
         <span
           style={{
             fontFamily: 'var(--font-data)',
-            fontSize: 11,
+            fontSize: 'var(--type-fine)',
             color: 'var(--ink-40)',
             whiteSpace: 'nowrap',
           }}
@@ -390,7 +390,7 @@ function ScoreColumn({
 const sectionTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,
-  fontSize: 19,
+  fontSize: 'var(--type-h4)',
   letterSpacing: '-0.01em',
   color: 'var(--ink)',
   margin: '0 0 16px',
@@ -402,42 +402,4 @@ const cardStyle: CSSProperties = {
   borderRadius: 'var(--radius-card)',
   boxShadow: 'var(--shadow-sm)',
   padding: '8px 22px',
-}
-
-function PinIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="14"
-      height="14"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  )
-}
-
-function ShieldCheckIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="13"
-      height="13"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 3 5 6v5c0 4 3 6.5 7 8 4-1.5 7-4 7-8V6l-7-3Z" />
-      <path d="m9 11.5 2 2 4-4.5" />
-    </svg>
-  )
 }

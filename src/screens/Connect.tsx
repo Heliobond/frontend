@@ -37,7 +37,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 16.5,
+            fontSize: 'var(--type-body-lg)',
             color: 'var(--ink-60)',
             margin: 0,
           }}
@@ -74,7 +74,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
             <div
               style={{
                 fontFamily: 'var(--font-data)',
-                fontSize: 12,
+                fontSize: 'var(--type-eyebrow)',
                 color: 'var(--ink-40)',
                 marginBottom: 8,
               }}
@@ -85,7 +85,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
-                fontSize: 16,
+                fontSize: 'var(--type-body)',
                 margin: '0 0 6px',
                 color: 'var(--ink)',
               }}
@@ -95,7 +95,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
             <p
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 13.5,
+                fontSize: 'var(--type-small)',
                 lineHeight: 1.5,
                 color: 'var(--ink-60)',
                 margin: 0,
@@ -116,7 +116,7 @@ export function Connect({ onWallet, onNew, onCancel }: ConnectProps) {
             border: 'none',
             cursor: 'pointer',
             fontFamily: 'var(--font-body)',
-            fontSize: 14,
+            fontSize: 'var(--type-small)',
             color: 'var(--ink-60)',
           }}
         >
@@ -153,7 +153,7 @@ function Door({ title, body, cta, variant, onClick, chips }: DoorProps) {
         style={{
           fontFamily: 'var(--font-display)',
           fontWeight: 700,
-          fontSize: 21,
+          fontSize: 'var(--type-h3-sm)',
           letterSpacing: '-0.01em',
           margin: '0 0 8px',
           color: 'var(--ink)',
@@ -164,7 +164,7 @@ function Door({ title, body, cta, variant, onClick, chips }: DoorProps) {
       <p
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: 14.5,
+          fontSize: 'var(--type-data)',
           lineHeight: 1.5,
           color: 'var(--ink-60)',
           margin: '0 0 16px',
@@ -178,7 +178,7 @@ function Door({ title, body, cta, variant, onClick, chips }: DoorProps) {
             key={c}
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
+              fontSize: 'var(--type-caption)',
               color: 'var(--ink-60)',
               background: 'var(--ink-06)',
               borderRadius: 'var(--radius-pill)',

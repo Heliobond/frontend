@@ -70,7 +70,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 12,
+              fontSize: 'var(--type-eyebrow)',
               color: 'var(--ink-60)',
               margin: '8px 0 0',
             }}
@@ -87,7 +87,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 14,
+              fontSize: 'var(--type-small)',
               lineHeight: 1.55,
               color: 'var(--ink-60)',
               margin: '0 0 16px',
@@ -115,7 +115,11 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
           >
             <h3 style={cardTitle}>{t('activityTitle')}</h3>
             <span
-              style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-40)' }}
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-40)',
+              }}
             >
               {t('activityNote')}
             </span>
@@ -135,7 +139,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
                 <div
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 14,
+                    fontSize: 'var(--type-small)',
                     fontWeight: 600,
                     color: 'var(--ink)',
                   }}
@@ -143,7 +147,11 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
                   {a.kind}
                 </div>
                 <div
-                  style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--type-caption)',
+                    color: 'var(--ink-60)',
+                  }}
                 >
                   {a.amount}
                   {a.shares ? ` · ${a.shares}` : ''}
@@ -151,12 +159,20 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div
-                  style={{ fontFamily: 'var(--font-body)', fontSize: 12.5, color: 'var(--ink-60)' }}
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--type-caption)',
+                    color: 'var(--ink-60)',
+                  }}
                 >
                   {a.when}
                 </div>
                 <div
-                  style={{ fontFamily: 'var(--font-data)', fontSize: 12, color: 'var(--ink-40)' }}
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-eyebrow)',
+                    color: 'var(--ink-40)',
+                  }}
                 >
                   {a.hash} ↗
                 </div>
@@ -172,7 +188,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,
-  fontSize: 17,
+  fontSize: 'var(--type-body-lg)',
   margin: '0 0 10px',
   color: 'var(--ink)',
 }

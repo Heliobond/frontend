@@ -49,7 +49,7 @@ export default function ProjectDetailPage() {
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 800,
-            fontSize: 24,
+            fontSize: 'var(--type-h3)',
             color: 'var(--ink)',
             margin: 0,
           }}
@@ -59,7 +59,7 @@ export default function ProjectDetailPage() {
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 15,
+            fontSize: 'var(--type-data)',
             color: 'var(--ink-60)',
             margin: 0,
           }}

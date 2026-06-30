@@ -112,7 +112,7 @@ export function ScoreGauge({
         <div
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
+            fontSize: 'var(--type-caption)',
             color: 'var(--ink-60)',
             whiteSpace: 'nowrap',
           }}
@@ -128,7 +128,7 @@ export function ScoreGauge({
             rel="noreferrer"
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 11,
+              fontSize: 'var(--type-fine)',
               color: 'var(--ink-40)',
               whiteSpace: 'nowrap',
               textDecoration: 'none',
@@ -140,7 +140,7 @@ export function ScoreGauge({
           <span
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 11,
+              fontSize: 'var(--type-fine)',
               color: 'var(--ink-40)',
               whiteSpace: 'nowrap',
             }}

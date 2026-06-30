@@ -12,85 +12,22 @@ export function Footer() {
   const t = useTranslations('Footer')
   const links = [t('verify'), t('risk'), t('learn')]
   return (
-    <footer style={{ borderTop: '1px solid var(--ink-12)', background: 'var(--surface)' }}>
-      <div
-        style={{
-          maxWidth: 1320,
-          margin: '0 auto',
-          padding: '40px 32px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 16,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <footer className="hb-footer">
+      <div className="hb-footer__inner">
+        <div className="hb-footer__brand">
           <Mark size={24} />
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: 17,
-              color: 'var(--ink)',
-            }}
-          >
-            heliobond
-          </span>
+          <span className="hb-footer__wordmark">heliobond</span>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: 22,
-            alignItems: 'center',
-            fontFamily: 'var(--font-body)',
-            fontSize: 14,
-            color: 'var(--ink-60)',
-            flexWrap: 'wrap',
-          }}
-        >
+        <div className="hb-footer__links">
           {links.map((l) => (
-            <button
-              key={l}
-              className="hb-textlink"
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontSize: 'inherit',
-                color: 'var(--ink-60)',
-              }}
-            >
+            <button key={l} className="hb-textlink hb-footer__link">
               {l}
             </button>
           ))}
-          <button
-            className="hb-textlink"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 'inherit',
-              color: 'var(--ink)',
-              fontWeight: 600,
-            }}
-          >
+          <button className="hb-textlink hb-footer__link hb-footer__link--strong">
             {t('talk')}
           </button>
-          <Link
-            href="/admin"
-            className="hb-textlink"
-            style={{
-              color: 'var(--ink-40)',
-              textDecoration: 'none',
-              fontFamily: 'inherit',
-              fontSize: 13,
-            }}
-          >
+          <Link href="/admin" className="hb-textlink hb-footer__admin">
             {t('admin')}
           </Link>
         </div>

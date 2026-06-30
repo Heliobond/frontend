@@ -121,7 +121,13 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
               onChange={(e) => setAmount(sanitizeAmount(e.target.value))}
               style={{ ...textInput, flex: 1, fontSize: 18 }}
             />
-            <span style={{ fontFamily: 'var(--font-data)', fontSize: 13, color: 'var(--ink-60)' }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-data)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-60)',
+              }}
+            >
               USDC
             </span>
           </div>
@@ -161,7 +167,7 @@ function Panel({ title, hint, children }: { title: string; hint: string; childre
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 15.5,
+            fontSize: 'var(--type-body)',
             margin: 0,
             color: 'var(--ink)',
           }}
@@ -247,7 +253,7 @@ const textInput: CSSProperties = {
   height: 40,
   padding: '0 12px',
   fontFamily: 'var(--font-data)',
-  fontSize: 14,
+  fontSize: 'var(--type-small)',
   fontFeatureSettings: '"tnum" 1',
   color: 'var(--ink)',
   background: 'var(--surface)',
@@ -261,7 +267,7 @@ const selectStyle: CSSProperties = {
   height: 40,
   padding: '0 12px',
   fontFamily: 'var(--font-body)',
-  fontSize: 13.5,
+  fontSize: 'var(--type-small)',
   color: 'var(--ink)',
   background: 'var(--surface)',
   border: '1px solid var(--ink-12)',
@@ -274,7 +280,7 @@ const selectStyle: CSSProperties = {
 const helpText: CSSProperties = {
   margin: 0,
   fontFamily: 'var(--font-body)',
-  fontSize: 12.5,
+  fontSize: 'var(--type-caption)',
   lineHeight: 1.5,
   color: 'var(--ink-60)',
 }

@@ -31,10 +31,12 @@ export function StatBlock({
   href,
   style,
 }: StatBlockProps) {
-  const sizes: Record<StatBlockSize, { value: number; label: number }> = {
-    sm: { value: 18, label: 12 },
-    md: { value: 28, label: 13 },
-    lg: { value: 40, label: 13.5 },
+  // Each rung maps onto the shared type ladder (see tokens/typography.css):
+  // value is the figure, label the caption, delta the signed change.
+  const sizes: Record<StatBlockSize, { value: string; label: string; delta: string }> = {
+    sm: { value: 'var(--type-h5)', label: 'var(--type-eyebrow)', delta: 'var(--type-caption)' },
+    md: { value: 'var(--type-h2)', label: 'var(--type-caption)', delta: 'var(--type-small)' },
+    lg: { value: 'var(--type-data-xl)', label: 'var(--type-small)', delta: 'var(--type-h4)' },
   }
   const s = sizes[size] ?? sizes.md
 
@@ -87,7 +89,7 @@ export function StatBlock({
             style={{
               fontFamily: 'var(--font-data)',
               fontWeight: 600,
-              fontSize: Math.max(13, s.value * 0.5),
+              fontSize: s.delta,
               color: deltaColor,
               whiteSpace: 'nowrap',
             }}

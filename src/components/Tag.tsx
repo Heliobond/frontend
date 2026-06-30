@@ -28,7 +28,7 @@ export function Tag({ selected = false, onClick, children, style, ...rest }: Tag
         padding: '0 14px',
         fontFamily: 'var(--font-body)',
         fontWeight: 500,
-        fontSize: 13.5,
+        fontSize: 'var(--type-small)',
         color: 'var(--ink)',
         background: selected
           ? 'var(--solar-12)'

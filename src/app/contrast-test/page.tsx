@@ -12,7 +12,7 @@ export default function ContrastTestPage() {
       <h1
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 32,
+          fontSize: 'var(--type-h1)',
           fontWeight: 800,
           color: 'var(--ink)',
           marginBottom: 8,
@@ -23,7 +23,7 @@ export default function ContrastTestPage() {
       <p
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: 16,
+          fontSize: 'var(--type-body)',
           color: 'var(--ink-60)',
           marginBottom: 32,
         }}
@@ -36,7 +36,7 @@ export default function ContrastTestPage() {
         <h2
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 'var(--type-h3-sm)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginBottom: 16,
@@ -113,7 +113,7 @@ export default function ContrastTestPage() {
         <h2
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 'var(--type-h3-sm)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginBottom: 16,
@@ -135,7 +135,7 @@ export default function ContrastTestPage() {
         <h2
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 'var(--type-h3-sm)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginBottom: 16,
@@ -158,7 +158,7 @@ export default function ContrastTestPage() {
           <div
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 14,
+              fontSize: 'var(--type-small)',
               color: 'var(--ink)',
             }}
           >
@@ -168,7 +168,7 @@ export default function ContrastTestPage() {
           <div
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 14,
+              fontSize: 'var(--type-small)',
               color: 'var(--ink)',
             }}
           >
@@ -182,7 +182,7 @@ export default function ContrastTestPage() {
         <h2
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 'var(--type-h3-sm)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginBottom: 16,
@@ -203,14 +203,19 @@ export default function ContrastTestPage() {
           }}
         >
           <p
-            style={{ fontFamily: 'var(--font-body)', fontSize: 16, color: 'var(--ink)', margin: 0 }}
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-body)',
+              color: 'var(--ink)',
+              margin: 0,
+            }}
           >
             Primary text using --ink (full contrast)
           </p>
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 16,
+              fontSize: 'var(--type-body)',
               color: 'var(--ink-60)',
               margin: 0,
             }}
@@ -220,7 +225,7 @@ export default function ContrastTestPage() {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 16,
+              fontSize: 'var(--type-body)',
               color: 'var(--ink-40)',
               margin: 0,
             }}
@@ -230,7 +235,7 @@ export default function ContrastTestPage() {
           <p
             style={{
               fontFamily: 'var(--font-data)',
-              fontSize: 13,
+              fontSize: 'var(--type-caption)',
               color: 'var(--ink-40)',
               margin: 0,
             }}
@@ -245,7 +250,7 @@ export default function ContrastTestPage() {
         <h2
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 22,
+            fontSize: 'var(--type-h3-sm)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginBottom: 16,
@@ -260,7 +265,7 @@ export default function ContrastTestPage() {
             borderRadius: 'var(--radius-card)',
             padding: 20,
             fontFamily: 'var(--font-body)',
-            fontSize: 14,
+            fontSize: 'var(--type-small)',
             lineHeight: 1.6,
             color: 'var(--ink-60)',
           }}
@@ -313,7 +318,7 @@ export default function ContrastTestPage() {
         <h3
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 18,
+            fontSize: 'var(--type-h5)',
             fontWeight: 700,
             color: 'var(--ink)',
             marginTop: 0,
@@ -325,7 +330,7 @@ export default function ContrastTestPage() {
         <ol
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 14,
+            fontSize: 'var(--type-small)',
             lineHeight: 1.6,
             color: 'var(--ink-60)',
             margin: 0,

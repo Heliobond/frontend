@@ -55,7 +55,7 @@ export function Explore({ onOpen }: ExploreProps) {
         <p
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 16,
+            fontSize: 'var(--type-body)',
             color: 'var(--ink-60)',
             margin: 0,
             maxWidth: 560,
@@ -75,7 +75,7 @@ export function Explore({ onOpen }: ExploreProps) {
             background: 'var(--ink-06)',
             border: '1px solid var(--ink-12)',
             fontFamily: 'var(--font-body)',
-            fontSize: 13,
+            fontSize: 'var(--type-caption)',
             color: 'var(--ink-60)',
           }}
         >
@@ -101,7 +101,13 @@ export function Explore({ onOpen }: ExploreProps) {
           ))}
         </div>
         {!loading && (
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: 13.5, color: 'var(--ink-60)' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-small)',
+              color: 'var(--ink-60)',
+            }}
+          >
             {t('countSorted', { count: shown.length })}
           </span>
         )}
@@ -127,7 +133,7 @@ export function Explore({ onOpen }: ExploreProps) {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 20,
+              fontSize: 'var(--type-h4)',
               color: 'var(--ink)',
               margin: '0 0 8px',
             }}
@@ -137,7 +143,7 @@ export function Explore({ onOpen }: ExploreProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 14.5,
+              fontSize: 'var(--type-data)',
               color: 'var(--ink-60)',
               maxWidth: 400,
               margin: 0,

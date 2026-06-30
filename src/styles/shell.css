@@ -1,0 +1,258 @@
+/* ===========================================================================
+   Heliobond · App-shell component styles
+   ---------------------------------------------------------------------------
+   The first components migrated off inline-style objects onto the stylesheet
+   layer (see src/styles/README.md). The shell — top bar, wallet menu, footer —
+   now styles through `hb-`-prefixed classes reached via `className`, so :hover,
+   :focus-visible and media queries work without per-element JS state.
+
+   Convention: BEM-ish names (block__element--modifier). Every value is a design
+   token via var(--…); no raw colours or px font-sizes. Layout/responsive grids
+   stay in app.css; this file is component chrome.
+   =========================================================================== */
+
+/* --- Top bar -------------------------------------------------------------- */
+.hb-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 32px;
+  height: 68px;
+  background: color-mix(in srgb, var(--canvas) 86%, transparent);
+  backdrop-filter: saturate(140%) blur(12px);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--ink-12);
+}
+
+.hb-topbar__home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.hb-topbar__wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--type-h3-sm);
+  letter-spacing: var(--tracking-wordmark);
+  color: var(--ink);
+}
+
+.hb-topbar__nav {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.hb-topbar__nav-link {
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: var(--type-data);
+  font-weight: var(--weight-medium);
+  color: var(--ink-60);
+  transition: color var(--dur-press) var(--ease-out);
+}
+.hb-topbar__nav-link[aria-current='page'] {
+  color: var(--ink);
+}
+
+.hb-topbar__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hb-topbar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-data);
+  font-size: var(--type-eyebrow);
+  color: var(--ink-60);
+}
+.hb-topbar__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--growth);
+  box-shadow: 0 0 0 3px var(--growth-12);
+}
+
+.hb-topbar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-60);
+  transition:
+    color var(--dur-press) var(--ease-out),
+    background var(--dur-press) var(--ease-out);
+}
+/* Language switcher: same chrome, sized to its label + chevron */
+.hb-topbar__lang {
+  width: auto;
+  gap: 5px;
+  padding: 0 6px;
+  font-family: var(--font-body);
+  font-size: var(--type-small);
+}
+
+/* --- Wallet pill + account menu ------------------------------------------- */
+.hb-wallet {
+  position: relative;
+}
+.hb-wallet__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--ink-12);
+  border-radius: var(--radius-pill);
+  height: 40px;
+  padding: 0 6px 0 14px;
+  cursor: pointer;
+}
+.hb-wallet__addr {
+  font-family: var(--font-data);
+  font-size: var(--type-caption);
+  color: var(--ink);
+}
+.hb-wallet__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--solar);
+}
+.hb-wallet__menu {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  min-width: 224px;
+  background: var(--surface);
+  border: 1px solid var(--ink-12);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+  z-index: 400;
+}
+.hb-wallet__head {
+  padding: 8px 10px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hb-wallet__head-addr {
+  font-family: var(--font-data);
+  font-size: var(--type-caption);
+  color: var(--ink);
+}
+.hb-wallet__head-net {
+  font-family: var(--font-body);
+  font-size: var(--type-fine);
+  color: var(--ink-40);
+}
+.hb-wallet__sep {
+  height: 1px;
+  background: var(--ink-12);
+  margin: 4px 0;
+}
+
+.hb-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 9px 10px;
+  border-radius: var(--radius-input);
+  font-family: var(--font-body);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  text-decoration: none;
+}
+.hb-menu-item--ember {
+  color: var(--ember);
+}
+
+/* --- Footer --------------------------------------------------------------- */
+.hb-footer {
+  border-top: 1px solid var(--ink-12);
+  background: var(--surface);
+}
+.hb-footer__inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.hb-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hb-footer__wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-size: var(--type-body-lg);
+  color: var(--ink);
+}
+.hb-footer__links {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: var(--type-small);
+  color: var(--ink-60);
+  flex-wrap: wrap;
+}
+.hb-footer__link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--ink-60);
+}
+.hb-footer__link--strong {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+}
+.hb-footer__admin {
+  color: var(--ink-40);
+  text-decoration: none;
+  font-family: inherit;
+  font-size: var(--type-caption);
+}
+
+/* Hover is opt-in to fine pointers so it never sticks on touch. */
+@media (hover: hover) and (pointer: fine) {
+  .hb-topbar__nav-link:hover {
+    color: var(--ink);
+  }
+  .hb-topbar__icon-btn:hover {
+    background: var(--ink-06);
+    color: var(--ink);
+  }
+  .hb-menu-item:hover {
+    background: var(--ink-06);
+  }
+}

@@ -18,6 +18,7 @@ export function ProjectBuilder() {
   const [type, setType] = useState<ProjectType>(DRAFT_PROJECT.type)
   const [story, setStory] = useState(DRAFT_PROJECT.story)
   const [fundingGoal, setFundingGoal] = useState(String(DRAFT_PROJECT.fundingGoal))
+  const goalErrorId = useId()
 
   const goalNumber = Number(fundingGoal.replace(/[^0-9.]/g, '')) || 0
 
@@ -104,7 +105,7 @@ export function ProjectBuilder() {
                 top: '50%',
                 transform: 'translateY(-50%)',
                 fontFamily: 'var(--font-data)',
-                fontSize: 15,
+                fontSize: 'var(--type-data)',
                 color: 'var(--ink-60)',
               }}
             >
@@ -113,17 +114,34 @@ export function ProjectBuilder() {
             <input
               id="hb-goal"
               type="text"
-              inputMode="numeric"
+              inputMode="decimal"
               value={fundingGoal}
-              onChange={(e) => setFundingGoal(e.target.value)}
+              onChange={(e) => handleGoalChange(e.target.value)}
+              aria-invalid={goalError != null}
+              aria-describedby={goalError ? goalErrorId : undefined}
               style={{
                 ...inputStyle,
                 paddingLeft: 28,
                 fontFamily: 'var(--font-data)',
                 fontFeatureSettings: '"tnum" 1',
+                borderColor: goalError ? 'var(--ember)' : 'var(--ink-12)',
               }}
             />
           </div>
+          {goalError && (
+            <p
+              id={goalErrorId}
+              role="alert"
+              style={{
+                margin: '8px 0 0',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ember)',
+              }}
+            >
+              {goalError}
+            </p>
+          )}
         </Field>
 
         <Label>{t('fieldMediaDocs')}</Label>
@@ -151,7 +169,7 @@ export function ProjectBuilder() {
           <span
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 12.5,
+              fontSize: 'var(--type-caption)',
               fontWeight: 600,
               color: 'var(--ink)',
             }}
@@ -243,25 +261,11 @@ function DropZone({
           cursor: 'pointer',
         }}
       />
-      <svg
-        viewBox="0 0 24 24"
-        width="22"
-        height="22"
-        fill="none"
-        stroke="var(--ink)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M12 16V4" />
-        <path d="m7 9 5-5 5 5" />
-        <path d="M5 20h14" />
-      </svg>
+      <UploadIcon style={{ color: 'var(--ink)' }} />
       <div
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: 13,
+          fontSize: 'var(--type-caption)',
           fontWeight: 600,
           color: 'var(--ink)',
         }}
@@ -272,7 +276,7 @@ function DropZone({
         id={hintId}
         style={{
           fontFamily: 'var(--font-body)',
-          fontSize: 11.5,
+          fontSize: 'var(--type-eyebrow)',
           color: 'var(--ink-60)',
           lineHeight: 1.4,
         }}
@@ -307,7 +311,7 @@ function Label({ htmlFor, children }: { htmlFor?: string; children: ReactNode })
       style={{
         display: 'block',
         fontFamily: 'var(--font-body)',
-        fontSize: 13,
+        fontSize: 'var(--type-caption)',
         fontWeight: 600,
         color: 'var(--ink)',
         marginBottom: 8,
@@ -321,14 +325,14 @@ function Label({ htmlFor, children }: { htmlFor?: string; children: ReactNode })
 const cardTitle: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,
-  fontSize: 18,
+  fontSize: 'var(--type-h5)',
   margin: '0 0 8px',
   color: 'var(--ink)',
   letterSpacing: '-0.01em',
 }
 const subtle: CSSProperties = {
   fontFamily: 'var(--font-body)',
-  fontSize: 13.5,
+  fontSize: 'var(--type-small)',
   lineHeight: 1.5,
   color: 'var(--ink-60)',
 }
@@ -337,7 +341,7 @@ const inputStyle: CSSProperties = {
   height: 44,
   padding: '0 14px',
   fontFamily: 'var(--font-body)',
-  fontSize: 15,
+  fontSize: 'var(--type-data)',
   color: 'var(--ink)',
   background: 'var(--surface)',
   border: '1px solid var(--ink-12)',

@@ -65,7 +65,7 @@ export function AmountInput({
           htmlFor={id}
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: 13.5,
+            fontSize: 'var(--type-small)',
             fontWeight: 600,
             color: 'var(--ink)',
           }}
@@ -73,7 +73,13 @@ export function AmountInput({
           {label}
         </label>
         {balance != null && (
-          <span style={{ fontFamily: 'var(--font-data)', fontSize: 12.5, color: 'var(--ink-60)' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
             {balanceLabel} {balance} {currency}
           </span>
         )}
@@ -114,7 +120,7 @@ export function AmountInput({
         <span
           style={{
             fontFamily: 'var(--font-data)',
-            fontSize: 15,
+            fontSize: 'var(--type-data)',
             color: 'var(--ink-60)',
             fontWeight: 500,
           }}
@@ -232,7 +238,7 @@ const chipStyle: CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'var(--font-body)',
   fontWeight: 600,
-  fontSize: 13.5,
+  fontSize: 'var(--type-small)',
   color: 'var(--ink)',
 }
 

@@ -97,7 +97,7 @@ export function AdminConsole() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 28,
+              fontSize: 'var(--type-h2)',
               margin: 0,
               color: 'var(--ink)',
             }}
@@ -156,8 +156,8 @@ export function AdminConsole() {
               }}
             >
               <div style={{ minWidth: 180, flex: '1 1 200px' }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</div>
-                <div style={{ ...subtext, fontSize: 12 }}>
+                <div style={{ fontWeight: 600, fontSize: 'var(--type-small)' }}>{c.name}</div>
+                <div style={{ ...subtext, fontSize: 'var(--type-eyebrow)' }}>
                   <span style={{ fontFamily: 'var(--font-data)', fontFeatureSettings: '"tnum" 1' }}>
                     {c.projects}
                   </span>{' '}
@@ -223,7 +223,7 @@ function Section({
           style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 700,
-            fontSize: 18,
+            fontSize: 'var(--type-h5)',
             margin: 0,
             color: 'var(--ink)',
           }}
@@ -265,7 +265,7 @@ function StatCell({
           style={{
             fontFamily: 'var(--font-data)',
             fontWeight: 600,
-            fontSize: 19,
+            fontSize: 'var(--type-h4)',
             color: 'var(--ink)',
             fontFeatureSettings: '"tnum" 1',
             lineHeight: 1.1,
@@ -274,7 +274,13 @@ function StatCell({
           {value}
         </span>
         {unit && (
-          <span style={{ fontFamily: 'var(--font-data)', fontSize: 11, color: 'var(--ink-60)' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-data)',
+              fontSize: 'var(--type-fine)',
+              color: 'var(--ink-60)',
+            }}
+          >
             {unit}
           </span>
         )}
@@ -313,7 +319,7 @@ const statRow: CSSProperties = {
 const subtext: CSSProperties = {
   margin: 0,
   fontFamily: 'var(--font-body)',
-  fontSize: 12.5,
+  fontSize: 'var(--type-caption)',
   lineHeight: 1.5,
   color: 'var(--ink-60)',
 }

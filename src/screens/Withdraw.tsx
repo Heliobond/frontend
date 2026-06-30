@@ -66,7 +66,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 background: 'rgba(179,54,27,0.07)',
                 border: '1px solid rgba(179,54,27,0.18)',
                 fontFamily: 'var(--font-body)',
-                fontSize: 13.5,
+                fontSize: 'var(--type-small)',
                 color: 'var(--ember)',
               }}
             >
@@ -136,7 +136,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               border: 'none',
               cursor: 'pointer',
               fontFamily: 'var(--font-body)',
-              fontSize: 14,
+              fontSize: 'var(--type-small)',
               color: 'var(--ink-60)',
             }}
           >
@@ -170,7 +170,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
             <p
               style={{
                 fontFamily: 'var(--font-body)',
-                fontSize: 14.5,
+                fontSize: 'var(--type-data)',
                 color: 'var(--ink-60)',
                 margin: 0,
               }}
@@ -204,7 +204,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
           <p
             style={{
               fontFamily: 'var(--font-body)',
-              fontSize: 15,
+              fontSize: 'var(--type-data)',
               lineHeight: 1.55,
               color: 'var(--ink-60)',
               textAlign: 'center',
@@ -228,7 +228,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 rel="noreferrer"
                 style={{
                   fontFamily: 'var(--font-data)',
-                  fontSize: 12.5,
+                  fontSize: 'var(--type-caption)',
                   color: 'var(--ink-40)',
                   textDecoration: 'none',
                 }}
@@ -256,7 +256,7 @@ const panel: CSSProperties = {
 const hw: CSSProperties = {
   fontFamily: 'var(--font-display)',
   fontWeight: 700,
-  fontSize: 23,
+  fontSize: 'var(--type-h3)',
   lineHeight: 1.2,
   letterSpacing: '-0.01em',
   margin: '0 0 18px',
