@@ -1,4 +1,7 @@
+'use client'
+
 import { useState, type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 
 /**
  * Heliobond AddressChip — a Stellar address or tx hash, truncated in the
@@ -22,6 +25,7 @@ export function AddressChip({
   label = 'address',
   style,
 }: AddressChipProps) {
+  const t = useTranslations('Common')
   const [copied, setCopied] = useState(false)
   const [hover, setHover] = useState(false)
 
@@ -66,7 +70,7 @@ export function AddressChip({
       </span>
       <button
         type="button"
-        aria-label={copied ? 'Copied' : `Copy ${label}`}
+        aria-label={copied ? t('copied') : t('copyAddress', { label })}
         onClick={copy}
         style={iconBtn}
       >
@@ -77,7 +81,7 @@ export function AddressChip({
           href={explorerUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label={`View ${label} on Stellar Expert`}
+          aria-label={t('viewOnExplorer', { label })}
           style={iconBtn}
         >
           <ExternalIcon />

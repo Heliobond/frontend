@@ -85,19 +85,13 @@ export function Landing({ onConnect, onNav }: LandingProps) {
           }}
         >
           <div style={counterCell}>
-            <StatBlock
-              label={t('poolValue')}
-              value="$4,862,014"
-              decimals=".55"
-              size="lg"
-              href="#"
-            />
+            <StatBlock label={t('poolValue')} value="$4,862,014" decimals=".55" size="lg" />
           </div>
           <div style={counterCell}>
-            <StatBlock label={t('projectsFunded')} value="14" size="lg" href="#" />
+            <StatBlock label={t('projectsFunded')} value="14" size="lg" />
           </div>
           <div style={counterCell}>
-            <StatBlock label={t('returnRate')} value="7.4" unit="%" size="lg" href="#" />
+            <StatBlock label={t('returnRate')} value="7.4" unit="%" size="lg" />
           </div>
         </div>
         <p
@@ -258,9 +252,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
                 padding: '16px 18px',
               }}
             >
-              <span
-                style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, color: 'var(--ink-60)' }}
-              >
+              <span style={{ fontFamily: 'var(--font-body)', fontSize: 14.5, color: 'var(--ink-60)' }}>
                 {k}
               </span>
               <span style={{ fontFamily: 'var(--font-data)', fontSize: 13.5, color: 'var(--ink)' }}>

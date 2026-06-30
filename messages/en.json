@@ -1,4 +1,9 @@
 {
+  "Common": {
+    "copyAddress": "Copy {label}",
+    "copied": "Copied",
+    "viewOnExplorer": "View {label} on Stellar Expert"
+  },
   "Nav": {
     "explore": "Explore",
     "how": "How it works",
@@ -19,6 +24,7 @@
     "demoSession": "Demo session"
   },
   "Footer": {
+    "trustLinks": "Trust links",
     "verify": "Verify everything",
     "risk": "Risk disclosure",
     "learn": "Learn",
@@ -235,6 +241,8 @@
     "actionSave": "Save"
   },
   "Creator": {
+    "title": "Creator space",
+    "description": "Apply for the whitelist, build your project page, and watch the pool fund it. The oracle scores your credit quality and green impact, and we show you exactly what moves them.",
     "h1": "Creator space",
     "subtitle": "Apply for the whitelist, build your project page, and watch the pool fund it. The oracle scores your credit quality and green impact, and we show you exactly what moves them.",
     "tabApply": "Apply",
