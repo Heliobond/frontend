@@ -249,11 +249,7 @@ function Select({
   label: string
 }) {
   return (
-    <FormSelect
-      aria-label={label}
-      value={value}
-      onChange={(e) => onChange(Number(e.target.value))}
-    >
+    <FormSelect aria-label={label} value={value} onChange={(e) => onChange(Number(e.target.value))}>
       {projects.map((p) => (
         <option key={p.id} value={p.id}>
           {p.name}

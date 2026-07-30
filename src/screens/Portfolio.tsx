@@ -24,8 +24,19 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
 
   if (!connected) {
     return (
-      <main id="main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
-        <Card style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'flex-start' }}>
+      <main
+        id="main-content"
+        style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}
+      >
+        <Card
+          style={{
+            padding: 32,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            alignItems: 'flex-start',
+          }}
+        >
           <div className="hb-eyebrow">{t('eyebrow')}</div>
           <h2 style={{ ...cardTitle, margin: 0 }}>Connect your wallet to view your portfolio</h2>
           <p
