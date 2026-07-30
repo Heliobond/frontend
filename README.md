@@ -102,3 +102,8 @@ public/assets/             analemma marks, wordmark, favicon
 
 Implemented from the _Heliobond Design System_ handoff bundle exported from
 Claude Design. The reference bundle lives under `.design-handoff/` (gitignored).
+
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
