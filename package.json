@@ -19,6 +19,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
@@ -29,6 +30,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
+      "eslint --fix",
       "bash -c \"tsc --noEmit\""
     ]
   },
@@ -57,6 +59,9 @@
     "@vitest/ui": "^4.1.9",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.9",
+    "eslint-import-resolver-typescript": "^3.10.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "husky": "^9.1.7",
     "jsdom": "^24.0.0",
     "lint-staged": "^15.5.2",

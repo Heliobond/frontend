@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+public/
+coverage/
+*.min.js
+next-env.d.ts
+.vercel/
+.design-handoff/
+bun.lock
+package-lock.json
+messages/
