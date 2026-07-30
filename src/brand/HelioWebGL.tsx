@@ -24,6 +24,8 @@ import type { ComponentRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { MeshDistortMaterial } from '@react-three/drei'
 import * as THREE from 'three'
+/* --- Brand palette (shared with the static Helio and the CSS tokens) ------ */
+import { SOLAR, SOLAR_CORE as CORE, SOLAR_HALO as HALO, INK, SOLAR_HIGHLIGHT } from './palette'
 
 export interface HelioWebGLProps {
   /** Rendered size in px (square). */
@@ -35,12 +37,6 @@ export interface HelioWebGLProps {
   /** Fired once the canvas has painted its first frame (used to cross-fade from the static fallback). */
   onReady?: () => void
 }
-
-/* --- Brand palette (matches the static Helio exactly) -------------------- */
-const SOLAR = '#FFB400' // the sun — emissive accent
-const CORE = '#FFD451' // warm core surface tint
-const HALO = '#FFC633' // glow halo (sits between core and solar)
-const INK = '#0B2B23' // deep pine — corona motes
 
 const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n)
 
@@ -274,7 +270,7 @@ function Scene({
           highlight (echoing the static SVG's specular), plus a core glow light. */}
       <ambientLight intensity={0.28} />
       <pointLight position={[0, 0, 0]} intensity={0.9} color={SOLAR} distance={8} />
-      <directionalLight position={[-2.2, 2.4, 3]} intensity={1.05} color={'#FFF4D6'} />
+      <directionalLight position={[-2.2, 2.4, 3]} intensity={1.05} color={SOLAR_HIGHLIGHT} />
       <Halo animate={animate} intensity={intensity} />
       <Sun animate={animate} intensity={intensity} />
       <Corona specs={specs} animate={animate} />

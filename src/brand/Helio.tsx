@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { INK, SOLAR_RAMP, solarAlpha } from './palette'
 
 /**
  * Helio — the platform's one spectacle, here in its static, accessible fallback
@@ -36,20 +37,19 @@ export function Helio({ size = 360, motes = 14, breathe = true }: HelioProps) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <radialGradient id={coreId} cx="42%" cy="38%" r="68%">
-            <stop offset="0%" stopColor="#FFF4D6" />
-            <stop offset="34%" stopColor="#FFD451" />
-            <stop offset="72%" stopColor="#FFB400" />
-            <stop offset="100%" stopColor="#F59A00" />
+            {SOLAR_RAMP.map((stop) => (
+              <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
+            ))}
           </radialGradient>
           <radialGradient id={glowId} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,180,0,0.42)" />
-            <stop offset="55%" stopColor="rgba(255,180,0,0.12)" />
-            <stop offset="100%" stopColor="rgba(255,180,0,0)" />
+            <stop offset="0%" stopColor={solarAlpha(0.42)} />
+            <stop offset="55%" stopColor={solarAlpha(0.12)} />
+            <stop offset="100%" stopColor={solarAlpha(0)} />
           </radialGradient>
         </defs>
         <circle cx={cx} cy={cx} r={size * 0.48} fill={`url(#${glowId})`} />
         {dots.map((d, i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={d.s} fill="#0B2B23" opacity="0.55" />
+          <circle key={i} cx={d.x} cy={d.y} r={d.s} fill={INK} opacity="0.55" />
         ))}
         <g
           className="hb-orb"

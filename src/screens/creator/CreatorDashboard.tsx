@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties } from 'react'
+import { useId, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { StatBlock, ScoreGauge, Badge, Card, Sparkline } from '@/components'
 import {
@@ -21,6 +21,7 @@ export interface CreatorDashboardProps {
 
 export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardProps) {
   const t = useTranslations('Creator')
+  const fundingCaptionId = useId()
   const fundedPct =
     data.fundingGoal > 0 ? Math.round((data.fundingReceived / data.fundingGoal) * 100) : 0
 
@@ -67,6 +68,15 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
           />
           <div style={{ marginTop: 16 }}>
             <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.min(100, fundedPct)}
+              aria-valuetext={t('dashGoalDeployed', {
+                pct: fundedPct,
+                goal: data.fundingGoal.toLocaleString('en-US'),
+              })}
+              aria-labelledby={fundingCaptionId}
               style={{
                 height: 8,
                 borderRadius: 'var(--radius-pill)',
@@ -80,10 +90,19 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
                   width: `${Math.min(100, fundedPct)}%`,
                   height: '100%',
                   background: 'var(--solar)',
+                  /* The fill's leading edge is drawn in ink so the boundary is
+                     legible without perceiving the solar hue at all — the bar
+                     still reads in greyscale, under a colour-vision deficiency,
+                     or with forced colours on. Solar therefore decorates the
+                     value; it never carries it alone. */
+                  borderRight:
+                    fundedPct > 0 && fundedPct < 100 ? '2px solid var(--ink)' : undefined,
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
             <div
+              id={fundingCaptionId}
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-caption)',

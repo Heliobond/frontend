@@ -3,6 +3,13 @@
  * year-long path), drawn in currentColor with the one permitted second colour:
  * a solar dot. Upper loop subtly smaller, as in the real analemma.
  */
+/**
+ * The Heliobond analemma — a single continuous tilted figure-eight (the sun's
+ * year-long path), drawn in currentColor with the one permitted second colour:
+ * a solar dot. Upper loop subtly smaller, as in the real analemma.
+ */
+import { SOLAR } from './palette'
+
 export interface MarkProps {
   size?: number
 }
@@ -24,7 +31,7 @@ export function Mark({ size = 28 }: MarkProps) {
             strokeLinejoin="round"
             strokeLinecap="round"
           />
-          <circle cx="64" cy="20" r="7" fill="#FFB400" />
+          <circle cx="64" cy="20" r="7" fill={SOLAR} />
         </g>
       </svg>
     </span>
