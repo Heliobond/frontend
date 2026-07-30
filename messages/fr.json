@@ -103,7 +103,9 @@
     "cardFundedFromPool": "Financé par le pool",
     "cardVerifiedAgo": "vérifié il y a {ago}",
     "emptyTitle": "Aucun projet trouvé",
-    "emptySub": "Il n'y a aucun projet correspondant à la catégorie \"{filter}\" dans le pool en ce moment."
+    "emptySub": "Il n'y a aucun projet correspondant à la catégorie \"{filter}\" dans le pool en ce moment.",
+    "loadMore": "Afficher {count} de plus",
+    "showingCount": "{shown} projets sur {total} affichés"
   },
   "Deposit": {
     "stepAmount": "Montant",

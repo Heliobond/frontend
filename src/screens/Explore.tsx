@@ -17,6 +17,13 @@ export interface ExploreProps {
 
 const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
 
+/**
+ * Projects rendered per page. Twelve fills the widest grid with whole rows at
+ * every breakpoint (the grid runs 1–4 columns), so a page boundary never leaves
+ * a ragged half-row.
+ */
+const PAGE_SIZE = 12
+
 export function Explore({ onOpen }: ExploreProps) {
   const t = useTranslations('Explore')
   const router = useRouter()
@@ -28,6 +35,10 @@ export function Explore({ onOpen }: ExploreProps) {
   const [filter, setFilter] = useState<ProjectType | 'All'>(
     urlType && ['Solar', 'Wind', 'Hydro'].includes(urlType) ? urlType : 'All',
   )
+  // Explore used to render the entire registry in one pass. That is fine for a
+  // seed list and unbounded once the real registry lands, so the grid now grows
+  // a page at a time instead.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   useEffect(() => {
     getProjects()
@@ -43,6 +54,9 @@ export function Explore({ onOpen }: ExploreProps) {
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
     setFilter(next)
+    // A new filter is a new list — start it at the first page rather than
+    // carrying the previous filter's scroll depth across.
+    setVisibleCount(PAGE_SIZE)
     if (next === 'All') {
       router.replace('/explore', { scroll: false })
     } else {
@@ -51,6 +65,8 @@ export function Explore({ onOpen }: ExploreProps) {
   }
 
   const shown = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
+  const visible = shown.slice(0, visibleCount)
+  const remaining = shown.length - visible.length
 
   return (
     <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -171,7 +187,7 @@ export function Explore({ onOpen }: ExploreProps) {
         <div className="hb-projects-grid">
           {loading
             ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-            : shown.map((p) => (
+            : visible.map((p) => (
                 <ProjectCard
                   key={p.id}
                   name={p.name}
@@ -186,6 +202,47 @@ export function Explore({ onOpen }: ExploreProps) {
                   fundedAmount={p.fundedAmount}
                 />
               ))}
+        </div>
+      )}
+      {!loading && remaining > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 10,
+            marginTop: 32,
+          }}
+        >
+          {/* Progress through the list, announced politely so a screen-reader
+              user learns the grid grew without the update stealing focus. */}
+          <p
+            aria-live="polite"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+              margin: 0,
+            }}
+          >
+            {t('showingCount', { shown: visible.length, total: shown.length })}
+          </p>
+          <button
+            type="button"
+            onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-data)',
+              color: 'var(--ink)',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-hairline)',
+              borderRadius: 'var(--radius-pill)',
+              padding: '10px 22px',
+              cursor: 'pointer',
+            }}
+          >
+            {t('loadMore', { count: Math.min(PAGE_SIZE, remaining) })}
+          </button>
         </div>
       )}
     </main>

@@ -25,6 +25,15 @@ interface WalletContextValue {
   connected: boolean
   connecting: boolean
   isDemo: boolean
+  /**
+   * True until the persisted session has been read back from localStorage.
+   *
+   * The restore happens in an effect, so on the very first render `address` is
+   * null even for a user who *is* connected. Anything that reacts to the
+   * absence of a connection — route guards especially — must wait for this to
+   * go false, or it will act on a connected user mid-rehydration.
+   */
+  restoring: boolean
   connect: () => Promise<void>
   connectDemo: () => void
   disconnect: () => void
@@ -55,6 +64,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
+  const [restoring, setRestoring] = useState(true)
 
   const persist = useCallback((addr: string, walletId: string) => {
     try {
@@ -83,10 +93,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    if (!saved) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRestoring(false)
+      return
+    }
+    // The disable above covers this effect's set-state calls; the restore is
+    // intentionally a post-mount read of localStorage.
     setAddress(saved)
     setIsDemo(savedWallet === 'demo')
+    setRestoring(false)
 
     // Re-select the real wallet module in the kit so signing works after a
     // reload (the demo session needs nothing).
@@ -169,6 +185,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         connected: address !== null,
         connecting,
         isDemo,
+        restoring,
         connect,
         connectDemo,
         disconnect,
