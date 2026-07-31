@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { vault, SHARE_PRICE } from './vault'
+import { vault, SHARE_PRICE, submitDeposit, submitWithdraw } from './vault'
 
 describe('Vault math functions', () => {
   describe('convertToShares', () => {
@@ -179,6 +179,37 @@ describe('Vault math functions', () => {
       const backToUsdc = vault.convertToAssets(shares)
 
       expect(backToUsdc).toBeCloseTo(usdc)
+    })
+  })
+
+  describe('submitDeposit and submitWithdraw memo validation', () => {
+    const dummyAddress = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFXYSFTXF4VGWVJ5SZ3BG'
+    const dummySign = async (xdr: string) => xdr
+
+    it('rejects deposit with memo exceeding 28 bytes', async () => {
+      const invalidMemo = 'a'.repeat(100)
+      await expect(
+        submitDeposit(100, dummyAddress, dummySign, undefined, invalidMemo),
+      ).rejects.toThrow('Memo text cannot exceed 28 bytes')
+    })
+
+    it('rejects withdraw with memo exceeding 28 bytes', async () => {
+      const invalidMemo = 'a'.repeat(100)
+      await expect(
+        submitWithdraw(100, dummyAddress, dummySign, undefined, invalidMemo),
+      ).rejects.toThrow('Memo text cannot exceed 28 bytes')
+    })
+
+    it('allows deposit with valid memo <= 28 characters in demo mode', async () => {
+      const validMemo = 'Green bond deposit'
+      const hash = await submitDeposit(100, dummyAddress, dummySign, undefined, validMemo)
+      expect(hash).toMatch(/^demo/)
+    })
+
+    it('allows withdraw with valid memo <= 28 characters in demo mode', async () => {
+      const validMemo = 'Withdraw shares'
+      const hash = await submitWithdraw(100, dummyAddress, dummySign, undefined, validMemo)
+      expect(hash).toMatch(/^demo/)
     })
   })
 })

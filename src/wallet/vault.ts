@@ -12,6 +12,7 @@
 // back gracefully — no errors surface to the user.
 
 import { HB_DATA } from '../data'
+import { validateStellarMemo } from './memo'
 
 export interface WithdrawPreview {
   assets: number
@@ -135,6 +136,8 @@ async function waitForTransaction(hash: string): Promise<void> {
  * @param amount  USDC amount (integer stroops internally)
  * @param address Stellar address of the depositor (source account)
  * @param sign    Signing function from WalletProvider
+ * @param signal  Optional AbortSignal
+ * @param memo    Optional Stellar memo text (max 28 bytes)
  * @returns       Transaction hash (real or placeholder)
  */
 export async function submitDeposit(
@@ -142,7 +145,13 @@ export async function submitDeposit(
   address: string,
   sign: (xdr: string) => Promise<string>,
   signal?: AbortSignal,
+  memo?: string,
 ): Promise<string> {
+  if (memo) {
+    const { valid, error } = validateStellarMemo(memo)
+    if (!valid) throw new Error(error)
+  }
+
   if (!CONTRACT_ID) {
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -163,7 +172,7 @@ export async function submitDeposit(
     })
   }
 
-  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction } =
+  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction, Memo } =
     await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false })
@@ -176,10 +185,16 @@ export async function submitDeposit(
   const amountScVal = nativeToScVal(BigInt(Math.round(amount * 1e7)), { type: 'i128' })
   const minSharesScVal = nativeToScVal(BigInt(0), { type: 'i128' })
 
-  const tx = new TransactionBuilder(account, { fee: '100', networkPassphrase: Networks.TESTNET })
-    .addOperation(contract.call('deposit', amountScVal, minSharesScVal))
-    .setTimeout(180)
-    .build()
+  const builder = new TransactionBuilder(account, {
+    fee: '100',
+    networkPassphrase: Networks.TESTNET,
+  }).addOperation(contract.call('deposit', amountScVal, minSharesScVal))
+
+  if (memo) {
+    builder.addMemo(Memo.text(memo))
+  }
+
+  const tx = builder.setTimeout(180).build()
 
   const simResult = await server.simulateTransaction(tx)
   if ('error' in simResult) throw new Error(`Simulation failed: ${simResult.error}`)
@@ -203,6 +218,8 @@ export async function submitDeposit(
  * @param amount  USDC amount to withdraw
  * @param address Stellar address of the withdrawer
  * @param sign    Signing function from WalletProvider
+ * @param signal  Optional AbortSignal
+ * @param memo    Optional Stellar memo text (max 28 bytes)
  * @returns       Transaction hash (real or placeholder)
  */
 export async function submitWithdraw(
@@ -210,7 +227,13 @@ export async function submitWithdraw(
   address: string,
   sign: (xdr: string) => Promise<string>,
   signal?: AbortSignal,
+  memo?: string,
 ): Promise<string> {
+  if (memo) {
+    const { valid, error } = validateStellarMemo(memo)
+    if (!valid) throw new Error(error)
+  }
+
   if (!CONTRACT_ID) {
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -231,7 +254,7 @@ export async function submitWithdraw(
     })
   }
 
-  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction } =
+  const { rpc, Contract, TransactionBuilder, Networks, Horizon, nativeToScVal, Transaction, Memo } =
     await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: false })
@@ -242,10 +265,16 @@ export async function submitWithdraw(
   const sharesScVal = nativeToScVal(BigInt(Math.round(amount * 1e7)), { type: 'i128' })
   const minAssetsScVal = nativeToScVal(BigInt(0), { type: 'i128' })
 
-  const tx = new TransactionBuilder(account, { fee: '100', networkPassphrase: Networks.TESTNET })
-    .addOperation(contract.call('withdraw', sharesScVal, minAssetsScVal))
-    .setTimeout(180)
-    .build()
+  const builder = new TransactionBuilder(account, {
+    fee: '100',
+    networkPassphrase: Networks.TESTNET,
+  }).addOperation(contract.call('withdraw', sharesScVal, minAssetsScVal))
+
+  if (memo) {
+    builder.addMemo(Memo.text(memo))
+  }
+
+  const tx = builder.setTimeout(180).build()
 
   const simResult = await server.simulateTransaction(tx)
   if ('error' in simResult) throw new Error(`Simulation failed: ${simResult.error}`)
