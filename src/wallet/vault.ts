@@ -12,6 +12,11 @@
 // back gracefully — no errors surface to the user.
 
 import { HB_DATA } from '../data'
+import {
+  getNetworkPassphrase,
+  getSorobanRpcUrl,
+  getHorizonUrl,
+} from '../lib/network'
 
 export interface WithdrawPreview {
   assets: number
@@ -55,8 +60,8 @@ export const vault = {
 // ---------------------------------------------------------------------------
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL ?? 'https://soroban-testnet.stellar.org'
-const HORIZON_URL = 'https://horizon-testnet.stellar.org'
+const RPC_URL = getSorobanRpcUrl()
+const HORIZON_URL = getHorizonUrl()
 
 /** Call a Soroban view function (no state mutation) and return the raw ScVal. */
 async function sorobanSimulate(sourceAddress: string, method: string, args: unknown[] = []) {
