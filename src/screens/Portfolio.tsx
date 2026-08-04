@@ -26,7 +26,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
     return (
       <main
         id="main-content"
-        style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}
+        className="hb-portfolio-main" style={{ maxWidth: 1080, margin: '0 auto' }}
       >
         <Card
           style={{
@@ -59,7 +59,7 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   }
 
   return (
-    <main id="main-content" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 32px 80px' }}>
+    <main id="main-content" className="hb-portfolio-main" style={{ maxWidth: 1080, margin: '0 auto' }}>
       <div
         style={{
           display: 'flex',

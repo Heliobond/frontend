@@ -277,3 +277,14 @@
     background: var(--ink-06);
   }
 }
+
+/* --- Portfolio responsive ------------------------------------------------- */
+.hb-portfolio-main {
+  padding: 48px 32px 80px;
+}
+
+@media (max-width: 640px) {
+  .hb-portfolio-main {
+    padding: 24px 16px 64px;
+  }
+}
