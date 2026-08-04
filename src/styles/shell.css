@@ -277,3 +277,16 @@
     background: var(--ink-06);
   }
 }
+
+/* --- Deposit/Withdraw responsive ------------------------------------------ */
+.hb-deposit-main {
+  padding: 48px 24px 80px;
+}
+
+@media (max-width: 640px) {
+  .hb-deposit-main {
+    padding: 24px 16px 64px;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}

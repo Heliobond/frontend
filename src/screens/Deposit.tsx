@@ -65,7 +65,7 @@ export function Deposit({ onDone }: DepositProps) {
   const balance = 240
 
   return (
-    <main id="main-content" style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <main id="main-content" className="hb-deposit-main" style={{ maxWidth: 520, margin: '0 auto' }}>
       <Stepper step={step} />
 
       {step === 'amount' && (

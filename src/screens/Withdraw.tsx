@@ -53,7 +53,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const n = parseFloat(amount) || 0
 
   return (
-    <main id="main-content" style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
+    <main id="main-content" className="hb-deposit-main" style={{ maxWidth: 520, margin: '0 auto' }}>
       {step === 'amount' && (
         <div style={panel}>
           <h1 style={hw}>{t('h1')}</h1>
