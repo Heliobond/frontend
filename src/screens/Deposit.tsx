@@ -212,9 +212,14 @@ export function Deposit({ onDone }: DepositProps) {
                     if (e instanceof Error && e.message === 'Aborted') {
                       return
                     }
-                    setTxError(
-                      e instanceof Error ? e.message : 'Transaction failed — please try again.',
-                    )
+                    const errMsg = e instanceof Error ? e.message : 'Transaction failed — please try again.'
+                    setTxError(errMsg)
+                    toast({
+                      tone: 'error',
+                      title: 'Transaction failed',
+                      message: errMsg,
+                      duration: 0,
+                    })
                     changeStep('amount')
                   }
                 } finally {
