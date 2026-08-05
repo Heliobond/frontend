@@ -19,8 +19,7 @@
  * aria-hidden decoration — every datum it encodes is present as text elsewhere.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ComponentRef } from 'react'
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { MeshDistortMaterial } from '@react-three/drei'
 import * as THREE from 'three'
