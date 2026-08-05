@@ -151,7 +151,15 @@ export function CreatorApplication({ stage = 'submitted', onSubmit }: CreatorApp
             aria-invalid={linkError != null}
           />
           {linkError && (
-            <p role="alert" style={{ margin: 0, fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ember)' }}>
+            <p
+              role="alert"
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ember)',
+              }}
+            >
               {linkError}
             </p>
           )}

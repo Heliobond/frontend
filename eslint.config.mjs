@@ -3,6 +3,7 @@ import nextTypescript from 'eslint-config-next/typescript'
 
 /** @type {import('eslint').Linter.Config[]} */
 const eslintConfig = [
+  { ignores: ['.design-handoff/**'] },
   ...coreWebVitals,
   ...nextTypescript,
   {

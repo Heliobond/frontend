@@ -1,4 +1,10 @@
-import type { CSSProperties, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import type {
+  CSSProperties,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react'
 
 export interface FormFieldProps {
   label: string
@@ -29,7 +35,12 @@ export interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEl
 }
 
 export function FormTextarea(props: FormTextareaProps) {
-  return <textarea {...props} style={{ ...inputBaseStyle, ...((props.style as CSSProperties | undefined) ?? {}) }} />
+  return (
+    <textarea
+      {...props}
+      style={{ ...inputBaseStyle, ...((props.style as CSSProperties | undefined) ?? {}) }}
+    />
+  )
 }
 
 export interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
