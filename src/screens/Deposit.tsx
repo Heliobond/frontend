@@ -348,8 +348,14 @@ export function Deposit({ onDone }: DepositProps) {
             >
               {t('viewExpert')}
             </a>
-            <Button variant="primary" style={{ flex: 1 }} onClick={() => { setAmount('100'); onDone(); }}>
-
+            <Button
+              variant="primary"
+              style={{ flex: 1 }}
+              onClick={() => {
+                setAmount('100')
+                onDone()
+              }}
+            >
               {t('goPortfolio')}
             </Button>
           </div>
