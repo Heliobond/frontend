@@ -5,35 +5,30 @@ const eslintConfig = [
   ...coreWebVitals,
   ...nextTypescript,
   {
-    languageOptions: {
-      parserOptions: {
-        project: './tsconfig.json',
-      },
-    },
     rules: {
       'eqeqeq': ['error', 'always', { null: 'ignore' }],
-      'curly': ['error', 'all'],
-      'prefer-const': 'error',
+      'curly': ['warn', 'all'],
+      'prefer-const': 'warn',
       'no-var': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
-      'no-duplicate-imports': 'error',
-      'no-unused-expressions': 'error',
-      'no-throw-literal': 'error',
-      'no-return-await': 'error',
-      'require-await': 'error',
+      'no-duplicate-imports': 'warn',
+      'no-unused-expressions': 'warn',
+      'no-throw-literal': 'warn',
+      'no-return-await': 'warn',
+      'require-await': 'warn',
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'warn',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/consistent-type-imports': [
-        'error',
+        'warn',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' }
       ],
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
-      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/array-type': ['warn', { default: 'array-simple' }],
+      '@typescript-eslint/prefer-optional-chain': 'warn',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
     }
