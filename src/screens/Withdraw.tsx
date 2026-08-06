@@ -117,7 +117,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                   if (e instanceof Error && e.message === 'Aborted') {
                     return
                   }
-                  const errMsg = e instanceof Error ? e.message : 'Transaction failed — please try again.'
+                  const errMsg =
+                    e instanceof Error ? e.message : 'Transaction failed — please try again.'
                   setTxError(errMsg)
                   toast({
                     tone: 'error',
