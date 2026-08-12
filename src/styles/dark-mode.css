@@ -1,0 +1,80 @@
+
+/* Heliobond dark mode theme (issue #293)
+ * Additive drop-in: defines semantic design tokens and maps them to both
+ * light and dark surfaces. Activates automatically for OS-level dark
+ * preference and supports a manual override via [data-theme="dark"] /
+ * [data-theme="light"] set by ThemeToggle.
+ */
+:root {
+  --heliobond-bg: #f8fafc;
+  --heliobond-surface: #ffffff;
+  --heliobond-surface-raised: #ffffff;
+  --heliobond-text: #0f172a;
+  --heliobond-text-muted: #64748b;
+  --heliobond-border: #e2e8f0;
+  --heliobond-accent: #7c3aed;
+  --heliobond-accent-contrast: #ffffff;
+  --heliobond-positive: #16a34a;
+  --heliobond-negative: #dc2626;
+  --heliobond-shadow: rgba(15, 23, 42, 0.08);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --heliobond-bg: #0b1120;
+  --heliobond-surface: #111827;
+  --heliobond-surface-raised: #1f2937;
+  --heliobond-text: #f1f5f9;
+  --heliobond-text-muted: #94a3b8;
+  --heliobond-border: #1f2937;
+  --heliobond-accent: #a78bfa;
+  --heliobond-accent-contrast: #1e1b4b;
+  --heliobond-positive: #4ade80;
+  --heliobond-negative: #f87171;
+  --heliobond-shadow: rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --heliobond-bg: #0b1120;
+    --heliobond-surface: #111827;
+    --heliobond-surface-raised: #1f2937;
+    --heliobond-text: #f1f5f9;
+    --heliobond-text-muted: #94a3b8;
+    --heliobond-border: #1f2937;
+    --heliobond-accent: #a78bfa;
+    --heliobond-accent-contrast: #1e1b4b;
+    --heliobond-positive: #4ade80;
+    --heliobond-negative: #f87171;
+    --heliobond-shadow: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+
+body {
+  background-color: var(--heliobond-bg);
+  color: var(--heliobond-text);
+}
+
+a {
+  color: var(--heliobond-accent);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--heliobond-border);
+  border-radius: 0.5rem;
+  background: var(--heliobond-surface-raised);
+  color: var(--heliobond-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--heliobond-accent);
+}
