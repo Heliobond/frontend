@@ -71,7 +71,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuenow={Math.min(100, fundedPct)}
+              aria-valuenow={Math.min(100, Math.max(0, fundedPct))}
               aria-valuetext={t('dashGoalDeployed', {
                 pct: fundedPct,
                 goal: data.fundingGoal.toLocaleString('en-US'),
@@ -87,7 +87,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
             >
               <div
                 style={{
-                  width: `${Math.min(100, fundedPct)}%`,
+                  width: `${Math.min(100, Math.max(0, fundedPct))}%`,
                   height: '100%',
                   background: 'var(--solar)',
                   /* The fill's leading edge is drawn in ink so the boundary is
