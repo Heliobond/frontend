@@ -150,6 +150,9 @@ export function Deposit({ onDone }: DepositProps) {
                       </span>
                     )}
                     {t.rich('preview', { shares: (n / price).toFixed(4), price, num })}
+                    <span style={{ display: 'block', marginTop: 4, fontSize: 'var(--type-caption)', color: 'var(--ink-60)' }}>
+                      Fee: &lt; $0.01 · Net proceeds: ≈ {(n - 0.01).toFixed(2)} USDC worth {(n / price).toFixed(4)} HBS (real-time)
+                    </span>
                   </span>
                 )
               }

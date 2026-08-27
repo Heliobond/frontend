@@ -78,9 +78,12 @@ export function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
             label={t('currentValue')}
             value="$24,180"
             decimals=".45"
-            delta={`+$612.18 (2.6%) ${t('sinceDeposit')}`}
+            delta={`+$612.18 (2.6%) ${t('sinceDeposit')} + $320 pending`}
             size="lg"
           />
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ink-60)', marginTop: 4 }}>
+            Includes $320 pending/escrow investments awaiting verification — total reflects settled + pending.
+          </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Helio size={108} motes={d.you.backed} />
