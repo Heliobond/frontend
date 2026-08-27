@@ -7,6 +7,7 @@ import { Helio } from '../brand/Helio'
 import { submitDeposit } from '../wallet/vault'
 import { useVault } from '../wallet/useVault'
 import { scrollToFirstError } from '../lib/scrollToError'
+import { getFriendlyErrorMessage } from '../lib/errorMessages'
 import { useWallet } from '../wallet/WalletProvider'
 import { HB_DATA } from '../data'
 
@@ -32,12 +33,21 @@ export function Deposit({ onDone }: DepositProps) {
   const t = useTranslations('Deposit')
   const { toast } = useToast()
   const { address, sign } = useWallet()
-  const { sharePrice: livePrice, loading: vaultLoading, error: vaultError } = useVault()
+  const { sharePrice: livePrice, loading: vaultLoading, error: vaultError, fetchedAt, refresh: refreshVault } = useVault()
   const [step, setStep] = useState<DepositStep>('amount')
   const [amount, setAmount] = useState('100')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
-  const [priceFetchedAt] = useState(() => new Date())
+  const priceFetchedAt = fetchedAt ?? new Date()
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const rateAgeSeconds = Math.floor((now - priceFetchedAt.getTime()) / 1000)
+  const isRateStale = rateAgeSeconds > 30
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -90,7 +100,7 @@ export function Deposit({ onDone }: DepositProps) {
                   color: 'var(--ember)',
                 }}
               >
-                {txError}
+                {getFriendlyErrorMessage(txError)}
               </div>
             )}
             <AmountInput
@@ -151,7 +161,7 @@ export function Deposit({ onDone }: DepositProps) {
               style={{ width: '100%', marginTop: 20 }}
               disabled={n < 1 || n > balance}
               reason={n > balance ? t('reasonExceeds') : n < 1 ? t('reasonMin') : undefined}
-              onClick={() => { if (n < 1 || n > balance) { setTxError(n > balance ? 'Amount exceeds balance' : 'Enter at least $1'); setTimeout(()=>scrollToFirstError(document),50); return; } changeStep('review') } }
+              onClick={() => { if (n < 1 || n > balance) { setTxError(n > balance ? 'amount_exceeds_balance' : 'amount_too_low'); setTimeout(()=>scrollToFirstError(document),50); return; } changeStep('review') } }
             >
               {n >= 1 && n <= balance ? t('investCta', { amount: n }) : t('investCtaEmpty')}
             </Button>
@@ -178,9 +188,26 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k="Price fetched" v={priceFetchedAt.toLocaleString()} />
               <Row k={t('rowFee')} v="< $0.01" />
             </div>
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ink-40)', margin: '-12px 0 16px' }}>
-              Prices fetched at {priceFetchedAt.toLocaleTimeString()} on {priceFetchedAt.toLocaleDateString()} — refresh before confirming.
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '-12px 0 16px', flexWrap: 'wrap' }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: isRateStale ? 'var(--ember)' : 'var(--ink-40)', margin: 0, flex: 1 }}>
+                {isRateStale
+                  ? `Rate updated ${rateAgeSeconds}s ago — may be outdated. Refresh before confirming.`
+                  : `Live rate — updated ${rateAgeSeconds}s ago at ${priceFetchedAt.toLocaleTimeString()}`}
+              </p>
+              <button
+                type="button"
+                onClick={() => refreshVault()}
+                aria-label="Refresh exchange rate"
+                style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', fontWeight: 600, color: 'var(--ink)', background: 'var(--ink-06)', border: '1px solid var(--ink-12)', borderRadius: 'var(--radius-pill)', padding: '4px 10px', cursor: 'pointer' }}
+              >
+                Refresh rate
+              </button>
+            </div>
+            {isRateStale && (
+              <div role="alert" style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 'var(--radius-input)', background: 'rgba(179,54,27,0.07)', border: '1px solid rgba(179,54,27,0.18)', fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ember)' }}>
+                Exchange rate is more than 30 seconds old — please refresh to get the latest price before confirming.
+              </div>
+            )}
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -222,7 +249,7 @@ export function Deposit({ onDone }: DepositProps) {
                         return
                       }
                       setTxError(
-                        e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                        e instanceof Error ? getFriendlyErrorMessage(e.message) : 'Transaction failed — please try again.',
                       )
                       changeStep('amount')
                     }

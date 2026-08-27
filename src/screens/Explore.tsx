@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { ProjectCard, Tag } from '../components'
+import { Pagination } from '../components/Pagination'
 import { HB_DATA, type Project, type ProjectType } from '../data'
 import { getProjects } from '../lib/api'
 
@@ -51,6 +52,14 @@ export function Explore({ onOpen }: ExploreProps) {
   }
 
   const shown = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
+  const PAGE_SIZE = 6
+  const [currentPage, setCurrentPage] = useState(1)
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const paged = shown.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter, projects.length])
 
   return (
     <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -168,25 +177,36 @@ export function Explore({ onOpen }: ExploreProps) {
           </p>
         </div>
       ) : (
-        <div className="hb-projects-grid">
-          {loading
-            ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-            : shown.map((p) => (
-                <ProjectCard
-                  key={p.id}
-                  name={p.name}
-                  location={p.location}
-                  credit={p.credit}
-                  green={p.green}
-                  funded={p.funded}
-                  fundedLabel={t('cardFundedFromPool')}
-                  verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
-                  onOpen={() => onOpen(p)}
-                  fundingGoal={p.fundingGoal}
-                  fundedAmount={p.fundedAmount}
-                />
-              ))}
-        </div>
+        <>
+          <div className="hb-projects-grid">
+            {loading
+              ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
+              : paged.map((p) => (
+                  <ProjectCard
+                    key={p.id}
+                    name={p.name}
+                    location={p.location}
+                    credit={p.credit}
+                    green={p.green}
+                    funded={p.funded}
+                    fundedLabel={t('cardFundedFromPool')}
+                    verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
+                    onOpen={() => onOpen(p)}
+                    fundingGoal={p.fundingGoal}
+                    fundedAmount={p.fundedAmount}
+                  />
+                ))}
+          </div>
+          {!loading && shown.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={shown.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
       )}
     </main>
   )

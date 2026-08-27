@@ -10,25 +10,17 @@ import {
   type ReactNode,
 } from 'react'
 
-/**
- * Wallet state for Heliobond. Wraps the Stellar Wallets Kit (Freighter, xBull,
- * Albedo, Lobstr, Hana, WalletConnect, …) for a REAL connection on testnet. The
- * kit is browser-only and heavy, so it's dynamically imported on first use.
- *
- * `connectDemo()` sets a placeholder address so the click-through still works
- * end-to-end without a wallet extension installed (the app is also a demo).
- * Signing for deposit/withdraw will go through `StellarWalletsKit.signTransaction`
- * once the vault contract is deployed — see src/wallet/vault.ts.
- */
 interface WalletContextValue {
   address: string | null
   connected: boolean
   connecting: boolean
   isDemo: boolean
+  connectionError: string | null
+  retryCount: number
   connect: () => Promise<void>
   connectDemo: () => void
   disconnect: () => void
-  /** Sign an XDR envelope via the connected wallet. Throws in demo mode. */
+  retry: () => Promise<void>
   sign: (xdr: string) => Promise<string>
   network: 'TESTNET'
 }
@@ -41,7 +33,6 @@ export function useWallet(): WalletContextValue {
   return ctx
 }
 
-/** Stellar address / hash, truncated in the middle (never the end). */
 export function shortAddress(address: string, lead = 4, tail = 3): string {
   if (address.length <= lead + tail + 1) return address
   const suffix = tail > 0 ? address.slice(-tail) : ''
@@ -49,12 +40,16 @@ export function shortAddress(address: string, lead = 4, tail = 3): string {
 }
 
 const DEMO_ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
+const CONNECT_TIMEOUT_MS = 15000
+const MAX_AUTO_RETRIES = 2
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const initedRef = useRef(false)
   const [address, setAddress] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
+  const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   const persist = useCallback((addr: string, walletId: string) => {
     try {
@@ -73,7 +68,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     initedRef.current = true
   }, [])
 
-  // Restore a previous session (address persisted client-side).
   useEffect(() => {
     let saved: string | null = null
     let savedWallet: string | null = null
@@ -84,12 +78,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     if (!saved) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAddress(saved)
     setIsDemo(savedWallet === 'demo')
 
-    // Re-select the real wallet module in the kit so signing works after a
-    // reload (the demo session needs nothing).
     if (savedWallet && savedWallet !== 'demo') {
       void (async () => {
         try {
@@ -103,33 +94,63 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [ensureInit])
 
-  const connect = useCallback(async () => {
+  const connectWithRetry = useCallback(async (attempt = 0): Promise<void> => {
     setConnecting(true)
+    setConnectionError(null)
     try {
       await ensureInit()
       const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
-      // authModal opens the picker, sets the chosen wallet, and returns its address.
-      const { address: addr } = await StellarWalletsKit.authModal()
-      // Persist the real selected module id so the session can be restored to sign later.
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), CONNECT_TIMEOUT_MS)
+      )
+      const authPromise = StellarWalletsKit.authModal() as Promise<{ address: string }>
+      const { address: addr } = await Promise.race([authPromise, timeoutPromise])
       let walletId = 'wallet'
       try {
         walletId = StellarWalletsKit.selectedModule?.productId ?? 'wallet'
       } catch {
-        /* selectedModule may be unavailable — fall back to a generic marker */
+        /* fallback */
       }
       setAddress(addr)
       setIsDemo(false)
+      setRetryCount(0)
       persist(addr, walletId)
-    } catch {
-      // User dismissed the modal or no wallet is available — stay disconnected, quietly.
+    } catch (e) {
+      const isTimeout = e instanceof Error && e.message === 'timeout'
+      const isCancelled = e instanceof Error && /dismiss|cancel|closed/i.test(e.message)
+      if (isCancelled) {
+        return
+      }
+      if (isTimeout && attempt < MAX_AUTO_RETRIES) {
+        setRetryCount(attempt + 1)
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
+        return connectWithRetry(attempt + 1)
+      }
+      setConnectionError(
+        isTimeout
+          ? 'Connection timed out — please check your network and try again.'
+          : 'Could not connect to wallet — please try again.'
+      )
     } finally {
       setConnecting(false)
     }
   }, [ensureInit, persist])
 
+  const connect = useCallback(async () => {
+    setRetryCount(0)
+    await connectWithRetry(0)
+  }, [connectWithRetry])
+
+  const retry = useCallback(async () => {
+    setRetryCount(0)
+    setConnectionError(null)
+    await connectWithRetry(0)
+  }, [connectWithRetry])
+
   const connectDemo = useCallback(() => {
     setAddress(DEMO_ADDRESS)
     setIsDemo(true)
+    setConnectionError(null)
     persist(DEMO_ADDRESS, 'demo')
   }, [persist])
 
@@ -150,13 +171,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(() => {
     setAddress(null)
     setIsDemo(false)
+    setConnectionError(null)
+    setRetryCount(0)
     try {
       localStorage.removeItem('hb-address')
       localStorage.removeItem('hb-wallet')
     } catch {
       /* ignore */
     }
-    // Always clear the kit's own session/storage too (idempotent if never inited).
     void import('@creit.tech/stellar-wallets-kit')
       .then(({ StellarWalletsKit }) => StellarWalletsKit.disconnect())
       .catch(() => {})
@@ -169,9 +191,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         connected: address !== null,
         connecting,
         isDemo,
+        connectionError,
+        retryCount,
         connect,
         connectDemo,
         disconnect,
+        retry,
         sign,
         network: 'TESTNET',
       }}
