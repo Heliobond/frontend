@@ -6,6 +6,7 @@ import { fetchSharePrice, fetchTotalAssets } from './vault'
 import { useWallet } from './WalletProvider'
 
 export interface VaultState {
+  fetchedAt: Date | null;
   sharePrice: number
   totalAssets: number
   loading: boolean
@@ -23,6 +24,7 @@ export function useVault(): VaultState {
   const [totalAssets, setTotalAssets] = useState(HB_DATA.pool.totalAssets)
   const [loading, setLoading] = useState(!!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo)
   const [error, setError] = useState<string | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<Date | null>(null)
 
   useEffect(() => {
     const contractId = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
@@ -39,6 +41,7 @@ export function useVault(): VaultState {
       .then(([price, assets]) => {
         setSharePrice(price)
         setTotalAssets(assets)
+        setFetchedAt(new Date())
       })
       .catch((e: unknown) => {
         setError(e instanceof Error ? e.message : 'Could not read vault')
@@ -46,5 +49,5 @@ export function useVault(): VaultState {
       .finally(() => setLoading(false))
   }, [address, isDemo])
 
-  return { sharePrice, totalAssets, loading, error }
+  return { sharePrice, totalAssets, loading, error, fetchedAt }
 }

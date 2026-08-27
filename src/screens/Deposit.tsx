@@ -6,6 +6,7 @@ import { Button, AmountInput, useToast } from '../components'
 import { Helio } from '../brand/Helio'
 import { submitDeposit } from '../wallet/vault'
 import { useVault } from '../wallet/useVault'
+import { scrollToFirstError } from '../lib/scrollToError'
 import { useWallet } from '../wallet/WalletProvider'
 import { HB_DATA } from '../data'
 
@@ -36,6 +37,7 @@ export function Deposit({ onDone }: DepositProps) {
   const [amount, setAmount] = useState('100')
   const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
+  const [priceFetchedAt] = useState(() => new Date())
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -51,6 +53,10 @@ export function Deposit({ onDone }: DepositProps) {
   }, [])
 
   const changeStep = (newStep: DepositStep) => {
+    // auto-scroll to first error when navigating to amount with error
+    if (newStep === 'amount' && txError) {
+      setTimeout(() => scrollToFirstError(document), 100)
+    }
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
@@ -145,7 +151,7 @@ export function Deposit({ onDone }: DepositProps) {
               style={{ width: '100%', marginTop: 20 }}
               disabled={n < 1 || n > balance}
               reason={n > balance ? t('reasonExceeds') : n < 1 ? t('reasonMin') : undefined}
-              onClick={() => changeStep('review')}
+              onClick={() => { if (n < 1 || n > balance) { setTxError(n > balance ? 'Amount exceeds balance' : 'Enter at least $1'); setTimeout(()=>scrollToFirstError(document),50); return; } changeStep('review') } }
             >
               {n >= 1 && n <= balance ? t('investCta', { amount: n }) : t('investCtaEmpty')}
             </Button>
@@ -169,8 +175,12 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k={t('rowPay')} v={`${n.toFixed(2)} USDC`} />
               <Row k={t('rowReceive')} v={`≈ ${(n / price).toFixed(4)} HBS`} />
               <Row k={t('rowPrice')} v={`${price}`} />
+              <Row k="Price fetched" v={priceFetchedAt.toLocaleString()} />
               <Row k={t('rowFee')} v="< $0.01" />
             </div>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ink-40)', margin: '-12px 0 16px' }}>
+              Prices fetched at {priceFetchedAt.toLocaleTimeString()} on {priceFetchedAt.toLocaleDateString()} — refresh before confirming.
+            </p>
             <p
               style={{
                 fontFamily: 'var(--font-body)',

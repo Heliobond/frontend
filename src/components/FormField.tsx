@@ -7,18 +7,27 @@ import type {
 } from 'react'
 
 export interface FormFieldProps {
+  required?: boolean;
+  optionalHint?: string;
   label: string
   htmlFor?: string
   children: ReactNode
   style?: CSSProperties
 }
 
-export function FormField({ label, htmlFor, children, style }: FormFieldProps) {
+export function FormField({ label, htmlFor, children, style, required, optionalHint }: FormFieldProps) {
   return (
+    <div data-field-wrapper>
     <label htmlFor={htmlFor} style={{ display: 'flex', flexDirection: 'column', gap: 6, ...style }}>
-      <span className="hb-eyebrow">{label}</span>
+      <span className="hb-eyebrow">
+        {label}
+        {required && <span aria-hidden="true" style={{ color: 'var(--ember)', marginLeft: 4 }}>*</span>}
+        {required && <span className="sr-only"> (required)</span>}
+        {optionalHint && <span style={{ fontWeight: 400, color: 'var(--ink-40)', marginLeft: 6 }}>{optionalHint}</span>}
+      </span>
       {children}
     </label>
+    </div>
   )
 }
 
