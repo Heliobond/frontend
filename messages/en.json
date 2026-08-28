@@ -348,5 +348,12 @@
     "altLinkInstruction": "If the button above does not work, copy and paste this URL into your web browser:",
     "ignoreNotice": "If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.",
     "footerBrand": "Heliobond — Sunlight made financial."
+  },
+  "SessionTimeout": {
+    "title": "Your session will expire soon",
+    "body": "You have been inactive for a while. To protect your unsaved changes and account security, your session will automatically expire.",
+    "expiresIn": "Session expiring in",
+    "extendCta": "Stay connected",
+    "logoutCta": "Disconnect now"
   }
 }

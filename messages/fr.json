@@ -348,5 +348,12 @@
     "altLinkInstruction": "Si le bouton ci-dessus ne fonctionne pas, copiez et collez cette URL dans votre navigateur :",
     "ignoreNotice": "Si vous n’avez pas demandé cette réinitialisation, vous pouvez ignorer cet e-mail en toute sécurité. Votre mot de passe restera inchangé.",
     "footerBrand": "Heliobond — L’énergie solaire devenue finance."
+  },
+  "SessionTimeout": {
+    "title": "Votre session va bientôt expirer",
+    "body": "Vous êtes inactif depuis un moment. Pour protéger vos modifications non enregistrées et la sécurité de votre compte, votre session va expirer automatiquement.",
+    "expiresIn": "Expiration de la session dans",
+    "extendCta": "Rester connecté",
+    "logoutCta": "Se déconnecter"
   }
 }

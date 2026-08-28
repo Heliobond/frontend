@@ -34,4 +34,6 @@ export type {
 } from './FormField'
 export { Sparkline } from './Sparkline'
 export type { SparklineProps } from './Sparkline'
+export { SessionTimeoutModal } from './SessionTimeoutModal'
+export type { SessionTimeoutModalProps } from './SessionTimeoutModal'
 export * from './icons'

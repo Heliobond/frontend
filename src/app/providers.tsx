@@ -2,8 +2,35 @@
 
 import type { ReactNode } from 'react'
 import { ThemeProvider } from '../theme/ThemeProvider'
-import { WalletProvider } from '../wallet/WalletProvider'
-import { ToastProvider } from '../components'
+import { WalletProvider, useWallet } from '../wallet/WalletProvider'
+import { ToastProvider, SessionTimeoutModal, useToast } from '../components'
+import { useSessionTimeout } from '../hooks/useSessionTimeout'
+
+function SessionWatcher() {
+  const { connected, disconnect } = useWallet()
+  const { toast } = useToast()
+
+  const { isWarningOpen, formattedRemaining, extendSession, expireNow } = useSessionTimeout({
+    enabled: connected,
+    onTimeout: () => {
+      disconnect()
+      toast({
+        tone: 'ember',
+        title: 'Session expired',
+        description: 'You have been disconnected due to inactivity.',
+      })
+    },
+  })
+
+  return (
+    <SessionTimeoutModal
+      open={isWarningOpen}
+      formattedTime={formattedRemaining}
+      onExtend={extendSession}
+      onLogout={expireNow}
+    />
+  )
+}
 
 /**
  * Client providers that must persist across route changes: theme (After Sunset
@@ -14,7 +41,10 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <WalletProvider>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <SessionWatcher />
+          {children}
+        </ToastProvider>
       </WalletProvider>
     </ThemeProvider>
   )
