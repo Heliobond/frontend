@@ -355,5 +355,16 @@
     "expiresIn": "Expiration de la session dans",
     "extendCta": "Rester connecté",
     "logoutCta": "Se déconnecter"
+  },
+  "AccountConflict": {
+    "modalTitle": "Se connecter par e-mail",
+    "emailInputLabel": "Votre adresse e-mail",
+    "submitCta": "Continuer avec l'e-mail",
+    "conflictTitle": "Compte {provider} existant détecté",
+    "conflictBody": "L'adresse {email} est déjà enregistrée avec votre compte {provider}. Connectez-vous avec {provider} pour accéder à votre portefeuille existant et éviter de créer un doublon.",
+    "continueWithProvider": "Se connecter avec {provider}",
+    "sendLinkAnyway": "Lier cet e-mail à mon compte",
+    "linkSentMessage": "Un lien magique de connexion a été envoyé à {email}.",
+    "close": "Fermer"
   }
 }

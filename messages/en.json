@@ -355,5 +355,16 @@
     "expiresIn": "Session expiring in",
     "extendCta": "Stay connected",
     "logoutCta": "Disconnect now"
+  },
+  "AccountConflict": {
+    "modalTitle": "Sign in with email",
+    "emailInputLabel": "Your email address",
+    "submitCta": "Continue with email",
+    "conflictTitle": "Existing {provider} account detected",
+    "conflictBody": "The email {email} is already registered using your {provider} account. Sign in with {provider} to access your existing portfolio and avoid creating a duplicate account.",
+    "continueWithProvider": "Sign in with {provider}",
+    "sendLinkAnyway": "Link this email to my account",
+    "linkSentMessage": "A magic sign-in link has been sent to {email}.",
+    "close": "Close"
   }
 }
