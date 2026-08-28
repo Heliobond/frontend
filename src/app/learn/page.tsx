@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 
 export default function LearnPage() {
@@ -60,6 +61,19 @@ export default function LearnPage() {
         >
           {t('howBody')}
         </p>
+        <Link
+          href="/learn/password-reset-email"
+          style={{
+            display: 'inline-flex',
+            marginTop: 16,
+            color: 'var(--accent)',
+            fontFamily: 'var(--font-body)',
+            fontWeight: 600,
+            textDecoration: 'none',
+          }}
+        >
+          Preview the password reset email
+        </Link>
       </div>
     </main>
   )
