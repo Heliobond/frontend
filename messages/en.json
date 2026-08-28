@@ -336,5 +336,17 @@
     "calcFormula": "expected return = investment × (credit + green) ÷ 200 — read it in the contract ↗",
     "investCta": "Invest in the pool that funds this",
     "investNote": "You invest in the shared pool, which funds this project alongside others — not a per-project checkout."
+  },
+  "PasswordResetEmail": {
+    "subject": "Reset your Heliobond password",
+    "greeting": "Hello,",
+    "lead": "We received a request to reset your password for your Heliobond account.",
+    "cta": "Reset your password",
+    "expiryAlertTitle": "Token Expiration & Security Notice",
+    "expiryAlertBody": "This link is valid for {ttl} (until {utc}). For security reasons, expired links cannot be reused.",
+    "staleExplanation": "If this link has expired by the time you open it, please visit the sign-in page to request a new link.",
+    "altLinkInstruction": "If the button above does not work, copy and paste this URL into your web browser:",
+    "ignoreNotice": "If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.",
+    "footerBrand": "Heliobond — Sunlight made financial."
   }
 }

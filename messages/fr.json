@@ -336,5 +336,17 @@
     "calcFormula": "rendement attendu = investissement × (crédit + vert) ÷ 200 — lisez-le dans le contrat ↗",
     "investCta": "Investir dans le pool qui finance cela",
     "investNote": "Vous investissez dans le pool commun, qui finance ce projet parmi d'autres — pas une caisse par projet."
+  },
+  "PasswordResetEmail": {
+    "subject": "Réinitialisez votre mot de passe Heliobond",
+    "greeting": "Bonjour,",
+    "lead": "Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte Heliobond.",
+    "cta": "Réinitialiser le mot de passe",
+    "expiryAlertTitle": "Expiration du lien et sécurité",
+    "expiryAlertBody": "Ce lien est valide pendant {ttl} (jusqu'à {utc}). Pour des raisons de sécurité, les liens expirés ne peuvent pas être réutilisés.",
+    "staleExplanation": "Si ce lien a expiré au moment où vous l’ouvrez, veuillez vous rendre sur la page de connexion pour demander un nouveau lien.",
+    "altLinkInstruction": "Si le bouton ci-dessus ne fonctionne pas, copiez et collez cette URL dans votre navigateur :",
+    "ignoreNotice": "Si vous n’avez pas demandé cette réinitialisation, vous pouvez ignorer cet e-mail en toute sécurité. Votre mot de passe restera inchangé.",
+    "footerBrand": "Heliobond — L’énergie solaire devenue finance."
   }
 }
