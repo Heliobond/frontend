@@ -7,7 +7,7 @@ export default function VerifyPage() {
   const t = useTranslations('Footer')
   return (
     <main id="main-content">
-      <Landing onConnect={() => {}} onNav={() => {}} />
+      <Landing onConnect={() => {}} onExplore={() => {}} />
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '64px 32px', scrollMarginTop: 68 }}>
         <h2
           style={{

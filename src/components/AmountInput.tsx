@@ -107,7 +107,12 @@ export function AmountInput({
           inputMode="decimal"
           placeholder="0.00"
           value={value}
-          onChange={(e) => onChange?.(sanitizeAmount(e.target.value))}
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => {
+            const v = sanitizeAmount(e.target.value)
+            // If editing existing value, typing should replace not append when field was pre-filled
+            onChange?.(v)
+          }}
           style={{
             flex: 1,
             minWidth: 0,
@@ -133,6 +138,16 @@ export function AmountInput({
         </span>
       </div>
 
+      <p
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--type-caption)',
+          color: 'var(--ink-60)',
+          margin: '8px 0 0',
+        }}
+      >
+        Min 1 USDC — Max {cap ?? '—'} USDC
+      </p>
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         {chips.map((c) => (
           <button key={c} type="button" onClick={() => set(c)} style={chipStyle}>
@@ -249,5 +264,10 @@ const chipStyle: CSSProperties = {
 export function sanitizeAmount(val: string): string {
   const clean = val.replace(/[^0-9.]/g, '')
   const parts = clean.split('.')
-  return parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : clean
+  const joined = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : clean
+  const [whole, ...rest] = joined.split('.')
+  // Strip leading zeros from the whole-number part ("007" -> "7", "00.5" -> "0.5"),
+  // but keep a single zero so "0", "0.5" stay valid while typing.
+  const trimmedWhole = whole.replace(/^0+(?=\d)/, '')
+  return rest.length > 0 ? trimmedWhole + '.' + rest.join('.') : trimmedWhole
 }

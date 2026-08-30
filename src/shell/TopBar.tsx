@@ -274,16 +274,21 @@ function WalletMenu({ address, isDemo }: { address: string; isDemo: boolean }) {
   const router = useRouter()
   const { disconnect } = useWallet()
   const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState(false)
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | HTMLAnchorElement | null)[]>([])
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
+      }
+      if (cancelTimerRef.current) {
+        clearTimeout(cancelTimerRef.current)
       }
     }
   }, [])
@@ -301,7 +306,14 @@ function WalletMenu({ address, isDemo }: { address: string; isDemo: boolean }) {
   }, [open])
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setConfirming(false)
+      if (cancelTimerRef.current) {
+        clearTimeout(cancelTimerRef.current)
+        cancelTimerRef.current = null
+      }
+      return
+    }
     const onDown = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
@@ -381,7 +393,15 @@ function WalletMenu({ address, isDemo }: { address: string; isDemo: boolean }) {
       e.preventDefault()
       items[items.length - 1].focus()
     } else if (e.key === 'Escape') {
-      setOpen(false)
+      if (confirming) {
+        setConfirming(false)
+        if (cancelTimerRef.current) {
+          clearTimeout(cancelTimerRef.current)
+          cancelTimerRef.current = null
+        }
+      } else {
+        setOpen(false)
+      }
     } else if (e.key === 'Tab') {
       setOpen(false)
     }
@@ -477,19 +497,96 @@ function WalletMenu({ address, isDemo }: { address: string; isDemo: boolean }) {
               {t('viewOnExplorer')}
             </MenuLink>
           )}
-          <MenuItem
-            ref={(el) => {
-              itemRefs.current.push(el)
-            }}
-            tone="ember"
-            onClick={() => {
-              disconnect()
-              setOpen(false)
-              router.push('/')
-            }}
-          >
-            {t('disconnect')}
-          </MenuItem>
+          {confirming ? (
+            <div
+              style={{
+                padding: '8px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  color: 'var(--ink-60)',
+                  margin: 0,
+                }}
+              >
+                {t('disconnectConfirmBody')}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  tabIndex={-1}
+                  ref={(el) => {
+                    itemRefs.current.push(el)
+                  }}
+                  onClick={() => {
+                    if (cancelTimerRef.current) {
+                      clearTimeout(cancelTimerRef.current)
+                      cancelTimerRef.current = null
+                    }
+                    disconnect()
+                    setConfirming(false)
+                    setOpen(false)
+                    router.push('/')
+                  }}
+                  style={{
+                    ...menuItemStyle,
+                    flex: 1,
+                    background: 'var(--ember)',
+                    color: '#fff',
+                    fontWeight: 600,
+                  }}
+                >
+                  {t('disconnectConfirm')}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  tabIndex={-1}
+                  ref={(el) => {
+                    itemRefs.current.push(el)
+                  }}
+                  onClick={() => {
+                    if (cancelTimerRef.current) {
+                      clearTimeout(cancelTimerRef.current)
+                      cancelTimerRef.current = null
+                    }
+                    setConfirming(false)
+                  }}
+                  style={{
+                    ...menuItemStyle,
+                    flex: 1,
+                    background: 'var(--ink-06)',
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {t('disconnectCancel')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <MenuItem
+              ref={(el) => {
+                itemRefs.current.push(el)
+              }}
+              tone="ember"
+              onClick={() => {
+                setConfirming(true)
+                cancelTimerRef.current = setTimeout(() => {
+                  setConfirming(false)
+                  cancelTimerRef.current = null
+                }, 10000)
+              }}
+            >
+              {t('disconnect')}
+            </MenuItem>
+          )}
         </div>
       )}
     </div>

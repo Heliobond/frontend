@@ -21,6 +21,12 @@ export interface WithdrawPreview {
 /** total_assets / total_supply. Constant in the mock; a live read on-chain. */
 export const SHARE_PRICE = HB_DATA.pool.sharePrice
 
+/** Simulated pending delay for deposit transactions in demo mode. */
+export const SIMULATED_DEPOSIT_DELAY_MS = 2000
+
+/** Simulated pending delay for withdraw transactions in demo mode. */
+export const SIMULATED_WITHDRAW_DELAY_MS = 2000
+
 export interface DepositPreview {
   shares: number
   sharePrice: number
@@ -149,7 +155,7 @@ export async function submitDeposit(
         resolve(
           `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`,
         )
-      }, 2000)
+      }, SIMULATED_DEPOSIT_DELAY_MS)
       if (signal) {
         signal.addEventListener('abort', () => {
           clearTimeout(timer)
@@ -217,7 +223,7 @@ export async function submitWithdraw(
         resolve(
           `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`,
         )
-      }, 2000)
+      }, SIMULATED_WITHDRAW_DELAY_MS)
       if (signal) {
         signal.addEventListener('abort', () => {
           clearTimeout(timer)

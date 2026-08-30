@@ -7,6 +7,8 @@ import { VAULT_STATS, REGISTRY, WHITELIST, type RegistryEntry, type Creator } fr
 import { RegistryTable } from './RegistryTable'
 import { OracleForms } from './OracleForms'
 import { OFF_SCREEN_PROJECTS_COUNT } from '@/data'
+import { parseFundedNum } from './utils'
+import { formatMoney as sharedFormatMoney } from '@/lib/format'
 
 /**
  * AdminConsole — the internal admin / oracle surface. Same design system as the
@@ -54,7 +56,7 @@ export function AdminConsole() {
     toast({
       tone: 'solar',
       title: t('toastFundTitle'),
-      message: t('toastFundMsg', { name, amount: safe.toLocaleString('en-US') }),
+      message: t('toastFundMsg', { name, amount: sharedFormatMoney(safe) }),
     })
   }
 
@@ -109,15 +111,24 @@ export function AdminConsole() {
       {/* Vault overview — dense horizontal row of stat cells */}
       <section style={{ ...sectionCard, padding: 0, marginBottom: 20 }}>
         <div style={statRow}>
-          <StatCell label={t('statTotalAssets')} value={`$${formatMoney(totalAssets)}`} />
+          <StatCell
+            label={t('statTotalAssets')}
+            value={sharedFormatMoney(totalAssets, { includeSymbol: true })}
+          />
           <StatCell
             label={t('statSharePrice')}
             value={VAULT_STATS.sharePrice.toFixed(4)}
             unit="USDC/HBS"
           />
-          <StatCell label={t('statHbsSupply')} value={formatMoney(VAULT_STATS.hbsSupply)} />
-          <StatCell label={t('statLiquid')} value={`$${formatMoney(liquid)}`} />
-          <StatCell label={t('statDeployed')} value={`$${formatMoney(deployed)}`} />
+          <StatCell label={t('statHbsSupply')} value={sharedFormatMoney(VAULT_STATS.hbsSupply)} />
+          <StatCell
+            label={t('statLiquid')}
+            value={sharedFormatMoney(liquid, { includeSymbol: true })}
+          />
+          <StatCell
+            label={t('statDeployed')}
+            value={sharedFormatMoney(deployed, { includeSymbol: true })}
+          />
           <StatCell label={t('statProjectsFunded')} value={String(fundedCount)} last />
         </div>
       </section>
@@ -275,17 +286,10 @@ function StatCell({
 }
 
 // --- formatting helpers (no Math.random; deterministic) -------------------
-function formatMoney(n: number): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
-
-export function parseFundedNum(s: string): number {
-  const n = Number(s.replace(/[^0-9.]/g, ''))
-  return Number.isFinite(n) ? n : 0
-}
+export { parseFundedNum }
 
 export function formatFunded(n: number): string {
-  return `$${n.toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+  return sharedFormatMoney(n, { includeSymbol: true })
 }
 
 const sectionCard: CSSProperties = {

@@ -4,6 +4,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
+import { clampScore, parseFundedNum } from './utils'
 
 /**
  * RegistryTable — the dense project registry. A real <table> with a tinted,
@@ -18,12 +19,6 @@ type SortDir = 'asc' | 'desc'
 export interface RegistryTableProps {
   rows: RegistryEntry[]
   onSave: (id: number, credit: number, green: number) => void
-}
-
-/** Parse "$1,180,000" → 1180000 for numeric sorting on the funded column. */
-function fundedNum(s: string): number {
-  const n = Number(s.replace(/[^0-9.]/g, ''))
-  return Number.isFinite(n) ? n : 0
 }
 
 export function RegistryTable({ rows, onSave }: RegistryTableProps) {
@@ -43,7 +38,7 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
           cmp = String(a[sortKey]).localeCompare(String(b[sortKey]))
           break
         case 'funded':
-          cmp = fundedNum(a.funded) - fundedNum(b.funded)
+          cmp = parseFundedNum(a.funded) - parseFundedNum(b.funded)
           break
         default:
           cmp = (a[sortKey] as number) - (b[sortKey] as number)
@@ -241,12 +236,6 @@ function Row({
     onEdit()
   }
 
-  const clamp = (v: string) => {
-    const n = Math.round(Number(v))
-    if (!Number.isFinite(n)) return 0
-    return Math.min(100, Math.max(0, n))
-  }
-
   return (
     <>
       <tr style={{ borderTop: '1px solid var(--ink-12)' }}>
@@ -294,7 +283,7 @@ function Row({
                 <Button
                   size="sm"
                   variant="primary"
-                  onClick={() => onSave(clamp(credit), clamp(green))}
+                  onClick={() => onSave(clampScore(credit), clampScore(green))}
                 >
                   {saveLabel}
                 </Button>

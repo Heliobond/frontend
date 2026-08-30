@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { ProjectCard, Tag } from '../components'
+import { Pagination } from '../components/Pagination'
 import { HB_DATA, type Project, type ProjectType } from '../data'
 import { getProjects } from '../lib/api'
 
@@ -22,7 +23,7 @@ const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
  * every breakpoint (the grid runs 1–4 columns), so a page boundary never leaves
  * a ragged half-row.
  */
-const PAGE_SIZE = 12
+const PAGE_SIZE = 6
 
 export function Explore({ onOpen }: ExploreProps) {
   const t = useTranslations('Explore')
@@ -35,10 +36,7 @@ export function Explore({ onOpen }: ExploreProps) {
   const [filter, setFilter] = useState<ProjectType | 'All'>(
     urlType && ['Solar', 'Wind', 'Hydro'].includes(urlType) ? urlType : 'All',
   )
-  // Explore used to render the entire registry in one pass. That is fine for a
-  // seed list and unbounded once the real registry lands, so the grid now grows
-  // a page at a time instead.
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     getProjects()
@@ -54,9 +52,7 @@ export function Explore({ onOpen }: ExploreProps) {
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
     setFilter(next)
-    // A new filter is a new list — start it at the first page rather than
-    // carrying the previous filter's scroll depth across.
-    setVisibleCount(PAGE_SIZE)
+    setCurrentPage(1)
     if (next === 'All') {
       router.replace('/explore', { scroll: false })
     } else {
@@ -65,8 +61,12 @@ export function Explore({ onOpen }: ExploreProps) {
   }
 
   const shown = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
-  const visible = shown.slice(0, visibleCount)
-  const remaining = shown.length - visible.length
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE))
+  const paged = shown.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filter, projects.length])
 
   return (
     <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -184,66 +184,36 @@ export function Explore({ onOpen }: ExploreProps) {
           </p>
         </div>
       ) : (
-        <div className="hb-projects-grid">
-          {loading
-            ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-            : visible.map((p) => (
-                <ProjectCard
-                  key={p.id}
-                  name={p.name}
-                  location={p.location}
-                  credit={p.credit}
-                  green={p.green}
-                  funded={p.funded}
-                  fundedLabel={t('cardFundedFromPool')}
-                  verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
-                  onOpen={() => onOpen(p)}
-                  fundingGoal={p.fundingGoal}
-                  fundedAmount={p.fundedAmount}
-                />
-              ))}
-        </div>
-      )}
-      {!loading && remaining > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 10,
-            marginTop: 32,
-          }}
-        >
-          {/* Progress through the list, announced politely so a screen-reader
-              user learns the grid grew without the update stealing focus. */}
-          <p
-            aria-live="polite"
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-caption)',
-              color: 'var(--ink-60)',
-              margin: 0,
-            }}
-          >
-            {t('showingCount', { shown: visible.length, total: shown.length })}
-          </p>
-          <button
-            type="button"
-            onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-data)',
-              color: 'var(--ink)',
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-hairline)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '10px 22px',
-              cursor: 'pointer',
-            }}
-          >
-            {t('loadMore', { count: Math.min(PAGE_SIZE, remaining) })}
-          </button>
-        </div>
+        <>
+          <div className="hb-projects-grid">
+            {loading
+              ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
+              : paged.map((p) => (
+                  <ProjectCard
+                    key={p.id}
+                    name={p.name}
+                    location={p.location}
+                    credit={p.credit}
+                    green={p.green}
+                    funded={p.funded}
+                    fundedLabel={t('cardFundedFromPool')}
+                    verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
+                    onOpen={() => onOpen(p)}
+                    fundingGoal={p.fundingGoal}
+                    fundedAmount={p.fundedAmount}
+                  />
+                ))}
+          </div>
+          {!loading && shown.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={shown.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </>
       )}
     </main>
   )

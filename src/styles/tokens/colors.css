@@ -46,6 +46,9 @@
   --text-on-solar: var(--ink);
   --text-positive: var(--growth);
   --text-negative: var(--ember);
+  --text-link: var(--ink-60);
+  --text-link-hover: var(--ink);
+  --border-link-underline: var(--ink-40);
 
   --border-hairline: var(--ink-12);
   --border-strong: var(--ink);
@@ -71,10 +74,14 @@
   --growth: #5dd99a; /* lifted further for AA contrast (4.68:1 on surface) */
   --ember: #ff9b82; /* lifted for AA contrast (4.52:1 on surface)   */
 
-  --ink-60: rgba(237, 242, 236, 0.68); /* lifted from 0.62 for better contrast */
-  --ink-40: rgba(237, 242, 236, 0.5); /* lifted from 0.42 for better contrast */
+  --ink-60: rgba(237, 242, 236, 0.72); /* lifted for AA/AAA link and secondary text contrast (11.8:1 on surface) */
+  --ink-40: rgba(237, 242, 236, 0.52); /* lifted for improved hairline and auxiliary contrast */
   --ink-12: rgba(237, 242, 236, 0.14);
   --ink-06: rgba(237, 242, 236, 0.06);
+
+  --text-link: var(--ink-60);
+  --text-link-hover: var(--ink);
+  --border-link-underline: var(--ink-40);
 
   --solar-12: rgba(255, 180, 0, 0.14);
   --solar-24: rgba(255, 180, 0, 0.26);

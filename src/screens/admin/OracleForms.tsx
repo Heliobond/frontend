@@ -4,6 +4,8 @@ import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, FormField, FormInput, FormSelect, sanitizeAmount } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
+import { clampScore } from './utils'
+import { formatMoney } from '@/lib/format'
 
 /**
  * OracleForms — the two privileged write paths, side by side:
@@ -33,12 +35,6 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
   const [fundId, setFundId] = useState(first)
   const [amount, setAmount] = useState('')
 
-  const clamp = (v: string) => {
-    const n = Math.round(Number(v))
-    if (!Number.isFinite(n)) return 0
-    return Math.min(100, Math.max(0, n))
-  }
-
   const creditN = Number(credit)
   const greenN = Number(green)
   const scoresValid =
@@ -52,7 +48,7 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
 
   const submitScores = () => {
     if (!scoresValid) return
-    onPushScores(scoreId, clamp(credit), clamp(green))
+    onPushScores(scoreId, clampScore(credit), clampScore(green))
     setCredit('')
     setGreen('')
   }
@@ -181,7 +177,7 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
               color: 'var(--ink)',
             }}
           >
-            ${liquid.toLocaleString('en-US')}
+            ${formatMoney(liquid)}
           </span>
           . {amountN > liquid ? t('fundExceeds') : t('fundOk')}
         </p>

@@ -105,9 +105,28 @@
   border-radius: var(--radius-pill);
 }
 
+/* Accessible text links (Forgot Password, auth links, secondary action links) — WCAG AA compliant */
+.hb-textlink {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-color: var(--border-link-underline);
+  text-underline-offset: 0.25em;
+  transition:
+    color var(--dur-press) var(--ease-out),
+    text-decoration-color var(--dur-press) var(--ease-out);
+}
+
+.hb-textlink:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--focus-offset);
+  border-radius: var(--radius-input);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .hb-textlink:hover {
-    color: var(--ink);
+    color: var(--text-link-hover);
+    text-decoration-color: var(--text-link-hover);
   }
   .hb-underline:hover {
     text-decoration: underline;

@@ -189,6 +189,27 @@
 }
 
 /* --- Footer --------------------------------------------------------------- */
+.hb-skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--type-small);
+  font-weight: var(--weight-semibold);
+  border: 2px solid var(--solar);
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: top 0.1s;
+}
+
+.hb-skip-link:focus {
+  top: 8px;
+}
+
 .hb-footer {
   border-top: 1px solid var(--ink-12);
   background: var(--surface);

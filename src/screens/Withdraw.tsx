@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Button, AmountInput, LiquidityMeter, useToast } from '../components'
 import { submitWithdraw } from '../wallet/vault'
 import { useWallet } from '../wallet/WalletProvider'
+import { roundToCents, formatDecimal } from '../lib/format'
 
 /**
  * Withdraw — designed with the most care of all. Capped at the live liquid
@@ -50,204 +51,216 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       setStep(newStep)
     }
   }
-  const n = parseFloat(amount) || 0
+  // Round once to cents so every display of this amount agrees (#369).
+  const n = roundToCents(parseFloat(amount) || 0)
 
-  return (
-    <main id="main-content" style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
-      {step === 'amount' && (
-        <div style={panel}>
-          <h1 style={hw}>{t('h1')}</h1>
-          {txError && (
-            <div
-              role="alert"
-              style={{
-                marginBottom: 14,
-                padding: '10px 14px',
-                borderRadius: 'var(--radius-input)',
-                background: 'rgba(179,54,27,0.07)',
-                border: '1px solid rgba(179,54,27,0.18)',
-                fontFamily: 'var(--font-body)',
-                fontSize: 'var(--type-small)',
-                color: 'var(--ember)',
+  const renderStep = (currentStep: WithdrawStep) => {
+    switch (currentStep) {
+      case 'amount':
+        return (
+          <div style={panel}>
+            <h1 style={hw}>{t('h1')}</h1>
+            {txError && (
+              <div
+                role="alert"
+                style={{
+                  marginBottom: 14,
+                  padding: '10px 14px',
+                  borderRadius: 'var(--radius-input)',
+                  background: 'rgba(179,54,27,0.07)',
+                  border: '1px solid rgba(179,54,27,0.18)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-small)',
+                  color: 'var(--ember)',
+                }}
+              >
+                {txError}
+              </div>
+            )}
+            <div style={{ marginBottom: 18 }}>
+              <LiquidityMeter liquid={liquid} total={482} currency="$" />
+            </div>
+            <AmountInput
+              value={amount}
+              onChange={setAmount}
+              label={t('amountLabel')}
+              currency="USDC"
+              balanceLabel={t('yourValue')}
+              balance="482.00"
+              chips={[25, 50, 100]}
+              cap={liquid}
+              capMessage={t('capMessage', { cap: liquid })}
+              maxChipLabel={t('maxChip')}
+              capActionLabel={t('withdrawMaxAvailable')}
+            />
+            <Button
+              variant="primary"
+              size="lg"
+              style={{ width: '100%', marginTop: 20 }}
+              disabled={n < 1 || n > liquid}
+              reason={n > liquid ? t('reasonExceeds') : n < 1 ? t('reasonMin') : undefined}
+              onClick={async () => {
+                changeStep('pending')
+                setTxError(null)
+                const controller = new AbortController()
+                abortControllerRef.current = controller
+                try {
+                  const hash = await submitWithdraw(n, address ?? '', sign, controller.signal)
+                  if (mountedRef.current) {
+                    setTxHash(hash)
+                    changeStep('success')
+                    toast({
+                      tone: 'success',
+                      title: 'Withdrawal settled',
+                      message: `${formatDecimal(n, 2)} USDC is on its way to your wallet.`,
+                    })
+                  }
+                } catch (e) {
+                  if (mountedRef.current) {
+                    if (e instanceof Error && e.message === 'Aborted') {
+                      return
+                    }
+                    setTxError(
+                      e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                    )
+                    changeStep('amount')
+                  }
+                } finally {
+                  if (abortControllerRef.current === controller) {
+                    abortControllerRef.current = null
+                  }
+                }
               }}
             >
-              {txError}
+              {n >= 1 && n <= liquid ? t('withdrawCta', { amount: n }) : t('withdrawCtaEmpty')}
+            </Button>
+            <button
+              onClick={onBack}
+              className="hb-textlink"
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: 12,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                color: 'var(--ink-60)',
+              }}
+            >
+              {t('cancel')}
+            </button>
+          </div>
+        )
+      case 'pending':
+        return (
+          <div style={panel}>
+            {/* Announce pending state to screen readers (#80) */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+                clip: 'rect(0,0,0,0)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t('pendingH1')}. {t('pendingSub')}
             </div>
-          )}
-          <div style={{ marginBottom: 18 }}>
-            <LiquidityMeter liquid={liquid} total={482} currency="$" />
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <h1 style={hw} aria-hidden="true">
+                {t('pendingH1')}
+              </h1>
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-data)',
+                  color: 'var(--ink-60)',
+                  margin: 0,
+                }}
+                aria-hidden="true"
+              >
+                {t('pendingSub')}
+              </p>
+            </div>
           </div>
-          <AmountInput
-            value={amount}
-            onChange={setAmount}
-            label={t('amountLabel')}
-            currency="USDC"
-            balanceLabel={t('yourValue')}
-            balance="482.00"
-            chips={[25, 50, 100]}
-            cap={liquid}
-            capMessage={t('capMessage', { cap: liquid })}
-            maxChipLabel={t('maxChip')}
-            capActionLabel={t('withdrawMaxAvailable')}
-          />
-          <Button
-            variant="primary"
-            size="lg"
-            style={{ width: '100%', marginTop: 20 }}
-            disabled={n < 1 || n > liquid}
-            reason={n > liquid ? t('reasonExceeds') : n < 1 ? t('reasonMin') : undefined}
-            onClick={async () => {
-              changeStep('pending')
-              setTxError(null)
-              const controller = new AbortController()
-              abortControllerRef.current = controller
-              try {
-                const hash = await submitWithdraw(n, address ?? '', sign, controller.signal)
-                if (mountedRef.current) {
-                  setTxHash(hash)
-                  changeStep('success')
-                  toast({
-                    tone: 'success',
-                    title: 'Withdrawal settled',
-                    message: `${n.toFixed(2)} USDC is on its way to your wallet.`,
-                  })
-                }
-              } catch (e) {
-                if (mountedRef.current) {
-                  if (e instanceof Error && e.message === 'Aborted') {
-                    return
-                  }
-                  setTxError(
-                    e instanceof Error ? e.message : 'Transaction failed — please try again.',
-                  )
-                  changeStep('amount')
-                }
-              } finally {
-                if (abortControllerRef.current === controller) {
-                  abortControllerRef.current = null
-                }
-              }
-            }}
-          >
-            {n >= 1 && n <= liquid ? t('withdrawCta', { amount: n }) : t('withdrawCtaEmpty')}
-          </Button>
-          <button
-            onClick={onBack}
-            className="hb-textlink"
-            style={{
-              display: 'block',
-              width: '100%',
-              marginTop: 12,
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              color: 'var(--ink-60)',
-            }}
-          >
-            {t('cancel')}
-          </button>
-        </div>
-      )}
-
-      {step === 'pending' && (
-        <div style={panel}>
-          {/* Announce pending state to screen readers (#80) */}
-          <div
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            style={{
-              position: 'absolute',
-              width: 1,
-              height: 1,
-              overflow: 'hidden',
-              clip: 'rect(0,0,0,0)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('pendingH1')}. {t('pendingSub')}
-          </div>
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <h1 style={hw} aria-hidden="true">
-              {t('pendingH1')}
-            </h1>
+        )
+      case 'success':
+        return (
+          <div style={panel}>
+            {/* Announce success to screen readers (#80) */}
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+                clip: 'rect(0,0,0,0)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t('successH1')}
+            </div>
+            <h1 style={{ ...hw, textAlign: 'center' }}>{t('successH1')}</h1>
             <p
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-data)',
+                lineHeight: 1.55,
                 color: 'var(--ink-60)',
-                margin: 0,
+                textAlign: 'center',
+                margin: '0 0 22px',
               }}
-              aria-hidden="true"
             >
-              {t('pendingSub')}
+              {t.rich('successBody', {
+                amount: formatDecimal(n, 2),
+                num: (c: ReactNode) => (
+                  <b className="hb-data" style={{ color: 'var(--ink)' }}>
+                    {c}
+                  </b>
+                ),
+              })}
             </p>
+            {txHash && (
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <a
+                  href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-caption)',
+                    color: 'var(--ink-40)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  {txHash} ↗
+                </a>
+              </div>
+            )}
+            <Button variant="primary" size="lg" style={{ width: '100%' }} onClick={onDone}>
+              {t('backToPortfolio')}
+            </Button>
           </div>
-        </div>
-      )}
+        )
+      default: {
+        const _exhaustiveCheck: never = currentStep
+        return _exhaustiveCheck
+      }
+    }
+  }
 
-      {step === 'success' && (
-        <div style={panel}>
-          {/* Announce success to screen readers (#80) */}
-          <div
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            style={{
-              position: 'absolute',
-              width: 1,
-              height: 1,
-              overflow: 'hidden',
-              clip: 'rect(0,0,0,0)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {t('successH1')}
-          </div>
-          <h1 style={{ ...hw, textAlign: 'center' }}>{t('successH1')}</h1>
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-data)',
-              lineHeight: 1.55,
-              color: 'var(--ink-60)',
-              textAlign: 'center',
-              margin: '0 0 22px',
-            }}
-          >
-            {t.rich('successBody', {
-              amount: n.toFixed(2),
-              num: (c: ReactNode) => (
-                <b className="hb-data" style={{ color: 'var(--ink)' }}>
-                  {c}
-                </b>
-              ),
-            })}
-          </p>
-          {txHash && (
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <a
-                href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-caption)',
-                  color: 'var(--ink-40)',
-                  textDecoration: 'none',
-                }}
-              >
-                {txHash} ↗
-              </a>
-            </div>
-          )}
-          <Button variant="primary" size="lg" style={{ width: '100%' }} onClick={onDone}>
-            {t('backToPortfolio')}
-          </Button>
-        </div>
-      )}
+  return (
+    <main id="main-content" style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
+      {renderStep(step)}
     </main>
   )
 }

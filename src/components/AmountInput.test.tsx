@@ -39,6 +39,30 @@ describe('AmountInput', () => {
       expect(onChangeValue).toBe('0.001')
     })
 
+    it('strips leading zeros from the whole-number part (#370)', () => {
+      let onChangeValue = ''
+      const onChange = (value: string) => {
+        onChangeValue = value
+      }
+      const { container } = render(<AmountInput onChange={onChange} />)
+      const input = container.querySelector('input') as HTMLInputElement
+
+      fireEvent.change(input, { target: { value: '007' } })
+      expect(onChangeValue).toBe('7')
+
+      fireEvent.change(input, { target: { value: '00.5' } })
+      expect(onChangeValue).toBe('0.5')
+
+      fireEvent.change(input, { target: { value: '0' } })
+      expect(onChangeValue).toBe('0')
+
+      fireEvent.change(input, { target: { value: '0.001' } })
+      expect(onChangeValue).toBe('0.001')
+
+      fireEvent.change(input, { target: { value: '010.25' } })
+      expect(onChangeValue).toBe('10.25')
+    })
+
     it('rejects multiple decimal points', () => {
       let result = ''
       const onChange = (value: string) => {

@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react'
+import { formatMoney } from '@/lib/format'
 
 /**
  * Heliobond LiquidityMeter — the platform's hardest honesty moment, made
@@ -21,8 +22,7 @@ export function LiquidityMeter({
   style,
 }: LiquidityMeterProps) {
   const pct = total > 0 ? Math.max(0, Math.min(1, liquid / total)) : 0
-  const fmt = (n: number) =>
-    currency + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const fmt = (n: number) => formatMoney(n, { includeSymbol: true, symbol: currency })
 
   return (
     <div style={{ ...style }}>

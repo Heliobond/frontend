@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { ScoreGauge } from './ScoreGauge'
 import { PinIcon } from './icons'
+import { formatMoney } from '../lib/format'
 
 /**
  * Heliobond ProjectCard — a project in the living atlas. Photo, name, location,
@@ -171,7 +172,7 @@ export function ProjectCard({
                     marginTop: 4,
                   }}
                 >
-                  {fundedPct}% of {fundingGoal!.toLocaleString('en-US')}
+                  {fundedPct}% of {formatMoney(fundingGoal!)}
                 </div>
               </div>
             )}

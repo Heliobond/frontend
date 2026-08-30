@@ -1,1 +1,7 @@
-npx lint-staged
+set -e
+
+bun run typecheck
+bun run lint
+bun run format:check
+bun run typecheck:coverage
+bun run test

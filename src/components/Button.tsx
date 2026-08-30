@@ -1,4 +1,4 @@
-import { useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
+import { forwardRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react'
 
 /**
  * Heliobond Button — primary (pill, solar fill), secondary (ink outline), ghost.
@@ -19,20 +19,23 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   type?: 'button' | 'submit' | 'reset'
 }
 
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  disabled = false,
-  loading = false,
-  reason,
-  icon = null,
-  iconRight = null,
-  type = 'button',
-  onClick,
-  children,
-  style,
-  ...rest
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = 'primary',
+    size = 'md',
+    disabled = false,
+    loading = false,
+    reason,
+    icon = null,
+    iconRight = null,
+    type = 'button',
+    onClick,
+    children,
+    style,
+    ...rest
+  },
+  ref,
+) {
   const [hover, setHover] = useState(false)
   const [active, setActive] = useState(false)
 
@@ -88,6 +91,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       type={type}
       disabled={disabled}
       title={disabled && reason ? reason : undefined}
@@ -108,7 +112,7 @@ export function Button({
       {!loading && iconRight}
     </button>
   )
-}
+})
 
 function Spinner() {
   return (

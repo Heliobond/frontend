@@ -2,6 +2,8 @@ import { type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, Button, PinIcon, ScoreGauge, ShieldCheckIcon } from '../components'
 import { Sparkline } from '../components/Sparkline'
+import { formatMoney } from '../lib/format'
+
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
 
@@ -211,8 +213,8 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
                     {pct}%
                   </span>{' '}
                   {t('fundingGoalLabel', {
-                    raised: raised.toLocaleString('en-US'),
-                    goal: goal.toLocaleString('en-US'),
+                    raised: formatMoney(raised),
+                    goal: formatMoney(goal),
                   })}
                 </div>
               </>

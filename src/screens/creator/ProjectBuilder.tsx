@@ -4,6 +4,7 @@ import { useId, useState, useEffect, type CSSProperties, type ReactNode } from '
 import { useTranslations } from 'next-intl'
 import { ProjectCard, Tag, Card, UploadIcon } from '@/components'
 import { PROJECT_TYPES, DRAFT_PROJECT, type ProjectType } from '@/data/creator'
+import { formatMoney } from '@/lib/format'
 
 /**
  * ProjectBuilder — the off-chain metadata builder. The form on the left writes
@@ -36,7 +37,7 @@ export function ProjectBuilder() {
 
   const getGoalLabel = (): string => {
     if (goalNumber <= 0) return t('awaitingFunding')
-    return t('fundingLabel', { goal: goalNumber.toLocaleString('en-US') })
+    return t('fundingLabel', { goal: formatMoney(goalNumber) })
   }
 
   const goalLabel = getGoalLabel()

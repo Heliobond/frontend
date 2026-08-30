@@ -4,7 +4,6 @@ import { useTranslations } from 'next-intl'
 import { Button, StatBlock } from '../components'
 import { LiveHelio } from '../brand/LiveHelio'
 import { HB_DATA } from '../data'
-import type { Screen } from '../types'
 
 /**
  * Landing — public hero. The live Helio dominates; three counters deep-link to
@@ -12,10 +11,10 @@ import type { Screen } from '../types'
  */
 export interface LandingProps {
   onConnect: () => void
-  onNav: (screen: Screen) => void
+  onExplore: () => void
 }
 
-export function Landing({ onConnect, onNav }: LandingProps) {
+export function Landing({ onConnect, onExplore }: LandingProps) {
   const t = useTranslations('Landing')
   const d = HB_DATA
   const steps = [1, 2, 3, 4] as const
@@ -62,7 +61,7 @@ export function Landing({ onConnect, onNav }: LandingProps) {
             <Button variant="primary" size="lg" onClick={onConnect}>
               {t('ctaStart')}
             </Button>
-            <Button variant="secondary" size="lg" onClick={() => onNav('explore')}>
+            <Button variant="secondary" size="lg" onClick={onExplore}>
               {t('ctaExplore')}
             </Button>
           </div>

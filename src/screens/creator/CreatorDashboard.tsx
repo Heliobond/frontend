@@ -8,6 +8,7 @@ import {
   type CreatorDashboard as CreatorDashboardModel,
   type OracleUpdate,
 } from '@/data/creator'
+import { formatMoney } from '@/lib/format'
 
 /**
  * CreatorDashboard — the creator's calm read on their project. Funding received,
@@ -63,7 +64,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
         <Card>
           <StatBlock
             label={t('dashFunding')}
-            value={`$${data.fundingReceived.toLocaleString('en-US')}`}
+            value={formatMoney(data.fundingReceived, { includeSymbol: true })}
             size="lg"
           />
           <div style={{ marginTop: 16 }}>
@@ -117,7 +118,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               </span>{' '}
               {t('dashGoalDeployed', {
                 pct: fundedPct,
-                goal: data.fundingGoal.toLocaleString('en-US'),
+                goal: formatMoney(data.fundingGoal),
               })}
             </div>
           </div>

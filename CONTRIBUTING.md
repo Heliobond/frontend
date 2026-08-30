@@ -54,46 +54,98 @@ bun run test:e2e      # Playwright end-to-end tests
 bun run start         # serve the production build
 ```
 
-## Running tests
+## Testing
 
 ### Unit and component tests (Vitest)
 
 The project uses [Vitest](https://vitest.dev) with a jsdom environment and
 [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
-for component rendering.
+for component rendering (config: `vitest.config.mts`, `vitest.setup.ts`).
 
 ```bash
 bun run test        # run all tests once and exit
 bun run test:ui     # open the Vitest browser UI
 ```
 
-A shared render helper lives in `src/test/render.tsx`. It wraps components in
-the i18n and theme providers the app uses, so component tests get a realistic
-context. Import from there instead of `@testing-library/react` directly:
+**Structure.** Unit and component tests are co-located with the code they
+cover, as `<Name>.test.ts` / `<Name>.test.tsx` next to `<Name>.ts(x)` — e.g.
+`src/components/Button.test.tsx`, `src/wallet/vault.test.ts`,
+`src/hooks/useSessionTimeout.test.ts`. Tests that cover cross-cutting behaviour
+rather than a single module (i18n catalog parity, shared bond math, contrast
+ratios) live in `src/__tests__/` instead. Vitest picks up anything matching
+`**/*.test.{ts,tsx}`, so a new test file just needs the right name and location
+to be included automatically.
+
+**Helpers.** A shared render helper lives in `src/test/render.tsx`. It wraps
+components in the `LocaleProvider` (i18n) and `ThemeProvider` the app uses at
+runtime, so component tests get a realistic context instead of a bare tree.
+Import `render` (and re-exported `@testing-library/react` utilities like
+`screen`, `fireEvent`) from there instead of from `@testing-library/react`
+directly:
 
 ```ts
 import { render, screen, fireEvent } from '@/test/render'
+
+test('renders the primary label', () => {
+  render(<Button variant="primary">Continue</Button>)
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeVisible()
+})
 ```
+
+If a test needs `next-intl` strings, they come from `messages/en.json` via the
+helper's `LocaleProvider` — no extra setup required. Add new unit tests next to
+the code under test using this pattern; there's no separate mocking layer to
+configure beyond what `vitest.setup.ts` already provides.
 
 ### End-to-end tests (Playwright)
 
 [Playwright](https://playwright.dev) drives a real Chromium browser against the
-running Next.js dev server.
+running Next.js dev server (config: `playwright.config.ts` — single Chromium
+project, dev server started automatically unless one is already running).
 
 ```bash
 bun run test:e2e    # headless Chromium (starts dev server automatically)
 ```
 
-E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
-`localStorage` so no real Stellar wallet extension is required.
+**Structure.** E2E specs live in `e2e/` as `<flow>.spec.ts` (e.g.
+`e2e/deposit.spec.ts`), one file per user-facing flow, grouped with
+`test.describe`. There's no page-object layer yet — specs query the DOM
+directly via Testing-Library-style locators (`page.getByRole(...)`,
+`page.getByText(...)`).
+
+**Helpers.** Because the wallet integration needs a real browser extension,
+specs seed a demo session via `page.addInitScript` before navigating, so the
+flow under test never depends on an actual Stellar wallet:
+
+```ts
+async function seedDemoWallet(page: Page) {
+  await page.addInitScript(
+    ({ address }) => {
+      localStorage.setItem('hb-address', address)
+      localStorage.setItem('hb-wallet', 'demo')
+    },
+    { address: DEMO_ADDRESS },
+  )
+}
+```
+
+Follow `e2e/deposit.spec.ts` as the template for a new flow: seed whatever
+session state the flow needs, `page.goto()` the route, then assert each step
+of the flow in order with `expect(locator).toBeVisible()` /
+`toBeDisabled()`.
 
 ## Development workflow
 
 1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/withdraw-max-chip`, `fix/helio-glow`, `i18n/creator-screens`).
 2. Make focused changes — one issue per PR.
 3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, **`bun run format:check`**, and **`bun run test`**.
-4. Open a PR using the template; link the issue with `Closes #123`.
-5. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
+4. If your change is user-facing or otherwise notable (a feature, a fix, a
+   breaking change), add an entry under `[Unreleased]` in
+   [`CHANGELOG.md`](./CHANGELOG.md) — see that file's "How entries are added"
+   section for the format. Purely internal changes (refactors, tooling,
+   formatting) don't need one.
+5. Open a PR using the template; link the issue with `Closes #123`.
+6. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
@@ -163,16 +215,17 @@ To add a new namespace for a new screen or surface:
 - **Bugs:** open a **Bug report** issue with steps to reproduce.
 - **Security:** please do **not** open a public issue. Use GitHub's **"Report a vulnerability"** (Security tab) for a private advisory.
 
-## Pre-commit hooks (optional)
+## Pre-commit hooks
 
-The project ships a pre-commit hook via **Husky** + **lint-staged** that runs the TypeScript
-type-checker on staged files before each commit. Install it:
+The project ships a pre-commit hook via **Husky** that runs the TypeScript
+type-checker, ESLint, Prettier format check, and the full test suite on every
+commit. Install it:
 
 ```bash
 bun run prepare
 ```
 
-To opt out, skip the `prepare` step — the hook is **not** installed unless you run it.
-Contributors who opt out are still expected to run `bun run build` before opening a PR.
+To opt out, skip the `prepare` step — the hook is **not** installed unless you run
+it. Contributors who opt out are still expected to run `bun run build` before opening a PR.
 
 By contributing, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
