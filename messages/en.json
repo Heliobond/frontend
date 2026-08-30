@@ -117,6 +117,7 @@
     "balanceLabel": "Balance",
     "amountH1": "How much would you like to invest?",
     "preview": "You'll receive ≈ <num>{shares} HBS</num> · share price <num>{price}</num> · network fee <num>< $0.01</num>",
+    "projection": "Projected return in 1 year: ≈ ${amount} USDC at {rate}% APY",
     "liquidLine": "Today the pool is <b>29% liquid</b> — you can withdraw your liquid share anytime.",
     "investCta": "Invest {amount} USDC",
     "investCtaEmpty": "Invest",

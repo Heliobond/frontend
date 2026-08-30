@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Button, AmountInput, LiquidityMeter, useToast } from '../components'
 import { submitWithdraw } from '../wallet/vault'
 import { useWallet } from '../wallet/WalletProvider'
+import { roundToCents, formatDecimal } from '../lib/format'
 
 /**
  * Withdraw — designed with the most care of all. Capped at the live liquid
@@ -50,7 +51,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       setStep(newStep)
     }
   }
-  const n = parseFloat(amount) || 0
+  // Round once to cents so every display of this amount agrees (#369).
+  const n = roundToCents(parseFloat(amount) || 0)
 
   const renderStep = (currentStep: WithdrawStep) => {
     switch (currentStep) {
@@ -110,7 +112,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     toast({
                       tone: 'success',
                       title: 'Withdrawal settled',
-                      message: `${n.toFixed(2)} USDC is on its way to your wallet.`,
+                      message: `${formatDecimal(n, 2)} USDC is on its way to your wallet.`,
                     })
                   }
                 } catch (e) {
@@ -219,7 +221,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               }}
             >
               {t.rich('successBody', {
-                amount: n.toFixed(2),
+                amount: formatDecimal(n, 2),
                 num: (c: ReactNode) => (
                   <b className="hb-data" style={{ color: 'var(--ink)' }}>
                     {c}

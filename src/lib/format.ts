@@ -1,4 +1,29 @@
 /**
+ * Rounds a number to a fixed number of decimals using decimal (not binary
+ * floating-point) precision, so 1.005 rounds to 1.01 rather than the 1.00 that
+ * `Math.round(1.005 * 100) / 100` or `(1.005).toFixed(2)` produce because
+ * 1.005 has no exact binary representation (#369).
+ */
+export function roundToDecimals(value: number, decimals: number): number {
+  const factor = Math.pow(10, decimals)
+  return Math.round((value + Number.EPSILON) * factor) / factor
+}
+
+/** Rounds to whole cents — the shared precision for on-screen USDC amounts (#369). */
+export function roundToCents(value: number): number {
+  return roundToDecimals(value, 2)
+}
+
+/**
+ * Formats a number to a fixed number of decimals, rounding once with
+ * {@link roundToDecimals} first so every caller displays the same rounded
+ * value instead of re-rounding raw floating-point results independently (#369).
+ */
+export function formatDecimal(value: number, decimals: number): string {
+  return roundToDecimals(value, decimals).toFixed(decimals)
+}
+
+/**
  * Formats a number as a localized currency/money string.
  * Defaults to 'en-US' formatting.
  */

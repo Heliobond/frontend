@@ -117,6 +117,7 @@
     "balanceLabel": "Solde",
     "amountH1": "Combien souhaitez-vous investir ?",
     "preview": "Vous recevrez ≈ <num>{shares} HBS</num> · prix de la part <num>{price}</num> · frais réseau <num>< $0.01</num>",
+    "projection": "Rendement projeté sur 1 an : ≈ {amount} $ USDC à {rate} % de rendement annuel",
     "liquidLine": "Aujourd'hui le pool est <b>liquide à 29 %</b> — vous pouvez retirer votre part liquide à tout moment.",
     "investCta": "Investir {amount} USDC",
     "investCtaEmpty": "Investir",

@@ -5,5 +5,7 @@ import { Landing } from '../screens/Landing'
 
 export default function HomePage() {
   const router = useRouter()
-  return <Landing onConnect={() => router.push('/connect')} onNav={() => router.push('/explore')} />
+  return (
+    <Landing onConnect={() => router.push('/connect')} onExplore={() => router.push('/explore')} />
+  )
 }
