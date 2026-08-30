@@ -54,38 +54,85 @@ bun run test:e2e      # Playwright end-to-end tests
 bun run start         # serve the production build
 ```
 
-## Running tests
+## Testing
 
 ### Unit and component tests (Vitest)
 
 The project uses [Vitest](https://vitest.dev) with a jsdom environment and
 [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
-for component rendering.
+for component rendering (config: `vitest.config.mts`, `vitest.setup.ts`).
 
 ```bash
 bun run test        # run all tests once and exit
 bun run test:ui     # open the Vitest browser UI
 ```
 
-A shared render helper lives in `src/test/render.tsx`. It wraps components in
-the i18n and theme providers the app uses, so component tests get a realistic
-context. Import from there instead of `@testing-library/react` directly:
+**Structure.** Unit and component tests are co-located with the code they
+cover, as `<Name>.test.ts` / `<Name>.test.tsx` next to `<Name>.ts(x)` — e.g.
+`src/components/Button.test.tsx`, `src/wallet/vault.test.ts`,
+`src/hooks/useSessionTimeout.test.ts`. Tests that cover cross-cutting behaviour
+rather than a single module (i18n catalog parity, shared bond math, contrast
+ratios) live in `src/__tests__/` instead. Vitest picks up anything matching
+`**/*.test.{ts,tsx}`, so a new test file just needs the right name and location
+to be included automatically.
+
+**Helpers.** A shared render helper lives in `src/test/render.tsx`. It wraps
+components in the `LocaleProvider` (i18n) and `ThemeProvider` the app uses at
+runtime, so component tests get a realistic context instead of a bare tree.
+Import `render` (and re-exported `@testing-library/react` utilities like
+`screen`, `fireEvent`) from there instead of from `@testing-library/react`
+directly:
 
 ```ts
 import { render, screen, fireEvent } from '@/test/render'
+
+test('renders the primary label', () => {
+  render(<Button variant="primary">Continue</Button>)
+  expect(screen.getByRole('button', { name: 'Continue' })).toBeVisible()
+})
 ```
+
+If a test needs `next-intl` strings, they come from `messages/en.json` via the
+helper's `LocaleProvider` — no extra setup required. Add new unit tests next to
+the code under test using this pattern; there's no separate mocking layer to
+configure beyond what `vitest.setup.ts` already provides.
 
 ### End-to-end tests (Playwright)
 
 [Playwright](https://playwright.dev) drives a real Chromium browser against the
-running Next.js dev server.
+running Next.js dev server (config: `playwright.config.ts` — single Chromium
+project, dev server started automatically unless one is already running).
 
 ```bash
 bun run test:e2e    # headless Chromium (starts dev server automatically)
 ```
 
-E2E tests live in `e2e/`. The deposit smoke test seeds a demo wallet via
-`localStorage` so no real Stellar wallet extension is required.
+**Structure.** E2E specs live in `e2e/` as `<flow>.spec.ts` (e.g.
+`e2e/deposit.spec.ts`), one file per user-facing flow, grouped with
+`test.describe`. There's no page-object layer yet — specs query the DOM
+directly via Testing-Library-style locators (`page.getByRole(...)`,
+`page.getByText(...)`).
+
+**Helpers.** Because the wallet integration needs a real browser extension,
+specs seed a demo session via `page.addInitScript` before navigating, so the
+flow under test never depends on an actual Stellar wallet:
+
+```ts
+async function seedDemoWallet(page: Page) {
+  await page.addInitScript(
+    ({ address }) => {
+      localStorage.setItem('hb-address', address)
+      localStorage.setItem('hb-wallet', 'demo')
+    },
+    { address: DEMO_ADDRESS },
+  )
+}
+```
+
+Follow `e2e/deposit.spec.ts` as the template for a new flow: seed whatever
+session state the flow needs, `page.goto()` the route, then assert each step
+of the flow in order with `expect(locator).toBeVisible()` /
+`toBeDisabled()`.
 
 ## Development workflow
 
