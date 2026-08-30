@@ -26,11 +26,20 @@ import { MeshDistortMaterial } from '@react-three/drei'
 import * as THREE from 'three'
 
 export interface HelioWebGLProps {
-  /** Rendered size in px (square). */
+  /** Rendered size in px (square). Defaults to 360. */
   size?: number
-  /** Number of corona motes — one per funded project. */
+  /** Number of corona motes — one per funded project. Defaults to 14. */
   motes?: number
-  /** Vault fullness, 0..1. Subtly scales the orb's luminance + size. */
+  /**
+   * Vault fullness, expressed 0..1 (values outside that range are clamped —
+   * see `clamp01`). Drives three things together so the orb "fills up" as the
+   * pool does:
+   *   · the sun's resting scale (0.9 at 0 → 1.02 at 1, `baseScale`)
+   *   · the sun's emissive brightness (0.5 at 0 → 0.9 at 1, `baseEmissive`)
+   *   · the glow halo's opacity (0.18 at 0 → 0.34 at 1, `baseOpacity` in `Halo`)
+   * Defaults to 1 (fully lit). The breathing animation oscillates on top of
+   * whatever base these produce, so intensity sets the floor, not a fixed value.
+   */
   intensity?: number
   /** Fired once the canvas has painted its first frame (used to cross-fade from the static fallback). */
   onReady?: () => void

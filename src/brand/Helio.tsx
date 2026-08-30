@@ -2,16 +2,23 @@ import { useId } from 'react'
 
 /**
  * Helio — the platform's one spectacle, here in its static, accessible fallback
- * form. The live build is WebGL/R3F (a separate engineering deliverable); this
- * is the no-WebGL / reduced-motion representation: a soft luminous solar orb
- * with a faint corona of project motes (one mote per funded project).
+ * form. The live build is WebGL/R3F (`HelioWebGL`, wired in via `LiveHelio`);
+ * this is the no-WebGL / reduced-motion representation: a soft luminous solar
+ * orb with a faint corona of project motes (one mote per funded project).
  *
  * aria-hidden decoration — every datum it encodes is present as text elsewhere.
  */
 export interface HelioProps {
+  /** Rendered size in px (square). Defaults to 360. */
   size?: number
-  /** Number of corona motes — one per funded project. */
+  /** Number of corona motes — one per funded project. Defaults to 14. */
   motes?: number
+  /**
+   * Whether the orb plays its slow ~6s breathing animation (CSS `hb-breath` on
+   * the `.hb-orb` group). Defaults to true. Independent of `prefers-reduced-motion`
+   * support — that's handled globally in `app.css`, which forces `.hb-orb`'s
+   * animation off regardless of this prop.
+   */
   breathe?: boolean
 }
 
