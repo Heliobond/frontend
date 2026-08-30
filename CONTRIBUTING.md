@@ -139,8 +139,13 @@ of the flow in order with `expect(locator).toBeVisible()` /
 1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/withdraw-max-chip`, `fix/helio-glow`, `i18n/creator-screens`).
 2. Make focused changes — one issue per PR.
 3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, **`bun run format:check`**, and **`bun run test`**.
-4. Open a PR using the template; link the issue with `Closes #123`.
-5. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
+4. If your change is user-facing or otherwise notable (a feature, a fix, a
+   breaking change), add an entry under `[Unreleased]` in
+   [`CHANGELOG.md`](./CHANGELOG.md) — see that file's "How entries are added"
+   section for the format. Purely internal changes (refactors, tooling,
+   formatting) don't need one.
+5. Open a PR using the template; link the issue with `Closes #123`.
+6. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
