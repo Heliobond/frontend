@@ -42,7 +42,7 @@ describe('AdminConsole money formatting helpers', () => {
   )
 
   it('parses funded amounts with thousands separators', () => {
-    expect(parseFundedNum(',234,567')).toBe(1_234_567)
+    expect(parseFundedNum('$1,234,567')).toBe(1_234_567)
   })
 })
 

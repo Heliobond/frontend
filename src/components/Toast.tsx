@@ -25,6 +25,7 @@ export interface ToastProps {
   action?: ReactNode
   onDismiss?: () => void
   href?: string
+  stackable?: boolean
   style?: CSSProperties
 }
 

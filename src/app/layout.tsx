@@ -8,8 +8,8 @@ import { type Locale, RTL_LOCALES } from '../i18n/request'
 import { THEME_SCRIPT } from '../theme/themeScript'
 import '../styles/index.css'
 
-const TopBar = dynamic(() => import('../shell/TopBar'))
-const Footer = dynamic(() => import('../shell/Footer'))
+const TopBar = dynamic(() => import('../shell/TopBar').then((m) => m.TopBar))
+const Footer = dynamic(() => import('../shell/Footer').then((m) => m.Footer))
 
 export const metadata: Metadata = {
   title: 'Heliobond — sunlight made financial',
@@ -66,7 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHtml={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
         <LocaleProvider initialLocale={locale as Locale} initialMessages={messages as Messages}>

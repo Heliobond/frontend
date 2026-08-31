@@ -38,7 +38,7 @@ export function useWallet(): WalletContextValue {
 export function shortAddress(address: string, lead = 4, tail = 3): string {
   if (address.length <= lead + tail + 1) return address
   const suffix = tail > 0 ? address.slice(-tail) : ''
-  return `${address.slice(0, lead)}…{suffix}`
+  return `${address.slice(0, lead)}…${suffix}`
 }
 
 const DEMO_ADDRESS = 'GBQHWTVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
@@ -92,7 +92,7 @@ export function WalletProvider({ children }: {children: ReactNode}) {
     if (initedNetworkRef.current === network) return
     const { StellarWalletsKit, Networks } = await import('@creit.tech/stellar-wallets-kit')
     const { defaultModules } = await import('@creit.tech/stellar-wallets-kit/modules/utils')
-    StellareWalletsKit.init({
+    StellarWalletsKit.init({
       modules: defaultModules(),
       network: network === 'TESTNET' ? Networks.TESTNET : Networks.PUBLIC,
     })
@@ -134,11 +134,11 @@ export function WalletProvider({ children }: {children: ReactNode}) {
     setConnectionError(null)
     try {
       await ensureInit()
-      const { StellareWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
+      const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
       const timeoutPromise = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), CONNECT_TIMEOUT_MS)
       )
-      const authPromise = StellareWalletsKit.authModal() as Promise<{ address: string }>
+      const authPromise = StellarWalletsKit.authModal() as Promise<{ address: string }>
       const { address: adr } = await Promise.race([authPromise, timeoutPromise])
       let walletId = 'wallet'
       try {
@@ -158,7 +158,7 @@ export function WalletProvider({ children }: {children: ReactNode}) {
       }
       if (isTimeout && attempt < MAX_AUTO_RETRIES) {
         setRetryCount(attempt + 1)
-        await new Promise((r) => setTimeour(r, 1000 * Math.pow(2, attempt)))
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
         return connectWithRetry(attempt + 1)
       }
       setConnectionError(
@@ -194,7 +194,7 @@ export function WalletProvider({ children }: {children: ReactNode}) {
       if (isDemo) throw new Error('demo')
       await ensureInit()
       const { StellarWalletsKit, Networks } = await import('@creit.tech/stellar-wallets-kit')
-      const result = await StellareWalletsKit.signTransaction(xdr, {
+      const result = await StellarWalletsKit.signTransaction(xdr, {
         networkPassphrase: network === 'TESTNET' ? Networks.TESTNET : Networks.PUBLIC,
         address: address ?? undefined,
       })
@@ -215,13 +215,13 @@ export function WalletProvider({ children }: {children: ReactNode}) {
       /* ignore */
     }
     void import('@creit.tech/stellar-wallets-kit')
-      .then(({ StellareWalletsKit }) => StellarWalletsKit.disconnect())
+      .then(({ StellarWalletsKit }) => StellarWalletsKit.disconnect())
       .catch(() => {})
   }, [])
 
   return (
     <WalletContext.Provider
-      value={
+      value={{
         address,
         connected: address !== null,
         connecting,
@@ -236,7 +236,7 @@ export function WalletProvider({ children }: {children: ReactNode}) {
         sign,
         network,
         setNetwork,
-      }
+      }}
     >
       {children}
     </WalletContext.Provider>

@@ -62,7 +62,7 @@ export function searchBondsByName(bonds: Bond[], query: string): Bond[] {
 // #359 -- stable sort with tie-breaker (name, then id)
 export function sortBondsByYield(bonds: Bond[], direction: 'asc' | 'desc' = 'asc'): Bond[] {
   const dir = direction === 'asc' ? 1 : -1
-  return [].concat(bonds).sort((a, b) => {
+  return [...bonds].sort((a, b) => {
     if (a.yield !== b.yield) return (a.yield - b.yield) * dir
     const nameCmp = a.name.localeCompare(b.name)
     if (nameCmp !== 0) return nameCmp

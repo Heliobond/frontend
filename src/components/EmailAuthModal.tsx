@@ -1,4 +1,4 @@
-"'use client'
+'use client'
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
@@ -26,7 +26,7 @@ export interface EmailAuthModalProps {
  */
 export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: EmailAuthModalProps) {
   const t = useTranslations('AccountConflict')
-  const [email, setEmail] = useState({'')
+  const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [bypassWarning, setBypassWarning] = useState(false)
   const [bioLoading, setBioLoading] = useState(false)
@@ -60,7 +60,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
     setBioLoading(true)
     setBioError(null)
     try {
-      const result = await loginBiometric(email)
+      await loginBiometric(email)
       // On success, notify parent and close the modal
       if (onSuccess) onSuccess(email)
       onClose()
@@ -76,7 +76,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
     setBioLoading(true)
     setBioError(null)
     try {
-      const result = await registerBiometric(email)
+      await registerBiometric(email)
       // After registration, log in automatically
       if (onSuccess) onSuccess(email)
       onClose()
@@ -89,7 +89,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
 
   return (
     <div
-      style={
+      style={{
         position: 'fixed',
         top: 0,
         insetInline: 0,
@@ -102,13 +102,13 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
         justifyContent: 'center',
         zIndex: 9999,
         padding: 20,
-      }
+      }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="email-auth-title"
-        style={
+        style={{
           background: 'var(--surface)',
           border: '1px solid var(--ink-12)',
           borderRadius: 'var(--radius-modal)',
@@ -116,40 +116,40 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
           maxWidth: 460,
           width: '100%',
           maxHeight: 'calc(100dvh - 32px)',
-          overflowYJ   'auto',
+          overflowY: 'auto',
           padding: 28,
           animation: 'hb-rise 200ms var(--ease-out) forwards',
-        }
+        }}
       >
         <div
-          style={
+          style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             marginBottom: 16,
-          }
+          }}
         >
           <h3
             id="email-auth-title"
-            style={
+            style={{
               fontFamily: 'var(--font-display)',
               fontSize: 'var(--type-h3-sm)',
               fontWeight: 700,
               color: 'var(--ink)',
               margin: 0,
-            }
+            }}
           >
             {t('modalTitle')}
           </h3>
           <button
             onClick={onClose}
-            style={
+            style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               fontSize: 18,
               color: 'var(--ink-40)',
-            }
+            }}
             aria-label="Close"
           >
             ✕
@@ -157,33 +157,33 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
         </div>
 
         {submitted ? (
-          <div style={ textAlign: 'center', padding: '16px 0' }>
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
             <p
-              style={
+              style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-body)',
                 color: 'var(--ink)',
-              }
+              }}
             >
               {t('linkSentMessage', { email })}
             </p>
-            <Button variant="secondary" size="md" onClick={onClose} style={ marginTop: 16 }>
+            <Button variant="secondary" size="md" onClick={onClose} style={{ marginTop: 16 }}>
               {t('close')}
             </Button>
           </div>
         ) : (
           <form
             onSubmit={handleSubmit}
-            style={ display: 'flex', flexDirection: 'column', gap: 14 }
+            style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
           >
             <label
               htmlFor="auth-email-input"
-              style={
+              style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-small)',
                 color: 'var(--ink)',
                 fontWeight: 600,
-              }
+              }}
             >
               {t('emailInputLabel')}
             </label>
@@ -194,10 +194,10 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
               onChange={(e) => {
                 setEmail(e.target.value)
                 setBypassWarning(false)
-              }
+              }}
               placeholder="you@example.com"
               required
-              style={
+              style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-body)',
                 padding: '12px 14px',
@@ -206,7 +206,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
                 background: 'var(--canvas)',
                 color: 'var(--ink)',
                 outline: 'none',
-              }
+              }}
             />
 
             {/* Social Account Collision Warning */}
@@ -224,7 +224,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
               variant="primary"
               size="lg"
               disabled={showConflict || !email}
-              style={ marginTop: 8 }
+              style={{ marginTop: 8 }}
             >
               {t('submitCta')}
             </Button>
@@ -234,15 +234,29 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
         {!submitted && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
-              <div style={ flex: 1, height: 1, background: 'var(--ink-12)' }/>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-caption)', color: 'var(--ink-40)' }}>
-                or 
+              <div style={{ flex: 1, height: 1, background: 'var(--ink-12)' }} />
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-caption)',
+                  color: 'var(--ink-40)',
+                }}
+              >
+                or
               </span>
-              <div style={{ flex: 1, height: 1, background: 'var(--ink-12)' }}/>
+              <div style={{ flex: 1, height: 1, background: 'var(--ink-12)' }} />
             </div>
 
             {bioError && (
-              <p role="alert" style={ color: 'var(--ember)', fontFamily: 'var(--font-body)', fontSize: 'var(--type-small)', margin: '0 0 8px' }>
+              <p
+                role="alert"
+                style={{
+                  color: 'var(--ember)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-small)',
+                  margin: '0 0 8px',
+                }}
+              >
                 {bioError}
               </p>
             )}
@@ -254,7 +268,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
                 size="md"
                 onClick={handleBiometricLogin}
                 disabled={!email || bioLoading}
-                style={ flex: 1 }
+                style={{ flex: 1 }}
               >
                 Face ID / Touch ID Login
               </Button>
@@ -264,7 +278,7 @@ export function EmailAuthModal({ open, onClose, onSuccess, onSocialLogin }: Emai
                 size="md"
                 onClick={handleBiometricRegister}
                 disabled={!email || bioLoading}
-                style={ flex: 1 }
+                style={{ flex: 1 }}
               >
                 Register Biometric
               </Button>

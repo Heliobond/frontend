@@ -2,6 +2,7 @@
   "Common": {
     "copyAddress": "Copy {label}",
     "copied": "Copied",
+    "viewInvestment": "Ver tu inversión",
     "viewOnExplorer": "View {label} on Stellar Expert"
   },
   "Nav": {
@@ -17,8 +18,10 @@
     "switchToLight": "Switch to light",
     "language": "Language",
     "account": "Account",
+    "watchlist": "Lista de seguimiento",
     "copyAddress": "Copy address",
     "copied": "Copied",
+    "viewInvestment": "Ver tu inversión",
     "viewOnExplorer": "View on Stellar Expert",
     "disconnect": "Disconnect",
     "disconnectConfirm": "Yes, disconnect",
@@ -101,8 +104,8 @@
   "Explore": {
     "title": "Where the pool works",
     "sub": "Every project the pool funds, with oracle-verified scores. Explore freely — connecting a wallet comes later.",
+    "searchLabel": "Buscar proyectos",
     "searchPlaceholder": "Search by name or location",
-    "searchAriaLabel": "Search projects",
     "filterAll": "All",
     "countSorted": "{count} projects",
     "cardFundedFromPool": "Funded from the pool",
@@ -111,6 +114,21 @@
     "emptySub": "There are no projects matching the \"{filter}\" category in the pool right now.",
     "loadMore": "Show {count} more",
     "showingCount": "Showing {shown} of {total} projects"
+  },
+  "Watchlist": {
+    "title": "Tu lista de seguimiento",
+    "sub": "Bonos que estás siguiendo. Guardar uno no invierte, solo lo mantiene cerca y avisa cuando se abre para financiamiento.",
+    "cardFundedFromPool": "Financiado desde el pool",
+    "emptyTitle": "Nada guardado aún",
+    "emptySub": "Abra un bono desde Explorar y toque la estrella para agregarlo aquí. Le mostraremos cuando un bono guardado esté abierto para financiamiento.",
+    "added": "Añadido a la lista de seguimiento",
+    "removed": "Eliminado de la lista de seguimiento",
+    "saveLabel": "Agregar {name} a la lista de seguimiento",
+    "removeLabel": "Eliminar {name} de la lista de seguimiento",
+    "availableBanner": "{count, plural, one {# bono guardado está abierto para financiamiento en este momento.} other {# bonos guardados están abiertos para financiamiento en este momento.}}",
+    "statusOpen": "Abierto para financiamiento",
+    "statusUpcoming": "Aún no disponible",
+    "notYetAvailable": "Lo marcaremos aquí cuando se abra."
   },
   "Deposit": {
     "stepAmount": "Amount",
@@ -143,6 +161,7 @@
     "pendingTx": "tx a91f…3c0d · view on Stellar Expert ↗",
     "successH1": "Welcome to the pool",
     "successBody": "You received <num>{shares} HBS</num> and now back <b>{count} verified projects</b>.",
+    "viewInvestment": "Ver tu inversión",
     "viewExpert": "View on Stellar Expert",
     "goPortfolio": "Go to portfolio"
   },
@@ -159,6 +178,11 @@
     "impactBody": "Your stake helps fund <b>{count} verified projects</b> across 6 countries.",
     "projectsBacked": "Projects backed",
     "weightedGreen": "Weighted green score",
+    "riskScore": "Puntuación de riesgo de la cartera",
+    "riskTierConservative": "Conservador",
+    "riskTierModerate": "Moderado",
+    "riskTierAggressive": "Agresivo",
+    "riskCaption": "Basado en la combinación de calificaciones de bonos en sus tenencias.",
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert"
   },

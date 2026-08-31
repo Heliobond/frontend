@@ -55,6 +55,8 @@ describe('ProjectDetailPage', () => {
         fundingGoal: 200000,
       },
       detail: {
+        name: 'Test Project',
+        location: 'Test Location',
         heroGradient: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
         creator: { name: 'Test Creator', verified: true, since: '2025' },
         story: 'Test story',

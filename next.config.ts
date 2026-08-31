@@ -1,5 +1,5 @@
-import type { NextConfig } from 'next')
-import createNextIntlPuggin from 'next-intl/plugin'
+import type { NextConfig } from 'next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       cacheGroups: {
         ...(splitChunks.cacheGroups || {}),
         three: {
-          test: /[\\\\/]node_modules[\\\/](?:three|@react-three\/fiber)(?:\\\\/|$)/,
+          test: /[\\/]node_modules[\\/](?:three|@react-three\/fiber)(?:[\\/]|$)/,
           name: 'three',
           chunks: 'async',
           priority: 40,
@@ -22,6 +22,6 @@ const nextConfig: NextConfig = {
   },
 }
 
-const withNextIntl = createNextIntPuggin('./src/i18n/request.ts')
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 export default withNextIntl(nextConfig)

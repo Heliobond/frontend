@@ -2,6 +2,7 @@
   "Common": {
     "copyAddress": "Copier {label}",
     "copied": "Copié",
+    "viewInvestment": "Voir votre investissement",
     "viewOnExplorer": "Voir {label} sur Stellar Expert"
   },
   "Nav": {
@@ -20,6 +21,7 @@
     "watchlist": "Liste de suivi",
     "copyAddress": "Copier l'adresse",
     "copied": "Copié",
+    "viewInvestment": "Voir votre investissement",
     "viewOnExplorer": "Voir sur Stellar Expert",
     "disconnect": "Se déconnecter",
     "disconnectConfirm": "Oui, se déconnecter",
@@ -159,6 +161,7 @@
     "pendingTx": "tx a91f…3c0d · voir sur Stellar Expert ↗",
     "successH1": "Bienvenue dans le pool",
     "successBody": "Vous avez reçu <num>{shares} HBS</num> et soutenez désormais <b>{count} projets vérifiés</b>.",
+    "viewInvestment": "Voir votre investissement",
     "viewExpert": "Voir sur Stellar Expert",
     "goPortfolio": "Aller au portefeuille"
   },
@@ -175,6 +178,11 @@
     "impactBody": "Votre participation aide à financer <b>{count} projets vérifiés</b> dans 6 pays.",
     "projectsBacked": "Projets soutenus",
     "weightedGreen": "Score vert pondéré",
+    "riskScore": "Score de risque du portefeuille",
+    "riskTierConservative": "Conservateur",
+    "riskTierModerate": "Modéré",
+    "riskTierAggressive": "Agressif",
+    "riskCaption": "Basé sur la répartition des notations d'obligations dans vos avoirs.",
     "activityTitle": "Activité",
     "activityNote": "chaque entrée → Stellar Expert"
   },

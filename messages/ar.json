@@ -2,6 +2,7 @@
   "Common": {
     "copyAddress": "نسخ {label}",
     "copied": "تم النسخ",
+    "viewInvestment": "عرض استثمارك",
     "viewOnExplorer": "عرض {label} على Stellar Expert"
   },
   "Nav": {
@@ -17,8 +18,10 @@
     "switchToLight": "التبديل إلى الوضع الفاتح",
     "language": "اللغة",
     "account": "الحساب",
+    "watchlist": "قائمة المراقبة",
     "copyAddress": "نسخ العنوان",
     "copied": "تم النسخ",
+    "viewInvestment": "عرض استثمارك",
     "viewOnExplorer": "عرض على Stellar Expert",
     "disconnect": "قطع الاتصال",
     "disconnectConfirm": "نعم، قطع الاتصال",
@@ -101,9 +104,9 @@
   "Explore": {
     "title": "أين يعمل المجمع",
     "sub": "كل مشروع يموله المجمع، مع درجات مؤكدة من Oracle. استكشف بحرية — توصيل المحفظة يأتي لاحقاً.",
-    "filterAll": "الكل",
+    "searchLabel": "ابحث في المشاريع",
     "searchPlaceholder": "ابحث بالاسم أو الموقع",
-    "searchAriaLabel": "ابحث في المشاريع بالاسم أو الموقع",
+    "filterAll": "الكل",
     "countSorted": "{count} مشاريع",
     "cardFundedFromPool": "ممول من المجمع",
     "cardVerifiedAgo": "تم التحقق قبل {ago}",
@@ -111,6 +114,21 @@
     "emptySub": "لا توجد مشاريع تطابق فئة \"{filter}\" في المجمع حالياً.",
     "loadMore": "عرض {count} المزيد",
     "showingCount": "عرض {shown} من {total} مشاريع"
+  },
+  "Watchlist": {
+    "title": "قائمة المراقبة الخاصة بك",
+    "sub": "السندات التي تتابعها. حفظ السند لا يعني الاستثمار فيه، بل يبقيه قريباً وينبهك عند فتح التمويل.",
+    "cardFundedFromPool": "ممول من المجمع",
+    "emptyTitle": "لم يتم حفظ أي شيء بعد",
+    "emptySub": "افتح سنداً من الاستكشاف واضغط على النجمة لإضافته هنا. سنخبرك عندما يكون السند المحفوظ مفتوحاً للتمويل.",
+    "added": "تمت الإضافة إلى قائمة المراقبة",
+    "removed": "تمت الإزالة من قائمة المراقبة",
+    "saveLabel": "إضافة {name} إلى قائمة المراقبة",
+    "removeLabel": "إزالة {name} من قائمة المراقبة",
+    "availableBanner": "{count, plural, one {سند واحد محفوظ متاح للتمويل الآن.} other {# سندات محفوظة متاحة للتمويل الآن.}}",
+    "statusOpen": "مفتوح للتمويل",
+    "statusUpcoming": "غير متاح بعد",
+    "notYetAvailable": "سنشير إليه هنا عند فتحه."
   },
   "Deposit": {
     "stepAmount": "المبلغ",
@@ -143,6 +161,7 @@
     "pendingTx": "tx a91f…3c0d · عرض على Stellar Expert ↗",
     "successH1": "مرحباً بك في المجمع",
     "successBody": "حصلت على <num>{shares} HBS</num> وتدعم الآن <b>{count} مشاريع مؤكدة</b>.",
+    "viewInvestment": "عرض استثمارك",
     "viewExpert": "عرض على Stellar Expert",
     "goPortfolio": "انتقل إلى المحفظة"
   },
@@ -159,6 +178,11 @@
     "impactBody": "حصتك تساعد في تمويل <b>{count} مشاريع مؤكدة</b> في 6 دول.",
     "projectsBacked": "المشاريع المدعومة",
     "weightedGreen": "الدرجة الخضراء المرجحة",
+    "riskScore": "درجة مخاطر المحفظة",
+    "riskTierConservative": "محافظ",
+    "riskTierModerate": "معتدل",
+    "riskTierAggressive": "عالي المخاطر",
+    "riskCaption": "بناءً على مزيج تصنيفات السندات في حيازاتك.",
     "activityTitle": "النشاط",
     "activityNote": "كل إدخال → Stellar Expert"
   },

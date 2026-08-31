@@ -39,7 +39,7 @@ async function postJSON(url: string, body: unknown): Promise<any> {
     throw new Error(err.error || `HTTP ${res.status}`)
   }
   return res.json()
-]
+}
 export async function registerBiometric(username: string): Promise<any> {
   const options = await postJSON('/webauthn/register/begin', { username })
 
@@ -69,7 +69,7 @@ export async function registerBiometric(username: string): Promise<any> {
     },
   }
 
-  return postJSON('/webauthn'/register/complete', { username, credential: credentialJSON })
+  return postJSON('/webauthn/register/complete', { username, credential: credentialJSON })
 }
 
 export async function loginBiometric(username: string): Promise<any> {
@@ -103,5 +103,5 @@ export async function loginBiometric(username: string): Promise<any> {
     },
   }
 
-  return postJSON('/webauthn'/login/complete', { username, credential: credentialJSON })
+  return postJSON('/webauthn/login/complete', { username, credential: credentialJSON })
 }

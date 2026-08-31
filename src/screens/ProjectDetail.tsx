@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, Button, PinIcon, ScoreGauge, ShieldCheckIcon, WatchlistButton } from '../components'
 import { Sparkline } from '../components/Sparkline'
@@ -16,13 +16,12 @@ import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
 export interface ProjectDetailProps {
   project: Project
   detail: ProjectDetailData
-  onInvest: () => Promise<string>
+  onInvest: () => void
   onBack?: () => void
 }
 
 export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
-  const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       {onBack && (
@@ -350,30 +349,11 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
         <Button
           variant="primary"
           size="lg"
-          onClick={async () => {
-            const url = await onInvest()
-            setInvestmentUrl(url)
-          }}
+          onClick={() => onInvest()}
           style={{ width: '100%' }}
         >
           {t('investCta')}
         </Button>
-        {investmentUrl && (
-          <a
-            href={investmentUrl}
-            style={{
-              display: 'block',
-              textAlign: 'center',
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              fontWeight: 600,
-              color: 'var(--brand)',
-              textDecoration: 'none',
-            }}
-          >
-            View investment →
-          </a>
-        )}
         <p
           style={{
             fontFamily: 'var(--font-body)',
@@ -385,27 +365,6 @@ export function ProjectDetail({ project, detail, onInvest, onBack }: ProjectDeta
         >
           {t('investNote')}
         </p>
-        {investmentUrl && (
-          <div role="status">
-            <a
-              href={investmentUrl}
-              style={{
-                display: 'block',
-                padding: '14px 20px',
-                borderRadius: 'var(--radius-card)',
-                background: 'var(--growth)',
-                color: 'var(--surface)',
-                textAlign: 'center',
-                fontFamily: 'var(--font-body)',
-                fontSize: 'var(--type-data)',
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}
-            >
-              {t('viewInvestment')}
-            </a>
-          </div>
-        )}
         {onBack && (
           <div style={{ textAlign: 'center' }}>
             <button

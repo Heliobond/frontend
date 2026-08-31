@@ -130,6 +130,11 @@ export function useSessionTimeout({
     scheduleWarning()
   }, [scheduleWarning])
 
+  const isWarningOpenRef = useRef(isWarningOpen)
+  useEffect(() => {
+    isWarningOpenRef.current = isWarningOpen
+  }, [isWarningOpen])
+
   // Track user activity with throttled event handler
   useEffect(() => {
     if (!enabled) {
@@ -143,7 +148,7 @@ export function useSessionTimeout({
     const handleUserActivity = () => {
       // Do not reset activity automatically while the warning modal is actively open
       // (user must explicitly click Extend Session)
-      if (isWarningOpen) return
+      if (isWarningOpenRef.current) return
 
       const now = Date.now()
       if (now - lastThrottleRef.current > throttleMs) {
@@ -162,7 +167,7 @@ export function useSessionTimeout({
         window.removeEventListener(event, handleUserActivity)
       })
     }
-  }, [enabled, isWarningOpen, scheduleWarning, clearTimers, throttleMs])
+  }, [enabled, scheduleWarning, clearTimers, throttleMs])
 
   // Format MM:SS for countdown display
   const minutes = Math.floor(remainingSeconds / 60)

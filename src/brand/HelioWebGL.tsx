@@ -362,6 +362,7 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
   const [ready, setReady] = useState(false)
   const [webgl, setWebgl] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [visible, setVisible] = useState(true)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -373,15 +374,28 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
     // addEventListener is supported in all R19-era browsers.
     mq.addEventListener('change', onChange)
 
+    const onVisibilityChange = () => {
+      setVisible(document.visibilityState === 'visible')
+    }
+    if (typeof document !== 'undefined') {
+      setVisible(document.visibilityState === 'visible')
+      document.addEventListener('visibilitychange', onVisibilityChange)
+    }
+
     setReady(true)
-    return () => mq.removeEventListener('change', onChange)
+    return () => {
+      mq.removeEventListener('change', onChange)
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange)
+      }
+    }
   }, [])
 
   // Until we've probed the client, render nothing — the parent's static
   // <Helio> fallback covers this window (and SSR). No WebGL → stay null.
   if (!ready || !webgl) return null
 
-  const animate = !reducedMotion
+  const animate = !reducedMotion && visible
 
   return (
     <div aria-hidden="true" style={{ width: size, height: size, position: 'relative' }}>

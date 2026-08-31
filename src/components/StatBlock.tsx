@@ -41,7 +41,7 @@ export function StatBlock({
   const s = sizes[size] ?? sizes.md
 
   const dir = deltaDirection || (delta && delta.trim().startsWith('-') ? 'down' : 'up')
-  const arrow = dir === 'down' ? '↓' : '⇑'
+  const arrow = dir === 'down' ? '↓' : '↑'
   const deltaColor = dir === 'down' ? 'var(--ember)' : 'var(--growth)'
 
   const wrapperStyle: CSSProperties = { display: 'block', textDecoration: 'none', ...style }
@@ -77,7 +77,7 @@ export function StatBlock({
           }}
         >
           {value}
-          {decimals != null && <span style={{ color: 'var(--ink-60)' }}>{decimals}</span>
+          {decimals != null && <span style={{ color: 'var(--ink-60)' }}>{decimals}</span>}
           {unit && (
             <span style={{ fontSize: '0.55em', color: 'var(--ink-60)', marginInlineStart: 4 }}>
               {unit}

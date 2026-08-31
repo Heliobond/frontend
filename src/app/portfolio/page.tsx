@@ -1,18 +1,26 @@
 'use client'
 
+import { Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import { Portfolio } from '../../screens/Portfolio'
 import { RequireWallet } from '../../wallet/RequireWallet'
-import { usePortfolioRisk } from '../../hooks/usePortfolioRisk'
 
 function PortfolioRoute() {
-  const riskScore = usePortfolioRisk()
-  return <Portfolio riskScore={riskScore} />
+  const router = useRouter()
+  return (
+    <Portfolio
+      onWithdraw={() => router.push('/withdraw')}
+      onDeposit={() => router.push('/deposit')}
+    />
+  )
 }
 
 export default function PortfolioPage() {
   return (
-    <RequireWallet>
-      <PortfolioRoute />
-    </RequireWallet>
+    <Suspense fallback={null}>
+      <RequireWallet>
+        <PortfolioRoute />
+      </RequireWallet>
+    </Suspense>
   )
 }

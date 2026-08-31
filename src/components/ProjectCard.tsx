@@ -178,7 +178,7 @@ export function ProjectCard({
                     marginTop: 4,
                   }}
                 >
-                  {fundedPct}% of {formatMoney(fundingGoal!})
+                  {fundedPct}% of {formatMoney(fundingGoal!)}
                 </div>
               </div>
             )}

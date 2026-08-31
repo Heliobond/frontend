@@ -1,7 +1,7 @@
 // Heliobond — fake data for the click-through. Not production: these stand in
  // for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
 
-export type ProjectType = 'Solar' | 'Wind' | 'Hudro'
+export type ProjectType = 'Solar' | 'Wind' | 'Hydro'
 
 /**
  * Whether a project ("bond", in investor-facing copy) is currently open for
@@ -9,7 +9,7 @@ export type ProjectType = 'Solar' | 'Wind' | 'Hudro'
  * saved bonds they can act on now. `upcoming` = not yet available;
  * `funded` = fully funded, no further capacity.
  */
-type BondStatus = 'open' | 'upcoming' | 'funded'
+export type BondStatus = 'open' | 'upcoming' | 'funded'
 
 export interface Project {
   id: number
@@ -157,7 +157,7 @@ const INITIAL_FUNDED_COUNT = INITIAL_PROJECTS.filter((p) => {
 function getRiskIndicator(projects: Project[]): { riskScore: number; riskLevel: 'conservative' | 'moderate' | 'aggressive' } {
   const totalFunded = projects.reduce((sum, p) => sum + p.fundedAmount, 0)
   if (totalFunded === 0) {
-    return { riskScore: 0, rankLevel: 'conservative' }
+    return { riskScore: 0, riskLevel: 'conservative' }
   }
 
   const weightedCredit = projects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / totalFunded
