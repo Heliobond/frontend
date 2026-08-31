@@ -14,3 +14,14 @@ export function parseFundedNum(s: string): number {
   const n = Number(s.replace(/[^0-9.]/g, ''))
   return Number.isFinite(n) ? n : 0
 }
+
+/**
+ * Validates score inputs (credit and green scores must be between 0 and 100) (#414).
+ */
+export function validateScores(credit: string, green: string): boolean {
+  if (credit === '' || green === '') return false
+  const creditN = Number(credit)
+  const greenN = Number(green)
+  return creditN >= 0 && creditN <= 100 && greenN >= 0 && greenN <= 100
+}
+

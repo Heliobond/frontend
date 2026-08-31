@@ -85,6 +85,8 @@ export function EmailAuthModal({
           boxShadow: 'var(--shadow-lg)',
           maxWidth: 460,
           width: '100%',
+          maxHeight: 'calc(100dvh - 32px)',
+          overflowY: 'auto',
           padding: 28,
           animation: 'hb-rise 200ms var(--ease-out) forwards',
         }}

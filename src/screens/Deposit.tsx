@@ -10,7 +10,7 @@ import { scrollToFirstError } from '../lib/scrollToError'
 import { getFriendlyErrorMessage } from '../lib/errorMessages'
 import { useWallet } from '../wallet/WalletProvider'
 import { HB_DATA } from '../data'
-import { roundToCents, formatDecimal } from '../lib/format'
+import { roundToCents, formatDecimal, parseAmount } from '../lib/format'
 import { projectedReturn } from '../lib/bondUtils'
 
 /**
@@ -84,10 +84,8 @@ export function Deposit({ onDone }: DepositProps) {
     }
   }
 
-  // Round once to cents and reuse everywhere below so every display of this
-  // amount agrees, instead of each `.toFixed()` call re-rounding the raw
-  // float independently (#369).
-  const n = roundToCents(parseFloat(amount) || 0)
+  // Consolidate amount parsing with parseAmount helper (#417).
+  const n = parseAmount(amount)
   const price = livePrice
   const balance = 240
 
@@ -543,6 +541,8 @@ function Panel({ children }: { children: ReactNode }) {
         borderRadius: 'var(--radius-modal)',
         padding: 28,
         boxShadow: 'var(--shadow-sm)',
+        maxHeight: 'calc(100dvh - 32px)',
+        overflowY: 'auto',
       }}
     >
       {children}

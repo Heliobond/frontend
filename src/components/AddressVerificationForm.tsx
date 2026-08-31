@@ -4,15 +4,9 @@ import { useState } from 'react'
 import { FormField, FormInput, FormSelect } from './FormField'
 import { Button } from './Button'
 import { scrollToFirstError } from '../lib/scrollToError'
+import { validateAddress, type AddressValues, type AddressErrors } from '../lib/kycValidation'
 
-export interface AddressValues {
-  street: string
-  city: string
-  state: string
-  zip: string
-  country: string
-  apartment?: string
-}
+export type { AddressValues }
 
 interface Props {
   onSubmit?: (values: AddressValues) => void
@@ -28,15 +22,10 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
     country: initial?.country ?? 'US',
     apartment: initial?.apartment ?? '',
   })
-  const [errors, setErrors] = useState<Partial<Record<keyof AddressValues, string>>>({})
+  const [errors, setErrors] = useState<AddressErrors>({})
 
   function validate(): boolean {
-    const next: typeof errors = {}
-    if (!values.street.trim()) next.street = 'Street address is required'
-    if (!values.city.trim()) next.city = 'City is required'
-    if (!values.state.trim()) next.state = 'State is required'
-    if (!values.zip.trim()) next.zip = 'ZIP code is required'
-    if (!values.country.trim()) next.country = 'Country is required'
+    const next = validateAddress(values)
     setErrors(next)
     if (Object.keys(next).length > 0) {
       setTimeout(() => scrollToFirstError(document, { behavior: 'smooth' }), 50)

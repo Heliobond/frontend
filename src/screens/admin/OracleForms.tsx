@@ -4,8 +4,8 @@ import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, FormField, FormInput, FormSelect, sanitizeAmount } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
-import { clampScore } from './utils'
-import { formatMoney } from '@/lib/format'
+import { clampScore, validateScores } from './utils'
+import { formatMoney, parseAmount } from '@/lib/format'
 
 /**
  * OracleForms — the two privileged write paths, side by side:
@@ -35,12 +35,9 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
   const [fundId, setFundId] = useState(first)
   const [amount, setAmount] = useState('')
 
-  const creditN = Number(credit)
-  const greenN = Number(green)
-  const scoresValid =
-    credit !== '' && green !== '' && creditN >= 0 && creditN <= 100 && greenN >= 0 && greenN <= 100
+  const scoresValid = validateScores(credit, green)
 
-  const amountN = Number(sanitizeAmount(amount))
+  const amountN = parseAmount(amount)
   const fundValid = amountN > 0 && amountN <= liquid
   const overLiquid = amountN > liquid
 
@@ -125,6 +122,11 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
               inputMode="decimal"
               placeholder="0.00"
               value={amount}
+              onPaste={(e) => {
+                e.preventDefault()
+                const pastedText = e.clipboardData.getData('text')
+                setAmount(sanitizeAmount(pastedText))
+              }}
               onChange={(e) => setAmount(sanitizeAmount(e.target.value))}
               style={{
                 ...textInput,

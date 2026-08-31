@@ -110,6 +110,8 @@ export function SessionTimeoutModal({
           boxShadow: 'var(--shadow-lg)',
           maxWidth: 480,
           width: '100%',
+          maxHeight: 'calc(100dvh - 32px)',
+          overflowY: 'auto',
           padding: '32px 28px 24px',
           display: 'flex',
           flexDirection: 'column',

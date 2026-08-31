@@ -68,3 +68,29 @@ export function formatDobForDisplay(value: string): string {
   const { year, month, day } = parsed;
   return `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${year}`;
 }
+
+export interface AddressValues {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  apartment?: string;
+}
+
+export type AddressErrors = Partial<Record<keyof AddressValues, string>>;
+
+/**
+ * Validates address fields according to KYC requirements (#414).
+ * Single source of truth shared between component and schema.
+ */
+export function validateAddress(values: AddressValues): AddressErrors {
+  const errors: AddressErrors = {};
+  if (!values.street.trim()) errors.street = "Street address is required";
+  if (!values.city.trim()) errors.city = "City is required";
+  if (!values.state.trim()) errors.state = "State is required";
+  if (!values.zip.trim()) errors.zip = "ZIP code is required";
+  if (!values.country.trim()) errors.country = "Country is required";
+  return errors;
+}
+

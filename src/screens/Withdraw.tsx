@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Button, AmountInput, LiquidityMeter, useToast } from '../components'
 import { submitWithdraw } from '../wallet/vault'
 import { useWallet } from '../wallet/WalletProvider'
-import { roundToCents, formatDecimal } from '../lib/format'
+import { formatDecimal, parseAmount } from '../lib/format'
 
 /**
  * Withdraw — designed with the most care of all. Capped at the live liquid
@@ -51,8 +51,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
       setStep(newStep)
     }
   }
-  // Round once to cents so every display of this amount agrees (#369).
-  const n = roundToCents(parseFloat(amount) || 0)
+  // Consolidate amount parsing with parseAmount helper (#417).
+  const n = parseAmount(amount)
 
   const renderStep = (currentStep: WithdrawStep) => {
     switch (currentStep) {
@@ -271,6 +271,8 @@ const panel: CSSProperties = {
   borderRadius: 'var(--radius-modal)',
   padding: 28,
   boxShadow: 'var(--shadow-sm)',
+  maxHeight: 'calc(100dvh - 32px)',
+  overflowY: 'auto',
 }
 const hw: CSSProperties = {
   fontFamily: 'var(--font-display)',

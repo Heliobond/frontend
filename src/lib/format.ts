@@ -46,3 +46,27 @@ export function formatMoney(
   }
   return formatted
 }
+
+/**
+ * Sanitizes input strings by removing non-numeric characters except a single decimal point,
+ * stripping leading zeros from the whole-number part.
+ */
+export function sanitizeAmount(val: string): string {
+  const clean = val.replace(/[^0-9.]/g, '')
+  const parts = clean.split('.')
+  const joined = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : clean
+  const [whole, ...rest] = joined.split('.')
+  const trimmedWhole = whole.replace(/^0+(?=\d)/, '')
+  return rest.length > 0 ? trimmedWhole + '.' + rest.join('.') : trimmedWhole
+}
+
+/**
+ * Parses an investment amount string into a rounded numeric float (2 decimal places).
+ * Consolidates parsing logic across forms (#417).
+ */
+export function parseAmount(value: string): number {
+  const cleaned = sanitizeAmount(value)
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? 0 : roundToCents(num)
+}
+

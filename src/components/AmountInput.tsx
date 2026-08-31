@@ -1,4 +1,8 @@
 import { type CSSProperties, type ReactNode, useState, useEffect } from 'react'
+import { sanitizeAmount } from '../lib/format'
+
+export { sanitizeAmount }
+
 
 /**
  * Heliobond AmountInput — the heart of deposit & withdraw. Mono numerals, a
@@ -108,6 +112,12 @@ export function AmountInput({
           placeholder="0.00"
           value={value}
           onFocus={(e) => e.target.select()}
+          onPaste={(e) => {
+            e.preventDefault()
+            const pastedText = e.clipboardData.getData('text')
+            const sanitized = sanitizeAmount(pastedText)
+            onChange?.(sanitized)
+          }}
           onChange={(e) => {
             const v = sanitizeAmount(e.target.value)
             // If editing existing value, typing should replace not append when field was pre-filled
@@ -261,13 +271,4 @@ const chipStyle: CSSProperties = {
   color: 'var(--ink)',
 }
 
-export function sanitizeAmount(val: string): string {
-  const clean = val.replace(/[^0-9.]/g, '')
-  const parts = clean.split('.')
-  const joined = parts.length > 1 ? parts[0] + '.' + parts.slice(1).join('') : clean
-  const [whole, ...rest] = joined.split('.')
-  // Strip leading zeros from the whole-number part ("007" -> "7", "00.5" -> "0.5"),
-  // but keep a single zero so "0", "0.5" stay valid while typing.
-  const trimmedWhole = whole.replace(/^0+(?=\d)/, '')
-  return rest.length > 0 ? trimmedWhole + '.' + rest.join('.') : trimmedWhole
-}
+
