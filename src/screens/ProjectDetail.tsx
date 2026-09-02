@@ -38,6 +38,20 @@ export const ProjectDetail = memo(function ProjectDetail({
   const t = useTranslations('ProjectDetail')
   const tc = useTranslations('Common')
   const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
+  const sectionTitle: CSSProperties = {
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: 'var(--type-title)',
+    margin: '0 0 16px',
+    color: 'var(--ink)',
+  }
+  const cardStyle: CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--ink-12)',
+    borderRadius: 'var(--radius-card)',
+    boxShadow: 'var(--shadow-sm)',
+    padding: '20px',
+  }
   const creditHistory = useMemo(
     () => detail.scoreHistory.credit.map((p) => p.value),
     [detail.scoreHistory.credit],
@@ -199,6 +213,39 @@ export const ProjectDetail = memo(function ProjectDetail({
             onChainNote={t('onChainNote')}
             verifiedAgo={t('verifiedAgo')}
           />
+        </div>
+      </section>
+
+      {/* Bond pricing history */}
+      <section style={{ marginBottom: 40 }}>
+        <h2 style={sectionTitle}>{t('pricingTitle')}</h2>
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <Sparkline points={detail.bondHistory.map((p) => p.price)} aria-label={t('priceHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.bondHistory.length > 0 ? formatMoney(detail.bondHistory[detail.bondHistory.length - 1].price) : '—'}</span>
+              {detail.bondHistory.length > 1 && (
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+                  {detail.bondHistory[detail.bondHistory.length - 1].price >= detail.bondHistory[0].price ? '+' : '-'}{formatMoney(Math.abs(detail.bondHistory[detail.bondHistory.length - 1].price - detail.bondHistory[0].price))}
+                </span>
+              )}
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+                {t('priceLabel')}
+              </span>
+            </div>
+            <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <Sparkline points={detail.bondHistory.map((p) => p.yield)} aria-label={t('yieldHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.bondHistory.length > 0 ? `${detail.bondHistory[detail.bondHistory.length - 1].yield.toFixed(2)}%` : '—'}</span>
+              {detail.bondHistory.length > 1 && (
+                <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+                  {detail.bondHistory[detail.bondHistory.length - 1].yield >= detail.bondHistory[0].yield ? '+' : '-'}{Math.abs(detail.bondHistory[detail.bondHistory.length - 1].yield - detail.bondHistory[0].yield).toFixed(2)}%
+                </span>
+              )}
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+                {t('yieldLabel')}
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 

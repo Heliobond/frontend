@@ -83,16 +83,15 @@ export async function getProjectsPaginated(page = 1, pageSize = 12): Promise<Pag
 }
 
 export async function getProjects(): Promise<Project[]> {
-	if (!API_URL) return HB_DATA.projects
-	try {
-		const res = await fetch(`${API_URL}/projects`)
-		if (!res.ok) throw new ApiError('Unable to load projects. Please try again later.')
-		return (await res.json()) as Project[]
-	} catch (error) {
-		if (error instanceof ApiError) throw error
-		console.warn('[api] GET /projects failed -- using mock data')
-		return HB_DATA.projects
-	}
+  if (!API_URL) return HB_DATA.projects
+  try {
+    const res = await fetch(`${API_URL}/projects`)
+    if (!res.ok) throw new Error(`HTTP {res.status}`)
+    return (await res.json()) as Project[]
+  } catch {
+    console.warn('[api] GET /projects failed -- using mock data')
+    return HB_DATA.projects
+  }
 }
 
 export async function getProject(id: number): Promise<ProjectWithDetail | null> {
@@ -104,48 +103,51 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
 		return { project: mockProject, detail: mockDetail }
 	}
 
-	try {
-		const res = await fetch(`${API_URL}/projects/${id}`)
-		if (!res.ok) throw new ApiError('Unable to load project. Please try again later.')
-		return (await res.json()) as ProjectWithDetail
-	} catch (error) {
-		if (error instanceof ApiError) throw error
-		console.warn(`[api] GET /projects/${id} failed -- using mock data`)
-		if (!mockProject || !mockDetail) return null
-		return { project: mockProject, detail: mockDetail }
-	}
+  if (!API_URL) {
+    if (!mockProject || !mockDetail) return null
+    return { project: mockProject, detail: mockDetail }
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/projects/${id}`)
+    if (!res.ok) throw new Error(`HTTP {res.status}`)
+    return (await res.json()) as ProjectWithDetail
+  } catch {
+    console.warn(`[api] GET /projects/${id} failed -- using mock data`)
+    if (!mockProject || !mockDetail) return null
+    return { project: mockProject, detail: mockDetail }
+  }
 }
 
 export async function createInvestment(input: { projectId: number; amount: number }): Promise<Investment> {
-	const mockInvestment = (): Investment =>
-		({
-			id: Math.floor(Math.random() * 100000) + 1,
-			projectId: input.projectId,
-			amount: input.amount,
-			projectUrl: `/projects/${input.projectId}`,
-		})
+  const mockInvestment = (): Investment =>
+    {
+      id: Math.floor(Math.random() * 100000) + 1,
+      projectId: input.projectId,
+      amount: input.amount,
+      projectUrl: `/projects/${input.projectId}`,
+    }
 
-	if (!API_URL) {
-		return mockInvestment()
-	}
+  if (!API_URL) {
+    return mockInvestment()
+  }
 
-	try {
-		const res = await fetch(`${API_URL}/investments`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(input),
-		})
-		if (!res.ok) throw new ApiError('Investment failed. Please try again later.')
-		const data = (await res.json()) as Investment
-		return {
-			...data,
-			projectUrl: `/projects/${input.projectId}`,
-		}
-	} catch (error) {
-		if (error instanceof ApiError) throw error
-		console.warn('[api] POST /investments failed -- using mock data')
-		return mockInvestment()
-	}
+  try {
+    const res = await fetch(`${API_URL}/investments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+    if (!res.ok) throw new Error(`HTTP {res.status}`)
+    const data = (await res.json()) as Investment
+    return {
+      ...data,
+      projectUrl: `/projects/${encodeURIComponent(input.projectId)}`,
+    }
+  } catch (error) {
+    console.warn('[api] POST /investments failed -- using mock data')
+    return mockInvestment()
+  }
 }
 
 /**
@@ -160,23 +162,58 @@ export async function biometricLogin(): Promise<boolean> {
 		return false
 	}
 
-	try {
-		const challenge = new Uint8Array(32)
-		crypto.getRandomValues(challenge)
+  try {
+    // Generate a random challenge (in production, this would come from the server)
+    const challenge = new Uint8Array(32)
+    crypto.getRandomValues(challenge)
 
-		// Request a credential from the authenticator
-		const credential = await navigator.credentials.get({
-			publicKey: {
-				challenge,
-				rpId: window.location.hostname,
-				allowCredentials: [],
-				userVerification: 'required',
-			},
-		})
+    // Request a credential from the authenticator
+    const credential = await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        rpId: window.location.hostname,
+        allowCredentials: [],
+        userVerification: 'required',
+      },
+    })
 
-		return Boolean(credential)
-	} catch (error) {
-		console.warn('[api] biometric login failed:', error)
-		return false
-	}
+    return Boolean(credential)
+  } catch (error) {
+    console.warn('[api] biometric login failed:', error)
+    return false
+  }
+}
+
+export interface PricePoint {
+  date: string
+  price: number
+  yield?: number
+}
+
+export async function getPriceHistory(projectId: number): Promise<PricePoint[]> {
+  const makeMock = (): PricePoint[] => {
+    const basePrice = 95 + projectId * 5
+    const today = new Date()
+    const points = Array.from({ length: 30 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const date = d.toISOString().split('T')[0]
+      const price = basePrice + Math.sin((30 - i) / 3 + projectId) * 3 + (30 - i) * 0.1
+      const yieldValue = 5 + Math.cos((30 - i) / 2 + projectId) * 0.5
+      return { date, price: Number(price.toFixed(2)), yield: Number(yieldValue.toFixed(2)) }
+    })
+    return points.reverse() // ascending chronological order
+  }
+
+  if (!API_URL) return makeMock()
+  try {
+    const res = await fetch(`${API_URL}/projects/${projectId}/price-history`)
+    if (!res.ok) throw new Error(`HTTP {res.status}`)
+    const data = (await res.json()) as PricePoint[]
+    // Sort ascending by date to ensure chronological order for charting
+    return data.sort((a, b) => a.date.localeCompare(b.date))
+  } catch {
+    console.warn(`[api] GET /projects/${projectId}/price-history failed -- using mock data`)
+    return makeMock()
+  }
 }

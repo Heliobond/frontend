@@ -1,11 +1,12 @@
 /*
  * Bond utilities -- addresses multiple bond-related issues:
- *  - #364 filter persistence via URL + localStorage
- *  - #363 case-insensitive search
- *  - #359 stable sort with tie-breaker
- *  - #361 bond comparison view data helper
- *  - #367 projected return from an investment amount + annual yield
- *  - #portfolio-risk show portfolio risk score based on bond ratings mix
+  *  - #364 filter persistence via URL + localStorage
+  *  - #363 case-insensitive search
+  *  - #359 stable sort with tie-breaker
+  *  - #361 bond comparison view data helper
+  *  - #367 projected return from an investment amount + annual yield
+  *  - #portfolio-risk show portfolio risk score based on bond ratings mix
+  *  - #historical-pricing display historical pricing for bonds to show trends
  */
 
 export interface Bond {
@@ -16,13 +17,19 @@ export interface Bond {
   rating: string
 }
 
+export interface BondHistoryPoint {
+  date: string
+  price: number
+  yield: number
+}
+
 const YIELD_FILTER_KEY = 'bond_yield_filter'
 const YIELD_DEFAULT: [number, number] = [0, 15]
 
 export function getPersistedYieldRange(): [number, number] {
   if (typeof window === 'undefined') return YIELD_DEFAULT
   try {
-    const url = new URL(window.location.href)
+    const url = new URL("window.location.href")
     const fromUrl = url.searchParams.get('yieldRange')
     if (fromUrl) {
       const [min, max] = fromUrl.split('-').map(Number)
@@ -70,7 +77,7 @@ export function sortBondsByYield(bonds: Bond[], direction: 'asc' | 'desc' = 'asc
   })
 }
 
-// #361 -- bond comparison (side-by-side) helper
+// #361 -- bond comparison (side-by-side) comparison helper
 export function getBondsForComparison(bonds: Bond[], ids: (string | number)[]): Bond[] {
   if (ids.length < 2 || ids.length > 3) throw new Error('Select 2-3 bonds to compare')
   const map = new Map(bonds.map((b) => [String(b.id), b]))
@@ -137,4 +144,42 @@ export function getPortfolioRisk(bonds: Bond[]): PortfolioRisk {
   const score = Math.round(total / bonds.length)
   const level: RiskLevel = score < 35 ? 'conservative' : score < 70 ? 'moderate' : 'aggressive'
   return { score, level }
+}
+
+// #historical-pricing -- generate simulated historical price/yield data to display trends.
+// In a real app replace this with an API call to fetch historical bond data.
+export function getBondHistory(bond: Bond, days = 30): BondHistoryPoint[] {
+  if (days <= 0) return []
+  const seed = String(bond.id).split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) || 1
+  let s = seed
+  const random = () => {
+    s = (s * 9301 + 49297) % 233280
+    return s / 233280
+  }
+
+  const baseYield = bond.yield
+  const basePrice = 100
+  const history: BondHistoryPoint[] = []
+  const today = new Date()
+
+  // Generate a random walk of yield deviations, anchored at the most recent day (baseYield).
+  const deviations: number[] = new Array(days)
+  deviations[days - 1] = 0
+  for (let i = days - 2; i >= 0; i--) {
+    const delta = (random() - 0.5) * 0.15
+    deviations[i] = deviations[i + 1] + delta
+  }
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - (days - 1 - i))
+    const yieldValue = Math.max(0.1, baseYield + deviations[i])
+    const price = basePrice * (100 / (100 + (yieldValue - baseYield) * 5))
+    history.push({
+      date: date.toISOString().slice(0, 10),
+      price: Math.round(price * 100) / 100,
+      yield: Math.round(yieldValue * 100) / 100,
+    })
+  }
+  return history
 }

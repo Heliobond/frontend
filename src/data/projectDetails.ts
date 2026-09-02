@@ -32,6 +32,8 @@ export interface ProjectDetail {
   fundedAmount: number
   /** Stated funding goal. */
   fundingGoal: number
+  /** Historical bond price/yield observations, anchored by oracle updates. */
+  priceHistory: PricePoint[]
   /** A tasteful CSS gradient for the hero photo placeholder. */
   heroGradient: string
 }
@@ -39,6 +41,13 @@ export interface ProjectDetail {
 export interface ScorePoint {
   date: string
   value: number
+  hash: string
+}
+/** A bond price/yield observation, anchored by an oracle update. */
+export interface PricePoint {
+  date: string
+  price: number
+  yield: number
   hash: string
 }
 
@@ -79,6 +88,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 420000,
     fundingGoal: 600000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 96.4, yield: 7.4, hash: 'b41a…09c7' },
+      { date: 'Feb 2026', price: 97.1, yield: 7.3, hash: 'c5e8…2d14' },
+      { date: 'Mar 2026', price: 98.0, yield: 7.2, hash: 'e9f2…6a8b' },
+      { date: 'Apr 2026', price: 98.6, yield: 7.1, hash: '12d4…7c0e' },
+      { date: 'May 2026', price: 99.4, yield: 7.0, hash: '7a3c…b1f9' },
+      { date: 'Jun 2026', price: 100.2, yield: 6.9, hash: 'd44b…77a2' },
+    ],
     heroGradient:
       'radial-gradient(120% 120% at 72% 8%, var(--solar-24), transparent 60%), linear-gradient(150deg, var(--solar-12), var(--ink-06))',
   },
@@ -124,6 +141,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 1180000,
     fundingGoal: 1500000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 95.2, yield: 7.1, hash: '5d0a…77b3' },
+      { date: 'Feb 2026', price: 96.0, yield: 7.0, hash: 'e213…9c4f' },
+      { date: 'Mar 2026', price: 96.8, yield: 6.9, hash: 'aa90…1d6e' },
+      { date: 'Apr 2026', price: 97.4, yield: 6.8, hash: '4c7b…83a1' },
+      { date: 'May 2026', price: 98.1, yield: 6.7, hash: 'f0e8…22d9' },
+      { date: 'Jun 2026', price: 98.9, yield: 6.6, hash: '6b1c…0fa4' },
+    ],
     heroGradient:
       'radial-gradient(130% 110% at 24% 12%, var(--solar-12), transparent 58%), linear-gradient(165deg, var(--ink-06), var(--solar-12))',
   },
@@ -163,6 +188,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 640000,
     fundingGoal: 800000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 99.4, yield: 5.9, hash: '9c01…b4a7' },
+      { date: 'Feb 2026', price: 100.1, yield: 5.8, hash: 'e7d3…109f' },
+      { date: 'Mar 2026', price: 100.8, yield: 5.7, hash: '44ab…7c2e' },
+      { date: 'Apr 2026', price: 101.3, yield: 5.6, hash: '1d90…f83b' },
+      { date: 'May 2026', price: 102.0, yield: 5.5, hash: 'b62c…05d1' },
+      { date: 'Jun 2026', price: 102.7, yield: 5.4, hash: '7fa0…3e9c' },
+    ],
     heroGradient:
       'radial-gradient(120% 130% at 78% 6%, var(--solar-24), transparent 62%), linear-gradient(140deg, var(--solar-12), var(--ink-06))',
   },
@@ -203,10 +236,26 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 960000,
     fundingGoal: 1200000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 101.5, yield: 5.2, hash: 'aa01…47cf' },
+      { date: 'Feb 2026', price: 102.2, yield: 5.1, hash: 'd193…6b28' },
+      { date: 'Mar 2026', price: 102.9, yield: 5.0, hash: '3c7e…0f91' },
+      { date: 'Apr 2026', price: 103.6, yield: 4.9, hash: '92ab…d340' },
+      { date: 'May 2026', price: 104.2, yield: 4.8, hash: 'cf05…1a6d' },
+      { date: 'Jun 2026', price: 105.0, yield: 4.7, hash: '7b2c…e904' },
+    ],
     heroGradient:
       'radial-gradient(125% 115% at 20% 10%, var(--solar-12), transparent 56%), linear-gradient(170deg, var(--ink-06), var(--solar-12))',
   },
   5: {
+    priceHistory: [
+      { date: 'Jan 2026', price: 94.0, yield: 8.0, hash: '4d0a…91b7' },
+      { date: 'Feb 2026', price: 94.8, yield: 7.9, hash: 'e913…7c4f' },
+      { date: 'Mar 2026', price: 95.5, yield: 7.8, hash: 'aa70…2d6e' },
+      { date: 'Apr 2026', price: 96.2, yield: 7.7, hash: '1c8b…43a1' },
+      { date: 'May 2026', price: 97.0, yield: 7.6, hash: 'f2e8…02d9' },
+      { date: 'Jun 2026', price: 97.8, yield: 7.5, hash: '6d1c…b0a4' },
+    ],
     story:
       'Kerala micro-hydro runs a hillside stream through a small powerhouse and back to the river, lighting villages that the grid never reached. It is modest by megawatts and large by lives changed. Flow is gauged daily and the readings are public.',
     name: 'Kerala Micro-Hydro',
@@ -242,6 +291,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 310000,
     fundingGoal: 400000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 94.0, yield: 8.1, hash: '4d0a…91b7' },
+      { date: 'Feb 2026', price: 94.8, yield: 8.0, hash: 'e913…7c4f' },
+      { date: 'Mar 2026', price: 95.6, yield: 7.9, hash: 'aa70…2d6e' },
+      { date: 'Apr 2026', price: 96.3, yield: 7.8, hash: '1c8b…43a1' },
+      { date: 'May 2026', price: 97.0, yield: 7.7, hash: 'f2e8…02d9' },
+      { date: 'Jun 2026', price: 97.8, yield: 7.6, hash: '6d1c…b0a4' },
+    ],
     heroGradient:
       'radial-gradient(130% 120% at 74% 10%, var(--solar-12), transparent 60%), linear-gradient(155deg, var(--solar-12), var(--ink-06))',
   },
@@ -281,6 +338,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 520000,
     fundingGoal: 700000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 95.8, yield: 6.8, hash: '8c01…54a7' },
+      { date: 'Feb 2026', price: 96.5, yield: 6.7, hash: 'e2d3…30f9' },
+      { date: 'Mar 2026', price: 97.2, yield: 6.6, hash: '41ab…9c2e' },
+      { date: 'Apr 2026', price: 97.9, yield: 6.5, hash: '1f90…283b' },
+      { date: 'May 2026', price: 98.6, yield: 6.4, hash: 'b32c…75d1' },
+      { date: 'Jun 2026', price: 99.3, yield: 6.3, hash: '7da0…6e9c' },
+    ],
     heroGradient:
       'radial-gradient(120% 125% at 76% 8%, var(--solar-24), transparent 60%), linear-gradient(145deg, var(--solar-12), var(--ink-06))',
   },
