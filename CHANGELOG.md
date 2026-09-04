@@ -37,8 +37,9 @@ once it cuts its first tagged release (it currently ships continuously from
 
 ### Changed
 
-- Webfonts now preconnect to the Fontshare and Google CDNs and load with a
-  `swap` display strategy, so text appears sooner and shifts less (#385).
+- Webfonts (Cabinet Grotesk, Hanken Grotesk, Spline Sans Mono) are now
+  self-hosted through `next/font` instead of loading from the Fontshare and
+  Google CDNs via render-blocking CSS imports (#387).
 - Auth login now detects existing social accounts during email login to
   prevent duplicate accounts (#353).
 

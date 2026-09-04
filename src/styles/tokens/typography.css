@@ -13,9 +13,14 @@
 
 :root {
   /* --- Families -------------------------------------- */
-  --font-display: 'Cabinet Grotesk', 'Hanken Grotesk', system-ui, sans-serif;
-  --font-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-  --font-data: 'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* next/font self-hosts each face and exposes the generated family stack as a
+     CSS custom property (`--font-cabinet-grotesk`, `--font-hanken-grotesk`,
+     `--font-spline-sans-mono`), set on <html> from `src/theme/fonts.ts`. The
+     literal names below act as per-variable fallbacks so the tokens still
+     resolve to the next system font if a loader variable is ever absent. */
+  --font-display: var(--font-cabinet-grotesk, 'Cabinet Grotesk'), var(--font-hanken-grotesk, 'Hanken Grotesk'), system-ui, sans-serif;
+  --font-body: var(--font-hanken-grotesk, 'Hanken Grotesk'), system-ui, -apple-system, sans-serif;
+  --font-data: var(--font-spline-sans-mono, 'Spline Sans Mono'), ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* --- Weights --------------------------------------------- */
   --weight-regular: 400;
