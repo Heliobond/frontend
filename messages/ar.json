@@ -200,6 +200,7 @@
     "riskCaption": "بناءً على مزيج تصنيفات السندات في حيازاتك.",
     "activityTitle": "النشاط",
     "activityNote": "كل إدخال → Stellar Expert",
+    "transactionHashLabel": "هاش المعاملة",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",

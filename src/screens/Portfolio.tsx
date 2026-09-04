@@ -2,7 +2,7 @@
 
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { Button, StatBlock, LiquidityMeter, Card } from '../components'
+import { AddressChip, Button, Card, LiquidityMeter, StatBlock } from '../components'
 import { Helio } from '../brand/Helio'
 import { HB_DATA } from '../data'
 import { useWallet } from '../wallet/WalletProvider'
@@ -316,15 +316,15 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                 >
                   {a.when}
                 </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-data)',
-                    fontSize: 'var(--type-eyebrow)',
-                    color: 'var(--ink-40)',
-                  }}
-                >
-                  {a.hash} ↗
-                </div>
+                {a.hash && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                    <AddressChip
+                      value={a.hash}
+                      explorerUrl={txExplorerUrl(a.hash)}
+                      label={t('transactionHashLabel')}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -341,3 +341,6 @@ const cardTitle: CSSProperties = {
   margin: '0 0 10px',
   color: 'var(--ink)',
 }
+
+/** Stellar Expert transaction URL for an activity hash — mirrors Withdraw/TopBar explorer links. */
+const txExplorerUrl = (hash: string): string => `https://stellar.expert/explorer/testnet/tx/${hash}`
