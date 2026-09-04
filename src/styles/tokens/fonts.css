@@ -1,22 +1,19 @@
 /* =========================================================================================
-   Heliobond · Webfonts 
-  -----------------------------------------------------------------------------------
-   Display —Cabinet Grotesk (Fontshare)   ‗headlines, hero numbers, openers
-   Body—Hanken Grotesk  (Google)     ↕running text, UI, fine print
-   Data    —Spline Sans Mono (Google)    ∥balances, scores, rates, hashes
+   Heliobond · Webfonts
+   -----------------------------------------------------------------------------------
+   The three typefaces are self-hosted through `next/font` (see
+   `src/theme/fonts.ts`) and are served from the app's own origin with hashed,
+   preloaded WOFF2 files — the remote CSS imports and render-blocking CDN
+   round-trips are gone.
 
-   NOTE: fonts load from their official CDNs (Fontshare + Google). Binaries are
-   not vendored into this project. Licensed upgrades named in the brief:
-   Display →F37 Jagger / Söhne Breit · Body →Suisse Int'l Data →Söhne Mono.
+     Display — Cabinet Grotesk  (Fontshare, vendored WOFF2 · next/font/local)
+     Body    — Hanken Grotesk   (Google · next/font/google)
+     Data    — Spline Sans Mono (Google · next/font/google)
 
-   LOADING: both stylesheets are requested with `display=swap`, so every CDN
-   `@font-face` is emitted with `font-display: swap` — text paints immediately in
-   the fallback and swaps once the webfont arrives, instead of holding an
-   invisible-text block that shifts the layout when it resolves. Because these
-   `@import`s are only discovered after this file has parsed, the document head in
-   `src/app/layout.tsx` preconnects to the four origins involved (the two CSS hosts
-   and the two that serve the font binaries) so the handshakes are already done.
+   `next/font` emits every face with `font-display: swap`, so text paints
+   immediately in the fallback and swaps once the webfont arrives — the same
+   non-blocking behavior the old CDN `display=swap` imports provided, but
+   without the external fetch. The generated CSS custom properties
+   (`--font-cabinet-grotesk`, `--font-hanken-grotesk`, `--font-spline-sans-mono`)
+   are wired into the `--font-display/body/data` tokens in `tokens/typography.css`.
    =========================================================================================== */
-
-@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap');

@@ -3,6 +3,7 @@ import { getLocale, getMessages } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import { Providers } from './providers'
+import { fontVariables } from '../theme/fonts'
 import { LocaleProvider, type Messages } from '../i18n/LocaleProvider'
 import { type Locale, RTL_LOCALES } from '../i18n/request'
 import { THEME_SCRIPT } from '../theme/themeScript'
@@ -64,24 +65,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={locale}
       dir={RTL_LOCALES.has(locale as Locale) ? 'rtl' : 'ltr'}
       suppressHydrationWarning
+      className={fontVariables}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-        {/*
-          Warm the font CDN connections. The webfont stylesheets sit behind a CSS
-          `@import` chain (`src/styles/index.css` → `tokens/fonts.css`), so the
-          browser only discovers them once that CSS has parsed. Preconnecting here
-          runs the DNS + TLS handshakes in parallel with the parse, shortening the
-          window in which the `font-display: swap` faces render in the fallback.
-
-          The hosts serving the font binaries carry `crossOrigin`, because fonts are
-          always fetched in CORS mode and would otherwise need a second connection;
-          the hosts serving only CSS must not, or the warmed socket goes unused.
-        */}
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
         <LocaleProvider initialLocale={locale as Locale} initialMessages={messages as Messages}>
