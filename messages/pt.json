@@ -187,6 +187,7 @@
     "riskCaption": "Based on the mix of bond ratings in your holdings.",
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert",
+    "transactionHashLabel": "transaction hash",
     "referralProgram": "Referral program",
     "referralLink": "Your referral link",
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",

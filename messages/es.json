@@ -193,6 +193,7 @@
     "riskCaption": "Basado en la combinación de calificaciones de bonos en sus tenencias.",
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert",
+    "transactionHashLabel": "hash de transacción",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",

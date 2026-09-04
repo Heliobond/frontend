@@ -189,6 +189,7 @@
     "riskCaption": "Basé sur la répartition des notations d'obligations dans vos avoirs.",
     "activityTitle": "Activité",
     "activityNote": "chaque entrée → Stellar Expert",
+    "transactionHashLabel": "le hash de transaction",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",
