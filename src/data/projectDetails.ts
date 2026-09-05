@@ -291,14 +291,6 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 310000,
     fundingGoal: 400000,
-    priceHistory: [
-      { date: 'Jan 2026', price: 94.0, yield: 8.1, hash: '4d0a…91b7' },
-      { date: 'Feb 2026', price: 94.8, yield: 8.0, hash: 'e913…7c4f' },
-      { date: 'Mar 2026', price: 95.6, yield: 7.9, hash: 'aa70…2d6e' },
-      { date: 'Apr 2026', price: 96.3, yield: 7.8, hash: '1c8b…43a1' },
-      { date: 'May 2026', price: 97.0, yield: 7.7, hash: 'f2e8…02d9' },
-      { date: 'Jun 2026', price: 97.8, yield: 7.6, hash: '6d1c…b0a4' },
-    ],
     heroGradient:
       'radial-gradient(130% 120% at 74% 10%, var(--solar-12), transparent 60%), linear-gradient(155deg, var(--solar-12), var(--ink-06))',
   },

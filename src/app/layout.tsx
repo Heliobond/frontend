@@ -5,7 +5,7 @@ import { Suspense } from 'react'
 import { Providers } from './providers'
 import { fontVariables } from '../theme/fonts'
 import { LocaleProvider, type Messages } from '../i18n/LocaleProvider'
-import { type Locale, RTL_LOCALES } from '../i18n/request'
+import { type Locale, RTL_LOCALES } from '../i18n/config'
 import { THEME_SCRIPT } from '../theme/themeScript'
 import '../styles/index.css'
 

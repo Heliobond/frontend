@@ -15,6 +15,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 1180000,
     fundingGoal: 1500000,
     lastVerified: '2 days ago',
+    priceHistory: [],
   },
   {
     id: 2,
@@ -27,6 +28,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 430000,
     fundingGoal: 600000,
     lastVerified: '6 days ago',
+    priceHistory: [],
   },
   {
     id: 3,
@@ -39,6 +41,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 2750000,
     fundingGoal: 3000000,
     lastVerified: '11 days ago',
+    priceHistory: [],
   },
 ]
 

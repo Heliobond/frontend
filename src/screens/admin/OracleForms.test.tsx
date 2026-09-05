@@ -16,6 +16,7 @@ const mockProjects: RegistryEntry[] = [
     fundedAmount: 100000,
     fundingGoal: 200000,
     lastVerified: '2 days ago',
+    priceHistory: [],
   },
 ]
 

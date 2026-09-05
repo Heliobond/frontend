@@ -100,6 +100,9 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
               <option value="GB">United Kingdom</option>
               <option value="DE">Germany</option>
               <option value="FR">France</option>
+              {!['US', 'CA', 'GB', 'DE', 'FR', ''].includes(values.country) && (
+                <option value={values.country}>{values.country}</option>
+              )}
             </FormSelect>
           </FormField>
           {errors.country && <p role="alert" style={errorStyle}>{errors.country}</p>}

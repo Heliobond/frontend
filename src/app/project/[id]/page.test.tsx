@@ -53,6 +53,7 @@ describe('ProjectDetailPage', () => {
         funded: '$100,000',
         fundedAmount: 100000,
         fundingGoal: 200000,
+        priceHistory: [],
       },
       detail: {
         name: 'Test Project',
@@ -64,6 +65,7 @@ describe('ProjectDetailPage', () => {
         fundingTimeline: [],
         fundedAmount: 100000,
         fundingGoal: 200000,
+        priceHistory: [],
       },
     })
     render(<ProjectDetailPage />)

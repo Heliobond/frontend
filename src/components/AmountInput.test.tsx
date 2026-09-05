@@ -178,4 +178,16 @@ describe('AmountInput', () => {
       expect(queryByText(/Available/)).not.toBeInTheDocument()
     })
   })
+
+  describe('Accessibility (#467)', () => {
+    it('provides a default aria-label for screen reader users when label is omitted', () => {
+      const { getByRole } = render(<AmountInput />)
+      expect(getByRole('textbox', { name: 'Investment amount' })).toBeInTheDocument()
+    })
+
+    it('uses the provided label as aria-label for screen reader users', () => {
+      const { getByRole } = render(<AmountInput label="Deposit amount" />)
+      expect(getByRole('textbox', { name: 'Deposit amount' })).toBeInTheDocument()
+    })
+  })
 })

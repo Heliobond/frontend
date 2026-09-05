@@ -18,6 +18,7 @@ const bond = (over: Partial<Project> = {}): Project => ({
   funded: '$420,000',
   fundedAmount: 420000,
   fundingGoal: 600000,
+  priceHistory: [],
   ...over,
 })
 

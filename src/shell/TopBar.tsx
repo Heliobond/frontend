@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Button, useToast } from '../components'
 import { useLocaleSwitcher } from '../i18n/LocaleProvider'
-import { LOCALE_LABELS, type Locale } from '../i18n/request'
+import { LOCALE_LABELS, type Locale } from '../i18n/config'
 import { useWallet, shortAddress } from '../wallet/WalletProvider'
 import { useTheme } from '../theme/ThemeProvider'
 

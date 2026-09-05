@@ -16,7 +16,7 @@ import fr from '../../messages/fr.json'
 import es from '../../messages/es.json'
 import ar from '../../messages/ar.json'
 import pt from '../../messages/pt.json'
-import { type Locale, RTL_LOCALES } from './request'
+import { type Locale, RTL_LOCALES } from './config'
 
 export type Messages = typeof en
 
