@@ -14,6 +14,12 @@ const DATE_REGEXES = [
   /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/, //YYYY-MM-DD
 ];
 
+export const KYC_CONFIG = {
+  MIN_AGE: 18,
+  MAX_AGE: 120,
+  YEAR_LENGTH: 4,
+};
+
 /**
  * Checks if a string contains common XSS or SQL injection patterns.
  * Used to reject malicious input in form fields.
@@ -23,7 +29,8 @@ export function hasMaliciousContent(value: string): boolean {
   const jsProtocol = /javascript\s*:/i;
   const eventHandler = /(?:\s|^)on\w+\s*=/i;
   const htmlEntity = /&(?:lt|gt|#0*60|#0*62|#x0*3[cCE]|#x0*3[eE]);/i;
-  const sqlInjection = /(['<g;]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all)\b.*\b(?:from)\b)|(\/\.*\/)|(?:['<';\states:\\s*['\\d])/i;
+  const sqlInjection =
+    /([';]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all)\b)|(\b\d+\s+or\s+\d+=\d+\b)/i;
   return htmlTag.test(value) || jsProtocol.test(value) || eventHandler.test(value) || htmlEntity.test(value) || sqlInjection.test(value);
 }
 
@@ -101,21 +108,6 @@ export interface AddressValues {
   country: string
   apartment?: string
 }
-export type AddressErrors = Partial<Record<keyof AddressValues, string>>
-
-/**
- * Validates address fields according to KYC requirements (#414).
- * Single source of truth shared between component and schema.
- */
-export function validateAddress(values: AddressValues): AddressErrors {
-  const errors: AddressErrors = {}
-  if (!values.street.trim()) errors.street = 'Street address is required'
-  if (!values.city.trim()) errors.city = 'City is required'
-  if (!values.state.trim()) errors.state = 'State is required'
-  if (!values.zip.trim()) errors.zip = 'ZIP code is required'
-  if (!values.country.trim()) errors.country = 'Country is required'
-  return errors
-}
 export type AddressErrors = Partial<Record<keyof AddressValues, string>>;
 
 /**
@@ -141,12 +133,12 @@ export function validateAddress(values: AddressValues): AddressErrors {
 
   if (street && hasMaliciousContent(street)) errors.street = "Street address contains invalid characters";
   if (city && hasMaliciousContent(city)) errors.city = "City contains invalid characters";
-  if (state && hasMaliciousContent(state)) errors.state = "State contains invalid characters";
-  if (zip && hasMaliciousContent(zip)) errors.zip = "ZIP code contains invalid characters";
+  if (state && hasMaliciousContent(state)) errors.state = "State / Province contains invalid characters";
+  if (zip && hasMaliciousContent(zip)) errors.zip = "ZIP / Postal code contains invalid characters";
   if (country && hasMaliciousContent(country)) errors.country = "Country contains invalid characters";
   if (apartment && hasMaliciousContent(apartment)) errors.apartment = "Apartment contains invalid characters";
 
   return errors;
 }
-const ALLOWED_DOCUMENT_TYPES = ["image/jpeg", "application/pdf"];
-const ALLOWED_DOCUMENT_EXTENSIONS = ["jpg", "jpeg", "pdf"];
+export const ALLOWED_DOCUMENT_TYPES = ["image/jpeg", "application/pdf"];
+export const ALLOWED_DOCUMENT_EXTENSIONS = ["jpg", "jpeg", "pdf"];

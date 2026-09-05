@@ -126,6 +126,7 @@ export function AmountInput({
           pattern="[0-9.]*"
           placeholder="0.00"
           value={value}
+          aria-label={label || 'Investment amount'}
           onFocus={(e) => e.target.select()}
           onPaste={(e) => {
             e.preventDefault()

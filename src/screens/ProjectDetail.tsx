@@ -222,11 +222,11 @@ export const ProjectDetail = memo(function ProjectDetail({
         <div style={cardStyle}>
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={detail.bondHistory.map((p) => p.price)} aria-label={t('priceHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.bondHistory.length > 0 ? formatMoney(detail.bondHistory[detail.bondHistory.length - 1].price) : '—'}</span>
-              {detail.bondHistory.length > 1 && (
+              <Sparkline points={(detail.priceHistory ?? []).map((p: { price: number }) => p.price)} aria-label={t('priceHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{(detail.priceHistory ?? []).length > 0 ? formatMoney((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price) : '—'}</span>
+              {(detail.priceHistory ?? []).length > 1 && (
                 <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {detail.bondHistory[detail.bondHistory.length - 1].price >= detail.bondHistory[0].price ? '+' : '-'}{formatMoney(Math.abs(detail.bondHistory[detail.bondHistory.length - 1].price - detail.bondHistory[0].price))}
+                  {(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price >= (detail.priceHistory ?? [])[0].price ? '+' : '-'}{formatMoney(Math.abs((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price - (detail.priceHistory ?? [])[0].price))}
                 </span>
               )}
               <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
@@ -234,11 +234,11 @@ export const ProjectDetail = memo(function ProjectDetail({
               </span>
             </div>
             <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={detail.bondHistory.map((p) => p.yield)} aria-label={t('yieldHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.bondHistory.length > 0 ? `${detail.bondHistory[detail.bondHistory.length - 1].yield.toFixed(2)}%` : '—'}</span>
-              {detail.bondHistory.length > 1 && (
+              <Sparkline points={(detail.priceHistory ?? []).map((p: { yield: number }) => p.yield)} aria-label={t('yieldHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{(detail.priceHistory ?? []).length > 0 ? `${(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield.toFixed(2)}%` : '—'}</span>
+              {(detail.priceHistory ?? []).length > 1 && (
                 <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {detail.bondHistory[detail.bondHistory.length - 1].yield >= detail.bondHistory[0].yield ? '+' : '-'}{Math.abs(detail.bondHistory[detail.bondHistory.length - 1].yield - detail.bondHistory[0].yield).toFixed(2)}%
+                  {(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield >= (detail.priceHistory ?? [])[0].yield ? '+' : '-'}{Math.abs((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield - (detail.priceHistory ?? [])[0].yield).toFixed(2)}%
                 </span>
               )}
               <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
@@ -574,20 +574,3 @@ const ScoreColumn = memo(function ScoreColumn({
     </div>
   )
 })
-
-const sectionTitle: CSSProperties = {
-  fontFamily: 'var(--font-display)',
-  fontWeight: 700,
-  fontSize: 'var(--type-h4)',
-  letterSpacing: '-0.01em',
-  color: 'var(--ink)',
-  margin: '0 0 16px',
-}
-
-const cardStyle: CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--ink-12)',
-  borderRadius: 'var(--radius-card)',
-  boxShadow: 'var(--shadow-sm)',
-  padding: '8px 22px',
-}

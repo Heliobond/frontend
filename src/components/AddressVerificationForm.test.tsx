@@ -13,7 +13,7 @@ describe('AddressVerificationForm', () => {
     fireEvent.change(screen.getByLabelText('Country *'), { target: { value: 'US' } })
     fireEvent.click(screen.getByText('Verify address'))
     expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByText('Street address contains invalid characters')).toBeInDocument()
+    expect(screen.getByText('Street address contains invalid characters')).toBeInTheDocument()
   })
 
   it('does not submit when address contains SQL injection payload', () => {
@@ -26,7 +26,7 @@ describe('AddressVerificationForm', () => {
     fireEvent.change(screen.getByLabelText('Country *'), { target: { value: 'US' } })
     fireEvent.click(screen.getByText('Verify address'))
     expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByText('Street address contains invalid characters')).toBeInDocument()
+    expect(screen.getByText('Street address contains invalid characters')).toBeInTheDocument()
   })
 
   it('submits valid address', () => {
@@ -41,12 +41,17 @@ describe('AddressVerificationForm', () => {
     expect(onSubmit).toHaveBeenCalled()
   })
 
-  // Additional security-focused edge case tests for all fields
-  const setField = (label, value) => {
-    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  const setField = (label: string, value: string) => {
+    const el = screen.getByLabelText(label) as HTMLInputElement | HTMLSelectElement
+    if (el.tagName === 'SELECT') {
+      const opt = document.createElement('option')
+      opt.value = value
+      el.appendChild(opt)
+    }
+    fireEvent.change(el, { target: { value } })
   }
 
-  const fillForm = (values) => {
+  const fillForm = (values: Record<string, string>) => {
     setField('Street address *', values.street)
     setField('City *', values.city)
     setField('State / Province *', values.state)
@@ -82,7 +87,7 @@ describe('AddressVerificationForm', () => {
         })
         fireEvent.click(screen.getByText('Verify address'))
         expect(onSubmit).not.toHaveBeenCalled()
-        expect(screen.getByText(error)).toBeInDocument()
+        expect(screen.getByText(error)).toBeInTheDocument()
       })
     })
   })

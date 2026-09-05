@@ -42,7 +42,7 @@ export function useVault(): VaultState {
 
     Promise.all([fetchSharePrice(network), fetchTotalAssets(network)])
       .then(([price, assets]) => {
-        setSharePrice(price)
+        setSharePrice(Number(price))
         setTotalAssets(assets)
         setFetchedAt(new Date())
       })

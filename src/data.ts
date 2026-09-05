@@ -1,5 +1,7 @@
 // Heliobond — fake data for the click-through. Not production: these stand in
- // for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
+// for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
+
+import { formatPoolCounters } from './lib/format'
 
 export type ProjectType = 'Solar' | 'Wind' | 'Hydro'
 
@@ -9,7 +11,7 @@ export type ProjectType = 'Solar' | 'Wind' | 'Hydro'
  * saved bonds they can act on now. `upcoming` = not yet available;
  * `funded` = fully funded, no further capacity.
  */
-type BondStatus = 'open' | 'upcoming' | 'funded'
+export type BondStatus = 'open' | 'upcoming' | 'funded'
 
 export interface PricePoint {
   date: string
@@ -221,7 +223,7 @@ const INITIAL_PROJECTS: Project[] = [
 // plus 8 historical or off-screen projects funded in the past.
 export const OFF_SCREEN_PROJECTS_COUNT = 8
 
-const INITIAL_FUNDED_COUNT = INITIAL_PROJECTS.filter((p) => {
+export const INITIAL_FUNDED_COUNT = INITIAL_PROJECTS.filter((p) => {
   const n = Number(p.funded.replace(/[^0-9.]/g, ''))
   return Number.isFinite(n) && n > 0
 }).length
@@ -264,41 +266,6 @@ function getRiskIndicator(projects: Project[]): { riskScore: number; riskLevel: 
 
 const PROJECTS_FUNDED = INITIAL_PROJECTS.length + OFF_SCREEN_PROJECTS_COUNT
 
-// Helper to derive the portfolio risk indicator from the bond mix.
-// Credit scores are 0–100; higher credit = lower risk.
-// The risk score is inverted so a higher number means higher risk, and the
-// risk level is determined by the share of holdings in each credit band.
-function getRiskIndicator(projects: Project[]): { riskScore: number; riskLevel: 'conservative' | 'moderate' | 'aggressive' } {
-  const totalFunded = projects.reduce((sum, p) => sum + p.fundedAmount, 0)
-  if (totalFunded === 0) {
-    return { riskScore: 0, riskLevel: 'conservative' }
-  }
-
-  const weightedCredit = projects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / totalFunded
-  const riskScore = Math.round((100 - weightedCredit) * 10) / 10
-
-  // Determine the mix of holdings by rating class.
-  let highGradeShare = 0 // credit >= 80
-  let lowGradeShare = 0 // credit < 70
-
-  for (const p of projects) {
-    if (p.fundedAmount <= 0) continue
-    const share = p.fundedAmount / totalFunded
-    if (p.credit >= 80) highGradeShare += share
-    else if (p.credit < 70) lowGradeShare += share
-  }
-
-  let riskLevel: 'conservative' | 'moderate' | 'aggressive'
-  if (lowGradeShare > 0.2 || highGradeShare < 0.5) {
-    riskLevel = 'aggressive'
-  } else if (highGradeShare >= 0.7 && lowGradeShare <= 0.1) {
-    riskLevel = 'conservative'
-  } else {
-    riskLevel = 'moderate'
-  }
-
-  return { riskScore, riskLevel }
-}
 
 const { riskScore, riskLevel } = getRiskIndicator(INITIAL_PROJECTS)
 

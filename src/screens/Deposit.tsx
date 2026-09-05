@@ -14,7 +14,6 @@ import { roundToCents, formatDecimal, formatSharePrice, parseAmount } from '../l
 import { projectedReturn } from '../lib/bondUtils'
 import { useDepositGuard } from '../hooks/useDepositGuard'
 import { RecurringInvestmentOptions } from '../components/RecurringInvestmentOptions'
-import { saveRecurringInvestment } from '../lib/recurringInvestments'
 
 /**
  * Deposit — the flow that must be perfect. One column, one decision per step:
@@ -54,6 +53,7 @@ export function Deposit({ onDone }: DepositProps) {
   const [step, setStep] = useState<DepositStep>('amount')
   const [amount, setAmount] = useState(DEFAULT_DEPOSIT_USDC)
   const [investmentId, setInvestmentId] = useState<string | null>(null)
+  const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
   const [recurring, setRecurring] = useState(false)
   const [recurrenceDay, setRecurrenceDay] = useState(1)
@@ -102,10 +102,14 @@ export function Deposit({ onDone }: DepositProps) {
   const handleDone = () => {
     setAmount('')
     setInvestmentId(null)
+    setTxHash(null)
     setTxError(null)
     changeStep('amount')
     onDone()
   }
+
+  // Consolidate amount parsing with parseAmount helper (#417).
+  const n = parseAmount(amount)
 
   const handleSubmitDeposit = useCallback(async () => {
     changeStep('pending')
@@ -167,8 +171,6 @@ export function Deposit({ onDone }: DepositProps) {
     }
   }, [n, address, sign, markPending, clearPending, changeStep, toast])
 
-  // Consolidate amount parsing with parseAmount helper (#417).
-  const n = parseAmount(amount)
   const price = livePrice
   const balance = USER_BALANCE_USDC
 
@@ -557,6 +559,19 @@ export function Deposit({ onDone }: DepositProps) {
                 count: HB_DATA.pool.projectsFunded,
               })}
             </p>
+            {txHash && (
+              <p
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-caption)',
+                  color: 'var(--ink-40)',
+                  textAlign: 'center',
+                  margin: '-12px 0 20px',
+                }}
+              >
+                tx: {txHash}
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 10 }}>
               <a
                 href={investmentId ? `/investments/${investmentId}` : undefined}

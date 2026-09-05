@@ -4,7 +4,7 @@
 import { HB_DATA, type Project } from '../data'
 import { PROJECT_DETAILS, type ProjectDetail } from '../data/projectDetails'
 
-class ApiError extends Error {
+export class ApiError extends Error {
 	constructor(message: string) {
 		super(message)
 		this.name = 'ApiError'
@@ -95,13 +95,12 @@ export async function getProjects(): Promise<Project[]> {
 }
 
 export async function getProject(id: number): Promise<ProjectWithDetail | null> {
-	const mockProject = HB_DATA.projects.find((p) => p.id === id)
-	const mockDetail = PROJECT_DETAILS[id]
+  if (isNaN(id) || id <= 0 || !Number.isInteger(id)) {
+    return null
+  }
 
-	if (!API_URL) {
-		if (!mockProject || !mockDetail) return null
-		return { project: mockProject, detail: mockDetail }
-	}
+  const mockProject = HB_DATA.projects.find((p) => p.id === id)
+  const mockDetail = PROJECT_DETAILS[id]
 
   if (!API_URL) {
     if (!mockProject || !mockDetail) return null
@@ -120,13 +119,16 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
 }
 
 export async function createInvestment(input: { projectId: number; amount: number }): Promise<Investment> {
-  const mockInvestment = (): Investment =>
-    {
-      id: Math.floor(Math.random() * 100000) + 1,
-      projectId: input.projectId,
-      amount: input.amount,
-      projectUrl: `/projects/${input.projectId}`,
-    }
+  if (isNaN(input.projectId) || input.projectId <= 0 || isNaN(input.amount) || input.amount <= 0) {
+    throw new Error('Invalid investment input')
+  }
+
+  const mockInvestment = (): Investment => ({
+    id: Math.floor(Math.random() * 100000) + 1,
+    projectId: input.projectId,
+    amount: input.amount,
+    projectUrl: `/projects/${input.projectId}`,
+  })
 
   if (!API_URL) {
     return mockInvestment()

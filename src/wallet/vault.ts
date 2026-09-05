@@ -15,7 +15,7 @@ import { HB_DATA } from '../data'
 
 export interface WithdrawPreview {
   assets: number
-  sharePrice: string
+  sharePrice: number
   networkFee: number
 }
 /** total_assets / total_supply. Constant in the mock; a live read on-chain. */
@@ -37,13 +37,13 @@ export const SIMULATED_WITHDRAW_DELAY_MS = 2000
 
 export interface DepositPreview {
   shares: number
-  sharePrice: string
+  sharePrice: number
   /** USDC; sub-cent on Stellar. */
   networkFee: number
 }
 
 export const vault = {
-  sharePrice: () => formatSharePrice(SHARE_PRICE),
+  sharePrice: () => SHARE_PRICE,
 
   /** convert_to_shares(usdc) — what you receive for a deposit. */
   convertToShares: (usdc: number): number => usdc / SHARE_PRICE,
@@ -53,13 +53,13 @@ export const vault = {
 
   previewDeposit: (usdc: number): DepositPreview => ({
     shares: usdc / SHARE_PRICE,
-    sharePrice: formatSharePrice(SHARE_PRICE),
+    sharePrice: SHARE_PRICE,
     networkFee: 0.00001,
   }),
 
   previewWithdraw: (usdc: number): WithdrawPreview => ({
     assets: usdc,
-    sharePrice: formatSharePrice(SHARE_PRICE),
+    sharePrice: SHARE_PRICE,
     networkFee: 0.00001,
   }),
 }
