@@ -33,5 +33,6 @@ describe('security validation edge cases', () => {
     expect(validateAddress({ ...valid, state: '<svg/onload=alert(1)>' }).state).toBe('State / Province contains invalid characters');
     expect(validateAddress({ ...valid, zip: "1 UNION SELECT" }).zip).toBe('ZIP / Postal code contains invalid characters');
     expect(validateAddress({ ...valid, country: '"><img src=x onerror=alert(1)>' }).country).toBe('Country contains invalid characters');
+    expect(validateAddress({ ...valid, apartment: '<script>x</script>' }).apartment).toBe('Apartment contains invalid characters');
   });
 });

@@ -193,7 +193,6 @@
     "riskCaption": "Basado en la combinación de calificaciones de bonos en sus tenencias.",
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert",
-    "transactionHashLabel": "hash de transacción",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",
@@ -387,11 +386,6 @@
     "scoreGaugeAria": "{label}: {value} out of {max}",
     "onChainNote": "every oracle update is on-chain ↗",
     "verifiedAgo": "verified 2h ago ↗",
-    "pricingTitle": "Historial de precios y rendimiento del bono",
-    "priceLabel": "Historial de precios (% a la par)",
-    "priceHistory": "Historial de precios",
-    "yieldLabel": "Rendimiento al vencimiento",
-    "yieldHistory": "Historial de rendimiento",
     "fundingTitle": "Funding timeline",
     "fundingGoalLabel": "{raised} raised of {goal} goal",
     "contributionTitle": "This project's contribution",
@@ -400,6 +394,12 @@
     "calcFormula": "rentabilidad esperada = inversión × (crédito + impacto verde) ÷ 200 — consulta el contrato ↗",
     "investCta": "Invest in the pool that funds this",
     "investNote": "You invest in the shared pool, which funds this project alongside others — not a per-project checkout."
+  ,
+    "pricingTitle": "Precio del bono",
+    "priceHistory": "Historial del precio",
+    "priceLabel": "Precio",
+    "yieldHistory": "Historial del rendimiento",
+    "yieldLabel": "Rendimiento"
   },
   "PasswordResetEmail": {
     "subject": "Reset your Heliobond password",

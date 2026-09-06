@@ -11,7 +11,7 @@
 // In demo mode (isDemo flag) or when env vars are absent, everything falls
 // back gracefully — no errors surface to the user.
 
-import { HB_DATA } from '../data'
+import { selectSharePrice } from '../state/selectors'
 
 export interface WithdrawPreview {
   assets: number
@@ -19,7 +19,7 @@ export interface WithdrawPreview {
   networkFee: number
 }
 /** total_assets / total_supply. Constant in the mock; a live read on-chain. */
-export const SHARE_PRICE = HB_DATA.pool.sharePrice
+export const SHARE_PRICE = selectSharePrice()
 
 /** Number of decimal places used when formatting share prices. */
 export const SHARE_PRICE_DECIMALS = 7

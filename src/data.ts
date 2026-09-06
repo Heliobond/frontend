@@ -1,7 +1,5 @@
 // Heliobond — fake data for the click-through. Not production: these stand in
-// for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
-
-import { formatPoolCounters } from './lib/format'
+ // for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
 
 export type ProjectType = 'Solar' | 'Wind' | 'Hydro'
 
@@ -53,6 +51,8 @@ export interface Activity {
   when: string
   hash: string
 }
+
+import { formatPoolCounters } from './lib/format'
 
 export function formatCurrency(n: number): string {
   return '$' + Math.floor(n).toLocaleString('en-US')
@@ -223,11 +223,6 @@ const INITIAL_PROJECTS: Project[] = [
 // plus 8 historical or off-screen projects funded in the past.
 export const OFF_SCREEN_PROJECTS_COUNT = 8
 
-export const INITIAL_FUNDED_COUNT = INITIAL_PROJECTS.filter((p) => {
-  const n = Number(p.funded.replace(/[^0-9.]/g, ''))
-  return Number.isFinite(n) && n > 0
-}).length
-
 // Helper to derive the portfolio risk indicator from the bond mix.
 // Credit scores are 0–100; higher credit = lower risk.
 // The risk score is inverted so a higher number means higher risk, and the
@@ -265,7 +260,6 @@ function getRiskIndicator(projects: Project[]): { riskScore: number; riskLevel: 
 }
 
 const PROJECTS_FUNDED = INITIAL_PROJECTS.length + OFF_SCREEN_PROJECTS_COUNT
-
 
 const { riskScore, riskLevel } = getRiskIndicator(INITIAL_PROJECTS)
 

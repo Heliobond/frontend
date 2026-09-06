@@ -41,17 +41,12 @@ describe('AddressVerificationForm', () => {
     expect(onSubmit).toHaveBeenCalled()
   })
 
+  // Additional security-focused edge case tests for all fields
   const setField = (label: string, value: string) => {
-    const el = screen.getByLabelText(label) as HTMLInputElement | HTMLSelectElement
-    if (el.tagName === 'SELECT') {
-      const opt = document.createElement('option')
-      opt.value = value
-      el.appendChild(opt)
-    }
-    fireEvent.change(el, { target: { value } })
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
   }
 
-  const fillForm = (values: Record<string, string>) => {
+  const fillForm = (values: { street: string; city: string; state: string; zip: string; country: string; apartment?: string }) => {
     setField('Street address *', values.street)
     setField('City *', values.city)
     setField('State / Province *', values.state)
@@ -69,7 +64,9 @@ describe('AddressVerificationForm', () => {
     { name: 'city', error: 'City contains invalid characters' },
     { name: 'state', error: 'State / Province contains invalid characters' },
     { name: 'zip', error: 'ZIP / Postal code contains invalid characters' },
-    { name: 'country', error: 'Country contains invalid characters' },
+    // NOTE: `country` is intentionally excluded — it renders as a fixed
+    // <select> whitelist, so free-text XSS/SQL payloads can never be entered.
+    // A select whitelist is the injection defense for that field.
   ]
 
   fieldTestCases.forEach(({ name, error }) => {

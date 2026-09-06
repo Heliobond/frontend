@@ -1,8 +1,11 @@
 import { getRequestConfig } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import { LOCALES, DEFAULT_LOCALE, type Locale } from './config'
+import { DEFAULT_LOCALE, LOCALES, type Locale } from './config'
 
-export * from './config'
+// Re-export the shared, client-safe constants so existing server-side
+// importers (`layout.tsx`) keep working from this module.
+export { LOCALES, DEFAULT_LOCALE, LOCALE_LABELS, RTL_LOCALES } from './config'
+export type { Locale } from './config'
 
 export default getRequestConfig(async () => {
   const store = await cookies()

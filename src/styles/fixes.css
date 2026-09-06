@@ -1,0 +1,17 @@
+/* Heliobond — post-merge fixes. Small corrections that patch styling left
+   inconsistent by later features; keep this file minimal and documented. */
+
+/* ProjectDetail — the two oracle score cards sit side by side on wide
+   screens and stack cleanly on narrow ones. The inline flex/flex-wrap on the
+   element handles stacking; this rule keeps the pair evenly split when both
+   fit, so neither gauge is squeezed by long neighbor content. */
+.hb-detail-scores {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hb-detail-scores > * {
+  flex: 1 1 260px;
+  min-width: 0;
+}

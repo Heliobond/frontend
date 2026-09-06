@@ -8,17 +8,21 @@ export interface DobValidationResult {
   error?: string
 }
 
+/** KYC policy constants shared by the DOB validators. */
+const KYC_CONFIG = {
+  /** Minimum investor age, in years. */
+  MIN_AGE: 18,
+  /** Maximum plausible age, in years — anything above is a data-entry error. */
+  MAX_AGE: 120,
+  /** Length of a leading YYYY year segment. */
+  YEAR_LENGTH: 4,
+}
+
 const DATE_REGEXES = [
   /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/, //MM/DD/YYYY
   /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-(19|20)\d{2}$/, //MM-DD-YYYY
   /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/, //YYYY-MM-DD
 ];
-
-export const KYC_CONFIG = {
-  MIN_AGE: 18,
-  MAX_AGE: 120,
-  YEAR_LENGTH: 4,
-};
 
 /**
  * Checks if a string contains common XSS or SQL injection patterns.
@@ -29,8 +33,7 @@ export function hasMaliciousContent(value: string): boolean {
   const jsProtocol = /javascript\s*:/i;
   const eventHandler = /(?:\s|^)on\w+\s*=/i;
   const htmlEntity = /&(?:lt|gt|#0*60|#0*62|#x0*3[cCE]|#x0*3[eE]);/i;
-  const sqlInjection =
-    /([';]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all)\b)|(\b\d+\s+or\s+\d+=\d+\b)/i;
+  const sqlInjection = /(['<g;]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all|from)\b)|(\/\.*\/)|(\b(?:or|and)\b\s*[\d'"])|(\bunion\b)|(\bselect\b\s+[\w*]+\s+\bfrom\b)/i;
   return htmlTag.test(value) || jsProtocol.test(value) || eventHandler.test(value) || htmlEntity.test(value) || sqlInjection.test(value);
 }
 
@@ -140,5 +143,3 @@ export function validateAddress(values: AddressValues): AddressErrors {
 
   return errors;
 }
-export const ALLOWED_DOCUMENT_TYPES = ["image/jpeg", "application/pdf"];
-export const ALLOWED_DOCUMENT_EXTENSIONS = ["jpg", "jpeg", "pdf"];

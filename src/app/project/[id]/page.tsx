@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Button } from '../../../components'
 import { ProjectDetail } from '../../../screens/ProjectDetail'
 import { getProject, type ProjectWithDetail } from '../../../lib/api'
+import { PriceHistoryChart } from '../../../components/PriceHistoryChart'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
@@ -26,7 +27,13 @@ export default function ProjectDetailPage() {
   }, [id])
 
   if (data === 'loading') {
-    return <div id="main-content" aria-label="Loading project" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>Loading...</div>
+    return <div
+      id="main-content"
+      aria-label="Loading project"
+      style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}
+    >
+      Loading...
+    </div>
   }
 
   if (!data) {
@@ -40,14 +47,12 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <ProjectDetail
-      project={data.project}
-      detail={data.detail}
-      onInvest={async () => {
-        router.push('/connect')
-        return ''
-      }}
-      onBack={() => router.push('/explore')}
-    />
+    <>
+      <ProjectDetail project={data.project} detail={data.detail} onInvest={() => {
+                    router.push('/connect')
+                    return Promise.resolve('/connect')
+                  }} onBack={() => router.push('/explore')} />
+      <PriceHistoryChart projectId={id} />
+    </>
   )
 }

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, ProjectCard, WatchlistButton } from '../components'
-import { HB_DATA, type Project } from '../data'
+import { type Project } from '../data'
+import { selectProjects } from '../state/selectors'
 import { getProjects } from '../lib/api'
 import { getBondStatus, isBondAvailable } from '../lib/watchlist'
 import { useWatchlist } from '../watchlist/WatchlistProvider'
@@ -26,7 +27,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
   useEffect(() => {
     getProjects()
       .then(setProjects)
-      .catch(() => setProjects(HB_DATA.projects))
+      .catch(() => setProjects(selectProjects()))
       .finally(() => setLoading(false))
   }, [])
 
