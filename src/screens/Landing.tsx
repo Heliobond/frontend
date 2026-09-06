@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, StatBlock } from '../components'
 import { LiveHelio } from '../brand/LiveHelio'
@@ -14,11 +15,30 @@ export interface LandingProps {
   onExplore: () => void
 }
 
+// Stable reference — never changes at runtime.
+const STEPS = [1, 2, 3, 4] as const
+
 export function Landing({ onConnect, onExplore }: LandingProps) {
   const t = useTranslations('Landing')
   const d = HB_DATA
-  const steps = [1, 2, 3, 4] as const
-  const intensity = Math.min(1, d.pool.totalAssets / 6_000_000)
+
+  // Derived numeric value — recompute only when pool data changes.
+  const intensity = useMemo(
+    () => Math.min(1, d.pool.totalAssets / 6_000_000),
+    [d.pool.totalAssets],
+  )
+
+  // Verify-rows array — rebuilt only when translation function changes.
+  const verifyRows = useMemo(
+    () =>
+      [
+        [t('rowRegistry'), 'C…7K4Z'],
+        [t('rowVault'), 'C…9QWJ'],
+        [t('rowCadence'), t('rowCadenceValue')],
+        [t('rowAudit'), t('rowAuditValue')],
+      ] as const,
+    [t],
+  )
 
   return (
     <main id="main-content">
@@ -145,7 +165,7 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
             {t('howSub')}
           </p>
           <div className="hb-how-grid">
-            {steps.map((i) => (
+            {STEPS.map((i) => (
               <div key={i}>
                 <div
                   style={{
@@ -239,12 +259,7 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
             overflow: 'hidden',
           }}
         >
-          {[
-            [t('rowRegistry'), 'C…7K4Z'],
-            [t('rowVault'), 'C…9QWJ'],
-            [t('rowCadence'), t('rowCadenceValue')],
-            [t('rowAudit'), t('rowAuditValue')],
-          ].map(([k, v]) => (
+          {verifyRows.map(([k, v]) => (
             <div
               key={k}
               style={{

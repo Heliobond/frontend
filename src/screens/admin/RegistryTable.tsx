@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useCallback, useMemo, useState, memo, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
@@ -48,14 +48,55 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
     return copy
   }, [rows, sortKey, sortDir])
 
-  const toggleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir(key === 'name' || key === 'type' || key === 'lastVerified' ? 'asc' : 'desc')
-    }
-  }
+  // Stable sort toggler — only recreated when sort state changes.
+  const toggleSort = useCallback(
+    (key: SortKey) => {
+      if (key === sortKey) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortKey(key)
+        setSortDir(key === 'name' || key === 'type' || key === 'lastVerified' ? 'asc' : 'desc')
+      }
+    },
+    [sortKey],
+  )
+
+  // Stable row-level action handlers — Row receives these plus its own id
+  // and calls them with the id; avoids one new closure per row per render.
+  const handleEdit = useCallback((id: number) => setEditing(id), [])
+  const handleCancel = useCallback(() => setEditing(null), [])
+  const handleSave = useCallback(
+    (id: number, credit: number, green: number) => {
+      onSave(id, credit, green)
+      setEditing(null)
+    },
+    [onSave],
+  )
+
+  // Translated labels — stable as long as locale doesn't change.
+  const labels = useMemo(
+    () => ({
+      colProject: t('colProject'),
+      colType: t('colType'),
+      colCredit: t('colCredit'),
+      colGreen: t('colGreen'),
+      colFunded: t('colFunded'),
+      colLastVerified: t('colLastVerified'),
+      colActions: t('colActions'),
+      sortByProject: t('sortBy', { col: t('colProject') }),
+      sortByType: t('sortBy', { col: t('colType') }),
+      sortByCredit: t('sortBy', { col: t('colCredit') }),
+      sortByGreen: t('sortBy', { col: t('colGreen') }),
+      sortByFunded: t('sortBy', { col: t('colFunded') }),
+      sortByLastVerified: t('sortBy', { col: t('colLastVerified') }),
+      updateScores: t('updateScores'),
+      actionCancel: t('actionCancel'),
+      actionSave: t('actionSave'),
+      scoreFieldCredit: t('scoreFieldCredit'),
+      scoreFieldGreen: t('scoreFieldGreen'),
+    }),
+    [t],
+  )
 
   return (
     <div style={{ overflowX: 'auto', maxHeight: 320, overflowY: 'auto' }}>
@@ -63,59 +104,59 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
         <thead>
           <tr>
             <Th
-              label={t('colProject')}
+              label={labels.colProject}
               k="name"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colProject') })}
+              sortLabel={labels.sortByProject}
             />
             <Th
-              label={t('colType')}
+              label={labels.colType}
               k="type"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colType') })}
+              sortLabel={labels.sortByType}
             />
             <Th
-              label={t('colCredit')}
+              label={labels.colCredit}
               k="credit"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colCredit') })}
+              sortLabel={labels.sortByCredit}
               align="right"
             />
             <Th
-              label={t('colGreen')}
+              label={labels.colGreen}
               k="green"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colGreen') })}
+              sortLabel={labels.sortByGreen}
               align="right"
             />
             <Th
-              label={t('colFunded')}
+              label={labels.colFunded}
               k="funded"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colFunded') })}
+              sortLabel={labels.sortByFunded}
               align="right"
             />
             <Th
-              label={t('colLastVerified')}
+              label={labels.colLastVerified}
               k="lastVerified"
               sortKey={sortKey}
               sortDir={sortDir}
               onSort={toggleSort}
-              sortLabel={t('sortBy', { col: t('colLastVerified') })}
+              sortLabel={labels.sortByLastVerified}
               align="right"
             />
             <th style={{ ...thBase, textAlign: 'right' }}>
-              <span className="hb-eyebrow">{t('colActions')}</span>
+              <span className="hb-eyebrow">{labels.colActions}</span>
             </th>
           </tr>
         </thead>
@@ -125,18 +166,15 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
               key={r.id}
               row={r}
               editing={editing === r.id}
-              onEdit={() => setEditing(r.id)}
-              onCancel={() => setEditing(null)}
-              onSave={(credit, green) => {
-                onSave(r.id, credit, green)
-                setEditing(null)
-              }}
-              updateLabel={t('updateScores')}
+              onEdit={handleEdit}
+              onCancel={handleCancel}
+              onSave={handleSave}
+              updateLabel={labels.updateScores}
               reVerifyLabel={t('reVerify', { name: r.name })}
-              creditFieldLabel={t('scoreFieldCredit')}
-              greenFieldLabel={t('scoreFieldGreen')}
-              cancelLabel={t('actionCancel')}
-              saveLabel={t('actionSave')}
+              creditFieldLabel={labels.scoreFieldCredit}
+              greenFieldLabel={labels.scoreFieldGreen}
+              cancelLabel={labels.actionCancel}
+              saveLabel={labels.actionSave}
             />
           ))}
         </tbody>
@@ -145,7 +183,8 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
   )
 }
 
-function Th({
+// Memoised — only re-renders when its own sort props change.
+const Th = memo(function Th({
   label,
   k,
   sortKey,
@@ -199,9 +238,25 @@ function Th({
       </button>
     </th>
   )
+})
+
+// Callbacks accept the row id so the parent can use stable, non-closure handlers.
+interface RowProps {
+  row: RegistryEntry
+  editing: boolean
+  onEdit: (id: number) => void
+  onCancel: () => void
+  onSave: (id: number, credit: number, green: number) => void
+  updateLabel: string
+  reVerifyLabel: string
+  creditFieldLabel: string
+  greenFieldLabel: string
+  cancelLabel: string
+  saveLabel: string
 }
 
-function Row({
+// Memoised — skips re-render unless its own row data or editing state changes.
+const Row = memo(function Row({
   row,
   editing,
   onEdit,
@@ -213,28 +268,21 @@ function Row({
   greenFieldLabel,
   cancelLabel,
   saveLabel,
-}: {
-  row: RegistryEntry
-  editing: boolean
-  onEdit: () => void
-  onCancel: () => void
-  onSave: (credit: number, green: number) => void
-  updateLabel: string
-  reVerifyLabel: string
-  creditFieldLabel: string
-  greenFieldLabel: string
-  cancelLabel: string
-  saveLabel: string
-}) {
+}: RowProps) {
   const [credit, setCredit] = useState(String(row.credit))
   const [green, setGreen] = useState(String(row.green))
 
   // Reset draft to current values each time the editor opens.
-  const open = () => {
+  const open = useCallback(() => {
     setCredit(String(row.credit))
     setGreen(String(row.green))
-    onEdit()
-  }
+    onEdit(row.id)
+  }, [row.credit, row.green, row.id, onEdit])
+
+  const handleSave = useCallback(
+    () => onSave(row.id, clampScore(credit), clampScore(green)),
+    [row.id, credit, green, onSave],
+  )
 
   return (
     <>
@@ -280,11 +328,7 @@ function Row({
                 <Button size="sm" variant="ghost" onClick={onCancel}>
                   {cancelLabel}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={() => onSave(clampScore(credit), clampScore(green))}
-                >
+                <Button size="sm" variant="primary" onClick={handleSave}>
                   {saveLabel}
                 </Button>
               </div>
@@ -294,7 +338,7 @@ function Row({
       )}
     </>
   )
-}
+})
 
 function ScoreField({
   label,
