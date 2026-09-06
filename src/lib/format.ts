@@ -23,6 +23,14 @@ export function formatDecimal(value: number, decimals: number): string {
   return roundToDecimals(value, decimals).toFixed(decimals)
 }
 
+/**
+ * Formats the vault share price with the shared precision used everywhere
+ * the figure appears (deposit preview, admin stat cell, data source) so the
+ * same value reads identically across screens (#394).
+ */
+export function formatSharePrice(value: number): string {
+  return formatDecimal(value, 4)
+}
 
 /**
  * Formats a number as a localized currency/money string.
@@ -71,14 +79,6 @@ export function parseAmount(value: string): number {
   return isNaN(num) ? 0 : roundToCents(num)
 }
 
-/** The shared number of decimals used for on-screen share prices. */
-export const SHARE_PRICE_DECIMALS = 4
-
-/** Formats a share price to the shared precision, rounding once. */
-export function formatSharePrice(value: number): string {
-  return formatDecimal(value, SHARE_PRICE_DECIMALS)
-}
-
 /** Data shape for the landing pool counters. */
 export interface PoolData {
   totalAssets: number
@@ -88,8 +88,9 @@ export interface PoolData {
 
 /**
  * Formats the landing pool counters from the source data.
- * This drives the live counters from `HB_DATA.pool` rather than
- * hardcoded strings, preventing drift from the data source.
+ * This drives the live counters from the flat `selectPoolSummary()` selector
+ * (the `HB_DATA.pool` branch) rather than hardcoded strings, preventing drift
+ * from the data source.
  */
 export function formatPoolCounters(pool: PoolData): {
   totalAssets: string

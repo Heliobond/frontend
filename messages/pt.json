@@ -187,7 +187,6 @@
     "riskCaption": "Based on the mix of bond ratings in your holdings.",
     "activityTitle": "Activity",
     "activityNote": "every entry → Stellar Expert",
-    "transactionHashLabel": "transaction hash",
     "referralProgram": "Referral program",
     "referralLink": "Your referral link",
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
@@ -376,11 +375,6 @@
     "scoreGaugeAria": "{label}: {value} out of {max}",
     "onChainNote": "every oracle update is on-chain ↗",
     "verifiedAgo": "verified 2h ago ↗",
-    "pricingTitle": "Histórico de preços e rendimentos do título",
-    "priceLabel": "Histórico de preços (% do valor nominal)",
-    "priceHistory": "Histórico de preços",
-    "yieldLabel": "Rendimento até o vencimento",
-    "yieldHistory": "Histórico de rendimentos",
     "fundingTitle": "Funding timeline",
     "fundingGoalLabel": "{raised} raised of {goal} goal",
     "contributionTitle": "This project's contribution",
@@ -389,6 +383,12 @@
     "calcFormula": "expected return = investment × (credit + green) ÷ 200 — read it in the contract ↗",
     "investCta": "Invest in the pool that funds this",
     "investNote": "You invest in the shared pool, which funds this project alongside others — not a per-project checkout."
+  ,
+    "pricingTitle": "Preço do título",
+    "priceHistory": "Histórico de preços",
+    "priceLabel": "Preço",
+    "yieldHistory": "Histórico de rendimento",
+    "yieldLabel": "Rendimento"
   },
   "PasswordResetEmail": {
     "subject": "Redefinição de Senha - Heliobond",

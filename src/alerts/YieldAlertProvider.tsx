@@ -19,7 +19,7 @@ import {
   type AlertOperator,
 } from '../lib/yieldAlerts'
 import { useToast } from '../components/Toast'
-import { HB_DATA } from '../data'
+import { selectProjects } from '../state/selectors'
 
 interface YieldAlertContextValue {
   /** All saved alerts, most-recently-added last. */
@@ -84,7 +84,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       const current = alertsRef.current
       if (current.length === 0) return
 
-      const projects = HB_DATA.projects
+      const projects = selectProjects()
       const triggered = evaluateAlerts(current, projects)
 
       if (triggered.length === 0) return

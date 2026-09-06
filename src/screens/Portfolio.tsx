@@ -2,9 +2,9 @@
 
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
-import { AddressChip, Button, Card, LiquidityMeter, StatBlock } from '../components'
+import { Button, StatBlock, LiquidityMeter, Card } from '../components'
 import { Helio } from '../brand/Helio'
-import { HB_DATA } from '../data'
+import { selectActivity, selectYou } from '../state/selectors'
 import { useWallet } from '../wallet/WalletProvider'
 
 const MemoizedHelio = memo(Helio)
@@ -24,9 +24,11 @@ export interface PortfolioProps {
 export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const t = useTranslations('Portfolio')
   const { connected, connect } = useWallet()
-  const d = HB_DATA
-  const risk = { score: d.you.riskScore, level: d.you.riskLevel }
-  const referralLink = (d.you as { referralLink?: string }).referralLink
+  // Flat selectors — one level, no drilling through the nested state shape.
+  const you = selectYou()
+  const activity = selectActivity()
+  const risk = { score: you.riskScore, level: you.riskLevel }
+  const referralLink = you.referralLink
 
   if (!connected) {
     return (
@@ -82,9 +84,9 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           </div>
           <StatBlock
             label={t('currentValue')}
-            value={`$${Math.floor(d.you.value).toLocaleString('en-US')}`}
-            decimals={`.${String(d.you.value).split('.')[1] ?? '00'}`}
-            delta={`+$${d.you.deltaAbs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${d.you.deltaPct}%) ${t('sinceDeposit')}`}
+            value={`$${Math.floor(you.value).toLocaleString('en-US')}`}
+            decimals={`.${String(you.value).split('.')[1] ?? '00'}`}
+            delta={`+$${you.deltaAbs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${you.deltaPct}%) ${t('sinceDeposit')}`}
             size="lg"
             stackOnMobile
           />
@@ -101,7 +103,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <MemoizedHelio size={108} motes={d.you.backed} />
+          <MemoizedHelio size={108} motes={you.backed} />
           <div style={{ display: 'flex', gap: 10 }}>
             <Button variant="secondary" onClick={onWithdraw}>
               {t('withdraw')}
@@ -179,7 +181,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
         </Card>
       ) : null}
 
-      {d.you.referralLink && (
+      {referralLink && (
         <Card style={{ padding: 22, marginBottom: 28 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
@@ -200,7 +202,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               <input
                 type="text"
                 readOnly
-                value={d.you.referralLink}
+                value={referralLink}
                 style={{
                   flex: '1 1 280px',
                   padding: '10px 14px',
@@ -216,7 +218,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               <Button
                 variant="secondary"
                 onClick={() => {
-                  navigator.clipboard.writeText(d.you.referralLink ?? '')
+                  navigator.clipboard.writeText(referralLink ?? '')
                 }}
               >
                 {t('copyLink')}
@@ -241,11 +243,11 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           >
             {t.rich('impactBody', {
               b: (c: ReactNode) => <b style={{ color: 'var(--ink)' }}>{c}</b>,
-              count: d.you.backed,
+              count: you.backed,
             })}
           </p>
           <div style={{ display: 'flex', gap: 24 }}>
-            <StatBlock label={t('projectsBacked')} value={String(d.you.backed)} size="sm" />
+            <StatBlock label={t('projectsBacked')} value={String(you.backed)} size="sm" />
             <StatBlock label={t('weightedGreen')} value="88" size="sm" />
           </div>
         </Card>
@@ -271,7 +273,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               {t('activityNote')}
             </span>
           </div>
-          {d.activity.map((a, i) => (
+          {activity.map((a, i) => (
             <div
               key={a.hash}
               style={{
@@ -316,15 +318,15 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                 >
                   {a.when}
                 </div>
-                {a.hash && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                    <AddressChip
-                      value={a.hash}
-                      explorerUrl={txExplorerUrl(a.hash)}
-                      label={t('transactionHashLabel')}
-                    />
-                  </div>
-                )}
+                <div
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-eyebrow)',
+                    color: 'var(--ink-40)',
+                  }}
+                >
+                  {a.hash} ↗
+                </div>
               </div>
             </div>
           ))}
@@ -341,6 +343,3 @@ const cardTitle: CSSProperties = {
   margin: '0 0 10px',
   color: 'var(--ink)',
 }
-
-/** Stellar Expert transaction URL for an activity hash — mirrors Withdraw/TopBar explorer links. */
-const txExplorerUrl = (hash: string): string => `https://stellar.expert/explorer/testnet/tx/${hash}`

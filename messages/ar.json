@@ -200,7 +200,6 @@
     "riskCaption": "بناءً على مزيج تصنيفات السندات في حيازاتك.",
     "activityTitle": "النشاط",
     "activityNote": "كل إدخال → Stellar Expert",
-    "transactionHashLabel": "هاش المعاملة",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",
@@ -394,11 +393,6 @@
     "scoreGaugeAria": "{label}: {value} من {max}",
     "onChainNote": "كل تحديث Oracle على السلسلة ↗",
     "verifiedAgo": "تحقق قبل 2 ساعة ↗",
-    "pricingTitle": "سجل أسعار وعوائد السندات",
-    "priceLabel": "سجل الأسعار (% من القيمة الاسمية)",
-    "priceHistory": "سجل الأسعار",
-    "yieldLabel": "العائد حتى تاريخ الاستحقاق",
-    "yieldHistory": "سجل العائد",
     "fundingTitle": "جدول التمويل",
     "fundingGoalLabel": "{raised} م collects من هدف {goal}",
     "contributionTitle": "مساهمة هذا المشروع",
@@ -407,6 +401,12 @@
     "calcFormula": "العائد المتوقع = الاستثمار × (الائتمان + الأخضر) ÷ 200 — اقرأه في العقد ↗",
     "investCta": "استثمر في المجمع الذي يمول هذا",
     "investNote": "أنت تستثمر في المجمع المشترك، الذي يمول هذا المشروع إلى جانب أخرى — ليست عملية شراء لكل مشروع."
+  ,
+    "pricingTitle": "تسعير السند",
+    "priceHistory": "سجل الأسعار",
+    "priceLabel": "السعر",
+    "yieldHistory": "سجل العائد",
+    "yieldLabel": "العائد"
   },
   "PasswordResetEmail": {
     "subject": "إعادة تعيين كلمة مرور Heliobond",

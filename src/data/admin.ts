@@ -2,9 +2,10 @@
 // Not production: these stand in for privileged reads from the InvestmentVault
 // (vault accounting) + ProjectRegistry (registry + creator whitelist) Soroban
 // contracts. No Math.random — fixed figures so the console renders identically
-// across reloads. Reuse HB_DATA.projects for the registry table.
+// across reloads. Reuses the project registry (via selectProjects) for the table.
 
-import { HB_DATA, type Project } from '@/data'
+import { type Project } from '@/data'
+import { selectPoolSummary, selectProjects } from '@/state/selectors'
 
 /** Vault accounting, ERC-4626-style. `totalAssets = liquid + deployed`. */
 export interface VaultStats {
@@ -28,18 +29,18 @@ export interface RegistryEntry extends Project {
   lastVerified: string
 }
 
-// Derive the vault snapshot from the shared pool, then extend with the
+// Derive the vault snapshot via the flat selector layer, then extend with the
 // admin-only figures the consumer surface never shows (supply + deployed).
 const HBS_SUPPLY = 4_834_120.118
-const DEPLOYED = HB_DATA.pool.totalAssets - HB_DATA.pool.liquid
+const POOL = selectPoolSummary()
 
 export const VAULT_STATS: VaultStats = {
-  totalAssets: HB_DATA.pool.totalAssets,
-  sharePrice: HB_DATA.pool.sharePrice,
+  totalAssets: POOL.totalAssets,
+  sharePrice: POOL.sharePrice,
   hbsSupply: HBS_SUPPLY,
-  liquid: HB_DATA.pool.liquid,
-  deployed: DEPLOYED,
-  projectsFunded: HB_DATA.pool.projectsFunded,
+  liquid: POOL.liquid,
+  deployed: POOL.deployed,
+  projectsFunded: POOL.projectsFunded,
 }
 
 export type WhitelistStatus = 'approved' | 'pending' | 'rejected'
@@ -66,7 +67,7 @@ const VERIFIED_AT: string[] = [
   '5 days ago',
 ]
 
-export const REGISTRY: RegistryEntry[] = HB_DATA.projects.map((p, i) => ({
+export const REGISTRY: RegistryEntry[] = selectProjects().map((p, i) => ({
   ...p,
   lastVerified: VERIFIED_AT[i] ?? 'over a month ago',
 }))

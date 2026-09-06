@@ -248,14 +248,6 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
       'radial-gradient(125% 115% at 20% 10%, var(--solar-12), transparent 56%), linear-gradient(170deg, var(--ink-06), var(--solar-12))',
   },
   5: {
-    priceHistory: [
-      { date: 'Jan 2026', price: 94.0, yield: 8.0, hash: '4d0a…91b7' },
-      { date: 'Feb 2026', price: 94.8, yield: 7.9, hash: 'e913…7c4f' },
-      { date: 'Mar 2026', price: 95.5, yield: 7.8, hash: 'aa70…2d6e' },
-      { date: 'Apr 2026', price: 96.2, yield: 7.7, hash: '1c8b…43a1' },
-      { date: 'May 2026', price: 97.0, yield: 7.6, hash: 'f2e8…02d9' },
-      { date: 'Jun 2026', price: 97.8, yield: 7.5, hash: '6d1c…b0a4' },
-    ],
     story:
       'Kerala micro-hydro runs a hillside stream through a small powerhouse and back to the river, lighting villages that the grid never reached. It is modest by megawatts and large by lives changed. Flow is gauged daily and the readings are public.',
     name: 'Kerala Micro-Hydro',
@@ -291,6 +283,14 @@ export const PROJECT_DETAILS: Record<number, ProjectDetail> = {
     ],
     fundedAmount: 310000,
     fundingGoal: 400000,
+    priceHistory: [
+      { date: 'Jan 2026', price: 94.0, yield: 8.1, hash: '4d0a…91b7' },
+      { date: 'Feb 2026', price: 94.8, yield: 8.0, hash: 'e913…7c4f' },
+      { date: 'Mar 2026', price: 95.6, yield: 7.9, hash: 'aa70…2d6e' },
+      { date: 'Apr 2026', price: 96.3, yield: 7.8, hash: '1c8b…43a1' },
+      { date: 'May 2026', price: 97.0, yield: 7.7, hash: 'f2e8…02d9' },
+      { date: 'Jun 2026', price: 97.8, yield: 7.6, hash: '6d1c…b0a4' },
+    ],
     heroGradient:
       'radial-gradient(130% 120% at 74% 10%, var(--solar-12), transparent 60%), linear-gradient(155deg, var(--solar-12), var(--ink-06))',
   },

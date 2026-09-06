@@ -52,13 +52,18 @@ export const ProjectDetail = memo(function ProjectDetail({
     boxShadow: 'var(--shadow-sm)',
     padding: '20px',
   }
+  // Flat selectors — destructure the nested detail ONCE here instead of
+  // drilling five levels (`detail.scoreHistory.credit.map`, `detail.creator.*`)
+  // at every use site.
+  const { name: creatorName, since: creatorSince } = detail.creator
+  const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
   const creditHistory = useMemo(
-    () => detail.scoreHistory.credit.map((p) => p.value),
-    [detail.scoreHistory.credit],
+    () => creditPoints.map((p) => p.value),
+    [creditPoints],
   )
   const greenHistory = useMemo(
-    () => detail.scoreHistory.green.map((p) => p.value),
-    [detail.scoreHistory.green],
+    () => greenPoints.map((p) => p.value),
+    [greenPoints],
   )
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
@@ -110,7 +115,7 @@ export const ProjectDetail = memo(function ProjectDetail({
           }}
         >
           <Badge tone="growth" icon={<ShieldCheckIcon />}>
-            {t('verifiedSince', { since: detail.creator.since })}
+            {t('verifiedSince', { since: creatorSince })}
           </Badge>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <YieldAlertButton
@@ -177,7 +182,7 @@ export const ProjectDetail = memo(function ProjectDetail({
             marginBottom: 10,
           }}
         >
-          {t('builtBy')} <b style={{ color: 'var(--ink)' }}>{detail.creator.name}</b>
+          {t('builtBy')} <b style={{ color: 'var(--ink)' }}>{creatorName}</b>
         </div>
         <p
           style={{
@@ -222,11 +227,11 @@ export const ProjectDetail = memo(function ProjectDetail({
         <div style={cardStyle}>
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={(detail.priceHistory ?? []).map((p: { price: number }) => p.price)} aria-label={t('priceHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{(detail.priceHistory ?? []).length > 0 ? formatMoney((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price) : '—'}</span>
-              {(detail.priceHistory ?? []).length > 1 && (
+              <Sparkline points={detail.priceHistory.map((p) => p.price)} aria-label={t('priceHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.priceHistory.length > 0 ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price) : '—'}</span>
+              {detail.priceHistory.length > 1 && (
                 <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price >= (detail.priceHistory ?? [])[0].price ? '+' : '-'}{formatMoney(Math.abs((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].price - (detail.priceHistory ?? [])[0].price))}
+                  {detail.priceHistory[detail.priceHistory.length - 1].price >= detail.priceHistory[0].price ? '+' : '-'}{formatMoney(Math.abs(detail.priceHistory[detail.priceHistory.length - 1].price - detail.priceHistory[0].price))}
                 </span>
               )}
               <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
@@ -234,11 +239,11 @@ export const ProjectDetail = memo(function ProjectDetail({
               </span>
             </div>
             <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={(detail.priceHistory ?? []).map((p: { yield: number }) => p.yield)} aria-label={t('yieldHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{(detail.priceHistory ?? []).length > 0 ? `${(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield.toFixed(2)}%` : '—'}</span>
-              {(detail.priceHistory ?? []).length > 1 && (
+              <Sparkline points={detail.priceHistory.map((p) => p.yield)} aria-label={t('yieldHistory')} />
+              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.priceHistory.length > 0 ? `${detail.priceHistory[detail.priceHistory.length - 1].yield.toFixed(2)}%` : '—'}</span>
+              {detail.priceHistory.length > 1 && (
                 <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {(detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield >= (detail.priceHistory ?? [])[0].yield ? '+' : '-'}{Math.abs((detail.priceHistory ?? [])[(detail.priceHistory ?? []).length - 1].yield - (detail.priceHistory ?? [])[0].yield).toFixed(2)}%
+                  {detail.priceHistory[detail.priceHistory.length - 1].yield >= detail.priceHistory[0].yield ? '+' : '-'}{Math.abs(detail.priceHistory[detail.priceHistory.length - 1].yield - detail.priceHistory[0].yield).toFixed(2)}%
                 </span>
               )}
               <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>

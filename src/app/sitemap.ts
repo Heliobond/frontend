@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { HB_DATA } from '../data'
+import { selectProjects } from '../state/selectors'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://heliobond.vercel.app'
@@ -31,7 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  const projectRoutes = HB_DATA.projects.map((project) => ({
+  const projectRoutes = selectProjects().map((project) => ({
     url: `${baseUrl}/project/${project.id}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,

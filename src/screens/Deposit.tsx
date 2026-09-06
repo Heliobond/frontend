@@ -9,7 +9,7 @@ import { useVault } from '../wallet/useVault'
 import { scrollToFirstError } from '../lib/scrollToError'
 import { getFriendlyErrorMessage } from '../lib/errorMessages'
 import { useWallet } from '../wallet/WalletProvider'
-import { HB_DATA } from '../data'
+import { selectPoolSummary } from '../state/selectors'
 import { roundToCents, formatDecimal, formatSharePrice, parseAmount } from '../lib/format'
 import { projectedReturn } from '../lib/bondUtils'
 import { useDepositGuard } from '../hooks/useDepositGuard'
@@ -43,6 +43,8 @@ export function Deposit({ onDone }: DepositProps) {
   const t = useTranslations('Deposit')
   const { toast } = useToast()
   const { address, sign } = useWallet()
+  // Flat selector — pool figures in one level, no nested-state drilling.
+  const { projectedRate, projectsFunded } = selectPoolSummary()
   const {
     sharePrice: livePrice,
     loading: vaultLoading,
@@ -53,7 +55,6 @@ export function Deposit({ onDone }: DepositProps) {
   const [step, setStep] = useState<DepositStep>('amount')
   const [amount, setAmount] = useState(DEFAULT_DEPOSIT_USDC)
   const [investmentId, setInvestmentId] = useState<string | null>(null)
-  const [txHash, setTxHash] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
   const [recurring, setRecurring] = useState(false)
   const [recurrenceDay, setRecurrenceDay] = useState(1)
@@ -102,7 +103,6 @@ export function Deposit({ onDone }: DepositProps) {
   const handleDone = () => {
     setAmount('')
     setInvestmentId(null)
-    setTxHash(null)
     setTxError(null)
     changeStep('amount')
     onDone()
@@ -118,10 +118,11 @@ export function Deposit({ onDone }: DepositProps) {
     const controller = new AbortController()
     abortControllerRef.current = controller
     try {
-      const hash = await submitDeposit(n, address ?? '', sign, controller.signal)
+      // The tx hash is polled for confirmation inside submitDeposit; nothing
+      // on this surface reads it, so we don't bind it.
+      await submitDeposit(n, address ?? '', sign, controller.signal)
       if (mountedRef.current) {
         clearPending()
-        setTxHash(hash)
         changeStep('success')
         toast({
           tone: 'success',
@@ -263,10 +264,10 @@ export function Deposit({ onDone }: DepositProps) {
                           >
                             {years === 1 ? '1 year:' : `${years} years:`} ≈ $
                             {formatDecimal(
-                              roundToCents(projectedReturn(n, HB_DATA.pool.projectedRate, years)),
+                              roundToCents(projectedReturn(n, projectedRate, years)),
                               2,
                             )}{' '}
-                            @ {HB_DATA.pool.projectedRate}% annual
+                            @ {projectedRate}% annual
                           </span>
                         ))}
                       </div>
@@ -447,7 +448,7 @@ export function Deposit({ onDone }: DepositProps) {
                 margin: '0 0 20px',
               }}
             >
-              {t('reviewBody', { count: HB_DATA.pool.projectsFunded })}
+              {t('reviewBody', { count: projectsFunded })}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <Button variant="ghost" onClick={() => changeStep('amount')}>
@@ -539,7 +540,7 @@ export function Deposit({ onDone }: DepositProps) {
               {t('successH1')}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 6px' }}>
-              <Helio size={160} motes={HB_DATA.pool.projectsFunded} />
+              <Helio size={160} motes={projectsFunded} />
             </div>
             <h1 style={{ ...h1Style, textAlign: 'center' }}>{t('successH1')}</h1>
             <p
@@ -556,22 +557,9 @@ export function Deposit({ onDone }: DepositProps) {
                 shares: formatDecimal(n / price, 4),
                 num,
                 b: strong,
-                count: HB_DATA.pool.projectsFunded,
+                count: projectsFunded,
               })}
             </p>
-            {txHash && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-caption)',
-                  color: 'var(--ink-40)',
-                  textAlign: 'center',
-                  margin: '-12px 0 20px',
-                }}
-              >
-                tx: {txHash}
-              </p>
-            )}
             <div style={{ display: 'flex', gap: 10 }}>
               <a
                 href={investmentId ? `/investments/${investmentId}` : undefined}

@@ -1,0 +1,19 @@
+/* Heliobond — grid overflow fixes.
+   A grid/flex child's default `min-width: auto` lets long unbreakable content
+   (tx hashes, wordmarks, data strings) blow the track out past its container
+   on narrow viewports. Opt every layout-grid child into shrinking below its
+   content size; this is a no-op for content that already fits. */
+
+.hb-hero-grid > *,
+.hb-counter-grid > *,
+.hb-doors-grid > *,
+.hb-edu-grid > *,
+.hb-figures-grid > *,
+.hb-how-grid > *,
+.hb-portfolio-grid > *,
+.hb-projects-grid > *,
+.hb-verify-grid > *,
+.hb-detail-scores > *,
+.hb-footer__inner > * {
+  min-width: 0;
+}

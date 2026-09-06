@@ -4,7 +4,8 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { ProjectCard, Tag, WatchlistButton } from '../components'
-import { HB_DATA, type Project, type ProjectType } from '../data'
+import { type Project, type ProjectType } from '../data'
+import { selectProjects } from '../state/selectors'
 import { getProjectsPaginated } from '../lib/api'
 
 /**
@@ -43,7 +44,7 @@ export function Explore({ onOpen }: ExploreProps) {
         setProjects(res.projects)
       })
       .catch(() => {
-        setProjects(HB_DATA.projects.slice(0, 50))
+        setProjects(selectProjects().slice(0, 50))
         setApiError(true)
       })
       .finally(() => setLoading(false))

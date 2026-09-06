@@ -1,16 +1,9 @@
 // Heliobond — project data API client with lazy-loading and pagination support.
 // Reads from NEXT_PUBLIC_API_URL when set, and the request fails, so the click-through always works without a running backend.
 
-import { HB_DATA, type Project } from '../data'
-import { PROJECT_DETAILS, type ProjectDetail } from '../data/projectDetails'
-
-export class ApiError extends Error {
-	constructor(message: string) {
-		super(message)
-		this.name = 'ApiError'
-		this.stack = message
-	}
-}
+import { type Project } from '../data'
+import { type ProjectDetail } from '../data/projectDetails'
+import { selectProjectById, selectProjectDetail, selectProjects } from '../state/selectors'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -40,7 +33,7 @@ export interface PaginatedProjectsResponse {
  */
 export async function getProjectsPaginated(page = 1, pageSize = 12): Promise<PaginatedProjectsResponse> {
 	if (!API_URL) {
-		const all = HB_DATA.projects
+		const all = selectProjects()
 		const start = (page - 1) * pageSize
 		const projects = all.slice(start, start + pageSize)
 		return {
@@ -69,7 +62,7 @@ export async function getProjectsPaginated(page = 1, pageSize = 12): Promise<Pag
 		return data as PaginatedProjectsResponse
 	} catch {
 		console.warn('[api] GET /projects paginated failed -- using local dataset chunk')
-		const all = HB_DATA.projects
+		const all = selectProjects()
 		const start = (page - 1) * pageSize
 		const projects = all.slice(start, start + pageSize)
 		return {
@@ -83,24 +76,25 @@ export async function getProjectsPaginated(page = 1, pageSize = 12): Promise<Pag
 }
 
 export async function getProjects(): Promise<Project[]> {
-  if (!API_URL) return HB_DATA.projects
+  if (!API_URL) return selectProjects()
   try {
     const res = await fetch(`${API_URL}/projects`)
     if (!res.ok) throw new Error(`HTTP {res.status}`)
     return (await res.json()) as Project[]
   } catch {
     console.warn('[api] GET /projects failed -- using mock data')
-    return HB_DATA.projects
+    return selectProjects()
   }
 }
 
 export async function getProject(id: number): Promise<ProjectWithDetail | null> {
-  if (isNaN(id) || id <= 0 || !Number.isInteger(id)) {
-    return null
-  }
+	const mockProject = selectProjectById(id)
+	const mockDetail = selectProjectDetail(id)
 
-  const mockProject = HB_DATA.projects.find((p) => p.id === id)
-  const mockDetail = PROJECT_DETAILS[id]
+	if (!API_URL) {
+		if (!mockProject || !mockDetail) return null
+		return { project: mockProject, detail: mockDetail }
+	}
 
   if (!API_URL) {
     if (!mockProject || !mockDetail) return null
@@ -119,16 +113,22 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
 }
 
 export async function createInvestment(input: { projectId: number; amount: number }): Promise<Investment> {
-  if (isNaN(input.projectId) || input.projectId <= 0 || isNaN(input.amount) || input.amount <= 0) {
+  // Reject invalid input up front (#432) — projectId must be a positive
+  // integer and amount a positive finite number.
+  if (
+    !Number.isInteger(input.projectId) ||
+    input.projectId < 1 ||
+    !Number.isFinite(input.amount) ||
+    input.amount <= 0
+  ) {
     throw new Error('Invalid investment input')
   }
-
   const mockInvestment = (): Investment => ({
-    id: Math.floor(Math.random() * 100000) + 1,
-    projectId: input.projectId,
-    amount: input.amount,
-    projectUrl: `/projects/${input.projectId}`,
-  })
+      id: Math.floor(Math.random() * 100000) + 1,
+      projectId: input.projectId,
+      amount: input.amount,
+      projectUrl: `/projects/${input.projectId}`,
+    })
 
   if (!API_URL) {
     return mockInvestment()

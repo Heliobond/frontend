@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { HB_DATA } from '../data'
+import { selectSharePrice, selectTotalAssets } from '../state/selectors'
 import { fetchSharePrice, fetchTotalAssets } from './vault'
 import { useWallet } from './WalletProvider'
 export interface VaultState {
@@ -20,8 +20,8 @@ export function useVault(): VaultState {
     walletNetwork?.toLowerCase() ||
     'public') as 'public' | 'testnet'
 
-  const [sharePrice, setSharePrice] = useState(HB_DATA.pool.sharePrice)
-  const [totalAssets, setTotalAssets] = useState(HB_DATA.pool.totalAssets)
+  const [sharePrice, setSharePrice] = useState(selectSharePrice())
+  const [totalAssets, setTotalAssets] = useState(selectTotalAssets())
   const [loading, setLoading] = useState(!!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo)
   const [error, setError] = useState<string | null>(null)
   const [fetchedAt, setFetchedAt] = useState<Date | null>(new Date())
@@ -42,6 +42,7 @@ export function useVault(): VaultState {
 
     Promise.all([fetchSharePrice(network), fetchTotalAssets(network)])
       .then(([price, assets]) => {
+        // fetchSharePrice resolves a decimal string — coerce for numeric state.
         setSharePrice(Number(price))
         setTotalAssets(assets)
         setFetchedAt(new Date())
