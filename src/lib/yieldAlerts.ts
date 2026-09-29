@@ -25,6 +25,8 @@ export interface YieldAlert {
   createdAt: string
   /** ISO timestamp of the last time this alert fired. Undefined if never. */
   lastTriggeredAt?: string
+  /** Last observed state: was the yield above or below the threshold? */
+  lastState?: 'above' | 'below'
 }
 
 export interface TriggeredAlert {
@@ -74,13 +76,20 @@ export function getEffectiveYield(project: Pick<Project, 'credit' | 'green'>): n
 
 /**
  * Evaluate all alerts against current project data. Returns the subset
- * that have crossed their threshold. Applies a 60-second cooldown to
- * avoid spamming the same alert repeatedly.
+ * that have just crossed their threshold (edge-triggered, not
+ * level-triggered). An alert fires only when the yield moves from one
+ * side of the threshold to the other, not on every interval while the
+ * condition stays true (#638).
+ *
+ * The `lastState` field on each alert records which side of the
+ * threshold the yield was on the last time we checked. When it flips
+ * into the alert's target side, we fire. When it flips back, we clear
+ * `lastTriggeredAt` so the alert can fire again on the next crossing.
  */
-export function evaluateAlerts(alerts: YieldAlert[], projects: Project[]): TriggeredAlert[] {
-  const now = Date.now()
-  const COOLDOWN_MS = 60_000
-
+export function evaluateAlerts(
+  alerts: YieldAlert[],
+  projects: Project[],
+): TriggeredAlert[] {
   const triggered: TriggeredAlert[] = []
 
   for (const alert of alerts) {
@@ -88,22 +97,45 @@ export function evaluateAlerts(alerts: YieldAlert[], projects: Project[]): Trigg
     if (!project) continue
 
     const currentYield = getEffectiveYield(project)
+    const currentState: 'above' | 'below' =
+      currentYield > alert.threshold ? 'above' : 'below'
 
-    const crossed =
-      alert.operator === 'above' ? currentYield > alert.threshold : currentYield < alert.threshold
+    // Edge-triggered: fire only when the state flips into the target side.
+    const targetState = alert.operator // 'above' or 'below'
+    const justCrossed =
+      alert.lastState !== undefined &&
+      alert.lastState !== currentState &&
+      currentState === targetState
 
-    if (!crossed) continue
+    // First evaluation: if already on the target side, fire once.
+    const firstEvaluation = alert.lastState === undefined
+    const alreadyOnTarget = currentState === targetState
 
-    // Cooldown: don't re-trigger within 60 seconds.
-    if (alert.lastTriggeredAt) {
-      const lastFired = new Date(alert.lastTriggeredAt).getTime()
-      if (now - lastFired < COOLDOWN_MS) continue
+    if (justCrossed || (firstEvaluation && alreadyOnTarget)) {
+      triggered.push({ alert, currentYield })
     }
-
-    triggered.push({ alert, currentYield })
   }
 
   return triggered
+}
+
+/**
+ * Returns updated alerts with their `lastState` field set to the current
+ * side of the threshold. Called after `evaluateAlerts` so the next
+ * evaluation can detect a crossing.
+ */
+export function updateAlertStates(
+  alerts: YieldAlert[],
+  projects: Project[],
+): YieldAlert[] {
+  return alerts.map((alert) => {
+    const project = projects.find((p) => p.id === alert.bondId)
+    if (!project) return alert
+    const currentYield = getEffectiveYield(project)
+    const currentState: 'above' | 'below' =
+      currentYield > alert.threshold ? 'above' : 'below'
+    return { ...alert, lastState: currentState }
+  })
 }
 
 /** Generate a short, unique id for a new alert. */

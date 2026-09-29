@@ -12,7 +12,7 @@ import {
 import {
   readAlerts,
   writeAlerts,
-  evaluateAlerts,
+  evaluateAlerts, updateAlertStates,
   generateAlertId,
   YIELD_ALERTS_STORAGE_KEY,
   type YieldAlert,
@@ -100,13 +100,19 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       if (current.length === 0) return
 
       const projects = selectProjects()
-      const triggered = evaluateAlerts(current, projects)
+      const triggered = evaluateAlerts, updateAlertStates(current, projects)
 
-      if (triggered.length === 0) return
+      if (triggered.length === 0) {
+        // Even with no triggers, update lastState so crossings are detected.
+        const stateUpdated = updateAlertStates(current, projects)
+        commit(stateUpdated)
+        return
+      }
 
-      // Mark triggered alerts with the current timestamp.
+      // Mark triggered alerts with the current timestamp + update lastState.
       const now = new Date().toISOString()
-      const updatedAlerts = current.map((a) => {
+      const stateUpdated = updateAlertStates(current, projects)
+      const updatedAlerts = stateUpdated.map((a) => {
         const hit = triggered.find((t) => t.alert.id === a.id)
         if (hit) return { ...a, lastTriggeredAt: now }
         return a
@@ -117,8 +123,16 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       for (const { alert, currentYield } of triggered) {
         toast({
           tone: 'solar',
-          title: '🔔 Yield alert triggered',
-          message: `${alert.bondName} yield is ${currentYield.toFixed(1)}% — ${alert.operator === 'above' ? 'above' : 'below'} your ${alert.threshold}% threshold.`,
+          title: tYield('triggeredToastTitle', {
+            name: alert.bondName,
+            yield: currentYield.toFixed(1),
+          }),
+          message: tYield('triggeredToastMessage', {
+            name: alert.bondName,
+            yield: currentYield.toFixed(1),
+            direction: tYield(alert.operator === 'above' ? 'operatorAbove' : 'operatorBelow'),
+            threshold: String(alert.threshold),
+          }),
           duration: 8000,
         })
       }
