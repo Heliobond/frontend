@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ['/', '/explore', '/creator', '/project/'],
       disallow: ['/admin', '/portfolio', '/deposit', '/withdraw', ...DEV_ROUTES],
     },
-    sitemap: ${getSiteUrl()}/sitemap.xml,
+    sitemap: `${getSiteUrl()}/sitemap.xml`,
   }
 }
