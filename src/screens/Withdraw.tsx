@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, AmountInput, LiquidityMeter, AddressChip, useToast } from '../components'
-import { submitWithdraw } from '../wallet/vault'
+import { fetchUtilizationBps, submitWithdraw } from '../wallet/vault'
+import { reportTransactionFailure } from '../lib/errorReporting'
+import { parseContractError, translateContractError } from '../lib/contractErrors'
 import { useWallet } from '../wallet/WalletProvider'
 import { TransactionPendingError } from '../wallet/transactions'
 import { useTransactionFee } from '../wallet/useTransactionFee'
@@ -39,6 +41,7 @@ type WithdrawStep = 'amount' | 'pending' | 'success'
 
 export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const t = useTranslations('Withdraw')
+  const tErr = useTranslations('ContractErrors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
   const liquid = LIQUID_SHARE // your liquid share, $
@@ -280,8 +283,22 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                       changeStep('amount')
                       return
                     }
+                    // Contract failures get a translated, actionable message (#610);
+                    // liquidity errors also show current pool utilization when readable.
+                    reportTransactionFailure(e, 'withdraw')
+                    const contractError = parseContractError(e)
+                    let utilization: number | undefined
+                    if (
+                      contractError?.name === 'WithdrawalExceedsLimit' ||
+                      contractError?.name === 'InsufficientLiquid'
+                    ) {
+                      const bps = await fetchUtilizationBps(address ?? '').catch(() => 0)
+                      if (bps > 0) utilization = bps / 100
+                    }
+                    if (!mountedRef.current) return
                     setTxError(
-                      e instanceof Error ? e.message : 'Transaction failed — please try again.',
+                      translateContractError(e, tErr, { utilization }) ??
+                        (e instanceof Error ? e.message : 'Transaction failed — please try again.'),
                     )
                     changeStep('amount')
                   }

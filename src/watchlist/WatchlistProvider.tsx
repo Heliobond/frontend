@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { readWatchlist, writeWatchlist, WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
+import { useRemoteSync } from '../session/useRemoteSync'
 
 interface WatchlistContextValue {
   /** Saved bond ids, most-recently-added last. */
@@ -49,6 +50,14 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     setIds(next)
     writeWatchlist(next)
   }, [])
+
+  // Sync across devices once the wallet session is signed in (#603).
+  useRemoteSync<number[]>({
+    resource: 'watchlist',
+    value: ids,
+    apply: commit,
+    merge: (local, remote) => [...new Set([...(Array.isArray(remote) ? remote : []), ...local])],
+  })
 
   const has = useCallback((id: number) => ids.includes(id), [ids])
 

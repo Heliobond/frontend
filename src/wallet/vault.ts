@@ -21,6 +21,7 @@ import { recordTransaction, updateTransaction, TransactionPendingError } from '.
 // back gracefully — no errors surface to the user.
 
 import { selectSharePrice } from '../state/selectors'
+import { reportError } from '../lib/errorReporting'
 import {
   STELLAR_NETWORK,
   SOROBAN_RPC_URL as RPC_URL,
@@ -161,6 +162,7 @@ async function withTimeout<T>(promise: Promise<T>, message: string): Promise<T> 
     const timeout = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
         setOffline(true)
+        reportError(new Error(message), { kind: 'rpc-timeout' })
         reject(new Error(message))
       }, RPC_TIMEOUT_MS)
     })

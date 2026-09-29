@@ -25,7 +25,10 @@ interface WalletContextValue {
   connectDemo: () => void
   disconnect: () => void
   retry: () => Promise<void>
-  sign: (xdr: string) => Promise<string>
+  /** Sign a transaction XDR. `passphrase` overrides the app network (SEP-10 challenges). */
+  sign: (xdr: string, passphrase?: string) => Promise<string>
+  /** Sign an arbitrary message (SEP-53 / SEP-43 signMessage) for wallet sign-in (#603). */
+  signMessage: (message: string) => Promise<string>
   network: 'PUBLIC' | 'TESTNET'
   setNetwork: (network: 'PUBLIC' | 'TESTNET') => void
   /** Passphrase the connected wallet reports, or null if unknown / not connected. */
@@ -231,22 +234,40 @@ export function WalletProvider({ children }: {children: ReactNode}) {
   }, [persist])
 
   const sign = useCallback(
-    async (xdr: string): Promise<string> => {
+    async (xdr: string, passphrase?: string): Promise<string> => {
       if (isDemo) throw new Error('demo')
       await ensureInit()
       const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
-      // Block before the wallet prompt: a mismatched network can only fail (#611).
-      const walletPassphrase = await readWalletNetwork()
-      if (isNetworkMismatch(walletPassphrase, appPassphrase)) {
-        throw new NetworkMismatchError(walletPassphrase!, appPassphrase)
+      // A sign-in challenge may name its own network; only app transactions are
+      // guarded against a wallet/app network mismatch.
+      if (!passphrase) {
+        // Block before the wallet prompt: a mismatched network can only fail (#611).
+        const walletPassphrase = await readWalletNetwork()
+        if (isNetworkMismatch(walletPassphrase, appPassphrase)) {
+          throw new NetworkMismatchError(walletPassphrase!, appPassphrase)
+        }
       }
       const result = await StellarWalletsKit.signTransaction(xdr, {
-        networkPassphrase: appPassphrase,
+        networkPassphrase: passphrase ?? appPassphrase,
         address: address ?? undefined,
       })
       return result.signedTxXdr
     },
     [isDemo, ensureInit, address, appPassphrase, readWalletNetwork],
+  )
+
+  const signMessage = useCallback(
+    async (message: string): Promise<string> => {
+      if (isDemo) throw new Error('demo')
+      await ensureInit()
+      const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
+      const result = await StellarWalletsKit.signMessage(message, {
+        networkPassphrase: appPassphrase,
+        address: address ?? undefined,
+      })
+      return result.signedMessage
+    },
+    [isDemo, ensureInit, address, appPassphrase],
   )
 
   const disconnect = useCallback(() => {
@@ -281,6 +302,7 @@ export function WalletProvider({ children }: {children: ReactNode}) {
         disconnect,
         retry,
         sign,
+        signMessage,
         network,
         setNetwork,
         walletNetworkPassphrase,
