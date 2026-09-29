@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { getSiteUrl } from '../lib/siteUrl'
 import { headers } from 'next/headers'
 import { getLocale, getMessages } from 'next-intl/server'
 import dynamic from 'next/dynamic'
@@ -14,6 +15,8 @@ const TopBar = dynamic(() => import('../shell/TopBar').then((m) => m.TopBar))
 const Footer = dynamic(() => import('../shell/Footer').then((m) => m.Footer))
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
+  alternates: { canonical: '/' },
   title: 'Heliobond — sunlight made financial',
   description:
     'Own a piece of the energy transition. From one dollar. A transparent pool funding verified green projects on Stellar.',

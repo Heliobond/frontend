@@ -124,7 +124,7 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
     recipientName,
     requestTimestamp = Date.now(),
     locale = 'en',
-    supportUrl = 'https://heliobond.vercel.app/support',
+    supportUrl = \`\${getSiteUrl()}/support\`,
   } = options
 
   const safeUrl = sanitizeUrl(resetUrl)

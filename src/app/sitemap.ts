@@ -2,7 +2,9 @@ import type { MetadataRoute } from 'next'
 import { selectProjects } from '../state/selectors'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://heliobond.vercel.app'
+  import { getSiteUrl } from '../lib/siteUrl'
+
+const baseUrl = getSiteUrl()
 
   const staticRoutes = [
     {

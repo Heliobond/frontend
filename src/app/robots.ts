@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { getSiteUrl } from '../lib/siteUrl'
 import { DEV_ROUTES } from '../lib/devRoutes'
 
 export default function robots(): MetadataRoute.Robots {
@@ -8,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ['/', '/explore', '/creator', '/project/'],
       disallow: ['/admin', '/portfolio', '/deposit', '/withdraw', ...DEV_ROUTES],
     },
-    sitemap: 'https://heliobond.vercel.app/sitemap.xml',
+    sitemap: \`\${getSiteUrl()}/sitemap.xml\`,
   }
 }
