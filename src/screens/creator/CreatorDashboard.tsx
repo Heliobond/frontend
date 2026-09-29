@@ -9,7 +9,6 @@ import {
   cardInner,
   scoreColumn,
   sectionHeaderTop,
-import { getExplorerTxUrl } from "@/config/network"
   sectionHeaderBottom,
 } from '@/theme'
 import {
@@ -18,6 +17,7 @@ import {
   type OracleUpdate,
 } from '@/data/creator'
 import { formatMoney } from '@/lib/format'
+import { getExplorerTxUrl } from "@/config/network"
 
 /**
  * CreatorDashboard — the creator's calm read on their project. Funding received,
