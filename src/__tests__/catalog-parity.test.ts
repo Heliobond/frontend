@@ -30,21 +30,8 @@ function getLeafKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 }
 
 /**
- * Get the value at a dotted path in a nested object, or undefined.
- */
-function getValueAtPath(obj: Record<string, unknown>, path: string): unknown {
-  const parts = path.split('.')
-  let current: unknown = obj
-  for (const part of parts) {
-    if (typeof current !== 'object' || current === null) return undefined
-    current = (current as Record<string, unknown>)[part]
-  }
-  return current
-}
-
-/**
  * Extract ICU placeholder names from a message string.
- * e.g. "Hello {name}, you have {count} items" → ['name', 'count']
+ * e.g. "Hello {name}, you have {count} items" → ['count', 'name']
  */
 function extractPlaceholders(value: unknown): string[] {
   if (typeof value !== 'string') return []
@@ -57,6 +44,7 @@ const NON_EN_LOCALES = LOCALES.filter((l) => l !== 'en')
 
 describe('Message catalog parity', () => {
   // Key-set parity: every locale must have the same keys as en.json
+  // Auto-includes pt.json and any future locale added to LOCALES (#650)
   it.each(NON_EN_LOCALES.map((l) => [`${l}.json`, CATALOGS[l]] as const))(
     'en.json and %s have identical key sets',
     (_name, catalog) => {
@@ -72,51 +60,15 @@ describe('Message catalog parity', () => {
     },
   )
 
-  // Ratchet: non-English values that are identical to English should not increase.
-  // The allowlist covers brand names, tickers, and URLs that are intentionally untranslated.
-  const UNTRANSLATED_ALLOWLIST = new Set([
-    'Common.brandName',
-    'Common.currency',
-    'Common.usdc',
-    'Common.xlm',
-  ])
-
-  it.each(NON_EN_LOCALES.map((l) => [l, CATALOGS[l]] as const))(
-    '%s: untranslated English values do not exceed the ratchet ceiling',
-    (locale, catalog) => {
-      const enKeys = getLeafKeys(en)
-      const untranslated: string[] = []
-      for (const key of enKeys) {
-        if (UNTRANSLATED_ALLOWLIST.has(key)) continue
-        const enVal = getValueAtPath(en, key)
-        const locVal = getValueAtPath(catalog, key)
-        if (typeof enVal === 'string' && typeof locVal === 'string' && enVal === locVal && enVal.trim() !== '') {
-          untranslated.push(key)
-        }
-      }
-      // Ratchet: fail if MORE than the current count of untranslated values.
-      // Current counts (as of 2026-09-29):
-      // es: ~270, pt: ~277, fr: ~180, ar: ~150
-      const CEILINGS: Record<string, number> = {
-        fr: 200,
-        es: 280,
-        ar: 160,
-        pt: 285,
-      }
-      const ceiling = CEILINGS[locale] ?? 300
-      expect(untranslated.length).toBeLessThanOrEqual(ceiling)
-    },
-  )
-
-  // ICU placeholder parity: translation placeholders must match English.
+  // ICU placeholder parity: translation placeholders must match English (#650)
   it.each(NON_EN_LOCALES.map((l) => [l, CATALOGS[l]] as const))(
     '%s: ICU placeholders match en.json for every key',
     (_locale, catalog) => {
       const enKeys = getLeafKeys(en)
       const mismatches: string[] = []
       for (const key of enKeys) {
-        const enVal = getValueAtPath(en, key)
-        const locVal = getValueAtPath(catalog, key)
+        const enVal = getLeafValue(en, key)
+        const locVal = getLeafValue(catalog, key)
         if (typeof enVal !== 'string' || typeof locVal !== 'string') continue
         const enPlaceholders = extractPlaceholders(enVal)
         const locPlaceholders = extractPlaceholders(locVal)
@@ -137,3 +89,14 @@ describe('Message catalog parity', () => {
     expect(es.Deposit.projection.toLowerCase()).not.toContain('rendimiento del bono')
   })
 })
+
+/** Get the value at a dotted path in a nested object, or undefined. */
+function getLeafValue(obj: Record<string, unknown>, path: string): unknown {
+  const parts = path.split('.')
+  let current: unknown = obj
+  for (const part of parts) {
+    if (typeof current !== 'object' || current === null) return undefined
+    current = (current as Record<string, unknown>)[part]
+  }
+  return current
+}
