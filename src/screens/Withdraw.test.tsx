@@ -1,4 +1,5 @@
 import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react'
+import { EXPLORER_BASE_URL } from '../config/network'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
@@ -9,7 +10,6 @@ import type { ReactNode } from 'react'
 
 const FULL_TX_HASH = 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
 const EXPLORER_URL = `${EXPLORER_BASE_URL}/tx/${FULL_TX_HASH}`
-import { EXPLORER_BASE_URL } from '../config/network'
 
 vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => ({
