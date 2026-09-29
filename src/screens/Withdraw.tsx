@@ -9,6 +9,7 @@ import { parseContractError, translateContractError } from '../lib/contractError
 import { useWallet } from '../wallet/WalletProvider'
 import { formatDecimal, parseAmount } from '../lib/format'
 import { addPendingClaim } from '../wallet/pendingClaims'
+import { getExplorerTxUrl } from "../config/network"
 
 const LIQUID_SHARE = 236
 const TOTAL_LIQUID = 482
@@ -75,7 +76,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
 
   const renderStep = (currentStep: WithdrawStep) => {
     const txExplorerUrl = txHash
-      ? `https://stellar.expert/explorer/testnet/tx/${txHash}`
+      ? getExplorerTxUrl(txHash)
       : undefined
 
     switch (currentStep) {

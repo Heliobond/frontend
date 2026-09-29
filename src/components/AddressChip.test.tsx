@@ -11,7 +11,8 @@ vi.mock('./Toast', () => ({
 }))
 
 const FULL_TX_HASH = 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
-const EXPLORER_URL = `https://stellar.expert/explorer/testnet/tx/${FULL_TX_HASH}`
+const EXPLORER_URL = `${EXPLORER_BASE_URL}/tx/${FULL_TX_HASH}`
+import { EXPLORER_BASE_URL } from '../config/network'
 
 function render(ui: ReactNode) {
   return rtlRender(

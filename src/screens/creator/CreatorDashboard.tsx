@@ -9,6 +9,7 @@ import {
   cardInner,
   scoreColumn,
   sectionHeaderTop,
+import { getExplorerTxUrl } from "@/config/network"
   sectionHeaderBottom,
 } from '@/theme'
 import {
@@ -289,7 +290,7 @@ function UpdateRow({ update, first }: UpdateRowProps) {
         </div>
       </div>
       <a
-        href="https://stellar.expert"
+        href={getExplorerTxUrl(update.tx)}
         target="_blank"
         rel="noreferrer"
         style={{

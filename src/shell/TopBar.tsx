@@ -10,7 +10,7 @@ import { useLocaleSwitcher } from '../i18n/LocaleProvider'
 import { LOCALE_LABELS, type Locale } from '../i18n/config'
 import { useWallet, shortAddress } from '../wallet/WalletProvider'
 import { useTheme } from '../theme/ThemeProvider'
-import { HORIZON_URL, NETWORK_PASSPHRASE, networkLabel } from '../config/network'
+import { HORIZON_URL, NETWORK_PASSPHRASE, networkLabel, getExplorerAccountUrl } from '../config/network'
 import { networkMismatchMessage } from '../wallet/networkGuard'
 
 /** "Testnet", "Standalone", … — shown as a persistent pill on non-mainnet builds (#611). */
@@ -808,7 +808,7 @@ function WalletMenu({
               ref={(el) => {
                 itemRefs.current.push(el)
               }}
-              href={`https://stellar.expert/explorer/testnet/account/${address}`}
+              href={getExplorerAccountUrl(address)}
             >
               {t('viewOnExplorer')}
             </MenuLink>
