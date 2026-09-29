@@ -1,64 +1,62 @@
-'use client'
+import { Metadata } from 'next'
+import { getProject } from '../../../lib/api'
+import { ProjectDetailClient } from './ProjectDetailClient'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
-import { Button } from '../../../components'
-import { ProjectDetail } from '../../../screens/ProjectDetail'
-import { getProject, type ProjectWithDetail } from '../../../lib/api'
-import { PriceHistoryChart } from '../../../components/PriceHistoryChart'
+type Props = {
+  params: Promise<{ id: string }> | { id: string }
+}
 
-export default function ProjectDetailPage() {
-  const router = useRouter()
-  const params = useParams<{ id: string }>()
-  const t = useTranslations('ProjectDetail')
-  const id = Number(params?.id)
-
-  const [data, setData] = useState<ProjectWithDetail | null | 'loading'>('loading')
-
-  useEffect(() => {
-    if (!Number.isFinite(id)) {
-      setData(null)
-      return
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params
+  const id = Number(resolvedParams?.id)
+  if (!Number.isFinite(id)) {
+    return {
+      title: 'Project Not Found | Heliobond',
+      description: 'The requested green energy project could not be found.',
     }
-    getProject(id)
-      .then((result) => setData(result))
-     .catch(() => setData(null))
-  }, [id])
-
-  if (data === 'loading') {
-    return <div
-      id="main-content"
-      aria-label="Loading project"
-      style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}
-    >
-      Loading...
-    </div>
   }
 
+  const data = await getProject(id).catch(() => null)
   if (!data) {
-    return (
-      <main id="main-content" style={{ maxWidth: 480, margin: '0 auto', padding: '96px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'var(--type-h3)', color: 'var(--ink)', margin: 0 }}>{t('notFoundTitle')}</h1>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-data)', color: 'var(--ink-60)', margin: 0 }}>{t('notFoundBody')}</p>
-        <Button variant="primary" onClick={() => router.push('/explore')}>{t('notFoundCta')}</Button>
-      </main>
-    )
+    return {
+      title: 'Project Not Found | Heliobond',
+      description: 'The requested green energy project could not be found.',
+    }
   }
 
-  return (
-    <>
-      <ProjectDetail
-        project={data.project}
-        detail={data.detail}
-        verifiedMetadata={data.verifiedMetadata}
-        onInvest={() => {
-          router.push('/connect')
-          return Promise.resolve('/connect')
-        }}
-        onBack={() => router.push('/explore')}
-      />
-      <PriceHistoryChart projectId={id} />
-    </>
-  )
+  const { project } = data
+  const title = `${project.name} — Green Bond Details | Heliobond`
+  const description = `${project.name} (${project.type}) in ${project.location}. Verified Credit Quality: ${project.credit}/100, Green Impact: ${project.green}/100. Stated Funding Goal: ${project.funded}.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${project.name} | Heliobond Green Bond Pool`,
+      description,
+      type: 'article',
+      siteName: 'Heliobond',
+      images: [
+        {
+          url: '/screenshots/deposit-dark.svg',
+          width: 1200,
+          height: 630,
+          alt: project.name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
+}
+
+export default async function ProjectDetailPage({ params }: Props) {
+  const resolvedParams = await params
+  const id = Number(resolvedParams?.id)
+  const data = Number.isFinite(id) ? await getProject(id).catch(() => null) : null
+
+  return <ProjectDetailClient id={id} initialData={data} />
 }

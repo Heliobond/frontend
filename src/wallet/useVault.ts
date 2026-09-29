@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { selectSharePrice, selectTotalAssets } from '../state/selectors'
 import { fetchSharePrice, fetchTotalAssets } from './vault'
+import { useVaultRefresh } from './useVaultRefresh'
 import { useWallet } from './WalletProvider'
+
 export interface VaultState {
   fetchedAt: Date | null
   sharePrice: number
@@ -23,44 +25,44 @@ export function useVault(): VaultState {
 
   const [sharePrice, setSharePrice] = useState(selectSharePrice())
   const [totalAssets, setTotalAssets] = useState(selectTotalAssets())
-  const [loading, setLoading] = useState(!!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo)
+  const [completedRequest, setCompletedRequest] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fetchedAt, setFetchedAt] = useState<Date | null>(new Date())
-  const [tick, setTick] = useState(0)
-
-  const refresh = useCallback(() => setTick((t) => t + 1), [])
+  const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
+  const { tick, refresh } = useVaultRefresh(enabled)
+  const requestKey = `${address}:${network}:${tick}:${enabled}`
+  const loading =
+    enabled &&
+    completedRequest !== requestKey &&
+    (typeof document === 'undefined' || !document.hidden)
 
   useEffect(() => {
-    const contractId = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
-    if (!contractId || isDemo || !address) {
-      setLoading(false)
-      if (!fetchedAt) setFetchedAt(new Date())
-      return
-    }
+    if (!enabled || !address || document.hidden) return
 
-    setLoading(true)
-    setError(null)
+    let cancelled = false
 
     // Pass connected address as sourceAddress, network as second argument
     Promise.all([fetchSharePrice(address, network), fetchTotalAssets(address, network)])
       .then(([price, assets]) => {
+        if (cancelled) return
         // fetchSharePrice resolves a decimal string — coerce for numeric state.
+        setError(null)
         setSharePrice(Number(price))
         setTotalAssets(assets)
         setFetchedAt(new Date())
       })
       .catch((e: unknown) => {
+        if (cancelled) return
         setError(e instanceof Error ? e.message : 'Could not read vault')
         setFetchedAt(new Date())
       })
-      .finally(() => setLoading(false))
-  }, [address, isDemo, tick, network])
+      .finally(() => {
+        if (!cancelled) setCompletedRequest(requestKey)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [address, enabled, requestKey, network])
 
-  useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID || isDemo) return
-    const id = setInterval(() => refresh(), 30000)
-    return () => clearInterval(id)
-  }, [isDemo, refresh])
-
-  return { sharePrice, totalAssets, loading, error, fetchedAt, refresh }
+  return { sharePrice, totalAssets, loading, error: loading ? null : error, fetchedAt, refresh }
 }

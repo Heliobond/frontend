@@ -14,6 +14,8 @@ import { getProjectsPaginated } from '../lib/api'
  */
 export interface ExploreProps {
   onOpen: (project: Project) => void
+  initialProjects?: Project[]
+  initialTotal?: number
 }
 
 const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
@@ -25,12 +27,12 @@ const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
  */
 const PAGE_SIZE = 12
 
-export function Explore({ onOpen }: ExploreProps) {
+export function Explore({ onOpen, initialProjects }: ExploreProps) {
   const t = useTranslations('Explore')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  const [projects, setProjects] = useState<Project[]>(initialProjects ?? [])
+  const [loading, setLoading] = useState(!initialProjects || initialProjects.length === 0)
   const [apiError, setApiError] = useState(false)
   const urlType = searchParams.get('type') as ProjectType | null
   const [filter, setFilter] = useState<ProjectType | 'All'>(
@@ -39,6 +41,9 @@ export function Explore({ onOpen }: ExploreProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
+    if (initialProjects && initialProjects.length > 0) {
+      return
+    }
     getProjectsPaginated(1, 50)
       .then((res) => {
         setProjects(res.projects)
@@ -48,7 +53,7 @@ export function Explore({ onOpen }: ExploreProps) {
         setApiError(true)
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [initialProjects])
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
     setFilter(next)

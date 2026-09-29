@@ -12,6 +12,7 @@ import {
   fetchProjectWithDetails,
 } from '../wallet/registry'
 import { ApiError } from './error'
+import { reportError } from './errorReporting'
 export { ApiError } from './error'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -38,7 +39,13 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
   try {
-    const res = await fetch(`${API_URL}${path}`, { ...init, signal: controller.signal })
+    const isServer = typeof window === 'undefined'
+    const fetchInit: RequestInit = {
+      ...init,
+      signal: controller.signal,
+      ...(isServer ? { next: { revalidate: 60 } } : {}),
+    }
+    const res = await fetch(`${API_URL}${path}`, fetchInit)
     if (!res.ok) {
       throw new ApiError({
         status: res.status,
@@ -48,7 +55,11 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     return (await res.json()) as T
   } catch (error) {
-    if (controller.signal.aborted) throw new Error(`timed out after ${API_TIMEOUT_MS}ms`)
+    if (controller.signal.aborted) {
+      const timeout = new Error(`timed out after ${API_TIMEOUT_MS}ms`)
+      reportError(timeout, { kind: 'rpc-timeout', context: { target: 'api' } })
+      throw timeout
+    }
     throw error
   } finally {
     clearTimeout(timer)

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { headers } from 'next/headers'
 import { getLocale, getMessages } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
@@ -59,6 +60,8 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
   const messages = await getMessages()
+  // Per-request CSP nonce set by src/proxy.ts (#601); the inline theme script needs it.
+  const nonce = (await headers()).get('x-nonce') ?? undefined
 
   return (
     <html
@@ -68,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={fontVariables}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
         <LocaleProvider initialLocale={locale as Locale} initialMessages={messages as Messages}>

@@ -20,6 +20,7 @@ import {
 } from '../lib/yieldAlerts'
 import { useToast } from '../components/Toast'
 import { selectProjects } from '../state/selectors'
+import { useRemoteSync } from '../session/useRemoteSync'
 
 interface YieldAlertContextValue {
   /** All saved alerts, most-recently-added last. */
@@ -77,6 +78,20 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
     setAlerts(next)
     writeAlerts(next)
   }, [])
+
+  // Sync across devices once the wallet session is signed in (#603). Alerts are
+  // merged by id so one created while signed out is kept.
+  useRemoteSync<YieldAlert[]>({
+    resource: 'alerts',
+    value: alerts,
+    apply: commit,
+    merge: (local, remote) => {
+      const byId = new Map<string, YieldAlert>()
+      for (const alert of Array.isArray(remote) ? remote : []) byId.set(alert.id, alert)
+      for (const alert of local) if (!byId.has(alert.id)) byId.set(alert.id, alert)
+      return [...byId.values()]
+    },
+  })
 
   // Evaluate alerts on mount and at interval.
   useEffect(() => {

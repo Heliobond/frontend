@@ -1,3 +1,5 @@
+import { contractErrorMessageEn } from './contractErrors'
+
 /*
  * Maps technical error codes and enum values to user-friendly messages.
  * Never surface raw codes like 'insufficient_balance' to users.
@@ -73,6 +75,9 @@ function looksLikeNetworkError(message: string): boolean {
 
 export function getFriendlyErrorMessage(codeOrMessage: string): string {
   if (!codeOrMessage) return FALLBACK_MESSAGE;
+  // Soroban `Error(Contract, #N)` failures get a specific message (#610).
+  const contractMessage = contractErrorMessageEn(codeOrMessage);
+  if (contractMessage) return contractMessage;
   const normalized = normalizeCode(codeOrMessage);
   if (ERROR_CODE_MAP[normalized]) return ERROR_CODE_MAP[normalized];
 
@@ -85,6 +90,8 @@ export function getFriendlyErrorMessage(codeOrMessage: string): string {
 }
 
 export function parseAndFriendlyError(error: unknown): string {
+  const contractMessage = contractErrorMessageEn(error);
+  if (contractMessage) return contractMessage;
   const code = extractCodeFromError(error);
   if (code) return getFriendlyErrorMessage(code);
   if (error instanceof Error) return getFriendlyErrorMessage(error.message);

@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Helio } from '../brand/Helio'
+import { reportError } from '../lib/errorReporting'
 
 /**
  * App-level error boundary - runtime errors in any route segment bubble here
@@ -24,8 +25,11 @@ export default function GlobalError({
   )
 
   useEffect(() => {
-    // In production wire this to your error-reporting service (e.g. Sentry).
     console.error('[Heliobond] unhandled error:', error)
+    reportError(error, {
+      kind: 'route',
+      context: error.digest ? { digest: error.digest } : undefined,
+    })
   }, [error])
 
   return (

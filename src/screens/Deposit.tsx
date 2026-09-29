@@ -8,6 +8,8 @@ import { submitDeposit } from '../wallet/vault'
 import { useVault } from '../wallet/useVault'
 import { scrollToFirstError } from '../lib/scrollToError'
 import { getFriendlyErrorMessage } from '../lib/errorMessages'
+import { translateContractError } from '../lib/contractErrors'
+import { reportTransactionFailure } from '../lib/errorReporting'
 import { isNetworkMismatchError } from '../wallet/networkGuard'
 import { useWallet } from '../wallet/WalletProvider'
 import { selectPoolSummary } from '../state/selectors'
@@ -39,6 +41,7 @@ const strong = (chunks: ReactNode) => <b style={{ color: 'var(--ink)' }}>{chunks
 
 export function Deposit({ onDone }: DepositProps) {
   const t = useTranslations('Deposit')
+  const tErr = useTranslations('ContractErrors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
   // Flat selector — pool figures in one level, no nested-state drilling.
@@ -135,12 +138,14 @@ export function Deposit({ onDone }: DepositProps) {
           return
         }
         clearPending()
+        reportTransactionFailure(e, 'deposit')
         // A wallet/app network mismatch message is already user-facing (#611).
         const errorMessage = isNetworkMismatchError(e)
           ? e.message
-          : e instanceof Error
-            ? getFriendlyErrorMessage(e.message)
-            : 'Transaction failed — please try again.'
+          : (translateContractError(e, tErr) ??
+            (e instanceof Error
+              ? getFriendlyErrorMessage(e.message)
+              : 'Transaction failed — please try again.'))
         changeStep('amount')
         toast({
           tone: 'error',
@@ -173,7 +178,7 @@ export function Deposit({ onDone }: DepositProps) {
         abortControllerRef.current = null
       }
     }
-  }, [n, address, sign, markPending, clearPending, changeStep, toast, slippageTolerance])
+  }, [n, address, sign, markPending, clearPending, changeStep, toast, slippageTolerance, tErr])
 
   const price = livePrice
   const balance = USER_BALANCE_USDC
