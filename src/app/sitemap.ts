@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next'
 import { selectProjects } from '../state/selectors'
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  import { getSiteUrl } from '../lib/siteUrl'
+import { getSiteUrl } from '../lib/siteUrl'
 
 const baseUrl = getSiteUrl()
+
+export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes = [
     {
