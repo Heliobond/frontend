@@ -6,6 +6,8 @@
  * with strict XSS escaping, protocol sanitization, and localized relative/absolute expiration notices.
  */
 
+import { getSiteUrl } from '../siteUrl'
+
 export type SupportedLocale = 'en' | 'fr'
 
 export interface PasswordResetEmailOptions {
