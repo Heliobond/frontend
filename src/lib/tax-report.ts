@@ -86,33 +86,37 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
 
   for (const line of lines) {
     // Quarter header row
-    detailRows.push([
-      line.quarter,
-      'Quarter Summary',
-      line.totalDeposits.toFixed(2),
-      line.totalWithdrawals.toFixed(2),
-      line.totalDistributions.toFixed(2),
-      line.realizedGainUSD.toFixed(2),
-      '', // project (empty for summary)
-      '', // type (empty for summary)
-      '', // amount (empty for summary)
-      '', // cost basis (empty for summary)
-    ].join(','))
+    detailRows.push(
+      [
+        line.quarter,
+        'Quarter Summary',
+        line.totalDeposits.toFixed(2),
+        line.totalWithdrawals.toFixed(2),
+        line.totalDistributions.toFixed(2),
+        line.realizedGainUSD.toFixed(2),
+        '', // project (empty for summary)
+        '', // type (empty for summary)
+        '', // amount (empty for summary)
+        '', // cost basis (empty for summary)
+      ].join(','),
+    )
 
     // Event-level details for transparency and full audit trail
     for (const event of line.events) {
-      detailRows.push([
-        '', // quarter (empty for detail rows)
-        'Event Detail',
-        '', // total deposits (empty for detail)
-        '', // total withdrawals (empty for detail)
-        '', // total distributions (empty for detail)
-        '', // realized gain summary (empty for detail)
-        event.projectName,
-        event.type,
-        event.amountUSD.toFixed(2),
-        (event.costBasisUSD ?? 0).toFixed(2),
-      ].join(','))
+      detailRows.push(
+        [
+          '', // quarter (empty for detail rows)
+          'Event Detail',
+          '', // total deposits (empty for detail)
+          '', // total withdrawals (empty for detail)
+          '', // total distributions (empty for detail)
+          '', // realized gain summary (empty for detail)
+          event.projectName,
+          event.type,
+          event.amountUSD.toFixed(2),
+          (event.costBasisUSD ?? 0).toFixed(2),
+        ].join(','),
+      )
     }
   }
 
@@ -136,9 +140,9 @@ export function downloadCsv(filename: string, csvContent: string): void {
   // For large files, use streaming to avoid memory issues (#450)
   // Split into chunks to prevent browser from hanging with huge datasets
   const CHUNK_SIZE = 1024 * 1024 // 1MB chunks
-  
+
   let blob: Blob
-  
+
   if (csvContent.length > CHUNK_SIZE) {
     // Stream large files in chunks to prevent memory buildup
     const chunks: BlobPart[] = []
@@ -150,13 +154,13 @@ export function downloadCsv(filename: string, csvContent: string): void {
     // For smaller files, create blob directly (faster)
     blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   }
-  
+
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
   link.download = filename
   document.body.appendChild(link)
-  
+
   // Use requestAnimationFrame to ensure UI doesn't freeze during download
   requestAnimationFrame(() => {
     link.click()

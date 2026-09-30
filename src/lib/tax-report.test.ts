@@ -97,8 +97,8 @@ describe('quarterlyReportToCsv', () => {
     const csv = quarterlyReportToCsv(computeQuarterlyTaxReport(events))
     const lines = csv.split('\n')
     expect(lines[0]).toBe(
-      'Quarter,Total Deposits (USD),Total Withdrawals (USD),Total Distributions (USD),Realized Gain (USD)',
+      'Quarter,Type,Total Deposits (USD),Total Withdrawals (USD),Total Distributions (USD),Realized Gain (USD),Project Name,Event Type,Amount (USD),Cost Basis (USD)',
     )
-    expect(lines[1]).toBe('2025-Q1,1000.00,0.00,0.00,0.00')
+    expect(lines[1]).toMatch(/^2025-Q1,Quarter Summary,1000\.00,0\.00,0\.00,0\.00/)
   })
 })
