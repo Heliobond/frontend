@@ -16,7 +16,13 @@ export const TELEMETRY_CONSENT_KEY = 'hb-telemetry-consent'
 export type TelemetryConsent = 'granted' | 'denied'
 
 export type ErrorKind =
-  'render' | 'route' | 'transaction' | 'rpc-timeout' | 'unhandled-error' | 'unhandled-rejection'
+  | 'render'
+  | 'route'
+  | 'root'
+  | 'transaction'
+  | 'rpc-timeout'
+  | 'unhandled-error'
+  | 'unhandled-rejection'
 
 export interface ErrorReport {
   type: 'error'
