@@ -2,7 +2,7 @@
   "name": "heliobond-frontend",
   "private": true,
   "version": "0.1.0",
-  "description": "Heliobond \u2014 sunlight made financial. Investor app for a green-bond pool on Stellar.",
+  "description": "Heliobond — sunlight made financial. Investor app for a green-bond pool on Stellar.",
   "license": "Apache-2.0",
   "author": "Heliobond (https://heliobond.vercel.app)",
   "homepage": "https://heliobond.vercel.app",
@@ -11,10 +11,8 @@
     "url": "git+https://github.com/Heliobond/frontend.git"
   },
   "engines": {
-    "node": ">=20.9.0",
-    "npm": ">=10.0.0"
+    "node": ">=18.18.0"
   },
-  "packageManager": "bun@1.2.4",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -64,7 +62,6 @@
     "eslint-config-next": "^16.2.9",
     "husky": "^9.1.7",
     "jsdom": "^24.0.0",
-    "lint-staged": "^17.6.0",
     "prettier": "^3.9.1",
     "typescript": "^6.0.3",
     "vite": "^6.4.3",
