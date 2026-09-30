@@ -32,6 +32,16 @@ import {
 } from '../config/network'
 import type { xdr as XdrTypes } from '@stellar/stellar-sdk'
 import { notifyTransactionConfirmed } from './vaultEvents'
+import {
+  validateMemo,
+  validateStellarPayment,
+  validateStellarAddress,
+  isValidStellarAddress,
+  validatePublicKey,
+  isValidPublicKey,
+  type StellarMemoType,
+  type AddressValidationResult,
+} from '../lib/stellarPayment'
 import { MIN_DEPOSIT_USDC, MIN_WITHDRAW_SHARES } from '../config/vault'
 
 /** USDC and HBS shares are i128 values with 7 decimals on-chain. */
@@ -40,6 +50,14 @@ const SCALE = 1e7
 /** Convert a display amount to the contract's i128 units. */
 export function toStroops(amount: number): bigint {
   return BigInt(Math.round(amount * SCALE))
+}
+
+export {
+  validateStellarAddress,
+  isValidStellarAddress,
+  validatePublicKey,
+  isValidPublicKey,
+  type AddressValidationResult,
 }
 
 export interface WithdrawPreview {
@@ -545,8 +563,9 @@ async function invokeSigned(
   args: XdrTypes.ScVal[],
   sign: (xdr: string) => Promise<string>,
   amount?: number,
+  memo?: string,
 ): Promise<{ hash: string; confirmation: TransactionConfirmation }> {
-  const { rpc, Contract, TransactionBuilder, Horizon, Transaction } =
+  const { rpc, Contract, TransactionBuilder, Horizon, Transaction, Memo } =
     await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
@@ -558,13 +577,14 @@ async function invokeSigned(
     horizon.fetchBaseFee().catch(() => 100),
   ])
 
-  const tx = new TransactionBuilder(account, {
+  const txBuilder = new TransactionBuilder(account, {
     fee: baseFee.toString(),
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call(method, ...args))
     .setTimeout(180)
-    .build()
+  if (memo?.trim()) txBuilder.addMemo(Memo.text(memo.trim()))
+  const tx = txBuilder.build()
 
   const simResult = await withTimeout(
     server.simulateTransaction(tx),
@@ -732,6 +752,13 @@ export async function checkTransactionOnChain(
   }
 }
 
+/** Reject an over-long or malformed text memo before anything is sent (#575). */
+function assertValidMemo(memo: string | undefined): void {
+  if (memo === undefined || memo === '') return
+  const result = validateMemo(memo, 'text')
+  if (!result.valid) throw new Error(result.error || 'Memo is too long (maximum 28 bytes)')
+}
+
 /**
  * Build, sign, and submit a deposit transaction.
  * In demo mode (CONTRACT_ID not set): waits 2 s then returns a placeholder hash.
@@ -740,6 +767,7 @@ export async function checkTransactionOnChain(
  * @param address Stellar address of the depositor (source account)
  * @param sign    Signing function from WalletProvider
  * @param slippageTolerance  Slippage tolerance as decimal (e.g., 0.005 = 0.5%)
+ * @param memo    Optional Stellar text memo (max 28 bytes)
  * @returns       Transaction hash (real or placeholder)
  */
 export async function submitDeposit(
@@ -748,7 +776,9 @@ export async function submitDeposit(
   sign: (xdr: string) => Promise<string>,
   signal?: AbortSignal,
   slippageTolerance = 0.005,
+  memo?: string,
 ): Promise<string> {
+  assertValidMemo(memo)
   if (!CONTRACT_ID) {
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -781,9 +811,98 @@ export async function submitDeposit(
     ],
     sign,
     amount,
+    memo,
   )
   notifyTransactionConfirmed(hash, 'deposit')
   return hash
+}
+
+/**
+ * Validates and submits a direct Stellar payment transaction with memo validation.
+ * Rejects up-front before sending if the memo length or payment parameters are invalid.
+ */
+export async function submitPayment(
+  amount: number,
+  destination: string,
+  sourceAddress: string,
+  sign: (xdr: string) => Promise<string>,
+  options?: {
+    memo?: string
+    memoType?: StellarMemoType
+    signal?: AbortSignal
+  },
+): Promise<string> {
+  const validation = validateStellarPayment({
+    amount,
+    destination,
+    memo: options?.memo,
+    memoType: options?.memoType ?? 'text',
+  })
+
+  if (!validation.valid) {
+    const firstError = Object.values(validation.errors)[0]
+    throw new Error(firstError || 'Invalid payment parameters')
+  }
+
+  if (!CONTRACT_ID) {
+    return new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        resolve(
+          `demo${Math.random().toString(36).slice(2, 8).padEnd(6, '0')}…${Math.random().toString(36).slice(2, 8)}`,
+        )
+      }, SIMULATED_DEPOSIT_DELAY_MS)
+      if (options?.signal) {
+        options.signal.addEventListener('abort', () => {
+          clearTimeout(timer)
+          reject(new Error('Aborted'))
+        })
+        if (options.signal.aborted) {
+          clearTimeout(timer)
+          reject(new Error('Aborted'))
+        }
+      }
+    })
+  }
+
+  if (offline) throw new Error('Stellar node is offline')
+
+  const { Horizon, TransactionBuilder, Operation, Asset, Transaction, Memo } =
+    await import('@stellar/stellar-sdk')
+
+  const horizon = new Horizon.Server(HORIZON_URL, { allowHttp: allowHttpFor(HORIZON_URL) })
+
+  const account = await withTimeout(
+    horizon.loadAccount(sourceAddress),
+    'Stellar Horizon timed out loading account',
+  )
+
+  const txBuilder = new TransactionBuilder(account, {
+    fee: '100',
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(
+      Operation.payment({
+        destination,
+        asset: Asset.native(),
+        amount: amount.toFixed(7),
+      }),
+    )
+    .setTimeout(180)
+
+  if (options?.memo && options.memo.trim()) {
+    txBuilder.addMemo(Memo.text(options.memo.trim()))
+  }
+
+  const tx = txBuilder.build()
+  const signedXdr = await sign(tx.toXDR())
+  const signedTx = new Transaction(signedXdr, NETWORK_PASSPHRASE)
+
+  const sendResult = await withTimeout(
+    horizon.submitTransaction(signedTx),
+    'Stellar Horizon timed out submitting transaction',
+  )
+
+  return sendResult.hash
 }
 
 /**
@@ -804,7 +923,9 @@ export async function submitWithdraw(
   sign: (xdr: string) => Promise<string>,
   signal?: AbortSignal,
   slippageTolerance = 0.005,
+  memo?: string,
 ): Promise<WithdrawResult> {
+  assertValidMemo(memo)
   if (!CONTRACT_ID) {
     return new Promise<WithdrawResult>((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -858,6 +979,7 @@ export async function submitWithdraw(
     ],
     sign,
     amount,
+    memo,
   )
   const { queued, estimatedAmount } = decodeWithdrawConfirmation(
     conf,
