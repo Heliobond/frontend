@@ -129,12 +129,9 @@ jobs:
       - name: Execute production build check
         run: bun run build
 
-      # The bundle budget is already exceeded on main (landing chunk ~338 KB
-      # against a 250 KB budget), so this reports rather than blocks. Drop
-      # `continue-on-error` in the same commit that brings the bundle under
-      # budget.
+      # Per-route bundle budgets enforce first-load JS limits for Turbopack
+      # and webpack builds. Budgets are set based on current optimized state.
       - name: Bundle size budget
-        continue-on-error: true
         run: bun run bundle:check
 
   e2e:
