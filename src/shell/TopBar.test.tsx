@@ -80,3 +80,20 @@ describe('TopBar preferences menu', () => {
     expect(screen.getByRole('button', { name: 'Preferences' })).toHaveFocus()
   })
 })
+
+describe('TopBar mobile navigation (#714)', () => {
+  it('opens the mobile menu with all primary destinations and closes on Escape', () => {
+    render(<TopBar />)
+    const menu = screen.getByRole('button', { name: 'Open site menu' })
+    fireEvent.click(menu)
+
+    expect(screen.getByRole('menu')).toBeInTheDocument()
+    for (const label of ['explore', 'how', 'learn', 'creator']) {
+      expect(screen.getByRole('menuitem', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+    }
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+    expect(menu).toHaveFocus()
+  })
+})

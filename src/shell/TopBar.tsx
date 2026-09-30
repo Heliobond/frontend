@@ -53,6 +53,8 @@ export function TopBar() {
   } = useWallet()
   const { pendingCount, transactions } = useTransactions()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
   const { isOnline: networkOnline } = useHorizonHealth()
@@ -60,6 +62,25 @@ export function TopBar() {
   useEffect(() => {
     router.prefetch('/connect')
   }, [router])
+
+  useEffect(() => {
+    // The route is an external navigation signal; close the transient menu
+    // after navigation so it cannot remain open over the next page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMobileMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false)
+        mobileMenuButtonRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [mobileMenuOpen])
 
   // Theme state starts 'light' on server/first render (to avoid a hydration
   // mismatch), so the toggle icon can't be trusted until after mount — a
@@ -96,27 +117,8 @@ export function TopBar() {
 
   return (
     <>
-      <header
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 200,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 28,
-          padding: '0 32px',
-          height: 68,
-          background: 'color-mix(in srgb, var(--canvas) 86%, transparent)',
-          backdropFilter: 'saturate(140%) blur(12px)',
-          WebkitBackdropFilter: 'saturate(140%) blur(12px)',
-          borderBottom: '1px solid var(--ink-12)',
-        }}
-      >
-        <Link
-          href="/"
-          aria-label="Heliobond — home"
-          style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
-        >
+      <header className="hb-topbar">
+        <Link href="/" aria-label="Heliobond — home" className="hb-topbar__home">
           {mounted && pathname === '/' ? <Mark /> : null}
           <span
             style={{
@@ -131,7 +133,7 @@ export function TopBar() {
           </span>
         </Link>
 
-        <nav className="hb-topbar-nav" style={{ display: 'flex', gap: 4, marginInlineStart: 8 }}>
+        <nav className="hb-topbar-nav hb-topbar__nav">
           {NAV.map(({ href, key }) => {
             const active = href.includes('#')
               ? pathname === '/' && activeHash === href.slice(href.indexOf('#'))
@@ -157,7 +159,7 @@ export function TopBar() {
           })}
         </nav>
 
-        <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="hb-topbar__actions">
           <NetworkPill passphrase={NETWORK_PASSPHRASE} />
 
           <span
@@ -247,6 +249,35 @@ export function TopBar() {
             </Button>
           )}
         </div>
+
+        <button
+          ref={mobileMenuButtonRef}
+          type="button"
+          className="hb-mobile-menu-button"
+          aria-label="Open site menu"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-site-menu"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          Menu
+        </button>
+
+        {mobileMenuOpen && (
+          <div id="mobile-site-menu" className="hb-mobile-menu-panel" role="menu">
+            {NAV.map(({ href, key }) => (
+              <Link
+                key={key}
+                href={href}
+                role="menuitem"
+                onClick={() => setMobileMenuOpen(false)}
+                className="hb-mobile-menu-link"
+              >
+                {t(key)}
+              </Link>
+            ))}
+            <PreferencesDropdown />
+          </div>
+        )}
 
         <TransactionsDrawer open={drawerOpen} onClose={closeDrawer} />
       </header>
