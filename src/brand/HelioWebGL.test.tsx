@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, act } from '@/test/render'
-import { HelioWebGL, isConstrainedCanvas, shouldAnimateHelio } from './HelioWebGL'
+import {
+  HelioWebGL,
+  clearWebGLProbeCache,
+  detectWebGL,
+  isConstrainedCanvas,
+  shouldAnimateHelio,
+} from './HelioWebGL'
 
 /**
  * The WebGL canvas is loaded through next/dynamic and pulls in three/R3F, which
@@ -52,6 +58,7 @@ describe('HelioWebGL tab visibility, offscreen & motion behavior', () => {
   }
 
   beforeEach(() => {
+    clearWebGLProbeCache()
     visibilityState = 'visible'
     canvasProbe.props = null
     ioCallback = null
@@ -94,6 +101,18 @@ describe('HelioWebGL tab visibility, offscreen & motion behavior', () => {
   it('renders container when WebGL is available', async () => {
     const { container } = render(<HelioWebGL size={200} motes={10} />)
     expect(container.querySelector('div[aria-hidden="true"]')).toBeInTheDocument()
+  })
+
+  it('keeps the static fallback when reduced motion is enabled', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    render(<HelioWebGL size={200} motes={10} onReady={vi.fn()} />)
+    expect(canvasProbe.props).toBeNull()
   })
 
   it('listens for visibilitychange events to pause and resume rendering', async () => {
@@ -140,6 +159,25 @@ describe('HelioWebGL tab visibility, offscreen & motion behavior', () => {
     const { unmount } = render(<HelioWebGL size={200} motes={10} />)
     unmount()
     expect(disconnectSpy).toHaveBeenCalled()
+  })
+})
+
+describe('detectWebGL', () => {
+  beforeEach(() => clearWebGLProbeCache())
+
+  it('releases the temporary probe context and caches the result', () => {
+    const loseContext = vi.fn()
+    const getExtension = vi.fn().mockReturnValue({ loseContext })
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      getExtension,
+    } as unknown as RenderingContext)
+
+    expect(detectWebGL()).toBe(true)
+    expect(detectWebGL()).toBe(true)
+    expect(getExtension).toHaveBeenCalledWith('WEBGL_lose_context')
+    expect(loseContext).toHaveBeenCalledOnce()
+    expect(getContext).toHaveBeenCalledOnce()
+    getContext.mockRestore()
   })
 })
 

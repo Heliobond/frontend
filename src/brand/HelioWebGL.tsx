@@ -408,7 +408,10 @@ const HelioCanvas = dynamic(
 /* ------------------------------------------------------------------------- *
  * Lightweight, dependency-free WebGL capability probe.
  * ------------------------------------------------------------------------- */
-function detectWebGL(): boolean {
+let cachedWebGLProbe: boolean | undefined
+
+export function detectWebGL(): boolean {
+  if (cachedWebGLProbe !== undefined) return cachedWebGLProbe
   if (typeof window === 'undefined') return false
   try {
     const canvas = document.createElement('canvas')
@@ -416,10 +419,23 @@ function detectWebGL(): boolean {
       canvas.getContext('webgl2') ||
       canvas.getContext('webgl') ||
       canvas.getContext('experimental-webgl')
-    return Boolean(gl)
+    cachedWebGLProbe = Boolean(gl)
+    const webglContext = gl as
+      | (WebGLRenderingContext & {
+          getExtension?: WebGLRenderingContext['getExtension']
+        })
+      | null
+    webglContext?.getExtension?.('WEBGL_lose_context')?.loseContext()
+    return cachedWebGLProbe
   } catch {
-    return false
+    cachedWebGLProbe = false
+    return cachedWebGLProbe
   }
+}
+
+/** Test seam; production callers benefit from one probe per page load. */
+export function clearWebGLProbeCache(): void {
+  cachedWebGLProbe = undefined
 }
 
 /* ------------------------------------------------------------------------- *
@@ -482,7 +498,9 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
 
   // Until we've probed the client, render nothing — the parent's static
   // <Helio> fallback covers this window (and SSR). No WebGL → stay null.
-  if (!ready || !webgl) return null
+  // Reduced-motion users keep the static SVG fallback. Do not mount the Canvas
+  // or invoke its dynamic loader until the preference allows it.
+  if (!ready || !webgl || reducedMotion) return null
 
   const animate = shouldAnimateHelio({ reducedMotion, tabVisible: visible, onScreen })
 
