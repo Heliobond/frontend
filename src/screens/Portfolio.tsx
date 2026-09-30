@@ -4,19 +4,24 @@ import { TransactionPendingError } from '../wallet/transactions'
 
 import { memo, useState, useEffect, useCallback, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button, StatBlock, LiquidityMeter, Card, AddressChip, useToast } from '../components'
 import { Helio } from '../brand/Helio'
 import { useWallet } from '../wallet/WalletProvider'
 import { getPendingClaims, removePendingClaim, type PendingClaim } from '../wallet/pendingClaims'
 import { submitClaim } from '../wallet/vault'
-import { formatDecimal } from '../lib/format'
+import { formatDate, formatDecimal } from '../lib/format'
 import { OnChainPosition } from './OnChainPosition'
 import { usePortfolio } from '../hooks/usePortfolio'
+import { getVirtualRange } from '../lib/virtualRange'
+import { PortfolioPerformanceChart } from '../components/PortfolioPerformanceChart'
 
 const MemoizedHelio = memo(Helio)
 
 const MemoizedLiquidityMeter = memo(LiquidityMeter)
+const ACTIVITY_ROW_HEIGHT = 84
+const ACTIVITY_VIEWPORT_HEIGHT = 504
+const ACTIVITY_OVERSCAN = 2
 
 /**
  * Portfolio — calm dashboard. Headline value with delta since deposit, the
@@ -33,6 +38,7 @@ export interface PortfolioProps {
 
 export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const t = useTranslations('Portfolio')
+  const locale = useLocale()
   const { connected, connect, address, sign } = useWallet()
   const { toast } = useToast()
 
@@ -44,6 +50,14 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>([])
   const [claiming, setClaiming] = useState(false)
+  const [activityScrollTop, setActivityScrollTop] = useState(0)
+  const activityRange = getVirtualRange(
+    activity.length,
+    activityScrollTop,
+    ACTIVITY_VIEWPORT_HEIGHT,
+    ACTIVITY_ROW_HEIGHT,
+    ACTIVITY_OVERSCAN,
+  )
 
   const refreshClaims = useCallback(() => {
     setPendingClaims(getPendingClaims(address ?? undefined))
@@ -264,6 +278,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       </div>
 
       <OnChainPosition />
+      {address && <PortfolioPerformanceChart address={address} />}
 
       {/* Pending queued withdrawals */}
       <Card style={{ padding: 22, marginBottom: 28 }}>
@@ -350,7 +365,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                       color: 'var(--ink-60)',
                     }}
                   >
-                    {new Date(claim.timestamp).toLocaleDateString()}
+                    {formatDate(claim.timestamp, locale)}
                   </span>
                   <AddressChip value={claim.hash} label="transaction hash" />
                 </div>
@@ -511,63 +526,90 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               {t('activityNote')}
             </span>
           </div>
-          {activity.map((a, i) => (
-            <div
-              key={a.hash}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                padding: '12px 0',
-                borderTop: i ? '1px solid var(--ink-12)' : 'none',
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-small)',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                    overflowWrap: 'anywhere',
-                  }}
-                >
-                  {a.kind}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-caption)',
-                    color: 'var(--ink-60)',
-                  }}
-                >
-                  {a.amount}
-                  {a.shares ? ` · ${a.shares}` : ''}
-                </div>
-              </div>
-              <div style={{ textAlign: 'end' }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-caption)',
-                    color: 'var(--ink-60)',
-                  }}
-                >
-                  {a.when}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-data)',
-                    fontSize: 'var(--type-eyebrow)',
-                    color: 'var(--ink-40)',
-                  }}
-                >
-                  {a.hash} ↗
-                </div>
-              </div>
+          <div
+            role="region"
+            aria-label={`Portfolio activity, ${activity.length} items`}
+            tabIndex={0}
+            onScroll={(event) => setActivityScrollTop(event.currentTarget.scrollTop)}
+            style={{
+              maxHeight: ACTIVITY_VIEWPORT_HEIGHT,
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+            }}
+          >
+            <div role="list" aria-live="polite">
+              <div aria-hidden="true" style={{ height: activityRange.topPadding }} />
+              {activity.slice(activityRange.start, activityRange.end).map((a, offset) => {
+                const index = activityRange.start + offset
+                return (
+                  <div
+                    key={a.hash}
+                    role="listitem"
+                    aria-posinset={index + 1}
+                    aria-setsize={activity.length}
+                    style={{
+                      boxSizing: 'border-box',
+                      height: ACTIVITY_ROW_HEIGHT,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: 12,
+                      overflow: 'hidden',
+                      borderTop: index ? '1px solid var(--ink-12)' : 'none',
+                    }}
+                  >
+                    <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: 'var(--type-small)',
+                          fontWeight: 600,
+                          color: 'var(--ink)',
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {a.kind}
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: 'var(--type-caption)',
+                          color: 'var(--ink-60)',
+                        }}
+                      >
+                        {a.amount}
+                        {a.shares ? ` · ${a.shares}` : ''}
+                      </div>
+                    </div>
+                    <div style={{ flex: '0 0 auto', textAlign: 'end' }}>
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: 'var(--type-caption)',
+                          color: 'var(--ink-60)',
+                        }}
+                      >
+                        {a.when}
+                      </div>
+                      <div
+                        style={{
+                          maxWidth: 140,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontFamily: 'var(--font-data)',
+                          fontSize: 'var(--type-eyebrow)',
+                          color: 'var(--ink-40)',
+                        }}
+                      >
+                        {a.hash} ↗
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              <div aria-hidden="true" style={{ height: activityRange.bottomPadding }} />
             </div>
-          ))}
+          </div>
         </Card>
       </div>
     </main>

@@ -275,7 +275,7 @@ describe('getProject', () => {
       // Presentation fields still come from the local project.
       name: selectProjectById(id)?.name,
     })
-    expect(result?.verifiedMetadata).toBe(false)
+    expect(result?.verifiedMetadata).toBe('unverified')
   })
 
   it('returns null when the backend has no such project', async () => {

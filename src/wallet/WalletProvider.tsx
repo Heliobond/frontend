@@ -76,7 +76,17 @@ export function shortAddress(address: string, lead = 4, tail = 3): string {
   return `${address.slice(0, lead)}…${suffix}`
 }
 
-const DEMO_ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
+export {
+  isValidStellarAddress,
+  validateStellarAddress,
+  isValidPublicKey,
+  validatePublicKey,
+  type AddressValidationResult,
+} from '../lib/stellarPayment'
+
+// Valid Ed25519 public key so demo sessions can also drive on-chain reads
+// (simulation source); mirrors SIMULATION_SOURCE_ADDRESS in registry.ts (#625).
+const DEMO_ADDRESS = 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX'
 const CONNECT_TIMEOUT_MS = 15000
 const MAX_AUTO_RETRIES = 2
 

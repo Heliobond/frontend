@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { AddressChip } from './AddressChip'
 import { useTransactions, type TransactionItem } from '../wallet/TransactionsProvider'
 import { getExplorerTxUrl } from '../config/network'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 export interface TransactionsDrawerProps {
   open: boolean
@@ -14,34 +15,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
   const { transactions, pendingCount, clearCompleted } = useTransactions()
 
   const panel = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!open) return
-    const previous = document.activeElement as HTMLElement | null
-    panel.current?.focus()
-    const keydown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-      if (event.key !== 'Tab') return
-      const nodes = panel.current?.querySelectorAll<HTMLElement>('button, a[href], [tabindex="0"]')
-      if (!nodes?.length) return
-      const first = nodes[0],
-        last = nodes[nodes.length - 1]
-      if (
-        event.shiftKey &&
-        (document.activeElement === first || document.activeElement === panel.current)
-      ) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-    document.addEventListener('keydown', keydown)
-    return () => {
-      document.removeEventListener('keydown', keydown)
-      previous?.focus()
-    }
-  }, [open, onClose])
+  useFocusTrap(open, panel, undefined, onClose)
   if (!open) return null
 
   return (

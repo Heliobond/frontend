@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { shortAddress } from './WalletProvider'
+import {
+  shortAddress,
+  isValidStellarAddress,
+  validateStellarAddress,
+  isValidPublicKey,
+  validatePublicKey,
+} from './WalletProvider'
 
 describe('shortAddress', () => {
   const longAddress = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
@@ -102,6 +108,30 @@ describe('shortAddress', () => {
       const stellarAddress = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
       const result = shortAddress(stellarAddress)
       expect(result).toMatch(/^G.{3}….{2}Q$/)
+    })
+  })
+
+  describe('Wallet public key validation', () => {
+    const validKey = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+
+    it('validates genuine Stellar public keys', () => {
+      expect(isValidStellarAddress(validKey)).toBe(true)
+      expect(isValidPublicKey(validKey)).toBe(true)
+      expect(validateStellarAddress(validKey).valid).toBe(true)
+      expect(validatePublicKey(validKey).valid).toBe(true)
+    })
+
+    it('catches typos in 56-character addresses that only pass length checks', () => {
+      // Address with modified checksum (simulating user typo)
+      const typoKey = validKey.slice(0, -1) + 'A'
+      expect(typoKey.length).toBe(56)
+
+      expect(isValidStellarAddress(typoKey)).toBe(false)
+      expect(isValidPublicKey(typoKey)).toBe(false)
+
+      const validation = validateStellarAddress(typoKey)
+      expect(validation.valid).toBe(false)
+      expect(validation.error).toContain('checksum')
     })
   })
 })

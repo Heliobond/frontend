@@ -137,6 +137,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               balanceLabel={t('yourValue')}
               balance={maxTx.toFixed(2)}
               chips={QUICK_WITHDRAW_AMOUNTS}
+              min={minWithdrawUsdc}
+              max={maxTx}
               cap={liquid}
               capMessage={t('capMessage', { cap: liquid })}
               maxChipLabel={t('maxChip')}
@@ -230,7 +232,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     : n > maxTx
                       ? 'Amount exceeds pool limit'
                       : n < minWithdrawUsdc
-                        ? `Minimum withdrawal is ${minWithdrawShares} shares`
+                        ? t('reasonMin', { min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS) })
                         : undefined
               }
               onClick={async () => {

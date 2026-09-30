@@ -12,10 +12,12 @@ import {
   isRegistryConfigured,
   fetchProjectsPage,
   fetchProjectWithDetails,
+  type MetadataVerificationStatus,
 } from '../wallet/registry'
 import { ApiError } from './error'
 import { loginBiometric } from './webauthn'
 export { ApiError } from './error'
+export type { MetadataVerificationStatus } from '../wallet/registry'
 import {
   API_TIMEOUT_MS,
   apiGet,
@@ -89,7 +91,7 @@ export function mapBackendProject(raw: BackendProject, fallback?: Project): Proj
 export interface ProjectWithDetail {
   project: Project
   detail: ProjectDetail
-  verifiedMetadata?: boolean
+  verifiedMetadata?: MetadataVerificationStatus
 }
 
 export interface PaginatedProjectsResponse {
@@ -182,7 +184,7 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
 
   if (isDemoMode()) {
     if (!mockProject || !mockDetail) return null
-    return { project: mockProject, detail: mockDetail, verifiedMetadata: true }
+    return { project: mockProject, detail: mockDetail, verifiedMetadata: 'unverified' }
   }
 
   try {
@@ -191,7 +193,7 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
     return {
       project: mapBackendProject(raw, mockProject),
       detail: mockDetail ?? ({ id } as unknown as ProjectDetail),
-      verifiedMetadata: false,
+      verifiedMetadata: 'unverified',
     }
   } catch (error) {
     if (error instanceof ApiError) throw error

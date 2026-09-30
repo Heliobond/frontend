@@ -256,8 +256,8 @@ Fetches a single project with its full detail record.
 **Demo fallback:** Looks up `selectProjectById(id)` and `selectProjectDetail(id)`
 from fixture data. Returns `null` if either is missing. **On-chain priority:**
 If a project registry contract is configured, project and detail data are read
-from the Stellar blockchain first, with a `verifiedMetadata` flag indicating
-on-chain verification.
+from the Stellar blockchain first, with a `verifiedMetadata` status (`'verified' | 'mismatch' | 'unverified'`)
+indicating cryptographic on-chain hash verification of the off-chain metadata.
 
 **Example:**
 

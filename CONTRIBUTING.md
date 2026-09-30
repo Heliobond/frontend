@@ -6,7 +6,10 @@ users (transparency, plain language, no dark patterns, accessibility) apply to
 how we build: in the open, kindly, and to a high bar.
 
 - **Live demo:** https://heliobond.vercel.app
-- **Architecture & layout:** see [`README.md`](./README.md)
+- **Architecture:** [`ARCHITECTURE.md`](./ARCHITECTURE.md) maps every surface
+  to its Soroban contract calls, data sources and client functions.
+- **Repository layout:** the `## Structure` section of
+  [`README.md`](./README.md#structure).
 - **Code of conduct:** [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 
 ## Ways to contribute
@@ -44,15 +47,23 @@ bun run dev        # http://localhost:3000
 Useful scripts — run these before opening a PR:
 
 ```bash
-bun run build         # production build (must pass)
-bun run typecheck     # tsc --noEmit
-bun run lint          # ESLint
-bun run format:check  # Prettier — check only (used in CI)
-bun run format        # Prettier — rewrite files in place
-bun run test          # Vitest unit + component test suite
-bun run test:e2e      # Playwright end-to-end tests
-bun run start         # serve the production build
+bun run build               # production build (must pass)
+bun run typecheck           # tsc --noEmit
+bun run lint                # ESLint
+bun run format:check        # Prettier — check only
+bun run format              # Prettier — rewrite files in place
+bun run test                # Vitest unit + component test suite
+bun run test:coverage       # Vitest with the coverage thresholds CI enforces
+bun run test:e2e            # Playwright end-to-end tests (dev server)
+bun run test:e2e:production # Playwright against a production build with CSP enforced
+bun run test:e2e:chain      # Playwright against a local Stellar network (see below)
+bun run typecheck:coverage  # fails on any `any` in src/ (local only, not in CI)
+bun run bundle:check        # bundle budgets against .next/ (run after build)
+bun run start               # serve the production build
 ```
+
+Only `build`, `test:coverage` and `start` are used by CI; the rest are the
+checks you run locally before you open a PR.
 
 ## Testing
 
@@ -97,6 +108,33 @@ helper's `LocaleProvider` — no extra setup required. Add new unit tests next t
 the code under test using this pattern; there's no separate mocking layer to
 configure beyond what `vitest.setup.ts` already provides.
 
+### Coverage thresholds
+
+```bash
+bun run test:coverage   # vitest run --coverage, then enforce the thresholds
+```
+
+`bun run test` reports nothing about coverage; **this is the command CI runs**
+(`.github/workflows/ci.yml`), so an unmet threshold fails your PR even when the
+tests themselves pass.
+
+Only `src/lib/**` and `src/wallet/**` are instrumented (`vitest.config.mts`), and
+the thresholds there are:
+
+- **80% lines / statements / functions** for the money- and signing-critical
+  modules: `src/lib/api.ts`, `src/wallet/vault.ts`, `src/lib/webauthn.ts`,
+  `src/lib/yieldAlerts.ts`, `src/lib/recurringInvestments.ts`,
+  `src/lib/scrollToError.ts`.
+- **55% lines** for `src/lib/**` and `src/wallet/**` as a whole — a floor that
+  only exists to stop regressions, so raise it as `admin.ts`, `registry.ts` or
+  `useVault.ts` gain tests.
+
+New code under those two directories counts against the thresholds, so run
+`bun run test:coverage` (not just `bun run test`) before pushing. The report
+lands in `coverage/` (text summary in the terminal, HTML in
+`coverage/index.html`). Add tests alongside the change rather than lowering a
+threshold.
+
 ### End-to-end tests (Playwright)
 
 [Playwright](https://playwright.dev) drives a real Chromium browser against the
@@ -134,44 +172,122 @@ session state the flow needs, `page.goto()` the route, then assert each step
 of the flow in order with `expect(locator).toBeVisible()` /
 `toBeDisabled()`.
 
+#### Production CSP enforcement
+
+```bash
+bun run test:e2e:production
+```
+
+The run above sets `E2E_PRODUCTION=true` and targets only
+`e2e/security-headers.spec.ts`. That flag makes `playwright.config.ts` build the
+app and serve it on **port 3001** with `CSP_MODE=enforce`, so the extra
+assertions run against the enforcing `Content-Security-Policy` header instead of
+the `Content-Security-Policy-Report-Only` variant the app ships by default
+(`src/lib/securityHeaders.ts`): no `'unsafe-eval'`, no `ws:` and no
+`http://localhost` anywhere in the policy, `upgrade-insecure-requests` present,
+and no CSP violations recorded on `/` or `/explore`.
+
+Run it whenever you touch `src/proxy.ts`, `src/lib/securityHeaders.ts` or
+anything inlined into `<head>`. It needs a full build, so it is slower than
+`bun run test:e2e`, port 3001 must be free, and it is **not** part of CI — the
+nightly workflow doesn't run it either.
+
+#### On-chain journey (local Stellar network)
+
+`e2e/chain/investor-journey.spec.ts` builds, signs and submits real Soroban
+transactions, so it runs against **deployed contracts on a local network** and
+needs a different config: `playwright.chain.config.ts` (`testDir: ./e2e/chain`,
+base URL `http://localhost:3100`, override with `E2E_CHAIN_PORT`).
+
+Prerequisites, none of which this repo installs for you:
+
+- **Docker**, running quickstart with RPC and Horizon on port 8000:
+
+  ```bash
+  docker run -d --rm -p 8000:8000 --name stellar stellar/quickstart:latest \
+    --local --enable core,rpc,horizon --limits unlimited
+  ```
+
+- **The `stellar` CLI** on `PATH` (CI pins 26.1.0).
+- **Rust with the `wasm32v1-none` target** (`rustup target add wasm32v1-none`),
+  because the setup script builds the contracts unless you point it at
+  prebuilt WASM via `CONTRACTS_WASM_DIR`.
+- **Access to `Heliobond/contracts`**, which the script clones into `.e2e/`
+  (gitignored) at `CONTRACTS_REF`.
+- **Playwright Chromium**: `bunx playwright install --with-deps chromium`.
+
+Then, from the repo root:
+
+```bash
+scripts/e2e/setup-local-network.sh   # fund accounts, deploy contracts, write env
+bun run test:e2e:chain               # build + serve on :3100, then run the journey
+```
+
+The setup script writes `e2e/chain/.env.chain.local` (gitignored, throwaway keys
+only) and `playwright.chain.config.ts` loads it automatically; override the path
+with `E2E_CHAIN_ENV`. `RPC_URL`, `HORIZON_URL`, `FRIENDBOT_URL`,
+`CONTRACTS_DIR`, `CONTRACTS_REF`, `CONTRACTS_WASM_DIR` and `OUT_ENV` are the
+script's env knobs. It provisions `e2e-admin`, `e2e-issuer` and `e2e-investor`
+via friendbot, issues and deploys USDC, then deploys `ProjectRegistry` and
+`InvestmentVault`.
+
+The journey itself is one long test (connect → explore → project → deposit →
+portfolio → withdraw → claim yield) with a 5-minute timeout and 30s expect
+timeouts, single worker, traces and video retained on failure under
+`test-results/chain` and `playwright-report/chain`. Tear the network down with
+`docker rm -f stellar` when you're done.
+
+CI runs this same command nightly and on demand via
+`.github/workflows/e2e-chain.yml` (45-minute budget), not on pull requests.
+
 ## Development workflow
 
 1. Branch off `main`: `git checkout -b <type>/<short-description>` (e.g. `feat/withdraw-max-chip`, `fix/helio-glow`, `i18n/creator-screens`).
 2. Make focused changes — one issue per PR.
-3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, **`bun run format:check`**, and **`bun run test`**.
+3. Run the checks locally: **`bun run build`** (must pass), **`bun run typecheck`**, **`bun run lint`**, **`bun run format:check`**, and **`bun run test`**. Add **`bun run test:coverage`** whenever you touch `src/lib/` or `src/wallet/` — CI enforces those thresholds, and `bun run test` doesn't.
 4. If your change is user-facing or otherwise notable (a feature, a fix, a
    breaking change), add an entry under `[Unreleased]` in
    [`CHANGELOG.md`](./CHANGELOG.md) — see that file's "How entries are added"
    section for the format. Purely internal changes (refactors, tooling,
    formatting) don't need one.
 5. Open a PR using the template; link the issue with `Closes #123`.
-6. CI runs build, typecheck, lint, and unit tests on every PR; **`main` is protected** and requires green CI plus human maintainer review before merge.
+6. **CI runs two jobs** on every pull request and on pushes to `main`
+   (`.github/workflows/ci.yml`): **`build`** (`bun run build`) and
+   **`unit tests + coverage`** (`bun run test:coverage`). There is no CI job for
+   lint, `format:check` or the Playwright suites, so those are yours to run
+   locally. **`main` is protected** and requires green CI plus human maintainer
+   review before merge.
 
 ### Review & Security Policy
 
 - **Human Approval Required:** No pull request can be merged automatically. At least one human approval from a repository maintainer (or CODEOWNER) is required before code lands on `main`.
 - **Advisory Automated Review:** The DeepSeek AI review workflow (`auto-review.yml`) is strictly advisory. It provides helpful PR summary comments but has no permission to approve PRs or trigger merges.
 - **Least-Privilege Workflows:** Workflows running on `pull_request_target` operate with least-privilege `GITHUB_TOKEN` credentials (read-only repository contents access). Administrative Personal Access Tokens (`OWNER_PAT`) are strictly prohibited in public workflow runs.
-- **Enforced Status Checks:** Branch protection on `main` requires all CI checks (`build`, `unit tests + coverage`) to pass prior to merging.
+- **Enforced Status Checks:** Branch protection on `main` requires the two CI checks — `build` and `unit tests + coverage` — to pass prior to merging. Nothing else is a required check: the DeepSeek `auto-review.yml` run is advisory, and `e2e-chain.yml` is nightly/on-demand rather than per-PR.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
 ## Internationalization
 
 Heliobond uses [`next-intl`](https://next-intl.dev) with cookie-based locale
-selection. Message catalogs live at `messages/en.json` and `messages/fr.json`;
-the request config in `src/i18n/request.ts` loads the matching catalog for the
-current locale.
+selection. **Five** message catalogs ship, one per locale: `messages/ar.json`,
+`messages/en.json`, `messages/es.json`, `messages/fr.json` and
+`messages/pt.json` (the list lives in `src/i18n/config.ts` and is wired up in
+`src/i18n/LocaleProvider.tsx`; `ar` is right-to-left). The request config in
+`src/i18n/request.ts` loads the matching catalog for the current locale.
 
 When you add or change user-facing copy:
 
 1. Pick the namespace that matches the surface using the copy, such as `Nav`,
    `Footer`, `Landing`, `Deposit`, or `ProjectDetail`.
-2. Add the same key path to **both** `messages/en.json` and `messages/fr.json`.
-   The catalogs must stay in parity: every namespace and key in English must
-   also exist in French, and vice versa.
-3. Translate the value in each catalog. Do not leave English placeholder text in
-   `fr.json` unless the issue explicitly calls for a temporary fallback.
+2. Add the same key path to **all five** catalogs — `ar.json`, `en.json`,
+   `es.json`, `fr.json`, `pt.json`. The catalogs must stay in parity:
+   `src/__tests__/catalog-parity.test.ts` compares every catalog against `en`
+   key-for-key in both directions and fails the build on a missing **or** extra
+   key, and it runs as part of `bun run test` and CI.
+3. Translate the value in every catalog. Do not leave English placeholder text
+   in the non-English catalogs unless the issue explicitly calls for a
+   temporary fallback.
 4. Read the key from code with `useTranslations('<Namespace>')`, then call
    `t('<key>')`. For example:
 
@@ -186,7 +302,7 @@ export function Example() {
 
 To add a new namespace for a new screen or surface:
 
-1. Create the namespace object in **both** catalogs with identical keys:
+1. Create the namespace object in **all five** catalogs with identical keys:
 
 ```json
 {
@@ -196,11 +312,15 @@ To add a new namespace for a new screen or surface:
 }
 ```
 
-2. Add the translated French values under the same namespace and key names in
-   `messages/fr.json`.
+2. Add the translated values under the same namespace and key names in `ar.json`,
+   `es.json`, `fr.json` and `pt.json`.
 3. Use that namespace from the component with `useTranslations('Creator')`.
-4. Run `bun run build` or `bun run typecheck` before opening the PR so missing or
-   misspelled message keys are caught with the rest of the app checks.
+4. Run `bun run test` (which includes the parity test) plus `bun run build` or
+   `bun run typecheck` before opening the PR. Note what each one catches: the
+   parity test catches keys missing from any catalog, while `typecheck` only
+   catches missing or misspelled keys **in English** —
+   `src/i18n/next-intl.d.ts` types `Messages` as `typeof en`, so `tsc` cannot
+   see a key that exists only in `fr.json` (or the other three).
 
 ## Quality bar
 
@@ -213,7 +333,7 @@ To add a new namespace for a new screen or surface:
   - Solar is never the sole carrier of meaning (and never text on a light background).
   - No emoji in the product.
   - No exclamation marks on financial copy.
-- **User-facing strings are translated.** If you add or change copy in the shell or translated screens, add the key to **both** `messages/en.json` and `messages/fr.json` (they must stay in parity).
+- **User-facing strings are translated.** If you add or change copy in the shell or translated screens, add the key to **all five** catalogs (`ar`, `en`, `es`, `fr`, `pt`) — the parity test in `src/__tests__/catalog-parity.test.ts` fails the build otherwise.
 - **Accessibility is not optional.** Keyboard operable, visible focus, semantic landmarks, `prefers-reduced-motion` respected, touch targets ≥ 44px.
 - **No secrets** in the repo or in client code.
 
@@ -231,15 +351,40 @@ To add a new namespace for a new screen or surface:
 
 ## Pre-commit hooks
 
-The project ships a pre-commit hook via **Husky** that runs the TypeScript
-type-checker, ESLint, Prettier format check, and the full test suite on every
-commit. Install it:
+The project ships a [Husky](https://typicode.github.io/husky/) pre-commit hook
+in `.husky/pre-commit`, and **it is already active on a fresh clone** — there is
+nothing to opt in to. `bun install` runs the `prepare` script (`"prepare":
+"husky"`) in `package.json`, which points `core.hooksPath` at `.husky/_`. Check
+it with:
 
 ```bash
-bun run prepare
+git config core.hooksPath   # -> .husky/_
 ```
 
-To opt out, skip the `prepare` step — the hook is **not** installed unless you run
-it. Contributors who opt out are still expected to run `bun run build` before opening a PR.
+**What it actually runs** — `.husky/pre-commit` is two commands:
+
+1. `bunx lint-staged`, which per `.lintstagedrc.json` runs `eslint --fix` then
+   `prettier --write` on staged `*.{ts,tsx,js,jsx}` files, and `prettier --write`
+   on staged `*.{json,md,yml,yaml}` files. Only **staged** files are touched,
+   and because these commands write, their fixes land **in your commit** — keep
+   unrelated files unstaged so you don't sweep formatting changes into a
+   focused PR.
+2. `bun run typecheck` (`tsc --noEmit`) over the whole project.
+
+**No tests run on commit.** Run `bun run test`, and `bun run test:coverage` when
+you touched `src/lib/` or `src/wallet/`, yourself before pushing — CI runs the
+unit suite with coverage thresholds but not the Playwright suites.
+
+**Opting out**, if you need to:
+
+```bash
+HUSKY=0 bun install                   # skip installing the hook (per install)
+git commit --no-verify                # skip the hook for one commit
+git config core.hooksPath /dev/null   # disable it for this clone
+```
+
+`bun run prepare` re-installs it, and `git config --unset core.hooksPath` undoes
+the clone-wide opt-out. Contributors who skip the hook are still expected to run
+the checks in the [Development workflow](#development-workflow) section.
 
 By contributing, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
