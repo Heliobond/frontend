@@ -68,8 +68,6 @@ For the full token table and rules, see [src/styles/tokens/README.md](src/styles
 
 ## Run
 
-Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 22+ (see `.nvmrc`).
-
 ```bash
 bun install
 bun run dev        # http://localhost:3000 (Turbopack)
