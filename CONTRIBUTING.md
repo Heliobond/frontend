@@ -32,7 +32,7 @@ We don't merge unsolicited PRs that aren't tied to an accepted issue — it keep
 
 ## Local setup
 
-Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 18.18+.
+Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 20.9+.
 
 ```bash
 git clone https://github.com/Heliobond/frontend.git
