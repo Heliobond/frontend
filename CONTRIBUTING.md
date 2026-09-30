@@ -32,7 +32,7 @@ We don't merge unsolicited PRs that aren't tied to an accepted issue — it keep
 
 ## Local setup
 
-Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 22+.
+Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 18.18+.
 
 ```bash
 git clone https://github.com/Heliobond/frontend.git
@@ -145,14 +145,7 @@ of the flow in order with `expect(locator).toBeVisible()` /
    section for the format. Purely internal changes (refactors, tooling,
    formatting) don't need one.
 5. Open a PR using the template; link the issue with `Closes #123`.
-6. CI runs build, typecheck, lint, and unit tests on every PR; **`main` is protected** and requires green CI plus human maintainer review before merge.
-
-### Review & Security Policy
-
-- **Human Approval Required:** No pull request can be merged automatically. At least one human approval from a repository maintainer (or CODEOWNER) is required before code lands on `main`.
-- **Advisory Automated Review:** The DeepSeek AI review workflow (`auto-review.yml`) is strictly advisory. It provides helpful PR summary comments but has no permission to approve PRs or trigger merges.
-- **Least-Privilege Workflows:** Workflows running on `pull_request_target` operate with least-privilege `GITHUB_TOKEN` credentials (read-only repository contents access). Administrative Personal Access Tokens (`OWNER_PAT`) are strictly prohibited in public workflow runs.
-- **Enforced Status Checks:** Branch protection on `main` requires all CI checks (`build`, `unit tests + coverage`) to pass prior to merging.
+6. CI runs build, typecheck, lint, and format check on every PR; **`main` is protected** and requires green CI plus a maintainer review before merge.
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
@@ -243,3 +236,5 @@ To opt out, skip the `prepare` step — the hook is **not** installed unless you
 it. Contributors who opt out are still expected to run `bun run build` before opening a PR.
 
 By contributing, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+> **Node.js Engine Alignment:** Ensure your local runtime satisfies the repository `engines.node` requirement (`>=20.9.0` / `.nvmrc`) before running `bun run build` or `bun test`.
