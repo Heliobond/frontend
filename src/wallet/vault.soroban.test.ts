@@ -91,7 +91,13 @@ async function settle<T>(run: Promise<T>): Promise<T> {
   // Drain the submission polling loop, including the timers it schedules while
   // running. A fixed advance budget could run out on a loaded CI runner and
   // leave the promise pending, hanging the test instead of failing it (#596).
-  await vi.runAllTimersAsync()
+  // Keep draining until the promise settles: withdraw awaits a dynamic import
+  // and RPC reads before it schedules its first timer.
+  let settled = false
+  void guarded.then(() => {
+    settled = true
+  })
+  for (let i = 0; i < 100 && !settled; i++) await vi.runAllTimersAsync()
   const res = await guarded
   if (!res.ok) throw res.e
   return res.v

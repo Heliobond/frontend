@@ -72,7 +72,7 @@ export function formatMoney(
   },
 ): string {
   const localeCode = getLocaleCode(options?.appLocale)
-  
+
   // If using Intl.NumberFormat with currency
   if (options?.includeSymbol && !options?.symbol) {
     try {
@@ -92,7 +92,7 @@ export function formatMoney(
       return `$${formatted}`
     }
   }
-  
+
   // For backward compatibility with existing code that passes explicit symbol
   const formatted = amount.toLocaleString(options?.locale ?? localeCode, {
     minimumFractionDigits: 0,
