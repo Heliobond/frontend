@@ -29,7 +29,14 @@ import { OracleForms } from './OracleForms'
 import { OFF_SCREEN_PROJECTS_COUNT } from '@/data'
 import { parseFundedNum } from './utils'
 import { formatMoney as sharedFormatMoney } from '@/lib/format'
-import { formatSharePrice, fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
+import {
+  formatSharePrice,
+  fetchTotalAssets,
+  fetchUtilizationBps,
+  fetchSharePrice,
+  fetchHbsSupply,
+  fetchAllProjectInvestments,
+} from '@/wallet/vault'
 import { useWallet } from '@/wallet/WalletProvider'
 import { fetchProjectsPage } from '@/wallet/registry'
 import {
@@ -57,6 +64,9 @@ export function AdminConsole() {
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [isMultisig, setIsMultisig] = useState(false)
+  const [sharePrice, setSharePrice] = useState<number | null>(null)
+  const [hbsSupply, setHbsSupply] = useState<number | null>(null)
+  const [isDemo, setIsDemo] = useState(true)
 
   // Live contract reads on mount
   useEffect(() => {
@@ -65,12 +75,31 @@ export function AdminConsole() {
     fetchProjectsPage(0, 50, address ?? undefined)
       .then((res) => {
         if (!active || res.projects.length === 0) return
-        setRegistry(
-          res.projects.map((p, i) => ({
-            ...p,
-            lastVerified: REGISTRY[i]?.lastVerified ?? 'on-chain',
-          })),
-        )
+        setIsDemo(false)
+        const fundedById = new Map<number, number>()
+        fetchAllProjectInvestments(address ?? '')
+          .then((investments) => {
+            if (!active) return
+            for (const [id, amount] of investments) {
+              fundedById.set(id, Number(amount) / 1e7)
+            }
+            setRegistry(
+              res.projects.map((p) => ({
+                ...p,
+                lastVerifiedAt: p.last_update_timestamp ? Number(p.last_update_timestamp) : null,
+                funded: formatFunded(fundedById.get(p.id) ?? 0),
+              })),
+            )
+          })
+          .catch(() => {
+            if (!active) return
+            setRegistry(
+              res.projects.map((p) => ({
+                ...p,
+                lastVerifiedAt: p.last_update_timestamp ? Number(p.last_update_timestamp) : null,
+              })),
+            )
+          })
       })
       .catch(() => {})
 
@@ -79,9 +108,13 @@ export function AdminConsole() {
         fetchTotalAssets(address).catch(() => null),
         fetchUtilizationBps(address).catch(() => null),
         isMultisigDeployment(address).catch(() => false),
-      ]).then(([liveAssets, utilBps, multisig]) => {
+        fetchSharePrice(address).catch(() => null),
+        fetchHbsSupply(address).catch(() => null),
+      ]).then(([liveAssets, utilBps, multisig, liveSharePrice, liveSupply]) => {
         if (!active) return
         setIsMultisig(Boolean(multisig))
+        if (liveSharePrice !== null) setSharePrice(liveSharePrice)
+        if (liveSupply !== null) setHbsSupply(liveSupply)
         if (liveAssets !== null && liveAssets > 0) {
           const bps = utilBps ?? 0
           const liveDeployed = (liveAssets * bps) / 10000
@@ -103,7 +136,11 @@ export function AdminConsole() {
 
   const updateScores = async (id: number, credit: number, green: number) => {
     setRegistry((rows) =>
-      rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)),
+      rows.map((r) =>
+        r.id === id
+          ? { ...r, credit, green, lastVerifiedAt: Math.floor(Date.now() / 1000) }
+          : r,
+      ),
     )
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
@@ -249,6 +286,7 @@ export function AdminConsole() {
           <p style={{ ...subtext, marginTop: 6 }}>{t('subtitle')}</p>
         </div>
         <Badge tone="testnet">{t('badgeInternal')}</Badge>
+        {isDemo && <Badge tone="neutral">{t('badgeDemo')}</Badge>}
       </header>
 
       {/* Vault overview — dense horizontal row of stat cells */}
@@ -260,10 +298,13 @@ export function AdminConsole() {
           />
           <StatCell
             label={t('statSharePrice')}
-            value={formatSharePrice(VAULT_STATS.sharePrice)}
+            value={sharePrice !== null ? formatSharePrice(sharePrice) : '—'}
             unit="USDC/HBS"
           />
-          <StatCell label={t('statHbsSupply')} value={sharedFormatMoney(VAULT_STATS.hbsSupply)} />
+          <StatCell
+            label={t('statHbsSupply')}
+            value={hbsSupply !== null ? sharedFormatMoney(hbsSupply) : '—'}
+          />
           <StatCell
             label={t('statLiquid')}
             value={sharedFormatMoney(liquid, { includeSymbol: true })}

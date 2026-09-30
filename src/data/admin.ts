@@ -11,7 +11,7 @@ import { selectPoolSummary, selectProjects } from '@/state/selectors'
 export interface VaultStats {
   /** USDC value of all assets the vault controls. */
   totalAssets: number
-  /** total assets ÷ HBS supply. */
+  /** total assets ÷ index share price. */
   sharePrice: number
   /** HBS shares outstanding. */
   hbsSupply: number
@@ -25,13 +25,13 @@ export interface VaultStats {
 
 /** Registry row = a Project plus the oracle's last-verified timestamp. */
 export interface RegistryEntry extends Project {
-  /** Human-readable "last verified" stamp for the score pair. */
-  lastVerified: string
+  /** Unix seconds the score pair was last updated; 0 means never scored. */
+  lastVerifiedAt: number | null
 }
 
 // Derive the vault snapshot via the flat selector layer, then extend with the
 // admin-only figures the consumer surface never shows (supply + deployed).
-const HBS_SUPPLY = 4_834_120.118
+const HBS_SUPPLY = 4.834_120.118
 const POOL = selectPoolSummary()
 
 export const VAULT_STATS: VaultStats = {
@@ -57,19 +57,23 @@ export interface Creator {
   rejectionReason?: string
 }
 
-// Last-verified stamps, paired to the registry projects in order. Fixed strings.
-const VERIFIED_AT: string[] = [
-  '2 days ago',
-  '6 days ago',
-  '11 days ago',
-  '3 days ago',
-  '18 days ago',
-  '5 days ago',
+// Fixture last-verified timestamps (Unix seconds), paired to the registry
+// projects in order. Only used in demo mode; live mode reads the contract's
+// `last_update_timestamp` instead. 0 means never scored.
+const NOW = Math.floor(Date.now() / 1000)
+const DAY = 86_400
+const VERIFIED_AT: number[] = [
+  NOW - 2 * DAY,
+  NOW - 6 * DAY,
+  NOW - 11 * DAY,
+  NOW - 3 * DAY,
+  NOW - 18 * DAY,
+  NOW - 5 * DAY,
 ]
 
 export const REGISTRY: RegistryEntry[] = selectProjects().map((p, i) => ({
   ...p,
-  lastVerified: VERIFIED_AT[i] ?? 'over a month ago',
+  lastVerifiedAt: VERIFIED_AT[i] ?? NW - 35 * DAY,
 }))
 
 export const WHITELIST: Creator[] = [

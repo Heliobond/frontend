@@ -262,6 +262,82 @@ export async function fetchSharePrice(
 }
 
 /**
+ * Read the vault share token's total supply (HBS supply) on-chain.
+ * Returns null when the contract is not configured or the read fails, so
+ * callers can render "—" instead of a fixture value.
+ */
+export async function fetchHbsSupply(
+  sourceAddress: string,
+  network = STELLAR_NETWORK,
+): Promise<number | null> {
+  if (!CONTRACT_ID) return null
+  if (offline) return null
+  const { scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const retval = await sorobanSimulate(sourceAddress, 'total_supply', [], network)
+    const supply = Number(scValToNative(retval)) / SCALE
+    return Number.isFinite(supply) ? supply : null
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const isProgrammingError =
+      msg.includes('Invalid address') ||
+      msg.includes('invalid address') ||
+      msg.includes('Malformed') ||
+      msg.includes('malformed') ||
+      msg.includes('Contract not found') ||
+      msg.includes('contract not found') ||
+      msg.includes('not a valid')
+    if (!isProgrammingError) {
+      setOffline(true)
+    }
+    return null
+  }
+}
+
+/**
+ * Read all project investments from the vault: get_all_project_investments()
+ * returns Vec<(u32, i128)>. Amounts are i128 with 7 decimals.
+ * Returns null when the contract is not configured or the read fails.
+ */
+export async function fetchAllProjectInvestments(
+  sourceAddress: string,
+  network = STELLAR_NETWORK,
+): Promise<Map<number, number> | null> {
+  if (!CONTRACT_ID) return null
+  if (offline) return null
+  const { scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const retval = await sorobanSimulate(
+      sourceAddress,
+      'get_all_project_investments',
+      [],
+      network,
+    )
+    const raw = scValToNative(retval) as Array<[number | bigint, bigint | number]>
+    const map = new Map<number, number>()
+    for (const entry of raw ?? []) {
+      const [id, amount] = entry
+      map.set(Number(id), Number(amount) / SCALE)
+    }
+    return map
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const isProgrammingError =
+      msg.includes('Invalid address') ||
+      msg.includes('invalid address') ||
+      msg.includes('Malformed') ||
+      msg.includes('malformed') ||
+      msg.includes('Contract not found') ||
+      msg.includes('contract not found') ||
+      msg.includes('not a valid')
+    if (!isProgrammingError) {
+      setOffline(true)
+    }
+    return null
+  }
+}
+
+/**
  * Read total_assets (USDC) from the on-chain vault.
  * Throws when NEXT_PUBLIC_VAULT_CONTRACT_ID is not set.
  */

@@ -125,6 +125,7 @@ export interface OnChainProjectRaw {
   green_score?: number | bigint
   status?: string
   funded_amount?: number | bigint
+  last_update_timestamp?: number | bigint
   target_amount?: number | bigint
 }
 
@@ -141,6 +142,7 @@ export interface OffChainMetadata {
 /** Map on-chain project struct and optional metadata to UI Project */
 export function mapOnChainProject(raw: OnChainProjectRaw, metadata?: OffChainMetadata): Project {
   const id = Number(raw.id)
+  const lastVerifiedAt = Number(raw.last_update_timestamp ?? 0)
   const credit = Number(raw.credit_score ?? 80)
   const green = Number(raw.green_score ?? 80)
   const rawFunded = Number(raw.funded_amount ?? 0)
@@ -157,11 +159,45 @@ export function mapOnChainProject(raw: OnChainProjectRaw, metadata?: OffChainMet
     type: metadata?.type || fallback?.type || 'Solar',
     credit,
     green,
+    lastVerifiedAt,
     funded: `$${fundedAmount.toLocaleString('en-US')}`,
     fundedAmount,
     fundingGoal: metadata?.fundingGoal || fundingGoal || fallback?.fundingGoal || 1000000,
     status: (raw.status as Project['status']) || fallback?.status || 'open',
     priceHistory: metadata?.priceHistory || fallback?.priceHistory || [],
+  }
+}
+
+/**
+ * Read all project investments from the InvestmentVault as a map of project id -> funded amount.
+ * Values are i128 with 7 decimals; converted to whole units for display.
+ */
+export async function fetchProjectInvestments(
+  sourceAddress?: string,
+): Promise<Map<number, number>> {
+  const cacheKey = 'project_investments'
+  const cached = getFromCache<Map<number, number>>(cacheKey)
+  if (cached !== null) return cached
+
+  const result = new Map<number, number>()
+  const vaultId = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
+  if (!vaultId) return result
+
+  try {
+    const raw = (await simulateRegistryCall(
+      'get_all_project_investments',
+      [],
+      sourceAddress,
+    )) as Array<[number | bigint, number | bigint]>
+
+    for (const [id, amount] of raw || []) {
+      const whole = Number(amount) / 1e7
+      result.set(Number(id), whole)
+    }
+    setInCache(cacheKey, result)
+    return result
+  } catch {
+    return result
   }
 }
 

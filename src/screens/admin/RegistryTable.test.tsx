@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent, within } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
-import type { RegistryEntry } from '@/data/admin'
+import type { RegistryEntry } from './types'
 
 const rows: RegistryEntry[] = [
   {
@@ -15,6 +15,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 1180000,
     fundingGoal: 1500000,
     lastVerified: '2 days ago',
+    lastVerifiedAt: 172800,
     priceHistory: [],
   },
   {
@@ -28,6 +29,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 430000,
     fundingGoal: 600000,
     lastVerified: '6 days ago',
+    lastVerifiedAt: 518400,
     priceHistory: [],
   },
   {
@@ -41,6 +43,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 2750000,
     fundingGoal: 3000000,
     lastVerified: '11 days ago',
+    lastVerifiedAt: 950400,
     priceHistory: [],
   },
 ]

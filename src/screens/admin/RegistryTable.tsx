@@ -34,9 +34,14 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
       switch (sortKey) {
         case 'name':
         case 'type':
-        case 'lastVerified':
           cmp = String(a[sortKey]).localeCompare(String(b[sortKey]))
           break
+        case 'lastVerified': {
+          const av = a.lastVerifiedAt ?? 0
+          const bv = b.lastVerifiedAt ?? 0
+          cmp = av - bv
+          break
+        }
         case 'funded':
           cmp = parseFundedNum(a.funded) - parseFundedNum(b.funded)
           break
