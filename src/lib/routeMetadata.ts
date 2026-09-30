@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { siteUrl } from './siteUrl'
 
 /**
  * Per-route document metadata (#657).
@@ -22,8 +23,11 @@ export const TITLE_TEMPLATE = '%s | Heliobond'
  * The canonical origin. Used for `metadataBase` (so relative OpenGraph and
  * icon paths resolve to absolute URLs), the sitemap, and the `robots.txt`
  * sitemap pointer — one place, so they can't disagree.
+ *
+ * Reads from NEXT_PUBLIC_SITE_URL, VERCEL_PROJECT_PRODUCTION_URL, or
+ * VERCEL_URL environment variables (#656).
  */
-export const CANONICAL_ORIGIN = 'https://heliobond.vercel.app'
+export const CANONICAL_ORIGIN = siteUrl
 
 /** Home page title, and the fallback for any segment that sets no title. */
 export const SITE_TITLE = 'Sunlight made financial'
