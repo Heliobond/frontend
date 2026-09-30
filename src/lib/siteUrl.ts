@@ -21,25 +21,25 @@
 export function getSiteUrl(): string {
   // 1. Explicit override (production, staging, development)
   if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
+    return process.env.NEXT_PUBLIC_SITE_URL
   }
 
   // 2. Vercel production URL (automatic in production deployments)
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   }
 
   // 3. Vercel preview URL (automatic in preview deployments)
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
+    return `https://${process.env.VERCEL_URL}`
   }
 
   // 4. Local development fallback
-  return 'http://localhost:3000';
+  return 'http://localhost:3000'
 }
 
 /**
  * Export the site URL as a constant for use in metadata.
  * This is evaluated once at build time.
  */
-export const siteUrl = getSiteUrl();
+export const siteUrl = getSiteUrl()
