@@ -24,7 +24,7 @@ it touches, and [SECURITY.md](SECURITY.md) covers CSP, telemetry and sign-in.
 
 - **Next.js 16 (App Router) + React 19 + TypeScript** (strict). Each screen is a
   real route → per-route code splitting, real URLs, SSR-ready shells.
-- **bun** package manager / runner.
+- **bun** package manager / runner (Node.js >= 20.9.0 required by Next.js 16).
 - **@creit.tech/stellar-wallets-kit** — multi-wallet connection (Freighter, xBull,
   Albedo, Lobstr, Hana, WalletConnect) on testnet.
 - **three + @react-three/fiber + @react-three/drei** — the live Helio (WebGL/R3F).
