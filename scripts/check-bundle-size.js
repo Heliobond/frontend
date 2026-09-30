@@ -149,7 +149,9 @@ try {
   }
 
   console.log(`\n  Framework chunks: ${formatBytes(frameworkSize)} KB gzipped`)
-  console.log(`  Total chunks:     ${allChunks.length} (${frameworkChunks.length} framework + ${appChunks.length} app)`)
+  console.log(
+    `  Total chunks:     ${allChunks.length} (${frameworkChunks.length} framework + ${appChunks.length} app)`,
+  )
 
   // Analyze app chunks
   const appSizes = appChunks.map((chunk) => ({
@@ -229,7 +231,9 @@ try {
 
   const avgHeadroom =
     routes.reduce((sum, r) => sum + (r.budget - r.firstLoadSize), 0) / routes.length
-  console.log(`\n✅ PASSED: All routes within budget (avg ${formatBytes(avgHeadroom)} KB headroom)\n`)
+  console.log(
+    `\n✅ PASSED: All routes within budget (avg ${formatBytes(avgHeadroom)} KB headroom)\n`,
+  )
   process.exit(0)
 } catch (error) {
   console.error('❌ Error checking bundle size:', error.message)
