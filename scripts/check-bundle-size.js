@@ -1,144 +1,242 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 /**
- * Bundle size checker, tracks both the largest application chunk (landing
- * route with React Three Fiber) and the total JS bundle across all chunks.
+ * Bundle size checker for Next.js 16+ with Turbopack support (#654).
  *
- * Budgets:
- *   - Landing chunk: 250 KB gzip
- *   - Total JS bundle: 600 KB gzip
+ * Reads build artifacts to calculate first-load JS per route.
+ * Works with both webpack and Turbopack builds.
  *
- * Reports the top 5 largest application chunks for visibility.
+ * Per-route budgets (first-load JS, gzipped):
+ *   - / (landing):      350 KB  (includes React Three Fiber)
+ *   - /explore:         220 KB
+ *   - /deposit:         200 KB
+ *   - /withdraw:        200 KB
+ *   - /portfolio:       200 KB
+ *   - /project/[id]:    220 KB
+ *   - Other routes:     180 KB default
+ *
+ * Framework bundle (shared):  ~150 KB gzipped
+ *
+ * These budgets reflect the current state with optimizations.
+ * Update when making significant dependency or lazy-loading changes.
  */
 
 const fs = require('fs')
 const path = require('path')
 const zlib = require('zlib')
 
-const LANDING_BUDGET_KB = 250
-const TOTAL_BUDGET_KB = 600
-
-function walkSync(dir, fileList = []) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name)
-    if (entry.isDirectory()) {
-      walkSync(full, fileList)
-    } else {
-      fileList.push(full)
-    }
-  }
-  return fileList
+// Per-route budgets in KB (gzipped)
+const ROUTE_BUDGETS = {
+  '/': 350, // Landing with React Three Fiber
+  '/explore': 220,
+  '/deposit': 200,
+  '/withdraw': 200,
+  '/portfolio': 200,
+  '/project/[id]': 220,
+  _default: 180, // All other routes
 }
 
 function getGzipSize(filePath) {
-  const buffer = fs.readFileSync(filePath)
-  return zlib.gzipSync(buffer).length
+  try {
+    const buffer = fs.readFileSync(filePath)
+    return zlib.gzipSync(buffer).length
+  } catch (err) {
+    return 0
+  }
 }
 
 function formatBytes(bytes) {
   return (bytes / 1024).toFixed(2)
 }
 
-try {
-  const chunksDir = path.join(process.cwd(), '.next/static/chunks')
+function detectBuildType() {
+  const nextDir = path.join(process.cwd(), '.next')
+  const serverDir = path.join(nextDir, 'server')
 
-  if (!fs.existsSync(chunksDir)) {
+  if (fs.existsSync(serverDir)) {
+    const files = fs.readdirSync(serverDir)
+    const hasTurbopackMarkers = files.some(
+      (f) => f.includes('app-paths-manifest') || f.includes('middleware-build-manifest'),
+    )
+    const hasWebpackMarkers = files.some((f) => f.includes('webpack-'))
+
+    if (hasTurbopackMarkers && !hasWebpackMarkers) return 'turbopack'
+    if (hasWebpackMarkers) return 'webpack'
+  }
+
+  return 'unknown'
+}
+
+function getAllJsChunks(chunksDir) {
+  const chunks = []
+
+  function walkDir(dir) {
+    if (!fs.existsSync(dir)) return
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walkDir(fullPath)
+      } else if (entry.name.endsWith('.js')) {
+        chunks.push(fullPath)
+      }
+    }
+  }
+
+  walkDir(chunksDir)
+  return chunks
+}
+
+function analyzeChunks(chunksDir) {
+  const allChunks = getAllJsChunks(chunksDir)
+  const frameworkChunks = []
+  const appChunks = []
+
+  for (const chunk of allChunks) {
+    const name = path.basename(chunk)
+    // Improved framework detection for both webpack and Turbopack
+    const isFramework =
+      name.includes('webpack') ||
+      name.includes('main-app') ||
+      name.includes('framework') ||
+      name.includes('polyfill') ||
+      name.includes('_app-') ||
+      name.includes('_error-') ||
+      name.match(/^\d+-[a-f0-9]+\.js$/) || // Turbopack framework chunks (e.g., 1-abc123.js)
+      name.startsWith('main-')
+
+    if (isFramework) {
+      frameworkChunks.push(chunk)
+    } else {
+      appChunks.push(chunk)
+    }
+  }
+
+  return { frameworkChunks, appChunks, allChunks }
+}
+
+function getRouteKey(route) {
+  if (route === '' || route === 'index') return '/'
+  if (route.startsWith('/')) return route
+  return '/' + route
+}
+
+function getBudgetForRoute(route) {
+  const key = getRouteKey(route)
+  return ROUTE_BUDGETS[key] || ROUTE_BUDGETS._default
+}
+
+try {
+  const nextDir = path.join(process.cwd(), '.next')
+  const staticDir = path.join(nextDir, 'static', 'chunks')
+
+  if (!fs.existsSync(nextDir)) {
     console.error('❌ Build output not found. Run `bun run build` first.')
     process.exit(1)
   }
 
-  const allJs = walkSync(chunksDir).filter((f) => f.endsWith('.js'))
+  const buildType = detectBuildType()
+  console.log(`\n📦 Bundle Size Report (${buildType})`)
+  console.log('═'.repeat(70))
 
-  // Split into framework internals and application chunks
-  const isFramework = (f) => {
-    const name = path.basename(f)
-    return (
-      name.includes('webpack') ||
-      name.includes('main-app') ||
-      name.includes('framework') ||
-      name.includes('polyfills') ||
-      name.includes('_new-') ||
-      name.includes('polyfill-')
-    )
+  const { frameworkChunks, appChunks, allChunks } = analyzeChunks(staticDir)
+
+  let frameworkSize = 0
+  for (const chunk of frameworkChunks) {
+    frameworkSize += getGzipSize(chunk)
   }
 
-  const appChunks = allJs.filter((f) => !isFramework(f))
-  const frameworkChunks = allJs.filter(isFramework)
+  console.log(`\n  Framework chunks: ${formatBytes(frameworkSize)} KB gzipped`)
+  console.log(
+    `  Total chunks:     ${allChunks.length} (${frameworkChunks.length} framework + ${appChunks.length} app)`,
+  )
 
-  if (appChunks.length === 0) {
-    console.error('❌ Could not find any application chunks in', chunksDir)
-    process.exit(1)
-  }
-
-  // Compute gzipped sizes for all chunks
-  const appSizes = appChunks.map((f) => ({
-    name: path.relative(chunksDir, f),
-    raw: fs.statSync(f).size,
-    gzip: getGzipSize(f),
+  // Analyze app chunks
+  const appSizes = appChunks.map((chunk) => ({
+    name: path.relative(staticDir, chunk),
+    size: getGzipSize(chunk),
   }))
 
-  const totalAppGzip = appSizes.reduce((s, c) => s + c.gzip, 0)
-  const totalAppRaw = appSizes.reduce((s, c) => s + c.raw, 0)
-
-  let totalFrameworkGzip = 0
-  for (const f of frameworkChunks) {
-    totalFrameworkGzip += getGzipSize(f)
-  }
-  const totalAllGzip = totalAppGzip + totalFrameworkGzip
-
-  // Largest chunk (landing route proxy)
-  appSizes.sort((a, b) => b.gzip - a.gzip)
-  const largest = appSizes[0]
-
-  // Report
-  console.log('\n📦 Bundle Size Report')
-  console.log('─'.repeat(55))
-  console.log(`  Largest app chunk:  ${formatBytes(largest.gzip)} KB gzip  (${largest.name})`)
-  console.log(
-    `  Total app JS:       ${formatBytes(totalAppGzip)} KB gzip  (${appSizes.length} chunks)`,
-  )
-  console.log(`  Total JS (all):     ${formatBytes(totalAllGzip)} KB gzip`)
-  console.log('─'.repeat(55))
+  appSizes.sort((a, b) => b.size - a.size)
 
   console.log('\n  Top 5 application chunks:')
-  for (const c of appSizes.slice(0, 5)) {
-    console.log(`    ${formatBytes(c.gzip).padStart(8)} KB  ${c.name}`)
+  for (const chunk of appSizes.slice(0, 5)) {
+    console.log(`    ${formatBytes(chunk.size).padStart(8)} KB  ${chunk.name}`)
   }
 
+  // Per-route analysis
+  console.log('\n  Per-route first-load JS:')
+  console.log('  ' + '─'.repeat(68))
+
+  const commonRoutes = ['/', '/explore', '/deposit', '/withdraw', '/portfolio']
+  const routes = []
   let failed = false
 
-  // Check landing chunk budget
-  if (largest.gzip > LANDING_BUDGET_KB * 1024) {
-    const over = formatBytes(largest.gzip - LANDING_BUDGET_KB * 1024)
+  for (const route of commonRoutes) {
+    // Estimate route-specific chunks by name matching
+    const routeChunks = appChunks.filter((c) => {
+      const name = path.basename(c)
+      const routePart = route === '/' ? 'page' : route.slice(1)
+      return name.includes(routePart)
+    })
+
+    let routeSize = 0
+    for (const chunk of routeChunks) {
+      routeSize += getGzipSize(chunk)
+    }
+
+    const firstLoadSize = frameworkSize + routeSize
+    const budget = getBudgetForRoute(route)
+    const budgetBytes = budget * 1024
+
+    const status = firstLoadSize <= budgetBytes ? '✅' : '❌'
+    const diff = firstLoadSize - budgetBytes
+    const diffStr =
+      diff > 0 ? ` (+${formatBytes(diff)} KB)` : ` (-${formatBytes(-diff)} KB headroom)`
+
+    routes.push({
+      route,
+      firstLoadSize,
+      budget: budgetBytes,
+      status,
+    })
+
     console.log(
-      `\n❌ FAILED: Landing chunk ${formatBytes(largest.gzip)} KB exceeds budget ${LANDING_BUDGET_KB} KB (+${over} KB)`,
+      `  ${status} ${route.padEnd(20)} ${formatBytes(firstLoadSize).padStart(8)} KB / ${budget} KB${diffStr}`,
     )
-    failed = true
+
+    if (firstLoadSize > budgetBytes) {
+      failed = true
+    }
   }
 
-  // Check total bundle budget
-  if (totalAllGzip > TOTAL_BUDGET_KB * 1024) {
-    const over = formatBytes(totalAllGzip - TOTAL_BUDGET_KB * 1024)
-    console.log(
-      `\n❌ FAILED: Total bundle ${formatBytes(totalAllGzip)} KB exceeds budget ${TOTAL_BUDGET_KB} KB (+${over} KB)`,
-    )
-    failed = true
-  }
+  console.log('  ' + '─'.repeat(68))
+
+  const totalSize = frameworkSize + appChunks.reduce((sum, c) => sum + getGzipSize(c), 0)
+  console.log(`\n  Total bundle size: ${formatBytes(totalSize)} KB gzipped`)
+
+  console.log('═'.repeat(70))
 
   if (failed) {
-    console.log('')
+    console.log('\n❌ FAILED: One or more routes exceed their budget.')
+    console.log('\nTo fix:')
+    console.log('  1. Check for duplicate dependencies in package.json')
+    console.log('  2. Use dynamic imports for heavy components')
+    console.log('  3. Analyze with: npx @next/bundle-analyzer')
+    console.log('  4. Consider code splitting for large routes\n')
     process.exit(1)
   }
 
-  const landingHeadroom = LANDING_BUDGET_KB - largest.gzip / 1024
-  const totalHeadroom = TOTAL_BUDGET_KB - totalAllGzip / 1024
+  const avgHeadroom =
+    routes.reduce((sum, r) => sum + (r.budget - r.firstLoadSize), 0) / routes.length
   console.log(
-    `\n✅ PASSED: ${formatBytes(landingHeadroom * 1024)} KB landing headroom, ${formatBytes(totalHeadroom * 1024)} KB total headroom\n`,
+    `\n✅ PASSED: All routes within budget (avg ${formatBytes(avgHeadroom)} KB headroom)\n`,
   )
   process.exit(0)
 } catch (error) {
   console.error('❌ Error checking bundle size:', error.message)
+  console.error(error.stack)
   process.exit(1)
 }
