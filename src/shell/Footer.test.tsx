@@ -43,10 +43,16 @@ describe('Footer navigation (#712)', () => {
   it('uses client-side links for every internal footer destination', () => {
     const { container } = render(<Footer />)
     for (const path of ['/verify', '/risk', '/learn']) {
-      const link = Array.from(container.querySelectorAll('a')).find((item) => item.getAttribute('href') === path)
+      const link = Array.from(container.querySelectorAll('a')).find(
+        (item) => item.getAttribute('href') === path,
+      )
       expect(link).toBeInTheDocument()
       expect(ROUTES.some((route) => route.path === path)).toBe(true)
     }
-    expect(Array.from(container.querySelectorAll('a')).find((item) => item.getAttribute('href') === '/talk')).toBeUndefined()
+    expect(
+      Array.from(container.querySelectorAll('a')).find(
+        (item) => item.getAttribute('href') === '/talk',
+      ),
+    ).toBeUndefined()
   })
 })
