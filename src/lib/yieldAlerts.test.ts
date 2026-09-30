@@ -6,6 +6,7 @@ import {
   writeAlerts,
   getEffectiveYield,
   evaluateAlerts,
+  updateAlertStates,
   generateAlertId,
   type YieldAlert,
   YIELD_ALERTS_STORAGE_KEY,
@@ -215,7 +216,12 @@ describe('yieldAlerts', () => {
       expect(triggered).toHaveLength(0)
     })
 
-    it('should not trigger when threshold is exactly equal (below)', () => {
+    // #638 — edge-triggered: equal value falls to 'below' state (strict > check).
+    // On first evaluation, when yield equals threshold and operator is 'below',
+    // the alert fires once because equal-value state matches the target 'below'
+    // state. This is intentional — the user set a 'below X' alert and yield is
+    // at-or-below X, so they want to know about it.
+    it('should trigger on first evaluation when yield equals threshold (below)', () => {
       const alerts: YieldAlert[] = [
         {
           id: 'alert-1',
@@ -227,13 +233,15 @@ describe('yieldAlerts', () => {
         },
       ]
       const triggered = evaluateAlerts(alerts, mockProjects)
-      expect(triggered).toHaveLength(0)
+      expect(triggered).toHaveLength(1)
+      expect(triggered[0].alert.id).toBe('alert-1')
+      expect(triggered[0].currentYield).toBe(35)
     })
 
-    it('should apply 60-second cooldown and not re-trigger', () => {
-      const now = new Date()
-      const thirtySecondsAgo = new Date(now.getTime() - 30_000).toISOString()
-
+    // #638 — should NOT re-fire when state hasn't crossed (no edge).
+    // If lastState was 'above' (alert fired last time) and current state is still
+    // 'above' (yield still above threshold), the alert must not fire again.
+    it('should not re-fire when state has not crossed (lastState === currentState)', () => {
       const alerts: YieldAlert[] = [
         {
           id: 'alert-1',
@@ -242,16 +250,59 @@ describe('yieldAlerts', () => {
           threshold: 65,
           operator: 'above',
           createdAt: '2024-01-01T00:00:00Z',
-          lastTriggeredAt: thirtySecondsAgo,
+          lastState: 'above', // already on the target side — no crossing
         },
       ]
       const triggered = evaluateAlerts(alerts, mockProjects)
       expect(triggered).toHaveLength(0)
     })
 
-    it('should trigger after cooldown period (60+ seconds)', () => {
+    // #638 — should fire on crossing: state flips from 'below' to 'above'
+    // (operator='above') for an alert whose lastState was 'below'.
+    it('should fire when state crosses from below to above', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1',
+          bondId: 1,
+          bondName: 'Test Bond',
+          threshold: 65,
+          operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+          lastState: 'below', // was below last time, now above — crossing!
+        },
+      ]
+      const triggered = evaluateAlerts(alerts, mockProjects)
+      expect(triggered).toHaveLength(1)
+    })
+
+    // #638 — cooldown is no longer used (edge-triggered, not level-triggered).
+    // If lastState is undefined (first evaluation), and yield is already above
+    // threshold, the alert fires once. This replaces the old 60-second cooldown
+    // test which no longer reflects the contract.
+    it('should fire once on first evaluation when yield is already on target side', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1',
+          bondId: 1,
+          bondName: 'Test Bond',
+          threshold: 65,
+          operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+          // lastState undefined → first evaluation
+        },
+      ]
+      const triggered = evaluateAlerts(alerts, mockProjects)
+      expect(triggered).toHaveLength(1)
+    })
+
+    // #638 — lastTriggeredAt is no longer a cooldown gate; lastState is what
+    // determines whether the next evaluation fires. Here lastState is 'below'
+    // (alert was previously below threshold) and current yield is now above —
+    // crossing detected, alert fires. lastTriggeredAt is kept as a record
+    // only.
+    it('should fire when state crosses, regardless of lastTriggeredAt age', () => {
       const now = new Date()
-      const seventySecondsAgo = new Date(now.getTime() - 70_000).toISOString()
+      const tenSecondsAgo = new Date(now.getTime() - 10_000).toISOString()
 
       const alerts: YieldAlert[] = [
         {
@@ -261,7 +312,8 @@ describe('yieldAlerts', () => {
           threshold: 65,
           operator: 'above',
           createdAt: '2024-01-01T00:00:00Z',
-          lastTriggeredAt: seventySecondsAgo,
+          lastTriggeredAt: tenSecondsAgo, // very recent — but cooldown is gone
+          lastState: 'below',            // — crossing detected
         },
       ]
       const triggered = evaluateAlerts(alerts, mockProjects)
