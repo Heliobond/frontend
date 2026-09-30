@@ -44,8 +44,8 @@ export function hasMaliciousContent(value: string): boolean {
   )
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"]/g, (c) => {
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => {
     switch (c) {
       case '&':
         return '&amp;'
@@ -126,6 +126,18 @@ export interface AddressValues {
 }
 export type AddressErrors = Partial<Record<keyof AddressValues, string>>
 
+const ADDRESS_MAX_LENGTH = 200
+const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'&-]+$/u
+
+/** Addresses are validated by shape; database safety belongs to parameterized backend queries. */
+export function hasInvalidAddressCharacters(value: string): boolean {
+  return (
+    value.length > ADDRESS_MAX_LENGTH ||
+    /[\u0000-\u001f\u007f<>]/u.test(value) ||
+    !ADDRESS_ALLOWED_CHARACTERS.test(value)
+  )
+}
+
 /**
  * Validates address fields according to KYC requirements (#414).
  * Single source of truth shared between component and schema.
@@ -147,15 +159,16 @@ export function validateAddress(values: AddressValues): AddressErrors {
   if (!zip) errors.zip = 'ZIP code is required'
   if (!country) errors.country = 'Country is required'
 
-  if (street && hasMaliciousContent(street))
+  if (street && hasInvalidAddressCharacters(street))
     errors.street = 'Street address contains invalid characters'
-  if (city && hasMaliciousContent(city)) errors.city = 'City contains invalid characters'
-  if (state && hasMaliciousContent(state))
+  if (city && hasInvalidAddressCharacters(city)) errors.city = 'City contains invalid characters'
+  if (state && hasInvalidAddressCharacters(state))
     errors.state = 'State / Province contains invalid characters'
-  if (zip && hasMaliciousContent(zip)) errors.zip = 'ZIP / Postal code contains invalid characters'
-  if (country && hasMaliciousContent(country))
+  if (zip && hasInvalidAddressCharacters(zip))
+    errors.zip = 'ZIP / Postal code contains invalid characters'
+  if (country && hasInvalidAddressCharacters(country))
     errors.country = 'Country contains invalid characters'
-  if (apartment && hasMaliciousContent(apartment))
+  if (apartment && hasInvalidAddressCharacters(apartment))
     errors.apartment = 'Apartment contains invalid characters'
 
   return errors
