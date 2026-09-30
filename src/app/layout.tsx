@@ -16,7 +16,7 @@ const Footer = dynamic(() => import('../shell/Footer').then((m) => m.Footer))
 
 export const metadata: Metadata = {
   // Resolves the relative OpenGraph / Twitter image and icon paths below into
-  // absolute URLs, using the same origin as robots.txt and sitemap.xml.
+  // absolute URLs, using the same origin as robots.txt and sitemap.xml (#656).
   metadataBase: new URL(CANONICAL_ORIGIN),
   // Child segments contribute only their page title; the template appends the
   // brand, so no route has to repeat "| Heliobond" by hand (#657).
@@ -26,6 +26,10 @@ export const metadata: Metadata = {
   },
   description:
     'Own a piece of the energy transition. From one dollar. A transparent pool funding verified green projects on Stellar.',
+  // Canonical URL for the home page
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: '/assets/favicon.svg',
     apple: '/assets/apple-touch-icon.png',
@@ -34,6 +38,7 @@ export const metadata: Metadata = {
     title: 'Heliobond — sunlight made financial',
     description:
       'Own a piece of the energy transition. From one dollar. A transparent pool funding verified green projects on Stellar.',
+    url: CANONICAL_ORIGIN,
     images: [
       {
         url: '/assets/og-image.png',
