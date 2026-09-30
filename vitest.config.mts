@@ -34,6 +34,7 @@ export default defineConfig({
         'src/lib/yieldAlerts.ts': { lines: 80, statements: 80, functions: 80 },
         'src/lib/recurringInvestments.ts': { lines: 80, statements: 80, functions: 80 },
         'src/lib/scrollToError.ts': { lines: 80, statements: 80, functions: 80 },
+        'src/lib/errorMessages.ts': { lines: 80, statements: 80, functions: 80 },
         'src/lib/**': { lines: 55 },
         'src/wallet/**': { lines: 55 },
         'src/session/**': { lines: 55 },

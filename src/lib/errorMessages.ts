@@ -5,7 +5,7 @@ import { contractErrorMessageEn } from './contractErrors'
  * Never surface raw codes like 'insufficient_balance' to users.
  */
 
-const ERROR_CODE_MAP: Record<string, string> = {
+export const ERROR_CODE_MAP: Record<string, string> = {
   insufficient_balance: 'Not enough funds - your balance is too low for this amount.',
   insufficient_funds: 'Not enough funds - your balance is too low for this amount.',
   amount_too_low: 'Enter an amount of at least 1 USDC.',
@@ -100,7 +100,7 @@ function looksLikeAddressError(message: string): boolean {
   )
 }
 
-function normalizeCode(code: string): string {
+export function normalizeCode(code: string): string {
   return code
     .trim()
     .toLowerCase()
