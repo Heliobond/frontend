@@ -195,20 +195,37 @@ export function normalizeHash(
   return null
 }
 
+/**
+ * `ProjectData` as returned by the ProjectRegistry contract. Note there is no
+ * `id` (the id is the key/tuple element) and no display fields such as name or
+ * funding amounts — those come from the off-chain `uri` metadata.
+ */
 export interface OnChainProjectRaw {
-  id: number | bigint
-  name?: string
-  creator?: string
-  metadata_uri?: string
-  metadata_hash?: string | Uint8Array
-  credit_score?: number | bigint
-  green_score?: number | bigint
-  status?: string
-  funded_amount?: number | bigint
-  target_amount?: number | bigint
+  owner: string
+  uri: string
+  credit_quality: number | bigint
+  green_impact: number | bigint
+  maturity_date: number | bigint
+  certification_status: number | bigint
+  last_update_timestamp: number | bigint
+  /** `ProjectStatus` enum: Pending=0, Active=1, Funded=2, Completed=3, Archived=4 */
+  status: number | bigint
+  created_at: number | bigint
+  metadata_hash: string | Uint8Array
+}
+
+/** A `(u32, ProjectData)` element from `get_projects_page`. */
+export type OnChainProjectTuple = [number | bigint, OnChainProjectRaw]
+
+/** A single `ScoreHistoryEntry` from `get_score_history`. */
+export interface OnChainScoreHistoryEntryRaw {
+  timestamp: number | bigint
+  credit_quality: number | bigint
+  green_impact: number | bigint
 }
 
 export interface OffChainMetadata {
+  name?: string
   description?: string
   location?: string
   type?: ProjectType
@@ -218,31 +235,78 @@ export interface OffChainMetadata {
   priceHistory?: Array<{ date: string; price: number; yield: number }>
 }
 
-/** Map on-chain project struct and optional metadata to UI Project */
-export function mapOnChainProject(raw: OnChainProjectRaw, metadata?: OffChainMetadata): Project {
-  const id = Number(raw.id)
-  const credit = Number(raw.credit_score ?? 80)
-  const green = Number(raw.green_score ?? 80)
-  const rawFunded = Number(raw.funded_amount ?? 0)
-  const fundedAmount = rawFunded > 1e7 ? Math.round(rawFunded / 1e7) : rawFunded
-  const rawTarget = Number(raw.target_amount ?? 1000000)
-  const fundingGoal = rawTarget > 1e7 ? Math.round(rawTarget / 1e7) : rawTarget
+/** Map the contract's numeric `ProjectStatus` enum to the UI status union. */
+export function mapProjectStatus(
+  status: number | bigint | string | null | undefined,
+): Project['status'] | undefined {
+  if (typeof status === 'string') {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'open':
+        return 'open'
+      case 'pending':
+      case 'upcoming':
+        return 'upcoming'
+      case 'funded':
+      case 'completed':
+      case 'archived':
+        return 'funded'
+      default:
+        return undefined
+    }
+  }
+  switch (Number(status)) {
+    case 0:
+      return 'upcoming' // Pending
+    case 1:
+      return 'open' // Active
+    case 2:
+      return 'funded' // Funded
+    case 3:
+      return 'funded' // Completed
+    case 4:
+      return 'funded' // Archived
+    default:
+      return undefined
+  }
+}
+
+/** Map on-chain ProjectData plus its id and optional metadata to a UI Project. */
+export function mapOnChainProject(
+  raw: OnChainProjectRaw,
+  id: number,
+  metadata?: OffChainMetadata,
+): Project {
+  const credit = Number(raw.credit_quality ?? 80)
+  const green = Number(raw.green_impact ?? 80)
 
   const fallback = selectProjectById(id)
 
+  const fundedAmount = fallback?.fundedAmount ?? 0
+  const fundingGoal = metadata?.fundingGoal || fallback?.fundingGoal || 1000000
+
   return {
     id,
-    name: raw.name || fallback?.name || `Bond Project #${id}`,
+    name: metadata?.name || fallback?.name || `Bond Project #${id}`,
     location: metadata?.location || fallback?.location || 'Stellar Network',
     type: metadata?.type || fallback?.type || 'Solar',
-    credit,
-    green,
+    credit: Number.isFinite(credit) ? credit : 80,
+    green: Number.isFinite(green) ? green : 80,
     funded: `$${fundedAmount.toLocaleString('en-US')}`,
     fundedAmount,
-    fundingGoal: metadata?.fundingGoal || fundingGoal || fallback?.fundingGoal || 1000000,
-    status: (raw.status as Project['status']) || fallback?.status || 'open',
+    fundingGoal,
+    status: mapProjectStatus(raw.status) ?? fallback?.status ?? 'open',
     priceHistory: metadata?.priceHistory || fallback?.priceHistory || [],
   }
+}
+
+/** Render a score-history unix timestamp (seconds) as a short date label. */
+function formatScoreDate(timestamp: number | bigint | undefined, index: number): string {
+  const seconds = Number(timestamp)
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return new Date(seconds * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  }
+  return `${index + 1}mo ago`
 }
 
 /** Read total projects count from ProjectRegistry */
@@ -299,9 +363,14 @@ export async function fetchProjectsPage(
       'get_projects_page',
       [offset, limit],
       sourceAddress,
-    )) as OnChainProjectRaw[]
+    )) as OnChainProjectTuple[]
 
-    const projects: Project[] = (rawList || []).map((raw) => mapOnChainProject(raw))
+    const projects: Project[] = (rawList || []).map((entry) => {
+      const [rawId, data] = Array.isArray(entry)
+        ? entry
+        : [(entry as OnChainProjectRaw & { id?: number | bigint }).id, entry]
+      return mapOnChainProject(data as OnChainProjectRaw, Number(rawId))
+    })
     const total = await fetchTotalProjects(sourceAddress)
     const result: ProjectsPageResult = {
       projects,
@@ -371,9 +440,9 @@ export async function fetchProjectWithDetails(
     let verifiedMetadata: MetadataVerificationStatus = 'unverified'
     let offChainMetadata: OffChainMetadata | undefined
 
-    if (raw.metadata_uri) {
+    if (raw.uri) {
       try {
-        const res = await fetch(raw.metadata_uri)
+        const res = await fetch(raw.uri)
         if (res.ok) {
           const rawBytes = await res.arrayBuffer()
           const expected = normalizeHash(raw.metadata_hash)
@@ -420,7 +489,7 @@ export async function fetchProjectWithDetails(
       verifiedMetadata = 'unverified'
     }
 
-    const project = mapOnChainProject(raw, offChainMetadata)
+    const project = mapOnChainProject(raw, id, offChainMetadata)
 
     let scoreHistory = fallbackDetail?.scoreHistory
     try {
@@ -440,7 +509,7 @@ export async function fetchProjectWithDetails(
         offChainMetadata?.heroGradient ||
         'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(16,185,129,0.2) 100%)',
       creator: {
-        name: raw.creator ? `${raw.creator.slice(0, 4)}…${raw.creator.slice(-4)}` : 'Creator',
+        name: raw.owner ? `${raw.owner.slice(0, 4)}…${raw.owner.slice(-4)}` : 'Creator',
         verified: true,
         since: '2025',
       },
@@ -490,24 +559,22 @@ export async function fetchScoreHistory(
   }
 
   try {
-    const raw = (await simulateRegistryCall('get_score_history', [id], sourceAddress)) as Array<{
-      date?: string
-      timestamp?: number
-      credit: number
-      green: number
-      hash?: string
-    }>
+    const raw = (await simulateRegistryCall(
+      'get_score_history',
+      [id],
+      sourceAddress,
+    )) as OnChainScoreHistoryEntryRaw[]
 
     if (Array.isArray(raw) && raw.length > 0) {
       const credit: ScorePoint[] = raw.map((r, i) => ({
-        date: r.date || `${i + 1}mo ago`,
-        value: Number(r.credit),
-        hash: r.hash || `0xscore${id}${i}`,
+        date: formatScoreDate(r.timestamp, i),
+        value: Number(r.credit_quality),
+        hash: `0xscore${id}${i}`,
       }))
       const green: ScorePoint[] = raw.map((r, i) => ({
-        date: r.date || `${i + 1}mo ago`,
-        value: Number(r.green),
-        hash: r.hash || `0xscore${id}${i}`,
+        date: formatScoreDate(r.timestamp, i),
+        value: Number(r.green_impact),
+        hash: `0xscore${id}${i}`,
       }))
       const history = { credit, green }
       setInCache(cacheKey, history)

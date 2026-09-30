@@ -1,9 +1,13 @@
 'use client'
 import { useSyncExternalStore } from 'react'
 import {
+  getServerSortOrder,
   getServerYieldRange,
+  getSortOrder,
   getYieldRange,
+  setSortOrder as persistSort,
   setYieldRange as persistRange,
+  subscribeSortOrder,
   subscribeYieldRange,
 } from '@/lib/bondUtils'
 
@@ -14,7 +18,15 @@ import {
  */
 export function useBondFilters() {
   const yieldRange = useSyncExternalStore(subscribeYieldRange, getYieldRange, getServerYieldRange)
-  return { yieldRange, setYieldRange: persistRange }
+  const sortOrder = useSyncExternalStore(subscribeSortOrder, getSortOrder, getServerSortOrder)
+  return {
+    yieldRange,
+    setYieldRange: persistRange,
+    sortOrder,
+    setSortOrder: persistSort,
+    sortDirection: sortOrder,
+    setSortDirection: persistSort,
+  }
 }
 
 export default useBondFilters

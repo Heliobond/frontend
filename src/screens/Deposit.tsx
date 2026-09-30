@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { Button, AmountInput, useToast } from '../components'
+import { Button, AmountInput, MemoInput, useToast } from '../components'
 import { Helio } from '../brand/Helio'
 import { submitDeposit } from '../wallet/vault'
 import { useVault } from '../wallet/useVault'
@@ -11,6 +11,7 @@ import { TransactionPendingError } from '../wallet/transactions'
 import { useTransactionFee } from '../wallet/useTransactionFee'
 import { scrollToFirstError } from '../lib/scrollToError'
 import { getFriendlyErrorMessage } from '../lib/errorMessages'
+import { validateMemoLength } from '../lib/stellarPayment'
 import { translateContractError } from '../lib/contractErrors'
 import { reportTransactionFailure } from '../lib/errorReporting'
 import { isNetworkMismatchError } from '../wallet/networkGuard'
@@ -72,6 +73,7 @@ export function Deposit({ onDone }: DepositProps) {
   )
   const [step, setStep] = useState<DepositStep>('amount')
   const [amount, setAmount] = useState(DEFAULT_DEPOSIT_USDC)
+  const [memo, setMemo] = useState('')
   const [investmentId, setInvestmentId] = useState<string | null>(null)
   const [txError, setTxError] = useState<string | null>(null)
   const [recurring, setRecurring] = useState(false)
@@ -81,6 +83,7 @@ export function Deposit({ onDone }: DepositProps) {
   const [now, setNow] = useState(() => Date.now())
 
   const n = parseAmount(amount)
+  const isMemoValid = validateMemoLength(memo).valid
 
   const estimatedFee = useTransactionFee('deposit', n, address, slippageTolerance)
   const feeLabel =
@@ -129,6 +132,7 @@ export function Deposit({ onDone }: DepositProps) {
 
   const handleDone = () => {
     setAmount('')
+    setMemo('')
     setInvestmentId(null)
     setTxError(null)
     changeStep('amount')
@@ -142,7 +146,7 @@ export function Deposit({ onDone }: DepositProps) {
     const controller = new AbortController()
     abortControllerRef.current = controller
     try {
-      await submitDeposit(n, address ?? '', sign, controller.signal, slippageTolerance)
+      await submitDeposit(n, address ?? '', sign, controller.signal, slippageTolerance, memo)
 
       if (mountedRef.current) {
         clearPending()
@@ -321,6 +325,12 @@ export function Deposit({ onDone }: DepositProps) {
               }
             />
             <p style={liqLine}>{t.rich('liquidLine', { b: strong })}</p>
+            <MemoInput
+              value={memo}
+              onChange={setMemo}
+              label={t('memoLabel')}
+              placeholder={t('memoPlaceholder')}
+            />
             <RecurringInvestmentOptions
               enabled={recurring}
               amount={n}
@@ -332,7 +342,7 @@ export function Deposit({ onDone }: DepositProps) {
               variant="primary"
               size="lg"
               style={{ width: '100%', marginTop: 20 }}
-              disabled={n < minDeposit || n > balance || n > maxTx || paused}
+              disabled={n < minDeposit || n > balance || n > maxTx || paused || !isMemoValid}
               reason={
                 paused
                   ? 'Vault paused'
@@ -342,10 +352,12 @@ export function Deposit({ onDone }: DepositProps) {
                       ? 'Amount exceeds pool limit'
                       : n < minDeposit
                         ? t('reasonMin', { min: formatDecimal(minDeposit, 2) })
-                        : undefined
+                        : !isMemoValid
+                          ? t('reasonMemoTooLong')
+                          : undefined
               }
               onClick={() => {
-                if (n < minDeposit || n > balance || n > maxTx || paused) {
+                if (n < minDeposit || n > balance || n > maxTx || paused || !isMemoValid) {
                   setTxError(
                     paused
                       ? 'vault_paused'
@@ -353,7 +365,9 @@ export function Deposit({ onDone }: DepositProps) {
                         ? 'amount_exceeds_balance'
                         : n > maxTx
                           ? 'amount_exceeds_max_tx'
-                          : 'amount_too_low',
+                          : !isMemoValid && n >= minDeposit
+                            ? 'memo_too_long'
+                            : 'amount_too_low',
                   )
                   setTimeout(() => scrollToFirstError(document), 50)
                   return
@@ -432,6 +446,7 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k={t('rowPrice')} v={formatSharePrice(price)} />
               <Row k="Price fetched" v={formatDateTime(priceFetchedAt, locale)} />
               <Row k="Network fee" v={feeLabel} />
+              {memo.trim() && <Row k={t('rowMemo')} v={memo.trim()} />}
             </div>
             <div
               style={{

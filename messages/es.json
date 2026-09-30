@@ -17,6 +17,7 @@
     "watchlist": "Lista de seguimiento",
     "switchToDark": "Cambiar a oscuro",
     "switchToLight": "Cambiar a claro",
+    "preferences": "Preferencias",
     "language": "Idioma",
     "account": "Cuenta",
     "copyAddress": "Copiar dirección",
@@ -165,7 +166,11 @@
     "successBody": "You received <num>{shares} HBS</num> and now back <b>{count} verified projects</b>.",
     "viewInvestment": "Ver tu inversión",
     "viewExpert": "Ver en Stellar Expert",
-    "goPortfolio": "Ir a la cartera"
+    "goPortfolio": "Ir a la cartera",
+    "reasonMemoTooLong": "El memo supera los 28 bytes",
+    "memoLabel": "Memorando",
+    "memoPlaceholder": "Hasta 28 bytes",
+    "rowMemo": "Memorando"
   },
   "Portfolio": {
     "eyebrow": "Tu cartera",
