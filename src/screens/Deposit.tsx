@@ -319,11 +319,27 @@ export function Deposit({ onDone }: DepositProps) {
               style={{ width: '100%', marginTop: 20 }}
               disabled={n < minDeposit || n > balance || n > maxTx || paused}
               reason={
-                paused ? 'Vault paused' : n > balance ? t('reasonExceeds') : n > maxTx ? 'Amount exceeds pool limit' : n < minDeposit ? `Minimum deposit is ${minDeposit} USDC` : undefined
+                paused
+                  ? 'Vault paused'
+                  : n > balance
+                    ? t('reasonExceeds')
+                    : n > maxTx
+                      ? 'Amount exceeds pool limit'
+                      : n < minDeposit
+                        ? `Minimum deposit is ${minDeposit} USDC`
+                        : undefined
               }
               onClick={() => {
                 if (n < minDeposit || n > balance || n > maxTx || paused) {
-                  setTxError(paused ? 'vault_paused' : n > balance ? 'amount_exceeds_balance' : n > maxTx ? 'amount_exceeds_max_tx' : 'amount_too_low')
+                  setTxError(
+                    paused
+                      ? 'vault_paused'
+                      : n > balance
+                        ? 'amount_exceeds_balance'
+                        : n > maxTx
+                          ? 'amount_exceeds_max_tx'
+                          : 'amount_too_low',
+                  )
                   setTimeout(() => scrollToFirstError(document), 50)
                   return
                 }

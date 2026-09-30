@@ -181,3 +181,80 @@ When interacting with Soroban contracts (e.g. `submitDeposit` / `submitWithdraw`
 3. **Assembly & Signing:** `rpc.assembleTransaction` merges simulation results into the transaction; the user signs the XDR via their connected wallet (Freighter, xBull, etc.).
 4. **Submission & Polling:** The signed transaction is submitted to Stellar testnet and polled via `server.getTransaction(hash)` until reaching `SUCCESS` or `FAILED` state (timeout: 30s).
 5. **UI Update:** The client transitions to the success step, displays the transaction hash linking to StellarExpert (`https://stellar.expert/explorer/testnet/tx/...`), and invalidates cached vault stats.
+
+---
+
+## 5. Client-Side Stores (`useSyncExternalStore`)
+
+State that mirrors something outside React — `localStorage`, `sessionStorage`, or
+a background poller — lives in a plain module and is read through
+`useSyncExternalStore` rather than copied into `useState` from an `useEffect`.
+Copying state in an effect causes a cascading render, and the value is wrong for
+the whole first paint.
+
+| Module                      | Holds                                 | Consumer                  |
+| --------------------------- | ------------------------------------- | ------------------------- |
+| `wallet/session.ts`         | connected address, wallet id, network | `WalletProvider`          |
+| `wallet/transactions.ts`    | pending transaction list              | `TransactionsProvider`    |
+| `lib/yieldAlerts.ts`        | saved yield alerts                    | `YieldAlertProvider`      |
+| `lib/bondUtils.ts`          | bond yield-range filter               | `useBondFilters`          |
+| `hooks/useHorizonHealth.ts` | Horizon reachability                  | `OfflineBanner`, `TopBar` |
+
+### The snapshot stability rule
+
+`getSnapshot` **must return the same object reference until the stored value
+actually changes.** React compares the result with `Object.is` after every
+render; returning a fresh object each time makes it believe the store changed
+and re-render forever ("getSnapshot should be cached").
+
+So each store keeps a module-level snapshot and only replaces it inside an
+explicit `refresh()`:
+
+```ts
+let snapshot = INITIAL // stable module-level value
+const listeners = new Set<() => void>()
+
+function refresh() {
+  // the only place snapshot is reassigned
+  snapshot = readFromStorage()
+}
+
+function publish() {
+  refresh()
+  listeners.forEach((listener) => listener())
+}
+```
+
+`readFromStorage()` itself must **not** be called from `getSnapshot` — return the
+cached `snapshot` and let the store's `publish()` update it. `getServerSession()`
+returns a fixed object for SSR, which is what lets the first client render match
+the server HTML.
+
+### Tell "empty" apart from "not read yet"
+
+The server cannot read `localStorage`, so its snapshot necessarily says "no
+session". A component that acts on that immediately would, for example, redirect
+a signed-in user to `/connect` on every page load. `wallet/session.ts` exports a
+sentinel for this:
+
+```ts
+export const UNREAD_SESSION: StoredSession = { address: '', walletId: null, network: null }
+
+export function readSession(): StoredSession {
+  /* always returns a FRESH object, even when there is no session */
+}
+
+// in WalletProvider
+const restoring = stored === UNREAD_SESSION // identity, not a field
+```
+
+Because `readSession()` always allocates, `stored === UNREAD_SESSION` is true only
+before storage has been consulted. `RequireWallet` holds its gate while
+`restoring`, which is what keeps a refresh on a gated route from logging the user
+out. Test this with `wallet/RequireWallet.hydration.test.tsx`, which renders the
+real provider rather than a mocked context.
+
+### Cross-tab updates
+
+`subscribe()` also listens for the `storage` event so another tab's write
+re-renders this one, and removes the listener on unsubscribe.

@@ -30,7 +30,7 @@ describe('HelioWebGL tab visibility & motion behavior', () => {
         return {} as unknown as RenderingContext
       }
       return null
-    }) as any)
+    }) as HTMLCanvasElement['getContext'])
   })
 
   afterEach(() => {

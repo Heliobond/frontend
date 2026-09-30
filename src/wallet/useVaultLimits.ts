@@ -13,7 +13,7 @@ const defaultLimits: VaultLimits = {
   minWithdrawShares: MIN_WITHDRAW_SHARES,
   maxTx: 100000,
   lockExpiresAt: 0,
-  utilizationBps: 0
+  utilizationBps: 0,
 }
 
 export function useVaultLimits() {
@@ -23,16 +23,24 @@ export function useVaultLimits() {
     'public') as 'public' | 'testnet'
 
   const [limits, setLimits] = useState<VaultLimits>(defaultLimits)
-  const [loading, setLoading] = useState(false)
   const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
-  
+
   const { tick } = useVaultRefresh(enabled)
+
+  /**
+   * Identifies the fetch whose result `limits` holds. `loading` is derived from
+   * whether that request has settled, instead of being toggled from the effect
+   * body where it would cause a cascading render (#598).
+   */
+  const requestKey = enabled && address ? `${address}:${network}:${tick}` : null
+  const [settledKey, setSettledKey] = useState<string | null>(null)
+  const loading = requestKey !== null && settledKey !== requestKey
 
   useEffect(() => {
     if (!enabled || !address || document.hidden) return
 
     let cancelled = false
-    setLoading(true)
+    const key = `${address}:${network}:${tick}`
 
     fetchVaultLimits(address, network)
       .then((data) => {
@@ -40,7 +48,7 @@ export function useVaultLimits() {
       })
       .catch(() => {})
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setSettledKey(key)
       })
 
     return () => {

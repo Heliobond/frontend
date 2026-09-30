@@ -1,7 +1,9 @@
 // Heliobond — project data API client with lazy-loading and pagination support.
-// Reads from NEXT_PUBLIC_API_URL when set. In production (API_URL configured),
-// errors are surfaced through the error pipeline. In demo mode (no API_URL or
-// NEXT_PUBLIC_DEMO_MODE=true), mock data is used with a visible "Demo data" indicator.
+//
+// Requests go to the versioned `/v1` backend. The browser reaches it through the
+// same-origin `/api/backend` proxy, which attaches the API key server-side, so no
+// secret ships in the bundle (#588). With no backend configured the app falls
+// back to bundled demo data and shows a "Demo data" badge.
 
 import { type Project } from '../data'
 import { type ProjectDetail } from '../data/projectDetails'
@@ -14,10 +16,21 @@ import {
 import { ApiError } from './error'
 import { loginBiometric } from './webauthn'
 export { ApiError } from './error'
-import { reportError } from './errorReporting'
+import {
+  API_TIMEOUT_MS,
+  apiGet,
+  fetchBackendHistory,
+  fetchBackendPortfolio,
+  fetchBackendProject,
+  fetchBackendProjects,
+  historyToPricePoints,
+  isBackendConfigured,
+  type BackendProject,
+} from './apiClient'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL
-const DEMO_MODE = !API_URL || process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+export { API_TIMEOUT_MS }
+
+const DEMO_MODE = !isBackendConfigured()
 
 function isDemoMode(): boolean {
   return DEMO_MODE
@@ -28,60 +41,55 @@ export function shouldShowDemoBadge(): boolean {
   return isDemoMode()
 }
 
-/** Requests slower than this are aborted and the call falls back (#608). */
-export const API_TIMEOUT_MS = 8000
-
 /**
- * GET/POST `path` on the API and parse the JSON body. Rejects on a non-2xx
- * status ("HTTP 503"), a timeout, a network error or a malformed body. Demo
+ * GET a `/v1/...` path and parse the JSON body. Rejects with an `ApiError` on a
+ * non-2xx status, a timeout, a network error or a malformed body. Demo
  * fallbacks are selected before calling this helper; production errors bubble up.
  */
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
-  try {
-    const isServer = typeof window === 'undefined'
-    const fetchInit: RequestInit = {
-      ...init,
-      signal: controller.signal,
-      ...(isServer ? { next: { revalidate: 60 } } : {}),
-    }
-    const res = await fetch(`${API_URL}${path}`, fetchInit)
-    if (!res.ok) {
-      throw new ApiError({
-        status: res.status,
-        code: `HTTP_${res.status}`,
-        message: `HTTP ${res.status}`,
-      })
-    }
-    return (await res.json()) as T
-  } catch (error) {
-    if (controller.signal.aborted) {
-      const timeout = new Error(`timed out after ${API_TIMEOUT_MS}ms`)
-      reportError(timeout, { kind: 'rpc-timeout', context: { target: 'api' } })
-      throw timeout
-    }
-    throw error
-  } finally {
-    clearTimeout(timer)
-  }
+  return apiGet<T>(path, init)
 }
 
 /** Alias for request helper (#587) */
 export const apiFetch = request
 
+/**
+ * Maps a backend project row onto the app's `Project` shape.
+ *
+ * The backend reports scores and telemetry; presentation fields that only exist
+ * on-chain or in the bundled fixtures come from the local project, so a live
+ * backend fills in the scores without losing names and funding copy.
+ */
+export function mapBackendProject(raw: BackendProject, fallback?: Project): Project {
+  const credit = Number(raw.credit_quality)
+  const green = Number(raw.green_impact)
+  if (!fallback) {
+    return {
+      id: raw.id,
+      name: `Bond Project #${raw.id}`,
+      location: 'Stellar Network',
+      type: 'Solar',
+      credit,
+      green,
+      funded: '$0',
+      fundedAmount: 0,
+      fundingGoal: 0,
+      status: 'open',
+      priceHistory: [],
+    }
+  }
+  return {
+    ...fallback,
+    id: raw.id,
+    credit: Number.isFinite(credit) ? credit : fallback.credit,
+    green: Number.isFinite(green) ? green : fallback.green,
+  }
+}
+
 export interface ProjectWithDetail {
   project: Project
   detail: ProjectDetail
   verifiedMetadata?: boolean
-}
-
-export interface Investment {
-  id: number
-  projectId: number
-  amount: number
-  projectUrl: string
-  // Add other fields as needed
 }
 
 export interface PaginatedProjectsResponse {
@@ -125,18 +133,17 @@ export async function getProjectsPaginated(
   }
 
   try {
-    const data = await request<unknown>(`/projects?page=${page}&limit=${pageSize}`)
-    if (Array.isArray(data)) {
-      const start = (page - 1) * pageSize
-      return {
-        projects: data.slice(start, start + pageSize),
-        total: data.length,
-        page,
-        pageSize,
-        hasMore: start + pageSize < data.length,
-      }
+    // The backend paginates with a cursor; the page number maps to an offset.
+    const offset = (page - 1) * pageSize
+    const data = await fetchBackendProjects(offset, pageSize)
+    const projects = data.projects.map((row) => mapBackendProject(row, selectProjectById(row.id)))
+    return {
+      projects,
+      total: data.filtered_total ?? data.projects.length,
+      page,
+      pageSize,
+      hasMore: data.cursor !== undefined,
     }
-    return data as PaginatedProjectsResponse
   } catch (error) {
     if (error instanceof ApiError) throw error
     throw new ApiError({ cause: error, message: 'Failed to fetch projects' })
@@ -150,7 +157,8 @@ export async function getProjects(): Promise<Project[]> {
   }
   if (isDemoMode()) return selectProjects()
   try {
-    return await request<Project[]>(`/projects`)
+    const data = await fetchBackendProjects(0, 100)
+    return data.projects.map((row) => mapBackendProject(row, selectProjectById(row.id)))
   } catch (error) {
     if (error instanceof ApiError) throw error
     throw new ApiError({ cause: error, message: 'Failed to fetch projects' })
@@ -178,51 +186,16 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
   }
 
   try {
-    return await request<ProjectWithDetail>(`/projects/${id}`)
-  } catch (error) {
-    if (error instanceof ApiError) throw error
-    throw new ApiError({ cause: error, message: `Failed to fetch project ${id}` })
-  }
-}
-
-export async function createInvestment(input: {
-  projectId: number
-  amount: number
-}): Promise<Investment> {
-  // Reject invalid input up front (#432) — projectId must be a positive
-  // integer and amount a positive finite number.
-  if (
-    !Number.isInteger(input.projectId) ||
-    input.projectId < 1 ||
-    !Number.isFinite(input.amount) ||
-    input.amount <= 0
-  ) {
-    throw new Error('Invalid investment input')
-  }
-  const mockInvestment = (): Investment => ({
-    id: Math.floor(Math.random() * 100000) + 1,
-    projectId: input.projectId,
-    amount: input.amount,
-    projectUrl: `/projects/${input.projectId}`,
-  })
-
-  if (isDemoMode()) {
-    return mockInvestment()
-  }
-
-  try {
-    const data = await request<Investment>('/investments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    })
+    const raw = await fetchBackendProject(id)
+    if (!raw) return null
     return {
-      ...data,
-      projectUrl: `/projects/${encodeURIComponent(input.projectId)}`,
+      project: mapBackendProject(raw, mockProject),
+      detail: mockDetail ?? ({ id } as unknown as ProjectDetail),
+      verifiedMetadata: false,
     }
   } catch (error) {
     if (error instanceof ApiError) throw error
-    throw new ApiError({ cause: error, message: 'Failed to create investment' })
+    throw new ApiError({ cause: error, message: `Failed to fetch project ${id}` })
   }
 }
 
@@ -252,6 +225,14 @@ export interface PricePoint {
   yield?: number
 }
 
+/**
+ * Chart points for a project.
+ *
+ * Sourced from `GET /v1/projects/:id/history`, which reports impact-score
+ * snapshots. This replaces the mocked `/price-history` endpoint the backend
+ * never implemented (#588). Demo mode still synthesises points so the chart has
+ * something to draw without a backend.
+ */
 export async function getPriceHistory(projectId: number): Promise<PricePoint[]> {
   const makeMock = (): PricePoint[] => {
     const basePrice = 95 + projectId * 5
@@ -269,9 +250,8 @@ export async function getPriceHistory(projectId: number): Promise<PricePoint[]> 
 
   if (isDemoMode()) return makeMock()
   try {
-    const data = await request<PricePoint[]>(`/projects/${projectId}/price-history`)
-    // Sort ascending by date to ensure chronological order for charting
-    return data.sort((a, b) => a.date.localeCompare(b.date))
+    const history = await fetchBackendHistory(projectId)
+    return historyToPricePoints(history.entries)
   } catch (error) {
     if (error instanceof ApiError) throw error
     throw new ApiError({
@@ -280,3 +260,10 @@ export async function getPriceHistory(projectId: number): Promise<PricePoint[]> 
     })
   }
 }
+
+/**
+ * On-chain vault position for an address, from `GET /v1/portfolio/:address`.
+ * Exposed so screens can reach the backend portfolio when one is configured;
+ * the Soroban vault remains the source of truth for balances (#588).
+ */
+export { fetchBackendPortfolio }

@@ -159,7 +159,8 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
   })
 
   it('ignores results from a request after its effect is cleaned up', async () => {
-    let resolvePortfolio: ((value: Awaited<ReturnType<typeof vault.fetchPortfolio>>) => void) | undefined
+    let resolvePortfolio:
+      ((value: Awaited<ReturnType<typeof vault.fetchPortfolio>>) => void) | undefined
     vi.mocked(vault.fetchPortfolio).mockReturnValue(
       new Promise((resolve) => {
         resolvePortfolio = resolve

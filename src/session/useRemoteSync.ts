@@ -44,14 +44,20 @@ export function useRemoteSync<T>({
   const authedFetch = session?.authedFetch ?? unavailable
   const path = `/me/${resource}`
 
+  // Callers pass fresh closures every render. The effects below must not
+  // re-subscribe when only those identities change, so they read the latest
+  // value through refs. Synced after commit, never written during render.
   const valueRef = useRef(value)
-  valueRef.current = value
   const applyRef = useRef(apply)
-  applyRef.current = apply
   const mergeRef = useRef(merge)
-  mergeRef.current = merge
   const equalRef = useRef(isEqual)
-  equalRef.current = isEqual
+
+  useEffect(() => {
+    valueRef.current = value
+    applyRef.current = apply
+    mergeRef.current = merge
+    equalRef.current = isEqual
+  })
 
   // What the server is known to hold; null until the initial pull for this session.
   const remoteValue = useRef<T | null>(null)

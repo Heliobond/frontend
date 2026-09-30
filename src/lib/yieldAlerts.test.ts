@@ -1,9 +1,13 @@
 // Unit tests for yield alerts module
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   readAlerts,
   writeAlerts,
+  getAlerts,
+  getServerAlerts,
+  setAlerts,
+  subscribeAlerts,
   getEffectiveYield,
   evaluateAlerts,
   generateAlertId,
@@ -56,7 +60,14 @@ describe('yieldAlerts', () => {
 
     it('should filter out invalid alert objects', () => {
       const stored = [
-        { id: '1', bondId: 1, bondName: 'Test', threshold: 5, operator: 'above', createdAt: '2024-01-01' },
+        {
+          id: '1',
+          bondId: 1,
+          bondName: 'Test',
+          threshold: 5,
+          operator: 'above',
+          createdAt: '2024-01-01',
+        },
         { invalid: 'object' }, // missing required fields
         { id: '2', bondId: 2, threshold: 3, operator: 'below', createdAt: '2024-01-02' }, // missing bondName (optional)
       ]
@@ -313,6 +324,77 @@ describe('yieldAlerts', () => {
       const triggered = evaluateAlerts(alerts, mockProjects)
       expect(triggered).toHaveLength(2)
       expect(triggered.map((t) => t.alert.id)).toEqual(['alert-1', 'alert-2'])
+    })
+  })
+
+  describe('alerts store', () => {
+    const alert = (id: string): YieldAlert => ({
+      id,
+      bondId: 1,
+      bondName: 'Sokoto Solar',
+      threshold: 5,
+      operator: 'above',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    })
+
+    it('reports no alerts on the server so hydration matches', () => {
+      expect(getServerAlerts()).toEqual([])
+    })
+
+    it('notifies subscribers when the list is replaced', () => {
+      const listener = vi.fn()
+      const unsubscribe = subscribeAlerts(listener)
+      setAlerts([alert('a')])
+      expect(listener).toHaveBeenCalledTimes(1)
+      expect(getAlerts()).toHaveLength(1)
+      unsubscribe()
+    })
+
+    it('persists a replaced list to storage', () => {
+      const unsubscribe = subscribeAlerts(() => {})
+      setAlerts([alert('a')])
+      expect(readAlerts().map((a) => a.id)).toEqual(['a'])
+      unsubscribe()
+    })
+
+    it('keeps the snapshot referentially stable between writes', () => {
+      const unsubscribe = subscribeAlerts(() => {})
+      const first = getAlerts()
+      expect(getAlerts()).toBe(first)
+      unsubscribe()
+    })
+
+    it('reads the stored list on first subscribe', () => {
+      writeAlerts([alert('stored')])
+      const unsubscribe = subscribeAlerts(() => {})
+      expect(getAlerts().map((a) => a.id)).toEqual(['stored'])
+      unsubscribe()
+    })
+
+    it('picks up a change made in another tab', () => {
+      const listener = vi.fn()
+      const unsubscribe = subscribeAlerts(listener)
+      writeAlerts([alert('remote')])
+      window.dispatchEvent(new StorageEvent('storage', { key: YIELD_ALERTS_STORAGE_KEY }))
+      expect(listener).toHaveBeenCalled()
+      expect(getAlerts().map((a) => a.id)).toEqual(['remote'])
+      unsubscribe()
+    })
+
+    it('ignores storage events for unrelated keys', () => {
+      const listener = vi.fn()
+      const unsubscribe = subscribeAlerts(listener)
+      window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated-key' }))
+      expect(listener).not.toHaveBeenCalled()
+      unsubscribe()
+    })
+
+    it('stops notifying after unsubscribe', () => {
+      const listener = vi.fn()
+      const unsubscribe = subscribeAlerts(listener)
+      unsubscribe()
+      setAlerts([alert('a')])
+      expect(listener).not.toHaveBeenCalled()
     })
   })
 

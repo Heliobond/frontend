@@ -88,7 +88,10 @@ async function settle<T>(run: Promise<T>): Promise<T> {
     (v) => ({ ok: true as const, v }),
     (e: unknown) => ({ ok: false as const, e }),
   )
-  for (let i = 0; i < 20; i++) await vi.advanceTimersByTimeAsync(2000)
+  // Drain the submission polling loop, including the timers it schedules while
+  // running. A fixed advance budget could run out on a loaded CI runner and
+  // leave the promise pending, hanging the test instead of failing it (#596).
+  await vi.runAllTimersAsync()
   const res = await guarded
   if (!res.ok) throw res.e
   return res.v
@@ -105,18 +108,29 @@ beforeEach(() => {
     clear: () => storage.clear(),
   })
   vi.useFakeTimers()
-  rpcMock.simulateTransaction.mockReset().mockImplementation((tx: any) => {
+  rpcMock.simulateTransaction.mockReset().mockImplementation((tx: Transaction) => {
     const op = tx?.operations?.[0]
-    if (op && op.type === 'invokeHostFunction') {
+    if (op && 'func' in op) {
       const call = op.func.invokeContract()
       const method = call.functionName().toString()
-      if (method === 'convert_to_assets') return Promise.resolve(okSimulation(nativeToScVal(10_058_000n, { type: 'i128' })))
+      if (method === 'convert_to_assets')
+        return Promise.resolve(okSimulation(nativeToScVal(10_058_000n, { type: 'i128' })))
       if (method === 'get_portfolio') {
         const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' })
-        return Promise.resolve(okSimulation(xdr.ScVal.scvMap([
-          new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('shares'), val: i128(100000_000_000n) }),
-          new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('usdc_value'), val: i128(100000_000_000n) })
-        ])))
+        return Promise.resolve(
+          okSimulation(
+            xdr.ScVal.scvMap([
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol('shares'),
+                val: i128(100000_000_000n),
+              }),
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol('usdc_value'),
+                val: i128(100000_000_000n),
+              }),
+            ]),
+          ),
+        )
       }
     }
     return Promise.resolve(okSimulation())
@@ -226,17 +240,27 @@ describe('signed transactions', () => {
 
   it('withdraw(shares_amount: i128, min_usdc_return: i128) fetches live price and clamps', async () => {
     const vault = await loadVault()
-    rpcMock.simulateTransaction.mockImplementation((tx: any) => {
-      const op = tx.operations[0]
+    rpcMock.simulateTransaction.mockImplementation((tx: Transaction) => {
+      // Only invoke-contract operations reach this path.
+      const op = tx.operations.find((candidate) => 'func' in candidate)
+      if (!op || !('func' in op)) throw new Error('expected an invoke-contract operation')
       const call = op.func.invokeContract()
       const method = call.functionName().toString()
-      if (method === 'convert_to_assets') return Promise.resolve(okSimulation(nativeToScVal(10_500_000n, { type: 'i128' }))) // 1.05 price
+      if (method === 'convert_to_assets')
+        return Promise.resolve(okSimulation(nativeToScVal(10_500_000n, { type: 'i128' }))) // 1.05 price
       if (method === 'get_portfolio') {
         const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' })
-        return Promise.resolve(okSimulation(xdr.ScVal.scvMap([
-          new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('shares'), val: i128(150_000_000n) }), // 15 shares max
-          new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('usdc_value'), val: i128(157_500_000n) })
-        ])))
+        return Promise.resolve(
+          okSimulation(
+            xdr.ScVal.scvMap([
+              new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('shares'), val: i128(150_000_000n) }), // 15 shares max
+              new xdr.ScMapEntry({
+                key: xdr.ScVal.scvSymbol('usdc_value'),
+                val: i128(157_500_000n),
+              }),
+            ]),
+          ),
+        )
       }
       return Promise.resolve(okSimulation())
     })
@@ -251,10 +275,7 @@ describe('signed transactions', () => {
       contract: CONTRACT_ID,
       method: 'withdraw',
       argTypes: ['scvI128', 'scvI128'],
-      args: [
-        150_000_000n,
-        BigInt(Math.floor(15.75 * 0.995 * 1e7)),
-      ],
+      args: [150_000_000n, BigInt(Math.floor(15.75 * 0.995 * 1e7))],
     })
   })
 
@@ -568,8 +589,10 @@ describe('view calls', () => {
   describe('fetchVaultLimits', () => {
     it('fetches and scales vault limits from the contract', async () => {
       const vault = await loadVault()
-      rpcMock.simulateTransaction.mockImplementation((tx: any) => {
-        const op = tx.operations[0]
+      rpcMock.simulateTransaction.mockImplementation((tx: Transaction) => {
+        // Only invoke-contract operations reach `fetchVaultLimits`.
+        const op = tx.operations.find((candidate) => 'func' in candidate)
+        if (!op || !('func' in op)) throw new Error('expected an invoke-contract operation')
         const call = op.func.invokeContract()
         const method = call.functionName().toString()
         if (method === 'is_paused') return Promise.resolve(okSimulation(xdr.ScVal.scvBool(true)))
