@@ -1,9 +1,28 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { Helio } from '../brand/Helio'
 import { reportError } from '../lib/errorReporting'
+import { useHorizonHealth } from '../hooks/useHorizonHealth'
+
+/** `navigator.onLine`, read through the browser's `online`/`offline` events. */
+function subscribeBrowserOnline(onChange: () => void) {
+  window.addEventListener('online', onChange)
+  window.addEventListener('offline', onChange)
+  return () => {
+    window.removeEventListener('online', onChange)
+    window.removeEventListener('offline', onChange)
+  }
+}
+
+function getBrowserOnline() {
+  return typeof navigator === 'undefined' ? true : navigator.onLine
+}
+
+function useBrowserOnline() {
+  return useSyncExternalStore(subscribeBrowserOnline, getBrowserOnline, () => true)
+}
 
 /**
  * App-level error boundary - runtime errors in any route segment bubble here
@@ -19,10 +38,13 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const isOffline = useMemo(
-    () => /stellar|offline|network|connection|sync/i.test(error.message ?? ''),
-    [error.message],
-  )
+  // Offline is a connectivity fact, not a guess from the message text. The
+  // Horizon poller tracks reachability; `navigator.onLine` covers a hard drop
+  // before the poller notices. Generic production error messages ("An error
+  // occurred") no longer get mislabelled as a Stellar outage.
+  const { isOnline } = useHorizonHealth()
+  const browserOnline = useBrowserOnline()
+  const isOffline = !isOnline || !browserOnline
 
   useEffect(() => {
     console.error('[Heliobond] unhandled error:', error)
@@ -150,7 +172,7 @@ export default function GlobalError({
             transition: 'background var(--dur-press) var(--ease-out)',
           }}
         >
-          {isOffline ? 'View cached views' : 'Go home'}
+          Go home
         </Link>
       </div>
     </main>
