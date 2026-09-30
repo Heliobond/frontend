@@ -67,8 +67,10 @@ export function ProjectDetailClient({ id, initialData }: ProjectDetailClientProp
       detail={data.detail}
       verifiedMetadata={data.verifiedMetadata}
       onInvest={() => {
-        router.push('/connect')
-        return Promise.resolve('/connect')
+        // #641: Always go to /deposit — RequireWallet redirects to /connect
+        // with ?next= when the wallet is not connected, so the user returns
+        // here after connecting.
+        router.push(`/deposit?project=${id}`)
       }}
       onBack={() => router.push('/explore')}
     >
