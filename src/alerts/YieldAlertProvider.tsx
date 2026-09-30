@@ -18,6 +18,7 @@ import {
   type YieldAlert,
   type AlertOperator,
 } from '../lib/yieldAlerts'
+import { useTranslations } from 'next-intl'
 import { useToast } from '../components/Toast'
 import { selectProjects } from '../state/selectors'
 import { useRemoteSync } from '../session/useRemoteSync'
@@ -58,6 +59,7 @@ const EVAL_INTERVAL_MS = 60_000
 export function YieldAlertProvider({ children }: { children: ReactNode }) {
   const [alerts, setAlerts] = useState<YieldAlert[]>([])
   const { toast } = useToast()
+  const tYield = useTranslations('YieldAlert')
   const alertsRef = useRef(alerts)
   alertsRef.current = alerts
 
@@ -100,7 +102,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       if (current.length === 0) return
 
       const projects = selectProjects()
-      const triggered = evaluateAlerts, updateAlertStates(current, projects)
+      const triggered = evaluateAlerts(current, projects)
 
       if (triggered.length === 0) {
         // Even with no triggers, update lastState so crossings are detected.
