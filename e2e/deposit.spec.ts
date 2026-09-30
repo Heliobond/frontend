@@ -98,4 +98,31 @@ test.describe('Deposit flow — demo mode smoke test', () => {
 
     await expect(page.getByRole('button', { name: /invest 100 usdc/i })).toBeVisible()
   })
+
+  test('validates memo length and blocks 100-character memo before sending', async ({ page }) => {
+    await seedDemoWallet(page)
+    await page.goto('/deposit')
+
+    const memoInput = page.getByPlaceholder('Up to 28 bytes')
+    await expect(memoInput).toBeVisible()
+
+    // Enter a 100-character memo
+    await memoInput.fill('a'.repeat(100))
+
+    // Validation error should be visible
+    await expect(page.getByText('Memo cannot exceed 28 bytes (currently 100 bytes).')).toBeVisible()
+
+    // Invest button should be disabled with reason
+    const investBtn = page.getByRole('button', { name: /invest/i }).first()
+    await expect(investBtn).toBeDisabled()
+
+    // Now enter a valid memo <= 28 bytes
+    await memoInput.fill('valid-memo-123')
+    await expect(page.getByText('Memo cannot exceed 28 bytes')).not.toBeVisible()
+    await expect(investBtn).toBeEnabled()
+
+    // Proceed to review and verify memo is shown
+    await investBtn.click()
+    await expect(page.getByText('valid-memo-123')).toBeVisible()
+  })
 })

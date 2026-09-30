@@ -18,6 +18,9 @@ Heliobond backend.
 | `network_error`           | The frontend could not reach the API, RPC, or wallet provider.       | Check connectivity and retry.                            |
 | `simulation_failed`       | Soroban transaction simulation failed before submission.             | Retry; if it repeats, inspect the contract/RPC response. |
 | `tx_failed`               | Submitted transaction failed or was rejected.                        | Review wallet details and retry.                         |
+| `memo_too_long`           | Stellar text memo exceeds protocol 28-byte limit.                    | Shorten the memo to 28 bytes or fewer.                   |
+| `invalid_memo`            | Memo format or length does not match expected memo type.             | Check memo format and length.                            |
+| `tx_malformed`            | Transaction format or operation parameters are invalid.              | Verify inputs and retry.                                 |
 | `slippage_limit_exceeded` | Price moved past the slippage tolerance.                             | Refresh the quote and retry.                             |
 
 ## API Codes

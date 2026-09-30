@@ -17,6 +17,17 @@ export const ERROR_CODE_MAP: Record<string, string> = {
   stellar_unreachable: 'Cannot reach Stellar network - showing cached data.',
   simulation_failed: 'Could not estimate the transaction - please try again.',
   tx_failed: 'Transaction did not go through - please try again.',
+  memo_too_long: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+  err_memo_too_long: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+  memo_length_exceeded: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+  invalid_memo: 'Invalid memo — text memos must be 28 bytes or fewer.',
+  tx_malformed: 'Transaction malformed — please check your transaction inputs and memo.',
+  op_malformed: 'Transaction operation malformed — please check your inputs.',
+  invalid_address: 'Invalid Stellar address — please check the address for typos.',
+  invalid_destination: 'Invalid destination address — please check the address for typos.',
+  invalid_public_key: 'Invalid public key — please check the address for typos.',
+  invalid_stellar_address: 'Invalid Stellar address — please check the address for typos.',
+  address_checksum_failed: 'Invalid Stellar address checksum — please check for typos.',
   internal_server_error: 'We are having trouble right now - please try again shortly.',
   server_error: 'We are having trouble right now - please try again shortly.',
   internal_error: 'Something went wrong on our side - please try again.',
@@ -30,6 +41,8 @@ export const ERROR_CODE_MAP: Record<string, string> = {
 const FALLBACK_MESSAGE = 'Something went wrong - please try again.'
 
 const STELLAR_UNREACHABLE_MESSAGE = ERROR_CODE_MAP.stellar_unreachable
+const MEMO_TOO_LONG_MESSAGE = ERROR_CODE_MAP.memo_too_long
+const INVALID_ADDRESS_MESSAGE = ERROR_CODE_MAP.invalid_address
 
 // Keywords that indicate a network connectivity issue with the Stellar node.
 const NETWORK_ERROR_PATTERNS = [
@@ -59,6 +72,33 @@ const NETWORK_ERROR_PATTERNS = [
   'aborted',
   'abort',
 ]
+
+function looksLikeMemoError(message: string): boolean {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes('memo') &&
+    (lower.includes('too long') ||
+      lower.includes('length') ||
+      lower.includes('exceed') ||
+      lower.includes('28') ||
+      lower.includes('byte') ||
+      lower.includes('malformed'))
+  )
+}
+
+function looksLikeAddressError(message: string): boolean {
+  const lower = message.toLowerCase()
+  return (
+    (lower.includes('stellar') ||
+      lower.includes('destination') ||
+      lower.includes('public key') ||
+      lower.includes('address')) &&
+    (lower.includes('checksum') ||
+      lower.includes('typo') ||
+      lower.includes('must start with g') ||
+      lower.includes('invalid stellar public address'))
+  )
+}
 
 export function normalizeCode(code: string): string {
   return code
@@ -104,6 +144,16 @@ export function getFriendlyErrorMessage(codeOrMessage: string): string {
   if (contractMessage) return contractMessage
   const normalized = normalizeCode(codeOrMessage)
   if (ERROR_CODE_MAP[normalized]) return ERROR_CODE_MAP[normalized]
+
+  // If the error message describes a memo issue, return a clear memo error.
+  if (looksLikeMemoError(codeOrMessage)) {
+    return MEMO_TOO_LONG_MESSAGE
+  }
+
+  // If the error message describes an address or public key issue, return a clear address error.
+  if (looksLikeAddressError(codeOrMessage)) {
+    return INVALID_ADDRESS_MESSAGE
+  }
 
   // If the error looks like a network/connection issue, degrade gracefully.
   if (looksLikeNetworkError(codeOrMessage)) {

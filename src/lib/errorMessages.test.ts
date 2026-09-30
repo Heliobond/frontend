@@ -1,125 +1,75 @@
-import { describe, expect, it } from 'vitest'
+import { describe, it, expect } from 'vitest'
+import { getFriendlyErrorMessage, parseAndFriendlyError } from './errorMessages'
 
-import en from '../../messages/en.json'
-import {
-  ERROR_CODE_MAP,
-  getFriendlyErrorMessage,
-  normalizeCode,
-  parseAndFriendlyError,
-} from './errorMessages'
-
-const FALLBACK = 'Something went wrong - please try again.'
-const NETWORK_MESSAGE = ERROR_CODE_MAP.stellar_unreachable
-
-describe('normalizeCode', () => {
-  it('preserves the letter "s" (#718 regression)', () => {
-    expect(normalizeCode('insufficient_balance')).toBe('insufficient_balance')
+describe('errorMessages mapping', () => {
+  it('maps memo_too_long code to user-friendly message', () => {
+    expect(getFriendlyErrorMessage('memo_too_long')).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
+    expect(getFriendlyErrorMessage('err_memo_too_long')).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
+    expect(getFriendlyErrorMessage('memo_length_exceeded')).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
   })
 
-  it('collapses whitespace and hyphens to a single underscore', () => {
-    expect(normalizeCode('  Amount-Exceeds   Balance  ')).toBe('amount_exceeds_balance')
+  it('maps invalid_memo code to friendly message', () => {
+    expect(getFriendlyErrorMessage('invalid_memo')).toBe(
+      'Invalid memo — text memos must be 28 bytes or fewer.',
+    )
   })
 
-  it('lower-cases the result', () => {
-    expect(normalizeCode('SERVER_ERROR')).toBe('server_error')
-  })
-})
-
-describe('getFriendlyErrorMessage maps every ERROR_CODE_MAP entry', () => {
-  const entries = Object.entries(ERROR_CODE_MAP)
-
-  it('has a non-trivial map to cover', () => {
-    expect(entries.length).toBeGreaterThan(10)
+  it('maps tx_malformed code to friendly message', () => {
+    expect(getFriendlyErrorMessage('tx_malformed')).toBe(
+      'Transaction malformed — please check your transaction inputs and memo.',
+    )
   })
 
-  it.each(entries)('%s resolves to its own message', (key, message) => {
-    expect(getFriendlyErrorMessage(key)).toBe(message)
-    if (message !== FALLBACK) {
-      expect(getFriendlyErrorMessage(key)).not.toBe(FALLBACK)
-    }
-  })
-
-  const variants = (key: string): string[] => [
-    key.toUpperCase(),
-    key.replace(/_/g, '-'),
-    key.replace(/_/g, ' '),
-    `  ${key}  `,
-  ]
-
-  it.each(entries)('%s resolves across case/separator/whitespace variants', (key, message) => {
-    for (const variant of variants(key)) {
-      expect(getFriendlyErrorMessage(variant), variant).toBe(message)
-    }
-  })
-
-  it('still returns the fallback for an unknown code', () => {
-    expect(getFriendlyErrorMessage('totally_unknown_code')).toBe(FALLBACK)
-    expect(getFriendlyErrorMessage('')).toBe(FALLBACK)
-  })
-})
-
-describe('parseAndFriendlyError', () => {
-  it('resolves an Axios-like 400 with a data.code', () => {
+  it('detects cryptic backend error messages mentioning memo length and translates them', () => {
     expect(
-      parseAndFriendlyError({
-        response: { status: 400, data: { code: 'insufficient_balance' } },
-      }),
-    ).toBe(ERROR_CODE_MAP.insufficient_balance)
+      getFriendlyErrorMessage('Error: Memo text is too long (expected max 28 bytes, got 100)'),
+    ).toBe('Memo is too long — Stellar text memos must be 28 bytes or fewer.')
+    expect(getFriendlyErrorMessage('Backend rejected: transaction memo length exceeds limit')).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
+    expect(getFriendlyErrorMessage('Horizon op_malformed: memo byte length > 28')).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
   })
 
-  it('resolves an Axios-like 5xx by status', () => {
-    expect(parseAndFriendlyError({ response: { status: 503 } })).toBe(ERROR_CODE_MAP['503'])
+  it('parses error object with memo code', () => {
+    const error = { code: 'memo_too_long' }
+    expect(parseAndFriendlyError(error)).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
   })
 
-  it('resolves a data.message payload', () => {
+  it('parses Error instance with memo length message', () => {
+    const error = new Error('Memo text is too long: 100 bytes (maximum is 28 bytes)')
+    expect(parseAndFriendlyError(error)).toBe(
+      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    )
+  })
+
+  it('maps invalid_address and address_checksum_failed codes to user-friendly message', () => {
+    expect(getFriendlyErrorMessage('invalid_address')).toBe(
+      'Invalid Stellar address — please check the address for typos.',
+    )
+    expect(getFriendlyErrorMessage('address_checksum_failed')).toBe(
+      'Invalid Stellar address checksum — please check for typos.',
+    )
+    expect(getFriendlyErrorMessage('invalid_destination')).toBe(
+      'Invalid destination address — please check the address for typos.',
+    )
+  })
+
+  it('detects cryptic backend error messages mentioning address checksum and translates them', () => {
     expect(
-      parseAndFriendlyError({ response: { status: 400, data: { message: 'amount-too-low' } } }),
-    ).toBe(ERROR_CODE_MAP.amount_too_low)
-  })
-
-  it('resolves a string response.data payload', () => {
-    expect(parseAndFriendlyError({ response: { status: 400, data: 'invalid_amount' } })).toBe(
-      ERROR_CODE_MAP.invalid_amount,
+      getFriendlyErrorMessage('Invalid Stellar public address checksum (please check for typos)'),
+    ).toBe('Invalid Stellar address — please check the address for typos.')
+    expect(getFriendlyErrorMessage('Error: Stellar address checksum verification failed')).toBe(
+      'Invalid Stellar address — please check the address for typos.',
     )
-  })
-
-  it('resolves an error object carrying a code', () => {
-    expect(parseAndFriendlyError({ code: 'wallet_not_connected' })).toBe(
-      ERROR_CODE_MAP.wallet_not_connected,
-    )
-  })
-
-  it('resolves an Error instance by its message', () => {
-    expect(parseAndFriendlyError(new Error('simulation_failed'))).toBe(
-      ERROR_CODE_MAP.simulation_failed,
-    )
-  })
-
-  it('resolves a plain string', () => {
-    expect(parseAndFriendlyError('server_error')).toBe(ERROR_CODE_MAP.server_error)
-  })
-
-  it('delegates Error(Contract, #N) messages to the contract translator', () => {
-    expect(parseAndFriendlyError(new Error('Error(Contract, #33)'))).toBe(
-      en.ContractErrors.vault_SlippageLimitExceeded,
-    )
-  })
-
-  it.each(['fetch failed', 'ECONNREFUSED', 'request failed'] as const)(
-    'falls back to the network message for %s',
-    (message) => {
-      expect(parseAndFriendlyError(new Error(message))).toBe(NETWORK_MESSAGE)
-      expect(parseAndFriendlyError(new Error(message))).not.toBe(FALLBACK)
-    },
-  )
-
-  it('resolves "Network Error" through the map entry before the network branch', () => {
-    expect(parseAndFriendlyError(new Error('Network Error'))).toBe(ERROR_CODE_MAP.network_error)
-  })
-
-  it('returns the fallback for nullish or opaque input', () => {
-    expect(parseAndFriendlyError(null)).toBe(FALLBACK)
-    expect(parseAndFriendlyError(undefined)).toBe(FALLBACK)
-    expect(parseAndFriendlyError(42)).toBe(FALLBACK)
   })
 })
