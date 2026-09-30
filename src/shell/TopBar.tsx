@@ -588,6 +588,14 @@ function WalletMenu({
 
   const [open, setOpen] = useState(false)
   const [confirming, setConfirming] = useState(false)
+
+  // Closing the menu resets the confirm step. Adjusting during render is React's
+  // sanctioned way to reset state for a changed prop (#598).
+  const [wasMenuOpen, setWasMenuOpen] = useState(false)
+  if (wasMenuOpen !== open) {
+    setWasMenuOpen(open)
+    if (!open) setConfirming(false)
+  }
   const [copied, setCopied] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -619,19 +627,18 @@ function WalletMenu({
   }, [open])
 
   useEffect(() => {
-    if (!open) {
-      setConfirming(false)
-      if (cancelTimerRef.current) {
-        clearTimeout(cancelTimerRef.current)
-        cancelTimerRef.current = null
+    if (open) {
+      const onDown = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
       }
-      return
+      document.addEventListener('mousedown', onDown)
+      return () => document.removeEventListener('mousedown', onDown)
     }
-    const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    // Closing cancels a pending confirm-reset so it cannot fire on a later open.
+    if (cancelTimerRef.current) {
+      clearTimeout(cancelTimerRef.current)
+      cancelTimerRef.current = null
     }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
   const copy = async () => {

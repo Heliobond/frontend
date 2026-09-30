@@ -115,7 +115,9 @@ describe('recurringInvestments', () => {
       const dispatchSpy = vi.spyOn(window, 'dispatchEvent')
       const plans: RecurringInvestmentPlan[] = []
       writeRecurringInvestments(plans)
-      expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: RECURRING_CHANGED_EVENT }))
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: RECURRING_CHANGED_EVENT }),
+      )
     })
 
     it('should handle write errors gracefully (no-op)', () => {
@@ -193,7 +195,9 @@ describe('recurringInvestments', () => {
     it('should dispatch RECURRING_CHANGED_EVENT after save', () => {
       const dispatchSpy = vi.spyOn(window, 'dispatchEvent')
       saveRecurringInvestment({ bondId: '1', amount: 100, dayOfMonth: 15 })
-      expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: RECURRING_CHANGED_EVENT }))
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ type: RECURRING_CHANGED_EVENT }),
+      )
     })
 
     it('should return the plan even in SSR context (window undefined)', () => {

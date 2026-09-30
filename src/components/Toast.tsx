@@ -12,6 +12,14 @@ import { CloseIcon } from './icons'
 
 export type ToastTone = 'neutral' | 'success' | 'error' | 'solar'
 
+// Maps toast tones to accessible status labels for colorblind users (#464)
+const TONE_LABELS: Record<ToastTone, string> = {
+  neutral: 'Info',
+  success: 'Success',
+  error: 'Error',
+  solar: 'Warning',
+}
+
 export interface ToastProps {
   tone?: ToastTone
   title?: string
@@ -46,6 +54,9 @@ export function Toast({
     ? (title ?? (typeof message === 'string' ? message : undefined))
     : undefined
 
+  // Status label for accessibility - shown to screen readers and colorblind users (#464)
+  const statusLabel = TONE_LABELS[tone]
+
   const content = (
     <>
       <span
@@ -67,9 +78,63 @@ export function Toast({
               fontSize: 'var(--type-data)',
               color: 'var(--ink)',
               marginBottom: message ? 2 : 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
-            {title}
+            <span>{title}</span>
+            <span
+              style={{
+                display: 'inline-flex',
+                fontSize: '0.75em',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                padding: '2px 6px',
+                backgroundColor: accent,
+                color: 'white',
+                borderRadius: '3px',
+                opacity: 0.7,
+                textTransform: 'uppercase',
+                flex: '0 0 auto',
+              }}
+              aria-label={`Status: ${statusLabel}`}
+            >
+              {statusLabel}
+            </span>
+          </div>
+        )}
+        {!title && (
+          <div
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              fontSize: 'var(--type-data)',
+              color: 'var(--ink)',
+              marginBottom: message ? 2 : 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                fontSize: '0.85em',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                padding: '2px 6px',
+                backgroundColor: accent,
+                color: 'white',
+                borderRadius: '3px',
+                opacity: 0.7,
+                textTransform: 'uppercase',
+                flex: '0 0 auto',
+              }}
+              aria-label={`Status: ${statusLabel}`}
+            >
+              {statusLabel}
+            </span>
           </div>
         )}
         {message && (

@@ -1,34 +1,20 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { getPersistedYieldRange, persistYieldRange } from '@/lib/bondUtils'
+import { useSyncExternalStore } from 'react'
+import {
+  getServerYieldRange,
+  getYieldRange,
+  setYieldRange as persistRange,
+  subscribeYieldRange,
+} from '@/lib/bondUtils'
 
+/**
+ * The selected bond yield range. Read through an external store so the first
+ * client render already reflects the persisted value instead of being corrected
+ * by an effect afterwards (#598). Changes in another tab are picked up too.
+ */
 export function useBondFilters() {
-  const [yieldRange, setYieldRangeState] = useState<[number, number]>([0, 15])
-
-  useEffect(() => {
-    setYieldRangeState(getPersistedYieldRange())
-  }, [])
-
-  const setYieldRange = useCallback((range: [number, number]) => {
-    setYieldRangeState(range)
-    persistYieldRange(range)
-  }, [])
-
-  // Persist across tab switches via storage event
-  useEffect(() => {
-    const handler = () => setYieldRangeState(getPersistedYieldRange())
-    window.addEventListener('storage', handler)
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') handler()
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      window.removeEventListener('storage', handler)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [])
-
-  return { yieldRange, setYieldRange }
+  const yieldRange = useSyncExternalStore(subscribeYieldRange, getYieldRange, getServerYieldRange)
+  return { yieldRange, setYieldRange: persistRange }
 }
 
 export default useBondFilters

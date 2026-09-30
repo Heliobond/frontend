@@ -63,3 +63,7 @@ dist/
 
 # e2e: cloned Heliobond/contracts for the local-network journey
 /.e2e
+
+# Local agent tooling, not part of the app.
+AGENTS.md
+CLAUDE.md

@@ -69,13 +69,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<(SessionToken & { address: string }) | null>(null)
   const [signingIn, setSigningIn] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const sessionRef = useRef(session)
+  // Addresses the user already declined/failed to sign for, so we don't nag.
+  const attempted = useRef<Set<string>>(new Set())
+
   const addressRef = useRef(address)
   const isMountedRef = useRef(true)
-
-  useEffect(() => {
-    sessionRef.current = session
-  }, [session])
 
   useEffect(() => {
     addressRef.current = address
@@ -92,8 +90,23 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const sessionEpochRef = useRef(0)
   // Single in-flight refresh promise shared by timer, authedFetch, and connect-time restore.
   const refreshPromiseRef = useRef<Promise<SessionToken> | null>(null)
-  // Addresses the user already declined/failed to sign for, so we don't nag.
-  const attempted = useRef<Set<string>>(new Set())
+
+  /**
+   * The token, but only while it still matches the connected wallet.
+   *
+   * Derived rather than cleared in an effect: when the address changes or the
+   * wallet disconnects the stored token stops being usable immediately, and
+   * nothing renders an authenticated session in the meantime (#598).
+   */
+  const activeSession = session && eligible && session.address === address ? session : null
+
+  // Read by the callbacks below, which must not be re-created per token.
+  // Every write already updates it; this only catches a token invalidated by a
+  // wallet change.
+  const sessionRef = useRef<(SessionToken & { address: string }) | null>(null)
+  useEffect(() => {
+    sessionRef.current = activeSession
+  }, [activeSession])
 
   const clear = useCallback(() => {
     sessionEpochRef.current += 1
@@ -172,11 +185,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await endSession(token)
   }, [clear])
 
-  // Address changed or wallet disconnected: the old token no longer matches.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (session && (!eligible || session.address !== address)) clear()
-  }, [session, eligible, address, clear])
+  // Address changed or wallet disconnected: handled by `activeSession` above,
+  // so the stale token stops being usable without an extra render pass (#598).
 
   // On connect: restore silently via the refresh cookie, else ask for a signature once.
   useEffect(() => {
@@ -200,14 +210,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   // Silent refresh shortly before expiry, with jitter and pause-while-hidden.
   useEffect(() => {
-    if (!session) return
+    // Keyed on the derived session so an invalidated token stops being refreshed.
+    if (!activeSession) return
 
     let timer: ReturnType<typeof setTimeout> | undefined
 
     const scheduleTimer = () => {
       // Small jitter (0-5s) to avoid synchronised refreshes across tabs.
       const jitter = Math.floor(Math.random() * 5_000)
-      const delay = Math.max(session.expiresAt - Date.now() - REFRESH_LEAD_MS - jitter, 5_000)
+      const delay = Math.max(activeSession.expiresAt - Date.now() - REFRESH_LEAD_MS - jitter, 5_000)
 
       timer = setTimeout(async () => {
         if (typeof document !== 'undefined' && document.hidden) {
@@ -224,7 +235,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const onVisibilityChange = () => {
       if (typeof document !== 'undefined' && !document.hidden) {
-        const timeUntilExpiry = session.expiresAt - Date.now()
+        const timeUntilExpiry = activeSession.expiresAt - Date.now()
         if (timeUntilExpiry <= REFRESH_LEAD_MS) {
           void refreshCurrentSession().catch(() => {})
         }
@@ -242,7 +253,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         document.removeEventListener('visibilitychange', onVisibilityChange)
       }
     }
-  }, [session, refreshCurrentSession])
+  }, [activeSession, refreshCurrentSession])
 
   const authedFetch = useCallback<SessionContextValue['authedFetch']>(
     async (path, init) => {
@@ -284,7 +295,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const status: SessionStatus = !configured
     ? 'unavailable'
-    : session
+    : activeSession
       ? 'authenticated'
       : signingIn
         ? 'signing-in'
@@ -293,14 +304,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SessionContextValue>(
     () => ({
       status,
-      address: session?.address ?? null,
+      address: activeSession?.address ?? null,
       isAuthenticated: status === 'authenticated',
       error,
       signIn,
       signOut,
       authedFetch,
     }),
-    [status, session?.address, error, signIn, signOut, authedFetch],
+    [status, activeSession?.address, error, signIn, signOut, authedFetch],
   )
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

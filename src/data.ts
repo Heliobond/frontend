@@ -294,5 +294,5 @@ export const HB_DATA: HeliobondData = {
   },
   projects: INITIAL_PROJECTS,
   activity: [],
-  search: (_query: string) => INITIAL_PROJECTS,
+  search: () => INITIAL_PROJECTS,
 }

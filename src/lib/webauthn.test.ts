@@ -18,12 +18,10 @@ const get = vi.fn()
 const create = vi.fn()
 beforeEach(() => {
   get.mockReset().mockResolvedValue(assertion())
-  create
-    .mockReset()
-    .mockResolvedValue({
-      ...assertion(),
-      response: { attestationObject: buffer(), clientDataJSON: buffer() },
-    })
+  create.mockReset().mockResolvedValue({
+    ...assertion(),
+    response: { attestationObject: buffer(), clientDataJSON: buffer() },
+  })
   vi.stubGlobal('PublicKeyCredential', function () {})
   vi.stubGlobal('navigator', { credentials: { get, create } })
   vi.stubGlobal(

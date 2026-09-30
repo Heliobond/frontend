@@ -1,6 +1,6 @@
 'use client'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ThemeProvider } from '../theme/ThemeProvider'
 import { WalletProvider, useWallet } from '../wallet/WalletProvider'
 import { TransactionsProvider } from '../wallet/TransactionsProvider'
@@ -60,30 +60,18 @@ function SessionWatcher() {
   )
 }
 
-function OfflineBanner() {
-  const { connected } = useWallet()
+/**
+ * Warns that the app is serving cached data: no network, no Stellar node, or a
+ * wallet session that dropped on its own. Exported for tests (#595).
+ */
+export function OfflineBanner() {
+  const { connected, lastDisconnectReason } = useWallet()
   const { isOnline } = useHorizonHealth()
-  const [wasConnected, setWasConnected] = useState(() => {
-    try {
-      return localStorage.getItem('stellar-wallet-connected') === 'true'
-    } catch {
-      return false
-    }
-  })
 
-  useEffect(() => {
-    if (connected) {
-      try {
-        localStorage.setItem('stellar-wallet-connected', 'true')
-      } catch {
-        // ignore storage errors
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setWasConnected(true)
-    }
-  }, [connected])
-
-  const showOffline = !isOnline || (wasConnected && !connected)
+  // A session the user ended on purpose must not raise a false alarm (#595).
+  // An unexpected drop — or a plain network outage — still does.
+  const lostSession = !connected && lastDisconnectReason === 'lost'
+  const showOffline = !isOnline || lostSession
   if (!showOffline) return null
 
   return (

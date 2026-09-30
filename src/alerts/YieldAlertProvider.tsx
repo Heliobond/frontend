@@ -6,15 +6,16 @@ import {
   useContext,
   useEffect,
   useRef,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react'
 import {
-  readAlerts,
-  writeAlerts,
+  getAlerts,
+  getServerAlerts,
+  setAlerts as commitAlerts,
+  subscribeAlerts,
   evaluateAlerts,
   generateAlertId,
-  YIELD_ALERTS_STORAGE_KEY,
   type YieldAlert,
   type AlertOperator,
 } from '../lib/yieldAlerts'
@@ -50,34 +51,29 @@ export function useYieldAlerts(): YieldAlertContextValue {
 const EVAL_INTERVAL_MS = 60_000
 
 /**
- * Holds the yield alert state and mirrors it to localStorage. Starts empty
- * on the server and first client render to avoid hydration mismatch, then
- * hydrates from storage on mount. Evaluates alerts on mount and every 60s,
- * firing toasts for triggered ones.
+ * Holds the yield alert state and mirrors it to localStorage. The list is read
+ * through an external store, so the first client render already matches the
+ * server HTML and no hydration pass is needed. Evaluates alerts on mount and
+ * every 60s, firing toasts for triggered ones.
  */
 export function YieldAlertProvider({ children }: { children: ReactNode }) {
-  const [alerts, setAlerts] = useState<YieldAlert[]>([])
+  const alerts = useSyncExternalStore(subscribeAlerts, getAlerts, getServerAlerts)
   const { toast } = useToast()
+  // Read by callbacks and the interval below, which must not re-subscribe
+  // whenever the list changes. Kept in sync after commit instead of during render.
   const alertsRef = useRef(alerts)
-  alertsRef.current = alerts
-
-  // Hydrate from localStorage on mount + cross-tab sync.
-  useEffect(() => {
-    setAlerts(readAlerts())
-
-    const syncOtherTabs = (event: StorageEvent) => {
-      if (event.key !== YIELD_ALERTS_STORAGE_KEY) return
-      setAlerts(readAlerts())
-    }
-    window.addEventListener('storage', syncOtherTabs)
-    return () => window.removeEventListener('storage', syncOtherTabs)
-  }, [])
 
   // Persist + commit helper.
   const commit = useCallback((next: YieldAlert[]) => {
-    setAlerts(next)
-    writeAlerts(next)
+    alertsRef.current = next
+    commitAlerts(next)
   }, [])
+
+  // Mirror list changes that came from outside this component (another tab, a
+  // storage repair) so the callbacks and the evaluator below read current data.
+  useEffect(() => {
+    alertsRef.current = alerts
+  }, [alerts])
 
   // Sync across devices once the wallet session is signed in (#603). Alerts are
   // merged by id so one created while signed out is kept.

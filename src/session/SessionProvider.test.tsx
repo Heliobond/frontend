@@ -1,21 +1,60 @@
 import { act, render, waitFor } from '@testing-library/react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const wallet = {
-  address: 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H',
-  isDemo: false,
-  signMessage: vi.fn(async () => 'signed-message'),
-  sign: vi.fn(async () => 'signed-xdr'),
+const WALLET_ADDRESS = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+
+const signMessage = vi.fn(async () => 'signed-message')
+const sign = vi.fn(async () => 'signed-xdr')
+
+/**
+ * Reactive stand-in for the wallet context. Tests change the address to simulate
+ * a disconnect or an account switch, which must re-render `SessionProvider`.
+ */
+function createWalletMock() {
+  let snapshot = { address: WALLET_ADDRESS as string | null, isDemo: false }
+  const listeners = new Set<() => void>()
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    get: () => snapshot,
+    setAddress: (address: string | null) => {
+      snapshot = { ...snapshot, address }
+      listeners.forEach((listener) => listener())
+    },
+    signMessage,
+    sign,
+  }
 }
 
-vi.mock('../wallet/WalletProvider', () => ({ useWallet: () => wallet }))
+const walletMock = createWalletMock()
+
+vi.mock('../wallet/WalletProvider', () => ({
+  useWallet: () => {
+    useSyncExternalStore(walletMock.subscribe, walletMock.get, walletMock.get)
+    return {
+      address: walletMock.get().address,
+      isDemo: walletMock.get().isDemo,
+      signMessage,
+      sign,
+    }
+  },
+}))
 
 import { SessionProvider, useSession, type SessionContextValue } from './SessionProvider'
 
+/**
+ * Latest context value observed by the probe. Assigned in an effect rather than
+ * during render, so the probe stays pure (#598).
+ */
 let session: SessionContextValue
 function Probe() {
-  // eslint-disable-next-line react-hooks/globals
-  session = useSession()
+  const value = useSession()
+  useEffect(() => {
+    session = value
+  }, [value])
   return null
 }
 
@@ -40,7 +79,10 @@ describe('SessionProvider', () => {
     vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test')
     vi.stubGlobal('fetch', fetchMock)
     fetchMock.mockReset()
-    wallet.signMessage.mockClear()
+    signMessage.mockClear()
+    sign.mockClear()
+    // Restore the connected wallet; some tests disconnect or switch address.
+    walletMock.setAddress(WALLET_ADDRESS)
   })
 
   afterEach(() => {
@@ -66,11 +108,14 @@ describe('SessionProvider', () => {
     )
 
     await waitFor(() => expect(session.isAuthenticated).toBe(true))
-    expect(wallet.signMessage).toHaveBeenCalledWith('hello G...')
+    expect(signMessage).toHaveBeenCalledWith('hello G...')
     const verifyBody = JSON.parse(
       fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/auth/verify'))![1].body,
     )
-    expect(verifyBody).toMatchObject({ address: wallet.address, signature: 'signed-message' })
+    expect(verifyBody).toMatchObject({
+      address: walletMock.get().address,
+      signature: 'signed-message',
+    })
 
     // Authenticated call carries the bearer token.
     const data = await act(() => session.authedFetch<number[]>('/me/watchlist'))
@@ -91,7 +136,7 @@ describe('SessionProvider', () => {
       </SessionProvider>,
     )
     await waitFor(() => expect(session.isAuthenticated).toBe(true))
-    expect(wallet.signMessage).not.toHaveBeenCalled()
+    expect(signMessage).not.toHaveBeenCalled()
   })
 
   it('is unavailable when no backend is configured', () => {
@@ -475,5 +520,66 @@ describe('SessionProvider', () => {
 
     await waitFor(() => expect(refreshCalled).toBe(true))
     expect(session.isAuthenticated).toBe(true)
+  })
+  /**
+   * The token is bound to one address. Switching wallets or disconnecting must
+   * drop it; validity is derived rather than cleared in an effect (#598), so
+   * these pin that the derivation is correct, not merely faster.
+   */
+  it('stops reporting an authenticated session when the wallet disconnects', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.endsWith('/auth/refresh') ? json({ token: 'jwt-3', expiresIn: 900 }) : json({}, 404),
+    )
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+    await waitFor(() => expect(session.isAuthenticated).toBe(true))
+
+    act(() => walletMock.setAddress(null))
+
+    await waitFor(() => expect(session.isAuthenticated).toBe(false))
+    expect(session.address).toBeNull()
+  })
+
+  it('stops reporting an authenticated session when the address changes', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.endsWith('/auth/refresh') ? json({ token: 'jwt-4', expiresIn: 900 }) : json({}, 404),
+    )
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+    await waitFor(() => expect(session.isAuthenticated).toBe(true))
+
+    act(() => walletMock.setAddress('GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN'))
+
+    await waitFor(() => expect(session.isAuthenticated).toBe(false))
+  })
+
+  it('refuses to call an endpoint once the session is invalidated', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/auth/refresh')) return json({ token: 'jwt-5', expiresIn: 900 })
+      if (url.endsWith('/me/watchlist')) return json([7])
+      return json({}, 404)
+    })
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+    await waitFor(() => expect(session.isAuthenticated).toBe(true))
+
+    const data = await act(() => session.authedFetch<number[]>('/me/watchlist'))
+    expect(data).toEqual([7])
+
+    act(() => walletMock.setAddress(null))
+    await waitFor(() => expect(session.isAuthenticated).toBe(false))
+
+    await expect(act(() => session.authedFetch<number[]>('/me/watchlist'))).rejects.toThrow(
+      'Not signed in',
+    )
   })
 })

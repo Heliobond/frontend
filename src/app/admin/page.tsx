@@ -8,34 +8,37 @@ import { Button, Card } from '@/components'
 
 export default function AdminPage() {
   const { connected, address, connect, disconnect } = useWallet()
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
-  const [checking, setChecking] = useState(false)
+
+  /**
+   * The admin check result, keyed by the wallet it was made for.
+   *
+   * `isAdmin` is null until a check for the *current* address has completed, so
+   * switching wallets or reconnecting shows the "verifying" state instead of
+   * briefly rendering the previous wallet's verdict (#598).
+   */
+  const [result, setResult] = useState<{ address: string; allowed: boolean } | null>(null)
 
   useEffect(() => {
-    if (!connected || !address) {
-      setIsAdmin(false)
-      setChecking(false)
-      return
-    }
+    if (!connected || !address) return
 
     let active = true
-    setChecking(true)
 
     checkIsAdmin(address)
       .then((allowed) => {
-        if (active) setIsAdmin(allowed)
+        if (active) setResult({ address, allowed })
       })
       .catch(() => {
-        if (active) setIsAdmin(false)
-      })
-      .finally(() => {
-        if (active) setChecking(false)
+        if (active) setResult({ address, allowed: false })
       })
 
     return () => {
       active = false
     }
   }, [connected, address])
+
+  const checking = connected && address !== null && result?.address !== address
+  const isAdmin =
+    !checking && address !== null && result?.address === address ? result.allowed : null
 
   if (!connected) {
     return (

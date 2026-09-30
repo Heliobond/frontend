@@ -54,10 +54,23 @@ export function useSessionTimeout({
   onTimeout,
   onWarning,
 }: UseSessionTimeoutOptions = {}): UseSessionTimeoutReturn {
-  const [isWarningOpen, setIsWarningOpen] = useState(false)
+  const [warningScheduled, setIsWarningOpen] = useState(false)
   const [remainingSeconds, setRemainingSeconds] = useState(Math.round(warningMs / 1000))
+  // Disabled sessions never show the modal, so this is derived rather than
+  // reset from the effect when `enabled` flips to false (#598).
+  const isWarningOpen = enabled && warningScheduled
 
-  const lastActivityRef = useRef<number>(Date.now())
+  // React's sanctioned way to reset state when a prop changes: adjust during
+  // render instead of writing state from an effect.
+  const [wasEnabled, setWasEnabled] = useState(enabled)
+  if (wasEnabled !== enabled) {
+    setWasEnabled(enabled)
+    if (!enabled) setIsWarningOpen(false)
+  }
+
+  // `Date.now()` must not run during render. The clock is read in the effect
+  // below before any activity is scheduled, so zero is only the pre-mount value.
+  const lastActivityRef = useRef<number>(0)
   const lastThrottleRef = useRef<number>(0)
   // Mirrors `isWarningOpen` for the activity listener, so the listener stays
   // stable while the warning state changes (re-scheduling on every open/close
@@ -123,9 +136,9 @@ export function useSessionTimeout({
     countdownIntervalRef.current = setInterval(updateCountdown, 1000)
   }, [clearTimers, expireNow, timeoutMs])
 
-  const scheduleWarning = useCallback(() => {
+  /** Arms the warning timer without touching state, so effects can call it. */
+  const armWarningTimer = useCallback(() => {
     clearTimers()
-    setIsWarningOpen(false)
     lastActivityRef.current = Date.now()
 
     const warningDelay = Math.max(0, timeoutMs - warningMs)
@@ -133,6 +146,11 @@ export function useSessionTimeout({
       startCountdown()
     }, warningDelay)
   }, [clearTimers, startCountdown, timeoutMs, warningMs])
+
+  const scheduleWarning = useCallback(() => {
+    armWarningTimer()
+    setIsWarningOpen(false)
+  }, [armWarningTimer])
 
   const extendSession = useCallback(() => {
     scheduleWarning()
@@ -142,11 +160,12 @@ export function useSessionTimeout({
   useEffect(() => {
     if (!enabled) {
       clearTimers()
-      setIsWarningOpen(false)
       return
     }
 
-    scheduleWarning()
+    // Only arms a timer; the warning state is reset during render above and by
+    // the activity handler below, so this effect never sets state (#598).
+    armWarningTimer()
 
     const handleUserActivity = () => {
       // Do not reset activity automatically while the warning modal is actively open
@@ -170,7 +189,7 @@ export function useSessionTimeout({
         window.removeEventListener(event, handleUserActivity)
       })
     }
-  }, [enabled, scheduleWarning, clearTimers, throttleMs])
+  }, [enabled, armWarningTimer, scheduleWarning, clearTimers, throttleMs])
 
   // Format MM:SS for countdown display
   const minutes = Math.floor(remainingSeconds / 60)

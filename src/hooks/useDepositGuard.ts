@@ -21,7 +21,6 @@ const STORAGE_KEY = 'hb_pending_deposit'
 /** Maximum age (ms) for a pending deposit record to be considered active. */
 const PENDING_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-
 export interface PendingDeposit {
   /** USDC amount of the in-flight deposit. */
   amount: number

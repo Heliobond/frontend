@@ -42,15 +42,32 @@ export function YieldAlertModal({
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstInputRef = useRef<HTMLInputElement>(null)
 
-  // Reset form when modal opens with new values.
-  useEffect(() => {
+  // Reseed the form when the modal opens with new values. Adjusting during
+  // render is React's sanctioned way to reset state for a changed prop, and
+  // avoids a wasted render pass (#598).
+  const [seed, setSeed] = useState<{ open: boolean; threshold: number; operator: AlertOperator }>({
+    open,
+    threshold: initialThreshold,
+    operator: initialOperator,
+  })
+  if (
+    seed.open !== open ||
+    seed.threshold !== initialThreshold ||
+    seed.operator !== initialOperator
+  ) {
+    setSeed({ open, threshold: initialThreshold, operator: initialOperator })
     if (open) {
       setThreshold(String(initialThreshold))
       setOperator(initialOperator)
-      // Focus the threshold input on open.
-      requestAnimationFrame(() => firstInputRef.current?.focus())
     }
-  }, [open, initialThreshold, initialOperator])
+  }
+
+  // Focus the threshold input on open. Focus is a DOM effect, not state.
+  useEffect(() => {
+    if (!open) return
+    const frame = requestAnimationFrame(() => firstInputRef.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [open])
 
   // Close on Escape.
   useEffect(() => {

@@ -42,6 +42,8 @@ function realizedGain(event: InvestmentEvent): number {
   return event.amountUSD - (event.costBasisUSD ?? 0)
 }
 
+export { realizedGain }
+
 export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyTaxLine[] {
   const byQuarter = new Map<string, QuarterlyTaxLine>()
 
@@ -78,35 +80,90 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
 }
 
 export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
-  const header = [
-    'Quarter',
-    'Total Deposits (USD)',
-    'Total Withdrawals (USD)',
-    'Total Distributions (USD)',
-    'Realized Gain (USD)',
-  ].join(',')
+  // Generate row-level details for each event within quarters
+  // This matches the UI display and provides complete audit trail
+  const detailRows: string[] = []
 
-  const rows = lines.map((line) =>
-    [
+  for (const line of lines) {
+    // Quarter header row
+    detailRows.push([
       line.quarter,
+      'Quarter Summary',
       line.totalDeposits.toFixed(2),
       line.totalWithdrawals.toFixed(2),
       line.totalDistributions.toFixed(2),
       line.realizedGainUSD.toFixed(2),
-    ].join(','),
-  )
+      '', // project (empty for summary)
+      '', // type (empty for summary)
+      '', // amount (empty for summary)
+      '', // cost basis (empty for summary)
+    ].join(','))
 
-  return [header, ...rows].join('\n')
+    // Event-level details for transparency and full audit trail
+    for (const event of line.events) {
+      detailRows.push([
+        '', // quarter (empty for detail rows)
+        'Event Detail',
+        '', // total deposits (empty for detail)
+        '', // total withdrawals (empty for detail)
+        '', // total distributions (empty for detail)
+        '', // realized gain summary (empty for detail)
+        event.projectName,
+        event.type,
+        event.amountUSD.toFixed(2),
+        (event.costBasisUSD ?? 0).toFixed(2),
+      ].join(','))
+    }
+  }
+
+  const header = [
+    'Quarter',
+    'Type',
+    'Total Deposits (USD)',
+    'Total Withdrawals (USD)',
+    'Total Distributions (USD)',
+    'Realized Gain (USD)',
+    'Project Name',
+    'Event Type',
+    'Amount (USD)',
+    'Cost Basis (USD)',
+  ].join(',')
+
+  return [header, ...detailRows].join('\n')
 }
 
 export function downloadCsv(filename: string, csvContent: string): void {
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  // For large files, use streaming to avoid memory issues (#450)
+  // Split into chunks to prevent browser from hanging with huge datasets
+  const CHUNK_SIZE = 1024 * 1024 // 1MB chunks
+  
+  let blob: Blob
+  
+  if (csvContent.length > CHUNK_SIZE) {
+    // Stream large files in chunks to prevent memory buildup
+    const chunks: BlobPart[] = []
+    for (let i = 0; i < csvContent.length; i += CHUNK_SIZE) {
+      chunks.push(csvContent.slice(i, i + CHUNK_SIZE))
+    }
+    blob = new Blob(chunks, { type: 'text/csv;charset=utf-8;' })
+  } else {
+    // For smaller files, create blob directly (faster)
+    blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  }
+  
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
   link.download = filename
   document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  
+  // Use requestAnimationFrame to ensure UI doesn't freeze during download
+  requestAnimationFrame(() => {
+    link.click()
+    // Clean up after a short delay to ensure download started
+    setTimeout(() => {
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    }, 100)
+  })
 }

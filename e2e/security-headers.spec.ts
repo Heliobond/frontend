@@ -1,5 +1,22 @@
 import { test, expect } from '@playwright/test'
 
+/** A single `securitypolicyviolation` entry captured inside the page. */
+interface CapturedViolation {
+  directive: string
+  blockedURI: string
+  originalPolicy: string
+}
+
+/**
+ * The page-side collector is installed via `addInitScript`, which runs in the
+ * browser before any app code, so the violations have to travel on `window`.
+ */
+declare global {
+  interface Window {
+    __cspViolations?: CapturedViolation[]
+  }
+}
+
 const ROUTES = ['/', '/explore', '/connect', '/deposit', '/withdraw']
 const SMOKE_ROUTES = ['/', '/explore']
 const isProductionCSP = process.env.E2E_PRODUCTION === 'true'
@@ -72,8 +89,8 @@ test.describe('Production CSP enforcement (#663)', () => {
       // Listen for securitypolicyviolation events
       await page.addInitScript(() => {
         document.addEventListener('securitypolicyviolation', (e) => {
-          ;(window as any).__cspViolations = (window as any).__cspViolations || []
-          ;(window as any).__cspViolations.push({
+          window.__cspViolations = window.__cspViolations || []
+          window.__cspViolations.push({
             directive: e.violatedDirective,
             blockedURI: e.blockedURI,
             originalPolicy: e.originalPolicy,
@@ -87,7 +104,9 @@ test.describe('Production CSP enforcement (#663)', () => {
       await page.waitForTimeout(2000)
 
       // Check for violations
-      const capturedViolations = await page.evaluate(() => (window as any).__cspViolations || [])
+      const capturedViolations = await page.evaluate<CapturedViolation[]>(
+        () => window.__cspViolations || [],
+      )
       violations.push(...capturedViolations)
 
       if (violations.length > 0) {
