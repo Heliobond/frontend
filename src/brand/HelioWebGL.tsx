@@ -15,6 +15,10 @@
  *   · prefers-reduced-motion → renders a fully STATIC orb (no useFrame work).
  *   · No WebGL support → renders `null` so the parent can show the static
  *     <Helio> fallback instead.
+ *   · Tab hidden or orb scrolled out of view → the render loop pauses
+ *     (`frameloop` drops to 'demand') and every `useFrame` no-ops, so a
+ *     backgrounded or offscreen Helio costs no GPU time. An
+ *     IntersectionObserver on our own container drives the offscreen half.
  *   · Save-Data / low-end device → caps DPR at 1× and asks for a 'low-power'
  *     context, so constrained hardware never pays for 2× + high-performance.
  *
@@ -93,6 +97,23 @@ export function isConstrainedCanvas(): boolean {
   if (effectiveType === 'slow-2g' || effectiveType === '2g') return true
 
   return false
+}
+
+/**
+ * Whether the Helio's render loop should run. Animation is only allowed when
+ * nothing is asking us to stop: motion is permitted, the tab is visible, and
+ * the orb is actually on screen. Any one of those false pauses the loop, so a
+ * Helio parked below the fold or in a background tab renders no frames.
+ *
+ * Extracted as a pure function so the offscreen-pause contract is directly
+ * testable without a WebGL context.
+ */
+export function shouldAnimateHelio(opts: {
+  reducedMotion: boolean
+  tabVisible: boolean
+  onScreen: boolean
+}): boolean {
+  return !opts.reducedMotion && opts.tabVisible && opts.onScreen
 }
 
 /* ------------------------------------------------------------------------- *
@@ -412,6 +433,10 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
   const [webgl, setWebgl] = useState(false)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [visible, setVisible] = useState(true)
+  // Assume on screen until an observer says otherwise, so browsers without
+  // IntersectionObserver (and jsdom) keep the previous always-animate behavior.
+  const [onScreen, setOnScreen] = useState(true)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -440,14 +465,33 @@ export function HelioWebGL({ size = 360, motes = 14, intensity = 1, onReady }: H
     }
   }, [])
 
+  // Pause the render loop while the orb is scrolled out of the viewport: an
+  // IntersectionObserver on our own container flips `onScreen`, and the Canvas
+  // falls back to `frameloop="demand"` so a below-the-fold Helio stops painting.
+  // Runs once the container is actually mounted (after the WebGL probe).
+  useEffect(() => {
+    if (!ready || !webgl) return
+    const el = containerRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => {
+      setOnScreen(entry.isIntersecting)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [ready, webgl])
+
   // Until we've probed the client, render nothing — the parent's static
   // <Helio> fallback covers this window (and SSR). No WebGL → stay null.
   if (!ready || !webgl) return null
 
-  const animate = !reducedMotion && visible
+  const animate = shouldAnimateHelio({ reducedMotion, tabVisible: visible, onScreen })
 
   return (
-    <div aria-hidden="true" style={{ width: size, height: size, position: 'relative' }}>
+    <div
+      ref={containerRef}
+      aria-hidden="true"
+      style={{ width: size, height: size, position: 'relative' }}
+    >
       <HelioCanvas
         size={size}
         motes={motes}

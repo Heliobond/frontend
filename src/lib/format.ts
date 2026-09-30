@@ -105,6 +105,49 @@ export function formatMoney(
   return formatted
 }
 
+/** Locale used by the date helpers when no active locale is supplied. */
+export const FALLBACK_LOCALE = 'en-US'
+
+type DateInput = Date | number | string
+
+function toDate(value: DateInput): Date {
+  return value instanceof Date ? value : new Date(value)
+}
+
+/**
+ * Formats a date using the active app locale (e.g. `31.12.2024` for `de-DE`
+ * instead of the runtime default). Pass the locale from next-intl's
+ * `useLocale()`; falls back to {@link FALLBACK_LOCALE} when none is given (#461).
+ */
+export function formatDate(value: DateInput, locale?: string): string {
+  return new Intl.DateTimeFormat(locale ?? FALLBACK_LOCALE, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(toDate(value))
+}
+
+/** Formats a wall-clock time using the active app locale (#461). */
+export function formatTime(value: DateInput, locale?: string): string {
+  return new Intl.DateTimeFormat(locale ?? FALLBACK_LOCALE, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(toDate(value))
+}
+
+/** Formats a date and time together using the active app locale (#461). */
+export function formatDateTime(value: DateInput, locale?: string): string {
+  return new Intl.DateTimeFormat(locale ?? FALLBACK_LOCALE, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(toDate(value))
+}
+
 /**
  * Sanitizes input strings by removing non-numeric characters except a single decimal point,
  * stripping leading zeros from the whole-number part.

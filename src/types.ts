@@ -54,3 +54,6 @@ export function isKycAllowedDocumentType(fileType: string): fileType is KYC_Allo
     (allowed) => allowed.toLowerCase() === normalized,
   )
 }
+
+export const STELLAR_MAX_MEMO_TEXT_BYTES = 28 as const
+export type StellarMemoType = 'text' | 'id' | 'hash' | 'return' | 'none'
