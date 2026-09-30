@@ -120,14 +120,26 @@ async function computeSha256(content: string): Promise<string> {
 }
 
 export interface OnChainProjectRaw {
-  id: number | bigint
+  // Contract returns (u32, ProjectData) tuples — id comes from the tuple,
+  // not from ProjectData itself.
+  id?: number | bigint
+  // ProjectData struct fields (from contract types.rs):
+  owner?: string
+  uri?: string
+  credit_quality?: number | bigint
+  green_impact?: number | bigint
+  maturity_date?: number | bigint
+  certification_status?: number | bigint
+  last_update_timestamp?: number | bigint
+  status?: number | bigint
+  created_at?: number | bigint
+  metadata_hash?: string | Uint8Array
+  // Legacy fields (kept for fixture/demo compatibility):
   name?: string
   creator?: string
   metadata_uri?: string
-  metadata_hash?: string | Uint8Array
   credit_score?: number | bigint
   green_score?: number | bigint
-  status?: string
   funded_amount?: number | bigint
   target_amount?: number | bigint
 }
@@ -292,9 +304,9 @@ export async function fetchProjectWithDetails(
     let verifiedMetadata = false
     let offChainMetadata: OffChainMetadata | undefined
 
-    if (raw.metadata_uri) {
+    if (raw.metadata_uri || raw.uri) {
       try {
-        const res = await fetch(raw.metadata_uri)
+        const res = await fetch(raw.metadata_uri || raw.uri)
         if (res.ok) {
           const text = await res.text()
           offChainMetadata = JSON.parse(text)
