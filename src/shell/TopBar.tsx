@@ -24,8 +24,8 @@ const Mark = dynamic(() => import('../brand/Mark').then((m) => m.Mark), {
 
 /**
  * TopBar — persistent nav rendered by the root layout. Analemma mark + Explore /
- * How it works / Learn / Creator, network status dot, theme toggle, language
- * switcher, Connect (or the connected wallet pill). Active state derives from the
+ * How it works / Learn / Creator, network status dot, preferences menu (theme +
+ * language), Connect (or the connected wallet pill). Active state derives from the
  * route (and a scroll-spy for the landing anchors); connection from the wallet.
  */
 const NAV = [
@@ -51,7 +51,6 @@ export function TopBar() {
     walletNetworkPassphrase,
     checkWalletNetwork,
   } = useWallet()
-  const { theme, toggle } = useTheme()
   const { pendingCount, transactions } = useTransactions()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
@@ -94,9 +93,6 @@ export function TopBar() {
     sections.forEach((el) => observer.observe(el))
     return () => observer.disconnect()
   }, [pathname])
-
-  const isDarkTheme = mounted && theme === 'dark'
-  const themeToggleLabel = isDarkTheme ? t('switchToLight') : t('switchToDark')
 
   return (
     <>
@@ -192,18 +188,7 @@ export function TopBar() {
             {networkOnline ? null : 'Offline'}
           </span>
 
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={themeToggleLabel}
-            aria-pressed={mounted ? isDarkTheme : undefined}
-            title={themeToggleLabel}
-            style={iconBtnStyle}
-          >
-            {mounted ? isDarkTheme ? <SunIcon /> : <MoonIcon /> : null}
-          </button>
-
-          <LocaleDropdown />
+          <PreferencesDropdown />
 
           {(connected || transactions.length > 0) && (
             <button
@@ -377,9 +362,17 @@ const iconBtnStyle = {
   color: 'var(--ink-60)',
 } as const
 
-function LocaleDropdown() {
+function PreferencesDropdown() {
   const t = useTranslations('Nav')
   const { locale, switchLocale } = useLocaleSwitcher()
+  const { theme, toggle } = useTheme()
+  // Theme state starts 'light' on server/first render (to avoid a hydration
+  // mismatch), so the theme label can't be trusted until after mount.
+  const [mounted, setMounted] = useState(false)
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setMounted(true), [])
+  const isDarkTheme = mounted && theme === 'dark'
+  const themeToggleLabel = isDarkTheme ? t('switchToLight') : t('switchToDark')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -396,13 +389,10 @@ function LocaleDropdown() {
 
   useEffect(() => {
     if (open) {
-      setTimeout(() => {
-        const locales = Object.keys(LOCALE_LABELS) as Locale[]
-        const currentIndex = locales.indexOf(locale)
-        itemRefs.current[currentIndex]?.focus()
-      }, 0)
+      const timer = setTimeout(() => itemRefs.current[0]?.focus(), 0)
+      return () => clearTimeout(timer)
     }
-  }, [open, locale])
+  }, [open])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const items = itemRefs.current.filter((el): el is HTMLButtonElement => el !== null)
@@ -442,19 +432,11 @@ function LocaleDropdown() {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={t('language')}
-        style={{
-          ...iconBtnStyle,
-          width: 'auto',
-          gap: 5,
-          padding: '0 6px',
-          fontFamily: 'var(--font-body)',
-          fontSize: 14,
-          color: 'var(--ink-60)',
-        }}
+        aria-label={t('preferences')}
+        title={t('preferences')}
+        style={iconBtnStyle}
       >
-        {LOCALE_LABELS[locale]}
-        <ChevronDown />
+        <SettingsIcon />
       </button>
 
       {open && (
@@ -466,7 +448,7 @@ function LocaleDropdown() {
             position: 'absolute',
             top: 48,
             insetInlineEnd: 0,
-            minWidth: 120,
+            minWidth: 200,
             background: 'var(--surface)',
             border: '1px solid var(--ink-12)',
             borderRadius: 'var(--radius-card)',
@@ -475,6 +457,54 @@ function LocaleDropdown() {
             zIndex: 400,
           }}
         >
+          <button
+            ref={(el) => {
+              itemRefs.current.push(el)
+            }}
+            role="menuitemcheckbox"
+            aria-checked={isDarkTheme}
+            tabIndex={-1}
+            type="button"
+            onClick={toggle}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              width: '100%',
+              textAlign: 'start',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '9px 10px',
+              borderRadius: 'var(--radius-input)',
+              fontFamily: 'var(--font-body)',
+              fontSize: 14,
+              fontWeight: 500,
+              color: 'var(--ink-60)',
+              background: 'transparent',
+            }}
+          >
+            {themeToggleLabel}
+            {mounted ? isDarkTheme ? <SunIcon /> : <MoonIcon /> : null}
+          </button>
+          <div
+            role="separator"
+            style={{ height: 1, background: 'var(--ink-12)', margin: '6px 0' }}
+          />
+          <div
+            role="presentation"
+            style={{
+              padding: '4px 10px',
+              fontFamily: 'var(--font-data)',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-40)',
+            }}
+          >
+            {t('language')}
+          </div>
           {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
             <button
               key={code}
@@ -513,12 +543,12 @@ function LocaleDropdown() {
   )
 }
 
-function ChevronDown() {
+function SettingsIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      width="14"
-      height="14"
+      width="18"
+      height="18"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
@@ -526,7 +556,8 @@ function ChevronDown() {
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      <path d="m6 9 6 6 6-6" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
     </svg>
   )
 }

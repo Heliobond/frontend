@@ -181,4 +181,69 @@ describe('Vault math functions', () => {
       expect(backToUsdc).toBeCloseTo(usdc)
     })
   })
+
+  describe('Transaction submission memo validation', () => {
+    const mockSign = async (xdr: string) => xdr
+    const testAddress = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+
+    it('rejects submitDeposit when memo exceeds 28 bytes', async () => {
+      const { submitDeposit } = await import('./vault')
+      const longMemo = 'a'.repeat(100)
+
+      await expect(
+        submitDeposit(100, testAddress, mockSign, undefined, undefined, longMemo),
+      ).rejects.toThrow('Memo text is too long')
+    })
+
+    it('accepts submitDeposit with valid memo <= 28 bytes', async () => {
+      const { submitDeposit } = await import('./vault')
+      const validMemo = 'deposit-valid'
+
+      const hash = await submitDeposit(100, testAddress, mockSign, undefined, undefined, validMemo)
+      expect(hash).toBeDefined()
+    })
+
+    it('rejects submitWithdraw when memo exceeds 28 bytes', async () => {
+      const { submitWithdraw } = await import('./vault')
+      const longMemo = 'a'.repeat(100)
+
+      await expect(
+        submitWithdraw(50, testAddress, mockSign, undefined, undefined, longMemo),
+      ).rejects.toThrow('Memo text is too long')
+    })
+
+    it('rejects submitPayment when memo exceeds 28 bytes', async () => {
+      const { submitPayment } = await import('./vault')
+      const longMemo = 'a'.repeat(100)
+
+      await expect(
+        submitPayment(50, testAddress, testAddress, mockSign, { memo: longMemo }),
+      ).rejects.toThrow('Memo text is too long')
+    })
+
+    it('accepts submitPayment with valid memo', async () => {
+      const { submitPayment } = await import('./vault')
+      const hash = await submitPayment(50, testAddress, testAddress, mockSign, {
+        memo: 'valid-memo',
+      })
+      expect(hash).toBeDefined()
+    })
+
+    it('rejects submitPayment when destination address has typos (56 chars, starts with G)', async () => {
+      const { submitPayment } = await import('./vault')
+      const typoAddress = testAddress.slice(0, -1) + 'A'
+      expect(typoAddress.length).toBe(56)
+
+      await expect(submitPayment(50, typoAddress, testAddress, mockSign)).rejects.toThrow(
+        'Invalid Stellar public address checksum (please check for typos)',
+      )
+    })
+
+    it('rejects submitPayment when destination address is malformed', async () => {
+      const { submitPayment } = await import('./vault')
+      await expect(submitPayment(50, 'bad-address', testAddress, mockSign)).rejects.toThrow(
+        'Invalid Stellar public address (must start with G and be 56 characters)',
+      )
+    })
+  })
 })
