@@ -15,6 +15,8 @@ import {
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
 import { formatMoney } from '../lib/format'
+import { getExplorerUrl } from '../config/network'
+import { shortAddress } from '../wallet/WalletProvider'
 
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
@@ -467,14 +469,23 @@ export const ProjectDetail = memo(function ProjectDetail({
                     marginTop: 2,
                   }}
                 >
-                  <a
-                    href={`https://etherscan.io/tx/${event.hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {event.hash} ↗
-                  </a>
+                  {(() => {
+                    const explorerUrl = getExplorerUrl(event.hash)
+                    if (!explorerUrl) {
+                      return <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
+                    }
+                    return (
+                      <a
+                        href={explorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={event.hash}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                      >
+                        {shortAddress(event.hash, 4, 4)} ↗
+                      </a>
+                    )
+                  })()}
                 </div>
               </div>
             </div>
