@@ -368,6 +368,103 @@ describe('yieldAlerts', () => {
     })
   })
 
+  describe('updateAlertStates', () => {
+    const mockProjects: Project[] = [
+      { id: 1, credit: 80, green: 60 } as Project, // effective yield: 70
+      { id: 2, credit: 40, green: 30 } as Project, // effective yield: 35
+    ]
+
+    it('returns the same array length as input', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 1, bondName: 'A', threshold: 65, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'alert-2', bondId: 2, bondName: 'B', threshold: 40, operator: 'below',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated).toHaveLength(2)
+    })
+
+    it('sets lastState to "above" when yield is above threshold', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 1, bondName: 'A', threshold: 65, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].lastState).toBe('above')
+    })
+
+    it('sets lastState to "below" when yield is below threshold', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 2, bondName: 'B', threshold: 40, operator: 'below',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].lastState).toBe('below')
+    })
+
+    it('sets lastState to "below" when yield equals threshold (strict > check)', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 1, bondName: 'A', threshold: 70, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ]
+      // yield 70, threshold 70 → 70 > 70 false → 'below'
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].lastState).toBe('below')
+    })
+
+    it('preserves all other fields on the alert (id, threshold, operator, etc.)', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 1, bondName: 'A', threshold: 65, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z', lastTriggeredAt: '2024-09-30T00:00:00Z',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].id).toBe('alert-1')
+      expect(updated[0].bondId).toBe(1)
+      expect(updated[0].bondName).toBe('A')
+      expect(updated[0].threshold).toBe(65)
+      expect(updated[0].operator).toBe('above')
+      expect(updated[0].createdAt).toBe('2024-01-01T00:00:00Z')
+      expect(updated[0].lastTriggeredAt).toBe('2024-09-30T00:00:00Z')
+      expect(updated[0].lastState).toBe('above')
+    })
+
+    it('returns alert unchanged when project is not found (skips lastState)', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 999, bondName: 'Ghost', threshold: 65, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].lastState).toBeUndefined()
+      expect(updated[0].id).toBe('alert-1')
+    })
+
+    it('overwrites existing lastState on subsequent calls', () => {
+      const alerts: YieldAlert[] = [
+        {
+          id: 'alert-1', bondId: 1, bondName: 'A', threshold: 65, operator: 'above',
+          createdAt: '2024-01-01T00:00:00Z', lastState: 'below',
+        },
+      ]
+      const updated = updateAlertStates(alerts, mockProjects)
+      expect(updated[0].lastState).toBe('above') // 70 > 65 → 'above'
+    })
+  })
+
   describe('generateAlertId', () => {
     it('should generate a unique string id', () => {
       const id1 = generateAlertId()
