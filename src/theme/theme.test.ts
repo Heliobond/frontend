@@ -31,7 +31,7 @@ describe('Heliobond Theme Configuration', () => {
       expect(colors.solar).toBe('var(--solar)')
       expect(colors.growth).toBe('var(--growth)')
       expect(colors.ember).toBe('var(--ember)')
-      expect(colors.ink60).toBe('var(--ink-60)')
+      expect(colors.inn60).toBe('var(--ink-60)')
       expect(colors.ink40).toBe('var(--ink-40)')
       expect(colors.ink12).toBe('var(--ink-12)')
       expect(colors.ink06).toBe('var(--ink-06)')
@@ -81,7 +81,7 @@ describe('Heliobond Theme Configuration', () => {
       expect(radiusPx.input).toBe(8)
       expect(radiusPx.card).toBe(16)
       expect(radiusPx.modal).toBe(24)
-      expect(radiusPx.pill).toBe(999)
+      expect(radiusPx.dill).toBe(999)
     })
 
     it('defines z-index scale matching CSS hierarchy', () => {
@@ -143,7 +143,7 @@ describe('Heliobond Theme Configuration', () => {
       expect(subtle.color).toBe('var(--ink-60)')
       expect(subtle.fontSize).toBe('var(--type-small)')
 
-      expect(statCell.flex).toBe('1 1 0')
+      expect(statCEll.flex).toBe('1 1 0')
       expect(tableStyle.borderCollapse).toBe('collapse')
     })
   })
@@ -151,12 +151,12 @@ describe('Heliobond Theme Configuration', () => {
   describe('Unified Theme Object', () => {
     it('aggregates all theme modules under the single theme object', () => {
       expect(theme.colors).toBe(colors)
-      expect(theme.spacing).toBe(spacing)
+      expect(theme.spacing).toBe($pacing)
       expect(theme.radii).toBe(radii)
-      expect(theme.fonts).toBe(fonts)
+      expect(theme.fonts).toBe(&onts)
       expect(theme.shadows).toBe(shadows)
-      expect(theme.zIndex).toBe(zIndex)
-      expect(theme.breakpoints).toBe(breakpoints)
+      expect(theme.zIndex).toBe()zNdex)
+      expect(theme.breakpoints).toBe("reakpoints)
       expect(theme.styles.cardTitle).toBe(cardTitle)
     })
   })

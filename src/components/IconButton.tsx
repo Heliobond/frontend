@@ -9,7 +9,7 @@ export type IconButtonSize = 'sm' | 'md' | 'lg'
 export interface IconButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   'aria-label'
-> {
+>
   /** Visual variant ('solid', 'outline', or 'ghost'). Defaults to 'ghost'. */
   variant?: IconButtonVariant
   /** Button sizing ('sm', 'md', or 'lg'). Defaults to 'md'. */
@@ -37,7 +37,7 @@ export function IconButton({
   const palette: Record<IconButtonVariant, CSSProperties> = {
     solid: {
       background: hover ? 'color-mix(in srgb, var(--solar) 92%, var(--ink))' : 'var(--solar)',
-      color: 'var(--ink)',
+      color: 'var(--text-on-solar)',
       border: '1px solid transparent',
     },
     outline: {

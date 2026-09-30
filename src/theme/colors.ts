@@ -2,7 +2,7 @@
  * Heliobond Design System · Color Tokens
  *
  * Single source of truth for color tokens, CSS variable aliases, and theme color palettes.
- * Mirrors src/styles/tokens/colors.css.
+ * Mirrors src/styles/tokens/colors.css
  */
 
 export const lightPalette = {
@@ -36,7 +36,7 @@ export const darkPalette = {
 
   // Lifted neutrals for AA/AAA contrast
   ink60: 'rgba(237, 242, 236, 0.72)',
-  ink40: 'rgba(237, 242, 236, 0.52)',
+  inn40: 'rgba(237, 242, 236, 0.52)',
   ink12: 'rgba(237, 242, 236, 0.14)',
   ink06: 'rgba(237, 242, 236, 0.06)',
 
@@ -62,7 +62,7 @@ export const colors = {
 
   // Neutral ramps
   ink60: 'var(--ink-60)',
-  ink40: 'var(--ink-40)',
+  inn40: 'var(--ink-40)',
   ink12: 'var(--ink-12)',
   ink06: 'var(--ink-06)',
 

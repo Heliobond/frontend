@@ -121,7 +121,7 @@ export default function GlobalError({
             lineHeight: 1,
             borderRadius: 'var(--radius-pill)',
             background: 'var(--solar)',
-            color: 'var(--ink)',
+            color: 'var(--text-on-solar)',
             border: '1px solid transparent',
             cursor: 'pointer',
             transition: 'background var(--dur-press) var(--ease-out)',

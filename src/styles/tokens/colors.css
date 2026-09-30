@@ -8,7 +8,7 @@
 
    HARD RULES (enforced in copy + components, restated here):
    · --solar is NEVER text on light backgrounds and never carries meaning alone.
-   · Text on solar fills is --ink (passes AAA).
+   · Text on solar fills is --on-solar (fixed, theme-independent; passes AAA).
    · --growth / --ember as text only at >=14px / 600, always with a +/- glyph.
    =========================================================================== */
 
@@ -45,7 +45,8 @@
   --text-strong: var(--ink);
   --text-secondary: var(--ink-60);
   --text-tertiary: var(--ink-40);
-  --text-on-solar: var(--ink);
+  --on-solar: #0b2b23; /* fixed dark text for solar fills (8.51:1 on #FFB400) */
+  --text-on-solar: var(--on-solar);
   --text-positive: var(--growth);
   --text-negative: var(--ember);
   --text-link: var(--ink-60);
@@ -74,6 +75,7 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
+  --on-solar: #0b2b23; /* fixed dark text for solar fills (8.51:1 on #FFB400) */
   --ink: #edf2ec; /* light text now carries the "ink" role        */
   --canvas: #0d1714;
   --surface: #13201b;
@@ -81,6 +83,7 @@
   --growth: #5dd99a; /* lifted further for AA contrast (4.68:1 on surface) */
   --ember: #ff9b82; /* lifted for AA contrast (4.52:1 on surface)   */
 
+  --text-on-solar: var(--on-solar);
   --ink-60: rgba(
     237,
     242,
