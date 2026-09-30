@@ -243,7 +243,7 @@
     "rejectionReason": "Raison",
     "actionRevoke": "Révoquer",
     "revokeConfirm": "Oui, révoquer",
-    "revokeConfirmBody": "Are you sure you want to revoke {name}? You can undo this action.",
+    "revokeConfirmBody": "La révocation de {name} retirera immédiatement l'accès de ce créateur. Vous pourrez annuler cette action.",
     "revokeCancel": "Annuler",
     "actionApprove": "Approuver",
     "toastScoresTitle": "Scores écrits sur la chaîne",
@@ -497,5 +497,74 @@
     "category_bridge": "Ce transfert inter-chaînes n'a pas pu être effectué. Contactez le support si le problème persiste.",
     "category_governance": "Ce vote ou cette proposition ne peut pas être traité dans son état actuel.",
     "unknown": "Le contrat a rejeté cette transaction. Veuillez réessayer et contacter le support si le problème persiste."
+  },
+  "Telemetry": {
+    "label": "Télémétrie",
+    "title": "Aidez-nous à améliorer Heliobond",
+    "body": "Pouvons-nous envoyer des rapports d'erreurs anonymes et des mesures de performance des pages ? Nous n'envoyons jamais d'adresses de portefeuille, de hashes de transaction, d'adresses e-mail ni de données de transaction.",
+    "learnMore": "Ce que nous collectons",
+    "accept": "Autoriser",
+    "decline": "Non merci",
+    "statusOn": "Autorisée",
+    "statusOff": "Désactivée",
+    "statusUndecided": "Non définie"
+  },
+  "Metadata": {
+    "home": {
+      "title": "L’énergie solaire, rendue financière",
+      "description": "Investissez dès un dollar dans la transition énergétique. Un pool transparent qui finance des projets verts vérifiés sur Stellar."
+    },
+    "connect": {
+      "title": "Connecter votre portefeuille",
+      "description": "Connectez un portefeuille Stellar à Heliobond, ou ouvrez une session démo pour tester le parcours investisseur sans extension."
+    },
+    "explore": {
+      "title": "Explorer les obligations vertes",
+      "description": "Parcourez des projets d’énergie solaire, éolienne et hydroélectrique vérifiés. Filtrez par type d’actif et consultez les scores de crédit et environnemental."
+    },
+    "creator": {
+      "title": "Espace créateur",
+      "description": "Postulez au registre de projets Heliobond, construisez la fiche d’un projet vert et suivez la notation de l’oracle."
+    },
+    "deposit": {
+      "title": "Déposer",
+      "description": "Investissez des USDC dans une obligation verte vérifiée et recevez vos parts du pool."
+    },
+    "learn": {
+      "title": "Comment fonctionne Heliobond",
+      "description": "Explication simple du pool d’obligations vertes : où va l’argent, comment le rendement est calculé et qui vérifie les chiffres."
+    },
+    "portfolio": {
+      "title": "Votre portefeuille",
+      "description": "Votre position Heliobond, le rendement projeté et l’historique de vos dépôts."
+    },
+    "taxReports": {
+      "title": "Rapports fiscaux",
+      "description": "Téléchargez les rapports fiscaux consolidés de vos investissements Heliobond."
+    },
+    "risk": {
+      "title": "Avertissement sur les risques",
+      "description": "Ce qui peut mal tourner en investissant dans les obligations vertes Heliobond : liquidité, notation oracle et scénarios de perte."
+    },
+    "verify": {
+      "title": "Tout vérifier",
+      "description": "Les contrats Heliobond sont publics, la cadence de l’oracle est documentée et la formule de rendement est écrite noir sur blanc."
+    },
+    "watchlist": {
+      "title": "Liste de suivi",
+      "description": "Les obligations que vous avez enregistrées, et celles qui acceptent encore des investissements."
+    },
+    "withdraw": {
+      "title": "Retirer",
+      "description": "Remboursez vos parts du pool Heliobond en USDC."
+    },
+    "admin": {
+      "title": "Console admin",
+      "description": "Console interne Heliobond : statistiques du vault, registre de projets, notation oracle et liste des créateurs autorisés."
+    },
+    "projectNotFound": {
+      "title": "Projet introuvable",
+      "description": "Le projet d’énergie verte demandé est introuvable."
+    }
   }
 }
