@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
-  mapOnChainProject,
   fetchTotalProjects,
   fetchProjectsPage,
   fetchProjectWithDetails,
@@ -29,33 +28,6 @@ describe('registry client', () => {
     vi.restoreAllMocks()
     vi.unstubAllEnvs()
     vi.unstubAllGlobals()
-  })
-
-  it('maps on-chain project data to UI Project format', () => {
-    const raw = {
-      id: 101,
-      name: 'Sahara Agrivoltaic Test',
-      credit_score: 92,
-      green_score: 95,
-      funded_amount: 5000000000000n, // 500,000 * 10^7
-      target_amount: 10000000000000n,
-      status: 'open',
-    }
-
-    const metadata = {
-      location: 'Ouarzazate, Morocco',
-      type: 'Solar' as const,
-      fundingGoal: 1000000,
-    }
-
-    const mapped = mapOnChainProject(raw, metadata)
-    expect(mapped.id).toBe(101)
-    expect(mapped.name).toBe('Sahara Agrivoltaic Test')
-    expect(mapped.credit).toBe(92)
-    expect(mapped.green).toBe(95)
-    expect(mapped.fundedAmount).toBe(500000)
-    expect(mapped.location).toBe('Ouarzazate, Morocco')
-    expect(mapped.type).toBe('Solar')
   })
 
   it('falls back gracefully to fixtures when registry contract is unset', async () => {
@@ -129,16 +101,16 @@ describe('registry client', () => {
     const validBytes = new TextEncoder().encode(JSON.stringify(validMetadata))
 
     const baseRawProject: OnChainProjectRaw = {
-      id: 1,
-      name: 'On-Chain Solar Project',
-      creator: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
-      metadata_uri: 'https://metadata.example.com/project-1.json',
+      owner: 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX',
+      uri: 'https://metadata.example.com/project-1.json',
       metadata_hash: '',
-      credit_score: 92,
-      green_score: 95,
-      status: 'open',
-      funded_amount: 100000000000n,
-      target_amount: 500000000000n,
+      credit_quality: 92,
+      green_impact: 95,
+      maturity_date: 0,
+      certification_status: 0,
+      last_update_timestamp: 1_700_000_000,
+      status: 1,
+      created_at: 1_600_000_000,
     }
 
     beforeEach(() => {
@@ -317,12 +289,12 @@ describe('registry client', () => {
       )
     })
 
-    it('returns "unverified" when metadata_uri is missing', async () => {
+    it('returns "unverified" when the metadata uri is missing', async () => {
       const matchingHash = (await computeSha256(validBytes))!
 
       const mockSimulate = vi.fn().mockImplementation(async (method: string) => {
         if (method === 'get_project') {
-          return { ...baseRawProject, metadata_uri: undefined, metadata_hash: matchingHash }
+          return { ...baseRawProject, uri: '', metadata_hash: matchingHash }
         }
         return []
       })
