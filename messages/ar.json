@@ -143,7 +143,9 @@
     "availableBanner": "{count, plural, one {سند واحد متابع مفتوح للتمويل الآن.} other {# سندات متابعة مفتوحة للتمويل الآن.}}",
     "statusOpen": "مفتوح للتمويل",
     "statusUpcoming": "غير متاح بعد",
-    "notYetAvailable": "سنشير هنا بمجرد فتحه."
+    "notYetAvailable": "سنشير هنا بمجرد فتحه.",
+    "unresolvedMessage": "المشروع #{id} لم يعد متاحًا — إزالة",
+    "unresolvedAction": "إزالة"
   },
   "Deposit": {
     "stepAmount": "المبلغ",
@@ -504,7 +506,9 @@
     "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
     "statusOpen": "Open for funding",
     "statusUpcoming": "Not yet available",
-    "notYetAvailable": "We'll flag it here when it opens."
+    "notYetAvailable": "We'll flag it here when it opens.",
+    "unresolvedMessage": "المشروع #{id} لم يعد متاحًا — إزالة",
+    "unresolvedAction": "إزالة"
   },
   "ContractErrors": {
     "vault_AmountNotPositive": "أدخل مبلغًا أكبر من صفر.",

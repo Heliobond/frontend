@@ -132,7 +132,9 @@
     "availableBanner": "{count, plural, one {# obligation suivie est ouverte au financement en ce moment.} other {# obligations suivies sont ouvertes au financement en ce moment.}}",
     "statusOpen": "Ouverte au financement",
     "statusUpcoming": "Pas encore disponible",
-    "notYetAvailable": "Nous le signalerons ici dès son ouverture."
+    "notYetAvailable": "Nous le signalerons ici dès son ouverture.",
+    "unresolvedMessage": "Le projet #{id} n'est plus disponible — supprimer",
+    "unresolvedAction": "Supprimer"
   },
   "Deposit": {
     "stepAmount": "Montant",

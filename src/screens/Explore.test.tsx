@@ -141,4 +141,39 @@ describe('Explore — pagination', () => {
     await waitFor(() => expect(cards().length).toBe(12))
     expect(cards()[0]).toHaveTextContent('Project 21')
   })
+
+  it('fetches a second page from server when hasMore is true and in-memory projects are exhausted', async () => {
+    const user = userEvent.setup()
+    const all = makeProjects(60)
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      const start = (page - 1) * pageSize
+      return Promise.resolve({
+        projects: all.slice(start, start + pageSize),
+        total: all.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < all.length,
+      })
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(cards().length).toBe(12))
+
+    // Step through the first 50 in-memory items
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(24))
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(36))
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(48))
+    await user.click(loadMoreButton(2))
+    await waitFor(() => expect(cards().length).toBe(50))
+
+    // In-memory 50 are exhausted, but hasMore is true on server
+    expect(screen.getByRole('button', { name: /more/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /more/i }))
+
+    await waitFor(() => expect(cards().length).toBe(60))
+    expect(mockGetProjectsPaginated).toHaveBeenCalledWith(2, 50)
+  })
 })

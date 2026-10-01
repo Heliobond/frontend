@@ -131,7 +131,9 @@
     "availableBanner": "{count, plural, one {# bono guardado está abierto a financiación ahora mismo.} other {# bonos guardados están abiertos a financiación ahora mismo.}}",
     "statusOpen": "Abierto a financiación",
     "statusUpcoming": "Aún no disponible",
-    "notYetAvailable": "Te avisaremos aquí cuando se abra."
+    "notYetAvailable": "Te avisaremos aquí cuando se abra.",
+    "unresolvedMessage": "El proyecto #{id} ya no está disponible — eliminar",
+    "unresolvedAction": "Eliminar"
   },
   "Deposit": {
     "stepAmount": "Importe",

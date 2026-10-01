@@ -131,7 +131,9 @@
     "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
     "statusOpen": "Open for funding",
     "statusUpcoming": "Not yet available",
-    "notYetAvailable": "We'll flag it here when it opens."
+    "notYetAvailable": "We'll flag it here when it opens.",
+    "unresolvedMessage": "O projeto #{id} já não está disponível — remover",
+    "unresolvedAction": "Remover"
   },
   "Deposit": {
     "amountLabel": "Valor do Investimento",

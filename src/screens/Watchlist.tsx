@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, ProjectCard, WatchlistButton } from '../components'
 import { type Project } from '../data'
-import { selectProjects } from '../state/selectors'
-import { getProjects } from '../lib/api'
+import { selectProjectById } from '../state/selectors'
+import { getProject } from '../lib/api'
 import { getBondStatus, isBondAvailable } from '../lib/watchlist'
 import { useWatchlist } from '../watchlist/WatchlistProvider'
 
@@ -20,23 +20,58 @@ export interface WatchlistProps {
 
 export function Watchlist({ onOpen }: WatchlistProps) {
   const t = useTranslations('Watchlist')
-  const { ids } = useWatchlist()
+  const { ids, remove } = useWatchlist()
   const [projects, setProjects] = useState<Project[]>([])
+  const [unresolvedIds, setUnresolvedIds] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getProjects()
-      .then(setProjects)
-      .catch(() => setProjects(selectProjects()))
-      .finally(() => setLoading(false))
-  }, [])
+    if (ids.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setProjects([])
+      setUnresolvedIds([])
+      setLoading(false)
+      return
+    }
 
-  const saved = useMemo(() => {
-    const byId = new Map(projects.map((p) => [p.id, p]))
-    return ids.map((id) => byId.get(id)).filter((p): p is Project => p !== undefined)
-  }, [projects, ids])
+    let isSubscribed = true
+    setLoading(true)
 
-  const availableCount = saved.filter(isBondAvailable).length
+    Promise.allSettled(
+      ids.map(async (id) => {
+        try {
+          const res = await getProject(id)
+          if (res?.project) return { id, project: res.project }
+        } catch {}
+        const fallback = selectProjectById(id)
+        if (fallback) return { id, project: fallback }
+        return { id, project: null }
+      }),
+    ).then((results) => {
+      if (!isSubscribed) return
+      const found: Project[] = []
+      const missing: number[] = []
+
+      results.forEach((r, idx) => {
+        const id = ids[idx]
+        if (r.status === 'fulfilled' && r.value.project) {
+          found.push(r.value.project)
+        } else {
+          missing.push(id)
+        }
+      })
+
+      setProjects(found)
+      setUnresolvedIds(missing)
+      setLoading(false)
+    })
+
+    return () => {
+      isSubscribed = false
+    }
+  }, [ids])
+
+  const availableCount = projects.filter(isBondAvailable).length
 
   return (
     <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -84,7 +119,47 @@ export function Watchlist({ onOpen }: WatchlistProps) {
         </div>
       )}
 
-      {!loading && saved.length === 0 ? (
+      {!loading && unresolvedIds.length > 0 && (
+        <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {unresolvedIds.map((id) => (
+            <div
+              key={id}
+              data-testid={`unresolved-watchlist-${id}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-input)',
+                background: 'var(--ink-06)',
+                border: '1px solid var(--ink-12)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-60)',
+              }}
+            >
+              <span>{t('unresolvedMessage', { id })}</span>
+              <button
+                type="button"
+                onClick={() => remove(id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--ink)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 'var(--type-caption)',
+                }}
+              >
+                {t('unresolvedAction')}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && projects.length === 0 && unresolvedIds.length === 0 ? (
         <div
           style={{
             display: 'flex',
@@ -126,7 +201,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
       ) : (
         !loading && (
           <div className="hb-projects-grid">
-            {saved.map((p) => {
+            {projects.map((p) => {
               const open = getBondStatus(p) === 'open'
               return (
                 <div
