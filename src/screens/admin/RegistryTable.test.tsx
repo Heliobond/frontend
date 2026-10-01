@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, within } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
 import type { RegistryEntry } from '@/data/admin'
@@ -176,5 +176,84 @@ describe('RegistryTable aria-sort', () => {
       'aria-sort',
       'none',
     )
+  })
+})
+
+describe('RegistryTable inline score editor validation (Issue #693)', () => {
+  it('disables Save when nothing changed initially', () => {
+    const onSave = vi.fn()
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+    fireEvent.click(updateBtns[0])
+
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+    expect(saveBtn).toBeDisabled()
+    fireEvent.click(saveBtn)
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('disables Save and shows error when clearing a field', () => {
+    const onSave = vi.fn()
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+    fireEvent.click(updateBtns[0])
+
+    const creditInput = screen.getByLabelText(/credit quality/i)
+    fireEvent.change(creditInput, { target: { value: '' } })
+
+    expect(creditInput).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/score is required/i)).toBeInTheDocument()
+
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+    expect(saveBtn).toBeDisabled()
+    fireEvent.click(saveBtn)
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('rejects 150, -1 and 72.5 with a visible message and disables Save without clamping', () => {
+    const onSave = vi.fn()
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+    fireEvent.click(updateBtns[0])
+
+    const creditInput = screen.getByLabelText(/credit quality/i)
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+
+    // Test 150 (out of range)
+    fireEvent.change(creditInput, { target: { value: '150' } })
+    expect(creditInput).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/score must be between 0 and 100/i)).toBeInTheDocument()
+    expect(saveBtn).toBeDisabled()
+
+    // Test -1 (negative)
+    fireEvent.change(creditInput, { target: { value: '-1' } })
+    expect(creditInput).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/score must be an integer between 0 and 100/i)).toBeInTheDocument()
+    expect(saveBtn).toBeDisabled()
+
+    // Test 72.5 (decimal)
+    fireEvent.change(creditInput, { target: { value: '72.5' } })
+    expect(creditInput).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/score must be an integer between 0 and 100/i)).toBeInTheDocument()
+    expect(saveBtn).toBeDisabled()
+
+    fireEvent.click(saveBtn)
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('enables Save and calls onSave with valid updated integer scores', () => {
+    const onSave = vi.fn()
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+    fireEvent.click(updateBtns[0]) // row id 3 (Mekong Hydro, credit 91, green 85)
+
+    const creditInput = screen.getByLabelText(/credit quality/i)
+    fireEvent.change(creditInput, { target: { value: '95' } })
+
+    const saveBtn = screen.getByRole('button', { name: /save/i })
+    expect(saveBtn).not.toBeDisabled()
+
+    fireEvent.click(saveBtn)
+    expect(onSave).toHaveBeenCalledWith(rows[2].id, 95, 85)
   })
 })
