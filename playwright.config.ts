@@ -9,7 +9,8 @@ const isProductionCSP = process.env.E2E_PRODUCTION === 'true'
  */
 const useProductionServer = process.env.E2E_PRODUCTION_SERVER === 'true'
 
-const port = useProductionServer || isProductionCSP ? 3001 : 3000
+const productionPort = Number(process.env.E2E_PRODUCTION_PORT || 3200)
+const port = useProductionServer || isProductionCSP ? productionPort : 3000
 const baseURL = `http://localhost:${port}`
 
 export default defineConfig({
@@ -33,15 +34,15 @@ export default defineConfig({
   ],
   webServer: isProductionCSP
     ? {
-        command: 'bun run build && PORT=3001 CSP_MODE=enforce bun run start',
+        command: `bun run build && PORT=${productionPort} CSP_MODE=enforce bun run start`,
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 180_000,
       }
     : useProductionServer
       ? {
           // The caller has already built; only start the server here.
-          command: 'PORT=3001 bun run start',
+          command: `PORT=${productionPort} bun run start`,
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,

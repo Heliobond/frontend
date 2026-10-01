@@ -180,7 +180,7 @@ bun run test:e2e:production
 
 The run above sets `E2E_PRODUCTION=true` and targets only
 `e2e/security-headers.spec.ts`. That flag makes `playwright.config.ts` build the
-app and serve it on **port 3001** with `CSP_MODE=enforce`, so the extra
+app and serve it on **port 3200** (configurable via `E2E_PRODUCTION_PORT`) with `CSP_MODE=enforce`, so the extra
 assertions run against the enforcing `Content-Security-Policy` header instead of
 the `Content-Security-Policy-Report-Only` variant the app ships by default
 (`src/lib/securityHeaders.ts`): no `'unsafe-eval'`, no `ws:` and no
@@ -189,7 +189,7 @@ and no CSP violations recorded on `/` or `/explore`.
 
 Run it whenever you touch `src/proxy.ts`, `src/lib/securityHeaders.ts` or
 anything inlined into `<head>`. It needs a full build, so it is slower than
-`bun run test:e2e`, port 3001 must be free, and it is **not** part of CI — the
+`bun run test:e2e`, port 3200 must be free, and it is **not** part of CI — the
 nightly workflow doesn't run it either.
 
 #### On-chain journey (local Stellar network)
