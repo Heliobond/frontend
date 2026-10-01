@@ -172,6 +172,16 @@ session state the flow needs, `page.goto()` the route, then assert each step
 of the flow in order with `expect(locator).toBeVisible()` /
 `toBeDisabled()`.
 
+#### Accessibility audits (axe-core)
+
+Automated WCAG 2.1 AA accessibility checks run via `@axe-core/playwright` (#722):
+
+```bash
+bun run test:e2e e2e/a11y.spec.ts
+```
+
+The audit walks every public route and demo-authenticated route in both `light` and `dark` themes, excluding `<canvas>` elements. It fails on any unlisted `serious` or `critical` violations and attaches full axe diagnostics JSONs to the Playwright test report. Known pre-existing issues are tracked in `KNOWN_VIOLATIONS` in `e2e/a11y.spec.ts` with direct issue links.
+
 #### Production CSP enforcement
 
 ```bash
