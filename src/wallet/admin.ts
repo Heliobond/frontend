@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import type { xdr } from '@stellar/stellar-sdk'
+import { Address, type xdr } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -325,22 +325,21 @@ export async function submitSetWhitelist(
  * - pause() and unpause() take no arguments
  * - emergency_pause(caller) and emergency_unpause(caller) take caller Address
  */
-export async function buildSetPausedCall(
+export function buildSetPausedCall(
   contractType: 'vault' | 'registry',
   paused: boolean,
   address: string,
   isEmergency = false,
-): Promise<{ contractId: string | undefined; method: string; args: any[] }> {
+): { contractId: string | undefined; method: string; args: any[] } {
   const contractId =
-    (contractType === 'vault'
-      ? process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
-      : process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
+    contractType === 'vault'
+      ? (process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID)
+      : (process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
   let method: string
   let args: any[] = []
 
   if (isEmergency) {
     method = paused ? 'emergency_pause' : 'emergency_unpause'
-    const { Address } = await import('@stellar/stellar-sdk')
     args = [new Address(address).toScVal()]
   } else {
     method = paused ? 'pause' : 'unpause'
@@ -360,7 +359,7 @@ export async function submitSetPaused(
   sign: (xdr: string) => Promise<string>,
   isEmergency = false,
 ): Promise<AdminTxResult> {
-  const call = await buildSetPausedCall(contractType, paused, address, isEmergency)
+  const call = buildSetPausedCall(contractType, paused, address, isEmergency)
   if (!call.contractId) {
     const hash = await simulateDemoTx()
     return { hash }
@@ -385,9 +384,9 @@ export async function fetchIsPaused(
   sourceAddress = DEMO_ADMIN_ADDRESS,
 ): Promise<boolean> {
   const contractId =
-    (contractType === 'vault'
-      ? process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
-      : process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
+    contractType === 'vault'
+      ? (process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID)
+      : (process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
   if (!contractId) return false
 
   try {

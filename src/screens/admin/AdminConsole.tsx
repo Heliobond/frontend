@@ -36,6 +36,8 @@ import {
   submitFundProject,
   submitUpdateScores,
   submitSetWhitelist,
+  submitSetPaused,
+  fetchIsPaused,
   isMultisigDeployment,
 } from '@/wallet/admin'
 
@@ -57,6 +59,8 @@ export function AdminConsole() {
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [isMultisig, setIsMultisig] = useState(false)
+  const [vaultPaused, setVaultPaused] = useState(false)
+  const [registryPaused, setRegistryPaused] = useState(false)
 
   // Live contract reads on mount
   useEffect(() => {
@@ -73,6 +77,15 @@ export function AdminConsole() {
         )
       })
       .catch(() => {})
+
+    Promise.all([
+      fetchIsPaused('vault', address ?? undefined).catch(() => false),
+      fetchIsPaused('registry', address ?? undefined).catch(() => false),
+    ]).then(([isVaultPaused, isRegistryPaused]) => {
+      if (!active) return
+      setVaultPaused(isVaultPaused)
+      setRegistryPaused(isRegistryPaused)
+    })
 
     if (address) {
       Promise.all([
@@ -127,6 +140,15 @@ export function AdminConsole() {
   }
 
   const fundProject = async (id: number, amount: number) => {
+    if (registryPaused) {
+      toast({
+        tone: 'error',
+        title: 'Action blocked',
+        message: 'ProjectRegistry is currently paused. Project funding is disabled.',
+        duration: 5000,
+      })
+      return
+    }
     const safe = Math.min(amount, liquid)
     setRegistry((rows) =>
       rows.map((r) =>
@@ -235,6 +257,79 @@ export function AdminConsole() {
     }
   }
 
+  const toggleVaultPause = async () => {
+    const next = !vaultPaused
+    const actionName = next ? 'Pause InvestmentVault' : 'Resume InvestmentVault'
+    if (
+      !window.confirm(
+        `${actionName}? ${
+          next
+            ? 'User deposits and withdrawals will be suspended on-chain.'
+            : 'Normal vault operations will resume.'
+        }`,
+      )
+    ) {
+      return
+    }
+    try {
+      console.error('>>> Calling submitSetPaused now! type:', typeof submitSetPaused)
+      const res = await submitSetPaused('vault', next, address ?? '', sign)
+      console.error('>>> submitSetPaused returned:', res)
+      setVaultPaused(next)
+      toast({
+        tone: next ? 'error' : 'success',
+        title: next ? 'InvestmentVault paused' : 'InvestmentVault resumed',
+        message: next
+          ? 'Vault deposits and withdrawals are now suspended.'
+          : 'Vault is active. Normal deposits and withdrawals resumed.',
+        duration: 5000,
+      })
+    } catch (e) {
+      console.error('>>> submitSetPaused error:', e)
+      toast({
+        tone: 'error',
+        title: 'Transaction failed',
+        message: e instanceof Error ? e.message : 'Failed to change vault pause state',
+        duration: 5000,
+      })
+    }
+  }
+
+  const toggleRegistryPause = async () => {
+    const next = !registryPaused
+    const actionName = next ? 'Pause ProjectRegistry' : 'Resume ProjectRegistry'
+    if (
+      !window.confirm(
+        `${actionName}? ${
+          next
+            ? 'Project funding and registrations will be suspended on-chain.'
+            : 'Normal registry operations will resume.'
+        }`,
+      )
+    ) {
+      return
+    }
+    try {
+      await submitSetPaused('registry', next, address ?? '', sign)
+      setRegistryPaused(next)
+      toast({
+        tone: next ? 'error' : 'success',
+        title: next ? 'ProjectRegistry paused' : 'ProjectRegistry resumed',
+        message: next
+          ? 'Registry is now paused. Project funding is suspended.'
+          : 'Registry is active. Project registrations and funding resumed.',
+        duration: 5000,
+      })
+    } catch (e) {
+      toast({
+        tone: 'error',
+        title: 'Transaction failed',
+        message: e instanceof Error ? e.message : 'Failed to change registry pause state',
+        duration: 5000,
+      })
+    }
+  }
+
   const totalAssets = liquid + deployed
 
   return (
@@ -250,6 +345,36 @@ export function AdminConsole() {
         </div>
         <Badge tone="testnet">{t('badgeInternal')}</Badge>
       </header>
+
+      {/* Circuit Breaker Emergency Banner */}
+      {(vaultPaused || registryPaused) && (
+        <div
+          role="alert"
+          style={{
+            padding: '12px 16px',
+            marginBottom: 20,
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <div>
+            <strong style={{ color: 'var(--red, #ef4444)' }}>CIRCUIT BREAKER ACTIVE:</strong>{' '}
+            <span style={{ fontSize: 'var(--type-body)' }}>
+              {vaultPaused && registryPaused
+                ? 'Both InvestmentVault and ProjectRegistry are paused.'
+                : vaultPaused
+                  ? 'InvestmentVault is paused. Deposits and withdrawals are suspended.'
+                  : 'ProjectRegistry is paused. Project funding is suspended.'}
+            </span>
+          </div>
+          <Badge tone="ember">PAUSED</Badge>
+        </div>
+      )}
 
       {/* Vault overview — dense horizontal row of stat cells */}
       <section style={{ ...sectionCard, padding: 0, marginBottom: 20 }}>
@@ -331,6 +456,80 @@ export function AdminConsole() {
               </div>
             </div>
           ))}
+        </div>
+      </Section>
+
+      {/* Circuit Breakers & Emergency Controls */}
+      <Section
+        title="Circuit Breakers"
+        caption="Emergency pause and resume controls for InvestmentVault and ProjectRegistry contracts."
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              background: 'var(--surface-sunken, rgba(255,255,255,0.02))',
+              borderRadius: 8,
+              border: '1px solid var(--ink-12)',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 'var(--type-body)' }}>InvestmentVault</div>
+              <p style={{ ...subtext, marginTop: 2 }}>
+                {vaultPaused
+                  ? 'Vault operations are paused. User deposits and withdrawals are suspended.'
+                  : 'Vault is operating normally. Deposits and withdrawals are active.'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Badge tone={vaultPaused ? 'ember' : 'growth'}>
+                {vaultPaused ? 'Paused' : 'Active'}
+              </Badge>
+              <Button
+                size="sm"
+                variant={vaultPaused ? 'primary' : 'ghost'}
+                onClick={toggleVaultPause}
+              >
+                {vaultPaused ? 'Resume Vault' : 'Pause Vault'}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              background: 'var(--surface-sunken, rgba(255,255,255,0.02))',
+              borderRadius: 8,
+              border: '1px solid var(--ink-12)',
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 'var(--type-body)' }}>ProjectRegistry</div>
+              <p style={{ ...subtext, marginTop: 2 }}>
+                {registryPaused
+                  ? 'Registry is paused. Project registrations and funding are suspended.'
+                  : 'Registry is operating normally. Project registrations and funding are active.'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Badge tone={registryPaused ? 'ember' : 'growth'}>
+                {registryPaused ? 'Paused' : 'Active'}
+              </Badge>
+              <Button
+                size="sm"
+                variant={registryPaused ? 'primary' : 'ghost'}
+                onClick={toggleRegistryPause}
+              >
+                {registryPaused ? 'Resume Registry' : 'Pause Registry'}
+              </Button>
+            </div>
+          </div>
         </div>
       </Section>
     </div>
