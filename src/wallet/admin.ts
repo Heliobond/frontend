@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import type { xdr } from '@stellar/stellar-sdk'
+import { nativeToScVal, type xdr } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -234,6 +234,46 @@ function simulateDemoTx(): Promise<string> {
   })
 }
 
+/**
+ * Validate project ID is an integer within [1, 2^32 - 1]
+ */
+export function validateProjectId(id: number): number {
+  if (!Number.isInteger(id) || id < 1 || id > 0xffffffff) {
+    throw new Error(`Invalid project ID: ${id}. Must be an integer between 1 and 4294967295.`)
+  }
+  return id
+}
+
+/** Build ScVal arguments for fund_project (u32, i128) */
+export function buildFundProjectArgs(projectId: number, amount: number | bigint): [xdr.ScVal, xdr.ScVal] {
+  validateProjectId(projectId)
+  const scaledAmount = typeof amount === 'bigint' ? amount : BigInt(Math.round(amount * 1e7))
+  return [
+    nativeToScVal(projectId, { type: 'u32' }),
+    nativeToScVal(scaledAmount, { type: 'i128' }),
+  ]
+}
+
+/** Build ScVal arguments for update_impact_score (u32, u32, u32) */
+export function buildUpdateScoresArgs(
+  projectId: number,
+  credit: number,
+  green: number,
+): [xdr.ScVal, xdr.ScVal, xdr.ScVal] {
+  validateProjectId(projectId)
+  if (!Number.isInteger(credit) || credit < 0 || credit > 100) {
+    throw new Error(`Invalid credit score: ${credit}. Must be an integer between 0 and 100.`)
+  }
+  if (!Number.isInteger(green) || green < 0 || green > 100) {
+    throw new Error(`Invalid green score: ${green}. Must be an integer between 0 and 100.`)
+  }
+  return [
+    nativeToScVal(projectId, { type: 'u32' }),
+    nativeToScVal(credit, { type: 'u32' }),
+    nativeToScVal(green, { type: 'u32' }),
+  ]
+}
+
 /** Execute fund_project on InvestmentVault */
 export async function submitFundProject(
   projectId: number,
@@ -247,16 +287,12 @@ export async function submitFundProject(
     return { hash, approvalCount: isMultisig ? 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
   const method = isMultisig ? 'fund_project_approved' : 'fund_project'
-  const scaledAmount = BigInt(Math.round(amount * 1e7))
+  const args = buildFundProjectArgs(projectId, amount)
   const hash = await sendContractTx(
     VAULT_CONTRACT_ID,
     method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(scaledAmount, { type: 'i128' }),
-    ],
+    args,
     address,
     sign,
   )
@@ -278,16 +314,12 @@ export async function submitUpdateScores(
     return { hash, approvalCount: isMultisig ? 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
   const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
+  const args = buildUpdateScoresArgs(projectId, credit, green)
   const hash = await sendContractTx(
     targetContract,
     method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(credit, { type: 'u32' }),
-      nativeToScVal(green, { type: 'u32' }),
-    ],
+    args,
     address,
     sign,
   )
