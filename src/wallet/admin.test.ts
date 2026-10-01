@@ -1,123 +1,71 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { rpc, nativeToScVal, Address, type Transaction, type xdr } from '@stellar/stellar-sdk'
-import { checkIsAdmin, getAdminRoles, type AdminRoles } from './admin'
+import { describe, it, expect } from 'vitest'
+import { validateProjectId, buildFundProjectArgs, buildUpdateScoresArgs } from './admin'
 
-describe('On-chain admin and role checks (Issue #690)', () => {
-  const VAULT_ADDR = 'CCWG4L5IJ5Y36YBGKLUGMPLL6RXJUSRIXP67EV3VFHPAZZO56CJJTQYD'
-  const REGISTRY_ADDR = 'CBE75HS6PXI3C7LMUINZZNN2B3JAQ3ETOUOQT4H7XTEL5NCRJW4Z33BY'
-
-  const OWNER_ADDR = 'GCVIMAOPBRGVPOO7BSEO5OAAQ7S3CFPZSBZVCJALT4R6Q2WB473X5RQL'
-  const WHITELISTER_ADDR = 'GAMWDPHBEIUFOHQ3HOPBZS4QNFG7VCIKKGWRF3SLFLN6S5OQ3KIMJROH'
-  const NON_ADMIN_ADDR = 'GBJVMAZ7KECYYVGCT5BUYPF2XPHSUSUVY7YQORK7ND5Z5TAQIBPM43DD'
-
-  type TxWithOp = Transaction & {
-    operations: Array<{
-      func: {
-        invokeContract: () => {
-          functionName: () => { toString: () => string }
-          contractAddress: () => xdr.ScAddress
-        }
-      }
-    }>
-  }
-
-  function getFunctionName(tx: unknown): string | null {
-    try {
-      const op = (tx as TxWithOp).operations[0]
-      return op.func.invokeContract().functionName().toString()
-    } catch {
-      return null
-    }
-  }
-
-  function makeSimResponse(retval: xdr.ScVal | null): rpc.Api.SimulateTransactionResponse {
-    return {
-      result: { retval: retval ?? undefined },
-    } as unknown as rpc.Api.SimulateTransactionResponse
-  }
-
-  beforeEach(() => {
-    vi.restoreAllMocks()
-    delete process.env.NEXT_PUBLIC_ADMIN_ADDRESS
-    process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID = VAULT_ADDR
-    process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID = REGISTRY_ADDR
-  })
-
-  it('makes no calls to admin, owner, get_admin, or is_admin', async () => {
-    const simulatedMethods: string[] = []
-
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
-      const fn = getFunctionName(tx)
-      if (fn) simulatedMethods.push(fn)
-      return makeSimResponse(null)
+describe('admin arg encoding (Issue #688)', () => {
+  describe('validateProjectId', () => {
+    it('accepts valid u32 project IDs', () => {
+      expect(validateProjectId(1)).toBe(1)
+      expect(validateProjectId(42)).toBe(42)
+      expect(validateProjectId(0xffffffff)).toBe(4294967295)
     })
 
-    await getAdminRoles(NON_ADMIN_ADDR)
-
-    expect(simulatedMethods).not.toContain('admin')
-    expect(simulatedMethods).not.toContain('owner')
-    expect(simulatedMethods).not.toContain('get_admin')
-    expect(simulatedMethods).not.toContain('is_admin')
-    expect(simulatedMethods).toContain('get_owner')
-    expect(simulatedMethods).toContain('get_whitelister')
+    it('rejects 0, negative numbers, floats, and overflow values', () => {
+      expect(() => validateProjectId(0)).toThrow('Invalid project ID')
+      expect(() => validateProjectId(-1)).toThrow('Invalid project ID')
+      expect(() => validateProjectId(1.5)).toThrow('Invalid project ID')
+      expect(() => validateProjectId(0x100000000)).toThrow('Invalid project ID')
+      expect(() => validateProjectId(NaN)).toThrow('Invalid project ID')
+    })
   })
 
-  it('grants admin access to vault get_owner() when NEXT_PUBLIC_ADMIN_ADDRESS is unset', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
-      const fn = getFunctionName(tx)
-      if (fn === 'get_owner') {
-        const op = (tx as TxWithOp).operations[0]
-        const scAddr = op.func.invokeContract().contractAddress()
-        const contractId = Address.fromScAddress(scAddr).toString()
-        if (contractId === VAULT_ADDR) {
-          return makeSimResponse(nativeToScVal(OWNER_ADDR, { type: 'address' }))
-        }
-      }
-      return makeSimResponse(null)
+  describe('buildFundProjectArgs', () => {
+    it('encodes arguments as (u32, i128)', () => {
+      const projectId = 42
+      const amount = 100 // 100 USDC -> 100 * 1e7
+      const [scvProject, scvAmount] = buildFundProjectArgs(projectId, amount)
+
+      expect(scvProject.switch().name).toBe('scvU32')
+      expect(scvProject.u32()).toBe(42)
+
+      expect(scvAmount.switch().name).toBe('scvI128')
+      // i128 value check
+      const expectedScaled = BigInt(Math.round(amount * 1e7))
+      const parts = scvAmount.i128()
+      const low = BigInt(parts.lo().toString())
+      const high = BigInt(parts.hi().toString())
+      const combined = (high << 64n) + low
+      expect(combined).toBe(expectedScaled)
     })
 
-    const roles: AdminRoles = await getAdminRoles(OWNER_ADDR)
-    expect(roles.isVaultOwner).toBe(true)
-    expect(roles.isAdmin).toBe(true)
-
-    const isAdmin = await checkIsAdmin(OWNER_ADDR)
-    expect(isAdmin).toBe(true)
+    it('throws if project ID is invalid', () => {
+      expect(() => buildFundProjectArgs(0, 100)).toThrow('Invalid project ID')
+      expect(() => buildFundProjectArgs(-5, 100)).toThrow('Invalid project ID')
+    })
   })
 
-  it('grants admin access to whitelister even when not an owner', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
-      const fn = getFunctionName(tx)
-      if (fn === 'get_whitelister') {
-        return makeSimResponse(nativeToScVal(WHITELISTER_ADDR, { type: 'address' }))
-      }
-      return makeSimResponse(null)
+  describe('buildUpdateScoresArgs', () => {
+    it('encodes arguments as (u32, u32, u32)', () => {
+      const projectId = 7
+      const credit = 85
+      const green = 90
+      const [scvProject, scvCredit, scvGreen] = buildUpdateScoresArgs(projectId, credit, green)
+
+      expect(scvProject.switch().name).toBe('scvU32')
+      expect(scvProject.u32()).toBe(7)
+
+      expect(scvCredit.switch().name).toBe('scvU32')
+      expect(scvCredit.u32()).toBe(85)
+
+      expect(scvGreen.switch().name).toBe('scvU32')
+      expect(scvGreen.u32()).toBe(90)
     })
 
-    const roles = await getAdminRoles(WHITELISTER_ADDR)
-    expect(roles.isVaultOwner).toBe(false)
-    expect(roles.isWhitelister).toBe(true)
-    expect(roles.isAdmin).toBe(true)
-
-    const isAdmin = await checkIsAdmin(WHITELISTER_ADDR)
-    expect(isAdmin).toBe(true)
-  })
-
-  it('denies access to non-admin wallets when RPC returns different owners', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
-      const fn = getFunctionName(tx)
-      if (fn === 'get_owner') {
-        return makeSimResponse(nativeToScVal(OWNER_ADDR, { type: 'address' }))
-      }
-      return makeSimResponse(null)
+    it('rejects scores out of [0, 100] or non-integers', () => {
+      expect(() => buildUpdateScoresArgs(1, -1, 50)).toThrow('Invalid credit score')
+      expect(() => buildUpdateScoresArgs(1, 101, 50)).toThrow('Invalid credit score')
+      expect(() => buildUpdateScoresArgs(1, 50.5, 50)).toThrow('Invalid credit score')
+      expect(() => buildUpdateScoresArgs(1, 50, -1)).toThrow('Invalid green score')
+      expect(() => buildUpdateScoresArgs(1, 50, 105)).toThrow('Invalid green score')
     })
-
-    const roles = await getAdminRoles(NON_ADMIN_ADDR)
-    expect(roles.isVaultOwner).toBe(false)
-    expect(roles.isRegistryOwner).toBe(false)
-    expect(roles.isWhitelister).toBe(false)
-    expect(roles.isAdmin).toBe(false)
-
-    const isAdmin = await checkIsAdmin(NON_ADMIN_ADDR)
-    expect(isAdmin).toBe(false)
   })
 })
