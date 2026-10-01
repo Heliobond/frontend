@@ -37,17 +37,15 @@ import {
   submitUpdateScores,
   submitSetWhitelist,
   isMultisigDeployment,
+  getAdminRoles,
+  type AdminRoles,
 } from '@/wallet/admin'
 
-/**
- * AdminConsole — the internal admin / oracle surface. Same design system as the
- * consumer app, but DENSER: tighter padding, smaller type, hairline-separated
- * rows, mono tabular numerals on every figure, and a real registry table.
- * All interactivity is local in-memory state — these stand in for privileged
- * InvestmentVault + ProjectRegistry writes. Honest, plain-language confirms.
- */
+export interface AdminConsoleProps {
+  roles?: AdminRoles
+}
 
-export function AdminConsole() {
+export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -57,6 +55,23 @@ export function AdminConsole() {
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [isMultisig, setIsMultisig] = useState(false)
+  const [roles, setRoles] = useState<AdminRoles | undefined>(propRoles)
+
+  useEffect(() => {
+    if (propRoles) {
+      setRoles(propRoles)
+      return
+    }
+    if (address) {
+      getAdminRoles(address).then(setRoles).catch(() => {})
+    }
+  }, [propRoles, address])
+
+  const canFund = roles ? roles.isVaultOwner || roles.isConfiguredAdmin : true
+  const canUpdateScores = roles ? roles.isRegistryOwner || roles.isConfiguredAdmin : true
+  const canManageWhitelist = roles
+    ? roles.isWhitelister || roles.isRegistryOwner || roles.isConfiguredAdmin
+    : true
 
   // Live contract reads on mount
   useEffect(() => {
@@ -278,11 +293,43 @@ export function AdminConsole() {
 
       {/* Project registry table */}
       <Section title={t('sectionRegistry')} caption={t('sectionRegistryCaption')}>
+        {!canUpdateScores && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            Registry owner permissions required to update scores.
+          </div>
+        )}
         <RegistryTable rows={registry} onSave={updateScores} />
       </Section>
 
       {/* Oracle actions */}
       <Section title={t('sectionOracle')} caption={t('sectionOracleCaption')}>
+        {(!canFund || !canUpdateScores) && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            {!canFund && !canUpdateScores
+              ? 'Vault owner or registry owner permissions required for privileged actions.'
+              : !canFund
+                ? 'Vault owner permissions required to fund projects.'
+                : 'Registry owner permissions required to update scores.'}
+          </div>
+        )}
         <OracleForms
           projects={registry}
           liquid={liquid}
@@ -293,6 +340,20 @@ export function AdminConsole() {
 
       {/* Whitelist management */}
       <Section title={t('sectionWhitelist')} caption={t('sectionWhitelistCaption')}>
+        {!canManageWhitelist && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            Whitelister permissions required to manage the creator whitelist.
+          </div>
+        )}
         <div>
           {whitelist.map((c, i) => (
             <div
@@ -315,6 +376,7 @@ export function AdminConsole() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!canManageWhitelist}
                     onClick={() => setCreatorStatus(c.address, 'pending')}
                   >
                     {t('actionRevoke')}
@@ -323,6 +385,7 @@ export function AdminConsole() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!canManageWhitelist}
                     onClick={() => setCreatorStatus(c.address, 'approved')}
                   >
                     {t('actionApprove')}

@@ -52,82 +52,135 @@ async function waitForTx(hash: string): Promise<void> {
   throw new Error('Admin transaction confirmation timed out')
 }
 
-/** Check if connected address is an authorized administrator */
-export async function checkIsAdmin(address: string | null): Promise<boolean> {
-  if (!address) return false
+export interface AdminRoles {
+  isVaultOwner: boolean
+  isRegistryOwner: boolean
+  isWhitelister: boolean
+  isMultisigSigner: boolean
+  isConfiguredAdmin: boolean
+  isAdmin: boolean
+}
 
-  const configuredList = (CONFIGURED_ADMIN_ADDR || '')
+async function queryMethodAddress(
+  server: any,
+  contractId: string,
+  method: string,
+  sourceAddress: string,
+  networkPassphrase: string,
+): Promise<string | null> {
+  const { Contract, TransactionBuilder, Account, scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const contract = new Contract(contractId)
+    const source = new Account(sourceAddress, '0')
+    const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
+      .addOperation(contract.call(method))
+      .setTimeout(0)
+      .build()
+
+    const simResult = (await withTimeout(
+      server.simulateTransaction(tx),
+      `Simulate ${method} timed out`,
+      3000,
+    )) as any
+    if (simResult && 'result' in simResult && simResult.result?.retval) {
+      const res = scValToNative(simResult.result.retval)
+      if (typeof res === 'string') return res
+    }
+  } catch {
+    /* method call failed or timed out */
+  }
+  return null
+}
+
+/**
+ * Fetch granular administrative roles for the connected address by probing
+ * get_owner on the vault and registry, and get_whitelister on the registry.
+ */
+export async function getAdminRoles(address: string | null): Promise<AdminRoles> {
+  const emptyRoles: AdminRoles = {
+    isVaultOwner: false,
+    isRegistryOwner: false,
+    isWhitelister: false,
+    isMultisigSigner: false,
+    isConfiguredAdmin: false,
+    isAdmin: false,
+  }
+
+  if (!address) return emptyRoles
+
+  const configuredAdminAddr = process.env.NEXT_PUBLIC_ADMIN_ADDRESS ?? CONFIGURED_ADMIN_ADDR
+  const configuredList = (configuredAdminAddr || '')
     .split(',')
     .map((a) => a.trim().toUpperCase())
     .filter(Boolean)
 
-  if (configuredList.includes(address.toUpperCase())) {
-    return true
+  const isConfiguredAdmin = configuredList.includes(address.toUpperCase())
+  if (isConfiguredAdmin) {
+    return {
+      isVaultOwner: true,
+      isRegistryOwner: true,
+      isWhitelister: true,
+      isMultisigSigner: true,
+      isConfiguredAdmin: true,
+      isAdmin: true,
+    }
   }
 
-  const contractId = VAULT_CONTRACT_ID || REGISTRY_CONTRACT_ID
-  if (!contractId) {
-    return address.toUpperCase() === DEMO_ADMIN_ADDRESS.toUpperCase()
+  const vaultContractId = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
+  const registryContractId = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID
+
+  if (!vaultContractId && !registryContractId) {
+    const isDemo = address.toUpperCase() === DEMO_ADMIN_ADDRESS.toUpperCase()
+    return {
+      isVaultOwner: isDemo,
+      isRegistryOwner: isDemo,
+      isWhitelister: isDemo,
+      isMultisigSigner: false,
+      isConfiguredAdmin: false,
+      isAdmin: isDemo,
+    }
   }
 
   try {
-    const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
-      await import('@stellar/stellar-sdk')
-
+    const { rpc, Networks } = await import('@stellar/stellar-sdk')
     const server = new rpc.Server(RPC_URL, { allowHttp: false })
-    const contract = new Contract(contractId)
-    const source = new Account(address, '0')
     const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
 
-    for (const method of ['admin', 'owner', 'get_admin']) {
-      try {
-        const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-          .addOperation(contract.call(method))
-          .setTimeout(0)
-          .build()
+    // Run parallel reads in one RPC round trip
+    const [vaultOwner, registryOwner, whitelister] = await Promise.all([
+      vaultContractId
+        ? queryMethodAddress(server, vaultContractId, 'get_owner', address, networkPassphrase)
+        : Promise.resolve(null),
+      registryContractId
+        ? queryMethodAddress(server, registryContractId, 'get_owner', address, networkPassphrase)
+        : Promise.resolve(null),
+      registryContractId
+        ? queryMethodAddress(server, registryContractId, 'get_whitelister', address, networkPassphrase)
+        : Promise.resolve(null),
+    ])
 
-        const simResult = await withTimeout(
-          server.simulateTransaction(tx),
-          'Simulate timed out',
-          3000,
-        )
-        if ('result' in simResult && simResult.result?.retval) {
-          const owner = scValToNative(simResult.result.retval)
-          if (typeof owner === 'string' && owner.toUpperCase() === address.toUpperCase()) {
-            return true
-          }
-        }
-      } catch {
-        /* try next method */
-      }
-    }
+    const isVaultOwner = Boolean(vaultOwner && vaultOwner.toUpperCase() === address.toUpperCase())
+    const isRegistryOwner = Boolean(registryOwner && registryOwner.toUpperCase() === address.toUpperCase())
+    const isWhitelister = Boolean(whitelister && whitelister.toUpperCase() === address.toUpperCase())
+    const isAdmin = isVaultOwner || isRegistryOwner || isWhitelister
 
-    // Check parameterized is_admin(address)
-    try {
-      const { Address } = await import('@stellar/stellar-sdk')
-      const userScVal = new Address(address).toScVal()
-      const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-        .addOperation(contract.call('is_admin', userScVal))
-        .setTimeout(0)
-        .build()
-
-      const simResult = await withTimeout(
-        server.simulateTransaction(tx),
-        'Simulate timed out',
-        3000,
-      )
-      if ('result' in simResult && simResult.result?.retval) {
-        const res = scValToNative(simResult.result.retval)
-        if (Boolean(res)) return true
-      }
-    } catch {
-      /* ignore */
+    return {
+      isVaultOwner,
+      isRegistryOwner,
+      isWhitelister,
+      isMultisigSigner: false,
+      isConfiguredAdmin: false,
+      isAdmin,
     }
   } catch {
-    /* fallback to configured addresses */
+    return emptyRoles
   }
+}
 
-  return configuredList.includes(address.toUpperCase())
+/** Check if connected address is an authorized administrator */
+export async function checkIsAdmin(address: string | null): Promise<boolean> {
+  const roles = await getAdminRoles(address)
+  return roles.isAdmin
 }
 
 /** Check if contract deployment uses multisig */
