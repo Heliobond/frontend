@@ -65,6 +65,12 @@
   max-width: 100%;
 }
 
+.hb-hero-helio {
+  width: 380px;
+  height: 380px;
+  max-width: 100%;
+}
+
 /* --- Tablet ---------------------------------------------------------------- */
 @media (max-width: 960px) {
   .hb-how-grid {
