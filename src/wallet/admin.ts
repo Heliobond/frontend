@@ -4,7 +4,12 @@
  * live contract reads, and signed admin transactions with multisig support.
  */
 
-import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
+import {
+  SOROBAN_RPC_URL as RPC_URL,
+  HORIZON_URL,
+  NETWORK_PASSPHRASE,
+  allowHttpFor,
+} from '../config/network'
 import type { xdr } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
@@ -35,7 +40,7 @@ async function withTimeout<T>(promise: Promise<T>, message: string, ms = 5000): 
 
 async function waitForTx(hash: string): Promise<void> {
   const { rpc } = await import('@stellar/stellar-sdk')
-  const server = new rpc.Server(RPC_URL, { allowHttp: false })
+  const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
   const deadline = Date.now() + TX_POLL_TIMEOUT_S * 1000
 
   while (Date.now() < deadline) {
@@ -71,13 +76,13 @@ export async function checkIsAdmin(address: string | null): Promise<boolean> {
   }
 
   try {
-    const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
+    const { rpc, Contract, TransactionBuilder, Account, scValToNative } =
       await import('@stellar/stellar-sdk')
 
-    const server = new rpc.Server(RPC_URL, { allowHttp: false })
+    const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
     const contract = new Contract(contractId)
     const source = new Account(address, '0')
-    const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
+    const networkPassphrase = NETWORK_PASSPHRASE
 
     for (const method of ['admin', 'owner', 'get_admin']) {
       try {
@@ -136,12 +141,12 @@ export async function isMultisigDeployment(address?: string): Promise<boolean> {
   if (!contractId || !address) return false
 
   try {
-    const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
+    const { rpc, Contract, TransactionBuilder, Account, scValToNative } =
       await import('@stellar/stellar-sdk')
-    const server = new rpc.Server(RPC_URL, { allowHttp: false })
+    const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
     const contract = new Contract(contractId)
     const source = new Account(address, '0')
-    const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
+    const networkPassphrase = NETWORK_PASSPHRASE
 
     const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
       .addOperation(contract.call('is_multisig'))
@@ -165,26 +170,18 @@ async function sendContractTx(
   address: string,
   sign: (xdr: string) => Promise<string>,
 ): Promise<string> {
-  const {
-    rpc,
-    Contract,
-    TransactionBuilder,
-    Networks,
-    Horizon,
-    Transaction,
-    nativeToScVal,
-    Address,
-  } = await import('@stellar/stellar-sdk')
+  const { rpc, Contract, TransactionBuilder, Horizon, Transaction, nativeToScVal, Address } =
+    await import('@stellar/stellar-sdk')
 
-  const server = new rpc.Server(RPC_URL, { allowHttp: false })
-  const horizon = new Horizon.Server(HORIZON_URL)
+  const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
+  const horizon = new Horizon.Server(HORIZON_URL, { allowHttp: allowHttpFor(HORIZON_URL) })
   const contract = new Contract(contractId)
 
   const account = await withTimeout(
     horizon.loadAccount(address),
     'Stellar Horizon timed out loading account',
   )
-  const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
+  const networkPassphrase = NETWORK_PASSPHRASE
 
   const scArgs = args.map((a) => {
     if (a && typeof a === 'object' && typeof (a as { switch?: unknown }).switch === 'function') {
