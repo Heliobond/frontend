@@ -60,6 +60,7 @@ bun run test:e2e:chain      # Playwright against a local Stellar network (see be
 bun run typecheck:coverage  # fails on any `any` in src/ (local only, not in CI)
 bun run bundle:check        # bundle budgets against .next/ (run after build)
 bun run start               # serve the production build
+./scripts/contracts/update-specs.sh # refresh contract-spec fixtures from Heliobond/contracts
 ```
 
 Only `build`, `test:coverage` and `start` are used by CI; the rest are the

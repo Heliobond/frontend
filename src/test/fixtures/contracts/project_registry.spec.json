@@ -1,0 +1,2418 @@
+[
+  {
+    "function_v0": {
+      "doc": "Pause the registry. Admin-only. Blocks all state-mutating user operations.\\nGetters and admin management functions (upgrade, migrate_state) remain available.",
+      "name": "pause",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Unpause the registry. Admin-only.",
+      "name": "unpause",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "upgrade",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_wasm_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Cast a vote on an open proposal.\\n\\n`weight` is the caller's HBS share balance, which the caller supplies.\\n**There is no on-chain verification of `weight` against the actual balance.**\\nOff-chain callers MUST query `vault.balance(voter)` and pass that value;\\nsupplying an inflated weight enables vote stuffing.\\n`support = true` = vote for; `support = false` = vote against.",
+      "name": "cast_vote",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "voter",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "support",
+          "type": "bool"
+        },
+        {
+          "doc": "",
+          "name": "weight",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns `Some(Address)` if ownership is set, or `None` if ownership has\\nbeen renounced.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.",
+      "name": "get_owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the configured investment vault address, if any (#526).",
+      "name": "get_vault",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Check whether a project's maturity date has been reached (#127).\\nReturns true if the current ledger timestamp is on or after the maturity\\ndate, false otherwise. Projects with no maturity date (0) are never mature.",
+      "name": "is_mature",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return whether the registry is currently paused.",
+      "name": "is_paused",
+      "inputs": [],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the investment vault that `delete_project` queries for active\\ninvestments (#526). Owner-only.",
+      "name": "set_vault",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "vault",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the `ProjectData` for `id`. Panics with `ProjectNotFound` if the ID is unknown.",
+      "name": "get_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "ProjectData"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return a proposal by ID. Panics with `ProposalNotFound` if unknown.",
+      "name": "get_proposal",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "Proposal"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return a consolidated operational-status snapshot for monitoring tools (#77).\\n\\nBundles state_version, is_paused, total_projects, and whether an\\nemergency admin is configured into a single call, so monitoring/alerting\\nintegrations don't need to poll each getter separately.",
+      "name": "health_check",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "HealthStatus"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Initialise the registry.\\n\\n- `admin` \\xe2\\x80\\x94 contract owner; may update scores, certify, and liquidate collateral.\\n- `whitelister` \\xe2\\x80\\x94 address authorised to approve creator accounts via `set_whitelist`.",
+      "name": "__constructor",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "admin",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "whitelister",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Migrate older state to the current schema version.\\n\\nVersion 0 means a deployment that predates explicit state versioning. The v1\\nmigration only records the version because existing storage layouts are unchanged.",
+      "name": "migrate_state",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from_version",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Grant or revoke project-creation rights for `account`.\\nOnly the whitelister address (set at construction) may call this.",
+      "name": "set_whitelist",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "status",
+          "type": "bool"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the state schema version supported by this contract build.",
+      "name": "state_version",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Create a new project. `maturity_date` is a Unix timestamp (seconds);\\npass 0 to create an open-ended project (#127).",
+      "name": "create_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "uri",
+          "type": "string"
+        },
+        {
+          "doc": "",
+          "name": "maturity_date",
+          "type": "u64"
+        },
+        {
+          "doc": "",
+          "name": "metadata_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Delete a project. Owner-only. Rejects deletion while the project has\\nactive investments in the vault (#26, #526).\\n\\nQueries `vault.get_project_investment(project_id)` on the vault set via\\n`set_vault`, panicking with `ProjectHasInvestments` if it is non-zero.\\nFails closed with `VaultNotConfigured` when no vault is set, so a\\nmissing configuration can never silently skip the check.",
+      "name": "delete_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the collateral balance for (`project_id`, `token`).",
+      "name": "get_collateral",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current project counter (equals the highest assigned project ID).\\nReturns 0 when no projects have been created yet.",
+      "name": "total_projects",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Archive a project. Admin-only. Archived projects are excluded from get_all_projects by default (#26).",
+      "name": "archive_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the certification status of a project (whitelister or owner only) (#130).",
+      "name": "certify_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "status",
+          "type": {
+            "udt": {
+              "name": "CertificationStatus"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Compact an archived project's storage to a minimal `ArchiveSummary` (#73).\\n\\nThe full `ProjectData` (up to ~580 bytes) is removed and replaced with an\\n`ArchiveSummary` (~52 bytes), significantly reducing ongoing rent costs.\\nThe project must already be archived via `archive_project`.\\nAfter compaction, `get_project(id)` returns `ProjectNotFound`; use\\n`get_archive_summary(id)` to retrieve the compact historical record.",
+      "name": "compact_archive",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Remove accumulated zero-value persistent storage entries. Admin-only.\\nCurrently removes collateral keys that were set to zero before the lazy-cleanup\\nfix (release_collateral and liquidate_collateral now call remove instead of\\nset-to-zero). Pass the `project_ids` to inspect and a `tokens` list for each.\\nEvery (project_id, token) pair is inspected, so the product of the two\\nlengths must not exceed `MAX_COMPACT_STORAGE_PAIRS` (#549); split larger\\ncleanups across multiple calls. Returns the number of entries removed.",
+      "name": "compact_storage",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_ids",
+          "type": {
+            "vec": {
+              "element_type": "u32"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "tokens",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Create a governance proposal. `voting_duration_secs` must be >= MIN_VOTING_PERIOD.\\nAny whitelisted address may propose; voting weight is determined at vote time\\nby the caller's HBS share balance (read via the vault cross-contract call).",
+      "name": "create_proposal",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "proposer",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "doc": "",
+          "name": "voting_duration_secs",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Pause the registry as the emergency admin, without requiring owner auth (#43).",
+      "name": "emergency_pause",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current whitelister address.",
+      "name": "get_whitelister",
+      "inputs": [],
+      "outputs": [
+        "address"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Replace the whitelister address. Admin-only (#76).\\n\\nThe new whitelister takes effect immediately for all subsequent `set_whitelist` calls.\\nEmits `WhitelisterChanged`. The admin key is the security boundary \\xe2\\x80\\x94 treat it\\nwith the same care as a multisig threshold key.",
+      "name": "set_whitelister",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_whitelister",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Accepts a pending ownership transfer.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n\\n# Errors\\n\\n* [`crate::role_transfer::RoleTransferError::NoPendingTransfer`] - If\\nthere is no pending transfer to accept.\\n\\n# Events\\n\\n* topics - `[\"ownership_transfer_completed\"]`\\n* data - `[new_owner: Address]`",
+      "name": "accept_ownership",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Finalise a proposal after voting has ended. Anyone may call this.\\nReturns true if the proposal passed (votes_for > votes_against).",
+      "name": "execute_proposal",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return all registered projects as `(project_id, ProjectData)` pairs.\\nIterates IDs 1..=`total_projects()` \\xe2\\x80\\x94 O(n) in the number of projects.",
+      "name": "get_all_projects",
+      "inputs": [],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "tuple": {
+                "value_types": [
+                  "u32",
+                  {
+                    "udt": {
+                      "name": "ProjectData"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Unpause the registry as the emergency admin, without requiring owner auth (#43).",
+      "name": "emergency_unpause",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current annualised interest rate in basis points for `project_id`.\\nFormula: `BASE_RATE_BPS \\xe2\\x88\\x92 avg_score \\xc3\\x97 (MAX_DISCOUNT_BPS / 100)`\\nwhere `avg_score = (credit_quality + green_impact) / 2` (0\\xe2\\x80\\x93100).\\nRate range: 500 bps (5 %) for perfect scores \\xe2\\x86\\x92 1 000 bps (10 %) for zero scores.",
+      "name": "get_interest_rate",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return up to `limit` non-archived projects starting after the first\\n`offset` project IDs, ordered by ascending project ID (#269).\\n\\nOrdering is stable across calls as long as no projects are created or\\narchived in between: paging through `offset = 0, limit, 2*limit, ...`\\nvisits every non-archived project exactly once, in the same order\\n`get_all_projects` would return them.",
+      "name": "get_projects_page",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "offset",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "limit",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "tuple": {
+                "value_types": [
+                  "u32",
+                  {
+                    "udt": {
+                      "name": "ProjectData"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the score history for `project_id` in chronological order (oldest first).\\nRetains at most MAX_SCORE_HISTORY (50) entries via a ring buffer; older entries are\\noverwritten. Returns an empty vec if no scores have been recorded yet.",
+      "name": "get_score_history",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "udt": {
+                "name": "ScoreHistoryEntry"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Deposit `amount` of `token` as collateral for `project_id`.\\nOnly the project owner may deposit; tokens are held by this contract.",
+      "name": "deposit_collateral",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "depositor",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_multisig_admin",
+      "inputs": [],
+      "outputs": [
+        {
+          "tuple": {
+            "value_types": [
+              {
+                "vec": {
+                  "element_type": "address"
+                }
+              },
+              "u32"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Release all collateral of `token` back to the project owner.\\nAllowed only after the project has matured or was never funded.",
+      "name": "release_collateral",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Renounces ownership of the contract.\\n\\nPermanently removes the owner, disabling all functions gated by\\n`#[only_owner]`.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n\\n# Errors\\n\\n* [`OwnableError::TransferInProgress`] - If there is a pending ownership\\ntransfer.\\n* [`OwnableError::OwnerNotSet`] - If the owner is not set.\\n\\n# Notes\\n\\n* Authorization for the current owner is required.",
+      "name": "renounce_ownership",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_multisig_admin",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "signers",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "threshold",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Transition a project's lifecycle status to `Active`, `Funded`, or `Completed`. Admin-only (#329).\\n\\nNothing in this contract advances `ProjectData::status` past `Pending` on\\nits own \\xe2\\x80\\x94 this is the callable transition path until a real cross-contract\\ncall from the vault on funding events lands (tracked separately). Cannot be\\nused to set or clear `Archived`; use `archive_project` for that, since\\narchived projects are otherwise immutable. Emits `ProjectStatusChanged`.",
+      "name": "set_project_status",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "status",
+          "type": {
+            "udt": {
+              "name": "ProjectStatus"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Initiates a 2-step ownership transfer and emits a project-specific\\n`OwnershipTransferred` event for auditing (#30).",
+      "name": "transfer_ownership",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the compact archive summary for a compacted project (#73).\\nPanics with `ProjectNotFound` if no compact record exists for `id`.",
+      "name": "get_archive_summary",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "ArchiveSummary"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the configured emergency-admin address, if any.",
+      "name": "get_emergency_admin",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set (or clear, via `None`) the emergency-admin address. Owner-only (#43).\\n\\nThe emergency admin may call `emergency_pause`/`emergency_unpause` without\\nholding full owner privileges \\xe2\\x80\\x94 intended for a fast-response operational\\nrole, separate from the owner who manages whitelisting, scoring, etc.",
+      "name": "set_emergency_admin",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "emergency_admin",
+          "type": {
+            "option": {
+              "value_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Update both `credit_quality` and `green_impact` for `project_id`. Admin-only.\\nBoth values must be in the range 0\\xe2\\x80\\x93100. Emits `ProjectUpdated` and `RateUpdated`.\\nNo-op if the new scores are identical to the existing ones.",
+      "name": "update_impact_score",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "green_impact",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "clear_multisig_admin",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Liquidate collateral to `recipient` (admin only). Used for defaulted projects.",
+      "name": "liquidate_collateral",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the version recorded in instance storage. Unversioned deployments report 0.",
+      "name": "stored_state_version",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return true if `candidate_hash` matches the metadata hash recorded for\\n`project_id` at creation time (#44). Callers hash the metadata content\\nthey fetched from the project's `uri` off-chain and pass it here to get\\ntrustless proof the content matches what the creator committed to.",
+      "name": "verify_metadata_hash",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "candidate_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        }
+      ],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the reputation score (0\\xe2\\x80\\x93100) for `creator`. Returns 0 if never set.",
+      "name": "get_creator_reputation",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "creator",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Earliest ledger timestamp at which `project_id` accepts another oracle\\nscore update (`last_update_timestamp + MIN_UPDATE_INTERVAL - UPDATE_INTERVAL_TOLERANCE`),\\nor `0` if it has never been updated. Lets oracles skip a too-early\\nsubmission instead of paying for an `UpdateTooFrequent` failure (#628).\\nPanics with `ProjectNotFound` if the ID is unknown.",
+      "name": "next_update_allowed_at",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "u64"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set a creator's reputation score (0\\xe2\\x80\\x93100). Callable by the whitelister or owner.\\nReputation reflects track record: successful funded projects, repayments, scores.\\nEmits `ReputationUpdated`.",
+      "name": "set_creator_reputation",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "score",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Update impact scores for multiple projects in a single transaction. Admin-only (#31).\\n\\nEach entry in `updates` is `(project_id, credit_quality, green_impact)`.\\nBoth score values must be in the range 0\\xe2\\x80\\x93100. Panics with `EmptyBatchUpdate`\\nif `updates` is empty (#445) \\xe2\\x80\\x94 a no-op batch is almost certainly a caller bug.\\nThe batch is rejected as a whole if it exceeds `MAX_BATCH_SCORE_SIZE` (20\\nentries), preventing transactions that would exceed Soroban ledger resource\\nlimits.\\n\\nIndividual project entries that are no-ops (scores identical to current values)\\nare silently skipped, consistent with `update_impact_score`. Emits `ProjectUpdated`,\\n`RateUpdated`, and `ScoreChanged` for each project whose scores actually change.",
+      "name": "update_impact_scores_batch",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "updates",
+          "type": {
+            "vec": {
+              "element_type": {
+                "tuple": {
+                  "value_types": [
+                    "u32",
+                    "u32",
+                    "u32"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set only the credit-quality score for a project. Admin-only, bounded 0\\xe2\\x80\\x93100.\\nEmits `ScoreChanged` with the old and new values. Use `update_impact_score` to\\nupdate both scores simultaneously (#6).",
+      "name": "update_credit_quality_score",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "update_impact_score_approved",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "green_impact",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Update impact scores for multiple projects using multi-sig admin approvals (#184, #437).\\n\\nMirrors `update_impact_score_approved`/`liquidate_collateral_approved`: this is\\nthe usable batch-update path once multisig is enabled, since\\n`update_impact_scores_batch` itself is blocked by `require_multisig_disabled`\\nafter `set_multisig_admin` sets a threshold > 0. Same validation as\\n`update_impact_scores_batch` (empty-batch/size-cap checks, no-op skipping).\\n\\nNamed `update_scores_batch_approved` rather than\\n`update_impact_scores_batch_approved` because Soroban caps exported\\ncontract function names at 32 bytes and the longer name exceeds it.",
+      "name": "update_scores_batch_approved",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "updates",
+          "type": {
+            "vec": {
+              "element_type": {
+                "tuple": {
+                  "value_types": [
+                    "u32",
+                    "u32",
+                    "u32"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the suggested max funding limit in basis points of vault total assets\\nfor projects owned by `creator`, derived from their reputation score.\\n\\nFormula: `reputation * 50` bps (0 rep = 0 bps, 100 rep = 5 000 bps = 50%).\\nVault admins should consult this value when calling `fund_project`.",
+      "name": "get_creator_funding_limit_bps",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "creator",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "liquidate_collateral_approved",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return all projects including archived ones (#26).",
+      "name": "get_all_projects_with_archived",
+      "inputs": [],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "tuple": {
+                "value_types": [
+                  "u32",
+                  {
+                    "udt": {
+                      "name": "ProjectData"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A governance proposal that HBS holders vote on (#134).",
+      "lib": "",
+      "name": "Proposal",
+      "fields": [
+        {
+          "doc": "Short human-readable description of the proposal.",
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "doc": "True once the proposal outcome has been finalised.",
+          "name": "executed",
+          "type": "bool"
+        },
+        {
+          "doc": "Address that created the proposal.",
+          "name": "proposer",
+          "type": "address"
+        },
+        {
+          "doc": "Weighted votes against.",
+          "name": "votes_against",
+          "type": "i128"
+        },
+        {
+          "doc": "Weighted votes in favour (1 HBS share = 1 vote).",
+          "name": "votes_for",
+          "type": "i128"
+        },
+        {
+          "doc": "Ledger timestamp after which no more votes are accepted.",
+          "name": "voting_ends_at",
+          "type": "u64"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "ProjectData",
+      "fields": [
+        {
+          "doc": "Third-party certification state (#130).",
+          "name": "certification_status",
+          "type": {
+            "udt": {
+              "name": "CertificationStatus"
+            }
+          }
+        },
+        {
+          "doc": "Ledger timestamp at project creation (#40).\\n\\nNOTE: this field was added after initial deployment. Projects created by\\ncontract builds predating this change will not have a value for it;\\nany state-migration for existing persisted `ProjectData` records (see\\n`migrate_state`) must backfill this field, e.g. from `last_update_timestamp`\\nor 0, since it cannot be reconstructed from on-chain data otherwise.",
+          "name": "created_at",
+          "type": "u64"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "green_impact",
+          "type": "u32"
+        },
+        {
+          "doc": "Timestamp of the last score update (#70).",
+          "name": "last_update_timestamp",
+          "type": "u64"
+        },
+        {
+          "doc": "Unix timestamp (seconds) after which the project is considered mature (#127).\\n0 means no maturity date set.",
+          "name": "maturity_date",
+          "type": "u64"
+        },
+        {
+          "doc": "Content hash (e.g. sha256) of the off-chain metadata pointed to by `uri` (#44).\\n\\nLets callers verify metadata hasn't been tampered with by hashing the\\nfetched content and comparing it against this value (see\\n`verify_metadata_hash`), without trusting the off-chain host.",
+          "name": "metadata_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "doc": "The lifecycle status of the project (#27).",
+          "name": "status",
+          "type": {
+            "udt": {
+              "name": "ProjectStatus"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Consolidated operational status for monitoring/health-check integrations (#77).\\n\\nBundles the getters an off-chain monitor would otherwise have to poll\\nindividually into a single call.",
+      "lib": "",
+      "name": "HealthStatus",
+      "fields": [
+        {
+          "doc": "",
+          "name": "has_emergency_admin",
+          "type": "bool"
+        },
+        {
+          "doc": "",
+          "name": "is_paused",
+          "type": "bool"
+        },
+        {
+          "doc": "",
+          "name": "state_version",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "total_projects",
+          "type": "u32"
+        }
+      ]
+    }
+  },
+  {
+    "udt_enum_v0": {
+      "doc": "Lifecycle status of a project (#27).\\n\\n`Pending` is set at creation and `Archived` via `archive_project`.\\n`Active`, `Funded`, and `Completed` are set via `set_project_status`\\n(admin/vault-callable) \\xe2\\x80\\x94 this contract does not transition into them on\\nits own; a cross-contract call from the vault on real funding events is\\ntracked separately (#329).",
+      "lib": "",
+      "name": "ProjectStatus",
+      "cases": [
+        {
+          "doc": "",
+          "name": "Pending",
+          "value": 0
+        },
+        {
+          "doc": "",
+          "name": "Active",
+          "value": 1
+        },
+        {
+          "doc": "",
+          "name": "Funded",
+          "value": 2
+        },
+        {
+          "doc": "",
+          "name": "Completed",
+          "value": 3
+        },
+        {
+          "doc": "",
+          "name": "Archived",
+          "value": 4
+        }
+      ]
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "Structured error codes for the ProjectRegistry contract (#75).\\nVariant values are stable \\xe2\\x80\\x94 never reorder or renumber after deployment,\\nas on-chain callers may inspect the numeric code.",
+      "lib": "",
+      "name": "RegistryError",
+      "cases": [
+        {
+          "doc": "Creator address is not in the whitelist.",
+          "name": "NotWhitelisted",
+          "value": 1
+        },
+        {
+          "doc": "Project URI is shorter than MIN_URI_LEN bytes.",
+          "name": "UriTooShort",
+          "value": 2
+        },
+        {
+          "doc": "Project URI is longer than MAX_URI_LEN bytes.",
+          "name": "UriTooLong",
+          "value": 3
+        },
+        {
+          "doc": "Maturity date is not in the future.",
+          "name": "MaturityDateInPast",
+          "value": 4
+        },
+        {
+          "doc": "Project ID counter reached u32::MAX.",
+          "name": "ProjectLimitReached",
+          "value": 5
+        },
+        {
+          "doc": "Counter integrity check failed (slot already occupied).",
+          "name": "CounterIntegrityViolation",
+          "value": 6
+        },
+        {
+          "doc": "Project with the given ID does not exist.",
+          "name": "ProjectNotFound",
+          "value": 7
+        },
+        {
+          "doc": "Credit quality or green impact score is out of the 0\\xe2\\x80\\x93100 range.",
+          "name": "ScoresOutOfRange",
+          "value": 8
+        },
+        {
+          "doc": "Caller is not authorised to certify projects.",
+          "name": "NotAuthorizedToCertify",
+          "value": 9
+        },
+        {
+          "doc": "Voting weight must be positive.",
+          "name": "VotingWeightNotPositive",
+          "value": 10
+        },
+        {
+          "doc": "Caller has already voted on this proposal.",
+          "name": "AlreadyVoted",
+          "value": 11
+        },
+        {
+          "doc": "Proposal with the given ID does not exist.",
+          "name": "ProposalNotFound",
+          "value": 12
+        },
+        {
+          "doc": "Voting period for this proposal has ended.",
+          "name": "VotingPeriodEnded",
+          "value": 13
+        },
+        {
+          "doc": "Proposal has already been executed.",
+          "name": "ProposalAlreadyExecuted",
+          "value": 14
+        },
+        {
+          "doc": "Requested voting duration is below MIN_VOTING_PERIOD.",
+          "name": "VotingPeriodTooShort",
+          "value": 15
+        },
+        {
+          "doc": "Voting is still in progress; cannot execute yet.",
+          "name": "VotingStillOpen",
+          "value": 16
+        },
+        {
+          "doc": "Collateral amount must be positive.",
+          "name": "CollateralNotPositive",
+          "value": 17
+        },
+        {
+          "doc": "Only the project owner may perform this operation.",
+          "name": "NotProjectOwner",
+          "value": 18
+        },
+        {
+          "doc": "No collateral balance to release or liquidate.",
+          "name": "NoCollateral",
+          "value": 19
+        },
+        {
+          "doc": "Project has not yet reached its maturity date.",
+          "name": "ProjectNotMature",
+          "value": 20
+        },
+        {
+          "doc": "Reputation score is out of the 0\\xe2\\x80\\x93100 range.",
+          "name": "ReputationOutOfRange",
+          "value": 21
+        },
+        {
+          "doc": "Caller is not authorised to set creator reputation.",
+          "name": "NotAuthorizedReputation",
+          "value": 22
+        },
+        {
+          "doc": "Credit quality score is out of the 0\\xe2\\x80\\x93100 range.",
+          "name": "CreditQualityOutOfRange",
+          "value": 23
+        },
+        {
+          "doc": "Multi-sig threshold must be greater than 0 and no larger than signer count.",
+          "name": "InvalidMultiSigThreshold",
+          "value": 24
+        },
+        {
+          "doc": "Multi-sig signer set is larger than the contract limit.",
+          "name": "TooManyMultiSigSigners",
+          "value": 25
+        },
+        {
+          "doc": "Approval address is not configured as a multi-sig signer.",
+          "name": "NotMultiSigSigner",
+          "value": 26
+        },
+        {
+          "doc": "Approval set contains the same signer more than once.",
+          "name": "DuplicateApproval",
+          "value": 27
+        },
+        {
+          "doc": "The operation did not include enough multi-sig approvals.",
+          "name": "InsufficientApprovals",
+          "value": 28
+        },
+        {
+          "doc": "Project URI must start with a valid scheme (ipfs://, https://, ar://).",
+          "name": "InvalidUriScheme",
+          "value": 29
+        },
+        {
+          "doc": "Project cannot be deleted because it has active investments.",
+          "name": "ProjectHasInvestments",
+          "value": 30
+        },
+        {
+          "doc": "Project is already archived.",
+          "name": "ProjectArchived",
+          "value": 31
+        },
+        {
+          "doc": "State version mismatch during migration.",
+          "name": "UnsupportedStateVersion",
+          "value": 32
+        },
+        {
+          "doc": "Score update requested too soon after previous update.",
+          "name": "UpdateTooFrequent",
+          "value": 33
+        },
+        {
+          "doc": "Project must be archived before it can be compacted.",
+          "name": "ProjectNotArchived",
+          "value": 34
+        },
+        {
+          "doc": "Circuit breaker is active (paused).",
+          "name": "Paused",
+          "value": 35
+        },
+        {
+          "doc": "Caller is neither the owner nor the configured emergency admin.",
+          "name": "NotEmergencyAdmin",
+          "value": 36
+        },
+        {
+          "doc": "Batch score update request exceeds the configured maximum batch size (#31).",
+          "name": "BatchTooLarge",
+          "value": 37
+        },
+        {
+          "doc": "Project is already certified with the target status.",
+          "name": "AlreadyCertified",
+          "value": 38
+        },
+        {
+          "doc": "create_proposal's description exceeds MAX_PROPOSAL_DESCRIPTION_LEN (#455).",
+          "name": "ProposalDescriptionTooLong",
+          "value": 39
+        },
+        {
+          "doc": "update_impact_scores_batch received an empty updates list (#445).",
+          "name": "EmptyBatchUpdate",
+          "value": 40
+        },
+        {
+          "doc": "set_project_status was asked to set or clear `Archived` \\xe2\\x80\\x94 use\\n`archive_project` instead, since archived projects are immutable (#329).",
+          "name": "InvalidStatusTransition",
+          "value": 41
+        },
+        {
+          "doc": "set_project_status was called with the project's current status (#329).",
+          "name": "ProjectStatusUnchanged",
+          "value": 42
+        },
+        {
+          "doc": "compact_storage input exceeds the maximum allowed batch size (#332).",
+          "name": "CompactStorageTooLarge",
+          "value": 43
+        },
+        {
+          "doc": "create_proposal voting_duration_secs exceeds the maximum allowed period (#332).",
+          "name": "VotingPeriodTooLong",
+          "value": 44
+        },
+        {
+          "doc": "delete_project was called before the investment vault address was set\\nvia `set_vault`, so active investments cannot be ruled out (#526).",
+          "name": "VaultNotConfigured",
+          "value": 45
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Compact archive record stored when a project's full data is compacted (#73).\\n\\nReplaces `ProjectData` (~580 bytes) with a minimal summary (~52 bytes),\\nreducing persistent storage rent for old projects that no longer need full data.\\nUse `compact_archive` to transition an archived project to this form.",
+      "lib": "",
+      "name": "ArchiveSummary",
+      "fields": [
+        {
+          "doc": "",
+          "name": "certification_status",
+          "type": {
+            "udt": {
+              "name": "CertificationStatus"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "final_credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "final_green_impact",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "maturity_date",
+          "type": "u64"
+        },
+        {
+          "doc": "Preserved so `verify_metadata_hash` keeps working after compaction (#448).",
+          "name": "metadata_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A timestamped snapshot of a project's scores, for on-chain history tracking (#123).",
+      "lib": "",
+      "name": "ScoreHistoryEntry",
+      "fields": [
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "green_impact",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "timestamp",
+          "type": "u64"
+        }
+      ]
+    }
+  },
+  {
+    "udt_enum_v0": {
+      "doc": "Certification state for a green project (#130).",
+      "lib": "",
+      "name": "CertificationStatus",
+      "cases": [
+        {
+          "doc": "",
+          "name": "None",
+          "value": 0
+        },
+        {
+          "doc": "",
+          "name": "Pending",
+          "value": 1
+        },
+        {
+          "doc": "",
+          "name": "Certified",
+          "value": 2
+        },
+        {
+          "doc": "",
+          "name": "Revoked",
+          "value": 3
+        }
+      ]
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a vote is cast on a proposal (#134).",
+      "lib": "",
+      "name": "VoteCast",
+      "prefix_topics": [
+        "vote_cast"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "voter",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "support",
+          "type": "bool",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "weight",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project's interest rate is recalculated (#129).",
+      "lib": "",
+      "name": "RateUpdated",
+      "prefix_topics": [
+        "rate_updated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "rate_bps",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when impact scores change, with old and new values for off-chain\\ntracking of score history and rate recalculations (#6).",
+      "lib": "",
+      "name": "ScoreChanged",
+      "prefix_topics": [
+        "score_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "old_credit_quality",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_credit_quality",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "old_green_impact",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_green_impact",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "old_rate_bps",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_rate_bps",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when an account's whitelist status is changed.",
+      "lib": "",
+      "name": "WhitelistSet",
+      "prefix_topics": [
+        "whitelist_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "status",
+          "type": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a whitelisted creator registers a new project.",
+      "lib": "",
+      "name": "ProjectCreated",
+      "prefix_topics": [
+        "project_created"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project is deleted by the admin.",
+      "lib": "",
+      "name": "ProjectDeleted",
+      "prefix_topics": [
+        "project_deleted"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the oracle updates a project's credit-quality / green-impact scores.",
+      "lib": "",
+      "name": "ProjectUpdated",
+      "prefix_topics": [
+        "project_updated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "green_impact",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the registry is paused (#72).",
+      "lib": "",
+      "name": "RegistryPaused",
+      "prefix_topics": [
+        "registry_paused"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project is archived by the admin.",
+      "lib": "",
+      "name": "ProjectArchived",
+      "prefix_topics": [
+        "project_archived"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a governance proposal is created (#134).",
+      "lib": "",
+      "name": "ProposalCreated",
+      "prefix_topics": [
+        "proposal_created"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "proposer",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "voting_ends_at",
+          "type": "u64",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project's certification status is updated (#130).",
+      "lib": "",
+      "name": "ProjectCertified",
+      "prefix_topics": [
+        "project_certified"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "status",
+          "type": {
+            "udt": {
+              "name": "CertificationStatus"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when project storage is compacted (#88).",
+      "lib": "",
+      "name": "ProjectCompacted",
+      "prefix_topics": [
+        "project_compacted"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a proposal is finalised (#134).",
+      "lib": "",
+      "name": "ProposalExecuted",
+      "prefix_topics": [
+        "proposal_executed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "proposal_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "passed",
+          "type": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the registry is unpaused (#72).",
+      "lib": "",
+      "name": "RegistryUnpaused",
+      "prefix_topics": [
+        "registry_unpaused"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a creator's reputation score is updated (#46).",
+      "lib": "",
+      "name": "ReputationUpdated",
+      "prefix_topics": [
+        "reputation_updated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "creator",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "score",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when collateral is released back to the project owner (#128).",
+      "lib": "",
+      "name": "CollateralReleased",
+      "prefix_topics": [
+        "collateral_released"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin replaces the whitelister address (#76).",
+      "lib": "",
+      "name": "WhitelisterChanged",
+      "prefix_topics": [
+        "whitelister_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_whitelister",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_whitelister",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when collateral is deposited for a project (#128).",
+      "lib": "",
+      "name": "CollateralDeposited",
+      "prefix_topics": [
+        "collateral_deposited"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "depositor",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when collateral is liquidated by the admin (#128).",
+      "lib": "",
+      "name": "CollateralLiquidated",
+      "prefix_topics": [
+        "collateral_liquidated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "token",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin updates a project's credit-quality score independently (#6).",
+      "lib": "",
+      "name": "CreditQualityUpdated",
+      "prefix_topics": [
+        "credit_quality_updated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "credit_quality",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin initiates an ownership transfer (#30).",
+      "lib": "",
+      "name": "OwnershipTransferred",
+      "prefix_topics": [
+        "ownership_transferred"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project's lifecycle status is changed via `set_project_status` (#329).",
+      "lib": "",
+      "name": "ProjectStatusChanged",
+      "prefix_topics": [
+        "project_status_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "old_status",
+          "type": {
+            "udt": {
+              "name": "ProjectStatus"
+            }
+          },
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_status",
+          "type": {
+            "udt": {
+              "name": "ProjectStatus"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin sets or clears the emergency-admin address (#43).",
+      "lib": "",
+      "name": "EmergencyAdminChanged",
+      "prefix_topics": [
+        "emergency_admin_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "new_emergency_admin",
+          "type": {
+            "option": {
+              "value_type": "address"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "RoleTransferError",
+      "cases": [
+        {
+          "doc": "",
+          "name": "NoPendingTransfer",
+          "value": 2200
+        },
+        {
+          "doc": "",
+          "name": "InvalidLiveUntilLedger",
+          "value": 2201
+        },
+        {
+          "doc": "",
+          "name": "InvalidPendingAccount",
+          "value": 2202
+        },
+        {
+          "doc": "",
+          "name": "TransferExpired",
+          "value": 2203
+        }
+      ]
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "OwnableError",
+      "cases": [
+        {
+          "doc": "",
+          "name": "OwnerNotSet",
+          "value": 2100
+        },
+        {
+          "doc": "",
+          "name": "TransferInProgress",
+          "value": 2101
+        },
+        {
+          "doc": "",
+          "name": "OwnerAlreadySet",
+          "value": 2102
+        }
+      ]
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when an ownership transfer is initiated.",
+      "lib": "",
+      "name": "OwnershipTransfer",
+      "prefix_topics": [
+        "ownership_transfer"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when ownership is renounced.",
+      "lib": "",
+      "name": "OwnershipRenounced",
+      "prefix_topics": [
+        "ownership_renounced"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when an ownership transfer is completed.",
+      "lib": "",
+      "name": "OwnershipTransferCompleted",
+      "prefix_topics": [
+        "ownership_transfer_completed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  }
+]

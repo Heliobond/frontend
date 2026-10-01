@@ -10,6 +10,7 @@ const eslintConfig = [
       '.next/**',
       'playwright-report/**',
       'test-results/**',
+      '.e2e/**',
     ],
   },
   ...coreWebVitals,

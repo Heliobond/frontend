@@ -1,0 +1,3729 @@
+[
+  {
+    "udt_error_enum_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "OwnableError",
+      "cases": [
+        {
+          "doc": "",
+          "name": "OwnerNotSet",
+          "value": 2100
+        },
+        {
+          "doc": "",
+          "name": "TransferInProgress",
+          "value": 2101
+        },
+        {
+          "doc": "",
+          "name": "OwnerAlreadySet",
+          "value": 2102
+        }
+      ]
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "RoleTransferError",
+      "cases": [
+        {
+          "doc": "",
+          "name": "NoPendingTransfer",
+          "value": 2200
+        },
+        {
+          "doc": "",
+          "name": "InvalidLiveUntilLedger",
+          "value": 2201
+        },
+        {
+          "doc": "",
+          "name": "InvalidPendingAccount",
+          "value": 2202
+        },
+        {
+          "doc": "",
+          "name": "TransferExpired",
+          "value": 2203
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Destroys `amount` of tokens from `from`. Updates the total\\nsupply accordingly.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n* `from` - The account whose tokens are destroyed.\\n* `amount` - The amount of tokens to burn.\\n\\n# Errors\\n\\n* [`crate::fungible::FungibleTokenError::InsufficientBalance`] - When\\nattempting to burn more tokens than `from` current balance.\\n* [`crate::fungible::FungibleTokenError::LessThanZero`] - When `amount <\\n0`.\\n\\n# Events\\n\\n* topics - `[\"burn\", from: Address]`\\n* data - `[amount: i128]`",
+      "name": "burn",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the name for this token.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.",
+      "name": "name",
+      "inputs": [],
+      "outputs": [
+        "string"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Settle queued redemptions in FIFO order using available liquid USDC (#3).\\n\\nStops at the head entry if it cannot be fully satisfied \\xe2\\x80\\x94 available liquidity\\nis NOT used to pay out later, smaller entries. This preserves strict ordering\\nso no claimant can be skipped ahead of an earlier one.\\n\\nAnyone may call this function; no auth required.",
+      "name": "claim",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "pause",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the symbol for this token.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.",
+      "name": "symbol",
+      "inputs": [],
+      "outputs": [
+        "string"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Sets the amount of tokens a `spender` is allowed to spend on behalf of\\nan `owner`. Overrides any existing allowance set between `spender` and\\n`owner`.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.\\n* `owner` - The address holding the tokens.\\n* `spender` - The address authorized to spend the tokens.\\n* `amount` - The amount of tokens made available to `spender`.\\n* `live_until_ledger` - The ledger number at which the allowance\\nexpires.\\n\\n# Errors\\n\\n* [`FungibleTokenError::InvalidLiveUntilLedger`] - Occurs when\\nattempting to set `live_until_ledger` that is less than the current\\nledger number and greater than `0`.\\n* [`FungibleTokenError::LessThanZero`] - Occurs when `amount < 0`.\\n\\n# Events\\n\\n* topics - `[\"approve\", from: Address, spender: Address]`\\n* data - `[amount: i128, live_until_ledger: u32]`",
+      "name": "approve",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the amount of tokens held by `account`.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n* `account` - The address for which the balance is being queried.",
+      "name": "balance",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Deposit USDC and mint HBS vault shares. Returns the number of shares minted.\\n\\nDeductions applied before share calculation:\\n1. Insurance premium: `INSURANCE_PREMIUM_BPS` (50 bps = 0.5%) credited to the insurance fund.\\n2. Management fee: optional `ManagementFeeBps` (0\\xe2\\x80\\x93500 bps) sent to the fee recipient.\\n\\nThe remaining investable amount is converted to shares at the current NAV.",
+      "name": "deposit",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "usdc_amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "unpause",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "upgrade",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_wasm_hash",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the number of decimals used to represent amounts of this token.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.",
+      "name": "decimals",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "transfer",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "muxed_address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Burn `shares_amount` HBS shares and return USDC to `from`.\\n\\nWithdrawal is subject to graduated liquidity limits based on vault utilization\\n(see `get_utilization_bps`). If the vault has insufficient liquid USDC to pay\\nthe full redemption, shares are burned immediately and the claim is enqueued\\nin FIFO order \\xe2\\x80\\x94 call `claim()` once liquidity is restored.",
+      "name": "withdraw",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "shares_amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "min_usdc_return",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the amount of tokens a `spender` is allowed to spend on behalf\\nof an `owner`.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.\\n* `owner` - The address holding the tokens.\\n* `spender` - The address authorized to spend the tokens.",
+      "name": "allowance",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "spender",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Destroys `amount` of tokens from `from`. Updates the total\\nsupply accordingly.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n* `spender` - The address authorized to burn the tokens.\\n* `from` - The account whose tokens are destroyed.\\n* `amount` - The amount of tokens to burn.\\n\\n# Errors\\n\\n* [`crate::fungible::FungibleTokenError::InsufficientBalance`] - When\\nattempting to burn more tokens than `from` current balance.\\n* [`crate::fungible::FungibleTokenError::InsufficientAllowance`] - When\\nattempting to burn more tokens than `from` allowance.\\n* [`crate::fungible::FungibleTokenError::LessThanZero`] - When `amount <\\n0`.\\n\\n# Events\\n\\n* topics - `[\"burn\", from: Address]`\\n* data - `[amount: i128]`",
+      "name": "burn_from",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns `Some(Address)` if ownership is set, or `None` if ownership has\\nbeen renounced.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.",
+      "name": "get_owner",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return whether the vault is currently paused (#72).",
+      "name": "is_paused",
+      "inputs": [],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the cross-chain bridge contract address (owner-only) (#184).",
+      "name": "set_bridge",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "bridge",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Burn HBS shares to initiate an outbound cross-chain bridge transfer (#184).",
+      "name": "bridge_burn",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Mint HBS shares resulting from an authorized cross-chain bridge transfer (#184).",
+      "name": "bridge_mint",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Claim accumulated yield for `from`. Transfers claimable USDC to `from`.",
+      "name": "claim_yield",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Largest USDC amount `account` could deposit right now: `MAX_DEPOSIT`,\\ncapped by the max-transaction cap and by the remaining HBS supply\\nheadroom (#20). Returns 0 while paused. Funding rounds only block share\\ntransfers (#38), not deposits, so they don't affect this. The supply\\nheadroom is converted conservatively (using the lower of the flat and\\nvolume-tier fee), so depositing `max_deposit` never hits\\n`MaxSupplyExceeded`.",
+      "name": "max_deposit",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "USDC value of one whole share (10^7 base units), scaled by 10^7.\\nReturns 10^7 (1:1) when no shares are outstanding, matching the 1:1\\nfirst-deposit mint.",
+      "name": "share_price",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Transfer USDC from the vault to a registered project's owner. Admin-only.\\n\\nRejects funding if the project's `credit_quality` or `green_impact` is below\\nthe admin-configured minimum thresholds (see `set_funding_thresholds`; defaults\\nare 0 so no restriction applies until explicitly configured).\\n\\nThe insurance reserve is always protected \\xe2\\x80\\x94 only `liquid_usdc - insurance_fund`\\nis available for deployment.\\n\\nUSDC is transferred directly to the project `owner` address registered in the\\n`ProjectRegistry`, not to an arbitrary address.",
+      "name": "fund_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current ProjectRegistry contract address.",
+      "name": "get_registry",
+      "inputs": [],
+      "outputs": [
+        "address"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return a consolidated operational-status snapshot for monitoring tools (#77).\\n\\nBundles state_version, is_paused, get_utilization_bps, and whether an\\nemergency admin is configured into a single call, so monitoring/alerting\\nintegrations don't need to poll each getter separately.",
+      "name": "health_check",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "HealthStatus"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Largest USDC amount `account` could withdraw right now: the value of\\nits share balance, capped by the graduated utilization limit (#45)\\nand the max-transaction cap. Returns 0 while paused, while the\\naccount's deposit lock (#33) is active, or if its balance is below\\nthe minimum withdrawal.",
+      "name": "max_withdraw",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Replace the ProjectRegistry dependency. Admin-only (#76).\\n\\nThe new address is validated immediately by calling `total_projects()` on it \\xe2\\x80\\x94\\npanics if the address is not a deployed ProjectRegistry.\\n\\n**Security:** This is a high-privilege operation. The admin key is the only\\nprotection against swapping in a malicious registry. Treat the admin key as a\\nsecurity boundary (ideally a multisig account).\\n\\nEmits `RegistryChanged`.",
+      "name": "set_registry",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_registry",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the vault's net asset value (NAV) by recomputing from on-chain\\nstate on every call (e.g., liquid USDC + investments + expected returns).",
+      "name": "total_assets",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Returns the total amount of tokens in circulation.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.",
+      "name": "total_supply",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Initialise the vault.\\n\\n- `admin` \\xe2\\x80\\x94 contract owner; may fund projects, distribute yield, set fees.\\n- `usdc_sac` \\xe2\\x80\\x94 Stellar Asset Contract address for USDC (the vault's accepted asset).\\n- `registry` \\xe2\\x80\\x94 deployed `ProjectRegistry` contract; validated immediately by calling\\n`total_projects()`, which panics if the address is not a valid registry.",
+      "name": "__constructor",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "admin",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "usdc_sac",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "registry",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Perform multiple deposits from different accounts in a single batch transaction (#184).\\n\\nPanics with `EmptyBatchDeposit` if `deposits` is empty (#178) \\xe2\\x80\\x94 a no-op\\nbatch is almost certainly a caller bug and should not silently succeed.\\nPanics with `BatchTooLarge` if `deposits` exceeds `MAX_BATCH_DEPOSIT_SIZE`\\n(20 entries), preventing transactions that could exceed Soroban ledger\\nresource limits (#447).",
+      "name": "batch_deposit",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "deposits",
+          "type": {
+            "vec": {
+              "element_type": {
+                "tuple": {
+                  "value_types": [
+                    "address",
+                    "i128"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": "i128"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return a full on-chain portfolio snapshot for `account`.",
+      "name": "get_portfolio",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "PortfolioInfo"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Migrate older state to the current schema version.\\n\\nVersion 0 means a deployment that predates explicit state versioning. The v1\\nmigration only records the version because existing storage layouts are unchanged.",
+      "name": "migrate_state",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from_version",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Deposit USDC yield into the vault and update the per-share accumulator.\\nCalled by the owner when a project makes a repayment.",
+      "name": "receive_yield",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the state schema version supported by this contract build.",
+      "name": "state_version",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Transfers `amount` of tokens from `from` to `to` using the\\nallowance mechanism. `amount` is then deducted from `spender`\\nallowance.\\n\\n# Arguments\\n\\n* `e` - Access to Soroban environment.\\n* `spender` - The address authorizing the transfer, and having its\\nallowance consumed during the transfer.\\n* `from` - The address holding the tokens which will be transferred.\\n* `to` - The address receiving the transferred tokens.\\n* `amount` - The amount of tokens to be transferred.\\n\\n# Errors\\n\\n* [`FungibleTokenError::InsufficientBalance`] - When attempting to\\ntransfer more tokens than `from` current balance.\\n* [`FungibleTokenError::LessThanZero`] - When `amount < 0`.\\n* [`FungibleTokenError::InsufficientAllowance`] - When attempting to\\ntransfer more tokens than `spender` current allowance.\\n\\n# Events\\n\\n* topics - `[\"transfer\", from: Address, to: Address]`\\n* data - `[amount: i128]`",
+      "name": "transfer_from",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "spender",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the primary accepted asset (USDC SAC address).\\nMulti-asset vaults should extend this by adding accepted_assets to config.",
+      "name": "accepted_asset",
+      "inputs": [],
+      "outputs": [
+        "address"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current flash loan fee in basis points (#184).",
+      "name": "flash_loan_fee",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the maximum total HBS share supply this contract build will ever mint (#20).",
+      "name": "max_hbs_supply",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Close a matured project's books (#631). Owner-only.\\n\\nRequires the registry to report the project as mature. Any principal\\nstill outstanding is written off as impairment (removed from\\n`TotalInvestments`, so NAV reflects the loss), and the project is\\nmarked settled: further `fund_project` / `repay_principal` calls for\\nit panic with `ProjectAlreadySettled`. Emits `ProjectSettled`.\\n\\nThe registry status is not changed here; the registry owner moves it\\nto `Completed` with `set_project_status` once settlement is final.",
+      "name": "settle_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Pay out an insurance claim for a defaulted project (owner only).\\nTransfers `amount` from the insurance fund to `recipient`.",
+      "name": "claim_insurance",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the USDC yield claimable by `account` without modifying state.",
+      "name": "claimable_yield",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Remove zero-value `ProjectInvestment` persistent storage entries. Admin-only.\\n\\nAfter a project fully repays, its investment counter drops to 0 but the storage\\nslot remains. This function iterates projects 1..=`total_projects` and removes\\nany zero entries, reducing ongoing rent costs.\\nReturns the number of entries removed.",
+      "name": "compact_storage",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Pause the vault as the emergency admin, without requiring owner auth (#43).",
+      "name": "emergency_pause",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Exact number of shares `deposit(from, usdc_amount)` would mint right\\nnow, after the insurance premium and the management / volume-tier fee.\\nPanics with the same errors `deposit` would (non-positive, below\\nminimum, above maximum, max-transaction cap, supply cap, paused).",
+      "name": "preview_deposit",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "usdc_amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return principal from a project to the vault (#631).\\n\\nTransfers `amount` USDC from `from` into the vault and applies it\\nagainst the project's outstanding investment. Anything above the\\noutstanding balance stays in the vault as liquid USDC (a gain for\\nshareholders) rather than going negative. NAV is unchanged by the\\nprincipal part: liquid USDC rises by exactly what investments fall.\\nPanics with `AmountNotPositive`, or `ProjectAlreadySettled` once\\n`settle_project` has run. Emits `PrincipalRepaid`.",
+      "name": "repay_principal",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Accepts a pending ownership transfer.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n\\n# Errors\\n\\n* [`crate::role_transfer::RoleTransferError::NoPendingTransfer`] - If\\nthere is no pending transfer to accept.\\n\\n# Events\\n\\n* topics - `[\"ownership_transfer_completed\"]`\\n* data - `[new_owner: Address]`",
+      "name": "accept_ownership",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "What `withdraw(_, shares_amount, 0)` would do right now:\\n`(usdc_now, usdc_queued)` \\xe2\\x80\\x94 paid immediately, or burned and enqueued\\nfor `claim()` when liquid USDC is short. Exactly one of the two is\\nnon-zero. Panics with `WithdrawalExceedsLimit` if the graduated\\nutilization limit (#45) would reject it, and with the same amount\\nerrors as `withdraw`. The per-account deposit lock is not checked here;\\nsee `max_withdraw`.",
+      "name": "preview_withdraw",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "shares_amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        {
+          "tuple": {
+            "value_types": [
+              "i128",
+              "i128"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Convert vault shares to a USDC redemption value at the current NAV.\\nReturns 0 when the vault is empty (no shares outstanding).",
+      "name": "convert_to_assets",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "shares_amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Convert a USDC amount to vault shares at the current NAV (ERC-4626 formula).\\nReturns `usdc_amount` 1:1 when the vault is empty (first deposit).",
+      "name": "convert_to_shares",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "usdc_amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Unpause the vault as the emergency admin, without requiring owner auth (#43).",
+      "name": "emergency_unpause",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Close the active funding round, re-enabling share transfers (#38).",
+      "name": "end_funding_round",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the carbon credit oracle address (owner-only) (#184).",
+      "name": "set_carbon_oracle",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "oracle",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the Wormhole core contract address (owner-only) (#184).",
+      "name": "set_wormhole_core",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "core",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Execute an uncollateralized flash loan of USDC capital (#184).",
+      "name": "execute_flash_loan",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "initiator",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "borrower",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return HBS token metadata for DEX listing and secondary market integration.\\nThe `trading_enabled` field mirrors `is_trading_enabled()`.",
+      "name": "get_hbs_token_info",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "HBSTokenInfo"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the list of multi-sig admin signers and required threshold (#184).",
+      "name": "get_multisig_admin",
+      "inputs": [],
+      "outputs": [
+        {
+          "tuple": {
+            "value_types": [
+              {
+                "vec": {
+                  "element_type": "address"
+                }
+              },
+              "u32"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return whether the admin has enabled secondary market trading for HBS.",
+      "name": "is_trading_enabled",
+      "inputs": [],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Renounces ownership of the contract.\\n\\nPermanently removes the owner, disabling all functions gated by\\n`#[only_owner]`.\\n\\n# Arguments\\n\\n* `e` - Access to the Soroban environment.\\n\\n# Errors\\n\\n* [`OwnableError::TransferInProgress`] - If there is a pending ownership\\ntransfer.\\n* [`OwnableError::OwnerNotSet`] - If the owner is not set.\\n\\n# Notes\\n\\n* Authorization for the current owner is required.",
+      "name": "renounce_ownership",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the flash loan fee in basis points (owner-only) (#184).",
+      "name": "set_flash_loan_fee",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "fee_bps",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the optional management fee deducted from each deposit.\\n`fee_bps` is bounded by MAX_MANAGEMENT_FEE_BPS (500 = 5%).\\nPass `fee_bps = 0` to disable the fee entirely.",
+      "name": "set_management_fee",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "fee_bps",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Configure multi-sig admin signers and approval threshold (owner-only) (#184).",
+      "name": "set_multisig_admin",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "signers",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "threshold",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Initiates a 2-step ownership transfer and emits a project-specific\\n`OwnershipTransferred` event for auditing (#30).",
+      "name": "transfer_ownership",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Fund multiple projects in a single batch transaction with multi-sig approvals (#184, #188).\\n\\nRejects batch requests containing duplicate project IDs to prevent double-funding.\\nPanics with `EmptyBatchFunding` if `fundings` is empty (#445) \\xe2\\x80\\x94 a no-op batch\\nis almost certainly a caller bug and should not pay `require_admin_approval`'s\\ncost for nothing.\\nPanics with `BatchTooLarge` if `fundings` exceeds `MAX_BATCH_FUND_SIZE`\\n(20 entries), preventing transactions that could exceed Soroban ledger\\nresource limits (#447).",
+      "name": "batch_fund_projects",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "fundings",
+          "type": {
+            "vec": {
+              "element_type": {
+                "tuple": {
+                  "value_types": [
+                    "u32",
+                    "i128"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current carbon credit price (#184).",
+      "name": "carbon_credit_price",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the configured emergency-admin address, if any.",
+      "name": "get_emergency_admin",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Retrieve the most recent regulatory reporting snapshot (#184).",
+      "name": "get_latest_snapshot",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "ReportingSnapshotData"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the vault utilization in basis points:\\n`total_investments * BPS_SCALE / (liquid_usdc + total_investments)`.\\nReturns 0 when no capital is deployed. Does not call into the registry (#45).",
+      "name": "get_utilization_bps",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the configured volume-discount tier as `(threshold, discounted_bps)`.\\nReturns `(0, 0)` when no tier is active.",
+      "name": "get_volume_fee_tier",
+      "inputs": [],
+      "outputs": [
+        {
+          "tuple": {
+            "value_types": [
+              "i128",
+              "u32"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the remaining USDC capacity that may still be invested in `project_id`.\\n\\nA return value of 0 means the cap is already reached; further funding calls will\\nfail with `InvestmentCapExceeded`.",
+      "name": "investment_capacity",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set (or clear, via `None`) the emergency-admin address. Owner-only (#43).\\n\\nThe emergency admin may call `emergency_pause`/`emergency_unpause` without\\nholding full owner privileges \\xe2\\x80\\x94 intended for a fast-response operational\\nrole, separate from the owner who manages funding, fees, etc.",
+      "name": "set_emergency_admin",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "emergency_admin",
+          "type": {
+            "option": {
+              "value_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Mark (or unmark) a `(chain_id, emitter_address)` pair as a trusted\\nWormhole message emitter. `complete_bridge_transfer` rejects any VAA\\nwhose emitter isn't marked trusted here (#267).",
+      "name": "set_trusted_emitter",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "chain_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "emitter_address",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "trusted",
+          "type": "bool"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Configure a two-tier volume-discount fee schedule for deposits (#39).\\n\\nWhen a deposit amount meets or exceeds `threshold`, the effective management\\nfee rate is `discounted_bps` instead of the flat `ManagementFeeBps`. Pass\\n`threshold = 0` to disable the tier (reverts to flat rate for all deposits).\\n\\nConstraints:\\n- `discounted_bps` must not exceed the current `ManagementFeeBps` (discounts only).\\n- `discounted_bps` must not exceed `MAX_MANAGEMENT_FEE_BPS`.\\n\\nAdmin-only.",
+      "name": "set_volume_fee_tier",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "threshold",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "discounted_bps",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Open a funding round \\xe2\\x80\\x94 share transfers are blocked until it is closed (#38).",
+      "name": "start_funding_round",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Retrieve a specific compliance event by sequence number (#184).",
+      "name": "get_compliance_event",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "seq",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "ComplianceEventData"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return expected returns across all funded projects using a time-weighted formula (#34).\\n\\nFor each project with an `InvestmentTimestamp` (set when first funded), returns\\nare accrued proportionally to time elapsed since funding:\\n`expected += investment * score_rate * elapsed / annual_period`\\n\\nProjects funded before this feature was deployed fall back to the static formula\\n(`investment * score_rate`) so no previously-funded project loses its contribution.",
+      "name": "get_expected_returns",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the minimum green impact threshold (0\\xe2\\x80\\x93100). Default is 0 (no restriction).",
+      "name": "get_min_green_impact",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the vault-side lifecycle position of `project_id` (#631):\\nfunded, repaid, outstanding and impaired principal, plus maturity and\\nsettlement flags, for the frontend's project page.",
+      "name": "get_project_position",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "ProjectPosition"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Issue carbon credits to a specified recipient (#184).\\n\\nOwner-only (#563): credits are a transferable, priced balance and\\n`amount` is caller-supplied, so an ungated call was an unlimited mint.",
+      "name": "issue_carbon_credits",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the version recorded in instance storage. Unversioned deployments report 0.",
+      "name": "stored_state_version",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the carbon credit balance for a given address (#184).",
+      "name": "carbon_credit_balance",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "address",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Retrieve a range of compliance events for reporting (#184).",
+      "name": "get_compliance_events",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "u64"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "udt": {
+                "name": "ComplianceEventData"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the currently configured withdrawal window in ledgers (#36).\\nReturns 1 when no explicit window has been set (same-ledger protection).",
+      "name": "get_withdrawal_window",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Configure the minimum number of ledgers that must pass after a deposit\\nbefore the same address may withdraw (#36).\\n\\n`ledgers = 1` (the default) retains the existing behaviour: a deposit and\\na withdrawal cannot appear in the same ledger. Larger values enforce a\\nlonger cooldown \\xe2\\x80\\x94 e.g., `ledgers = 720` (\\xe2\\x89\\x881 hour at 5 s/ledger) prevents\\ninstant-exit strategies in volatile markets.\\n`ledgers = 0` disables the window entirely (not recommended).",
+      "name": "set_withdrawal_window",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "ledgers",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Export a full regulatory report combining current metrics and recent audit events (#184).",
+      "name": "export_regulatory_data",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "RegulatoryReport"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current management fee in basis points (0 = disabled).",
+      "name": "get_management_fee_bps",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the minimum credit quality threshold (0\\xe2\\x80\\x93100). Default is 0 (no restriction).",
+      "name": "get_min_credit_quality",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the total USDC amount currently invested in `project_id` from this vault.",
+      "name": "get_project_investment",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current insurance fund USDC balance.",
+      "name": "insurance_fund_balance",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the current compliance transaction limit (#184).",
+      "name": "max_transaction_amount",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the minimum score thresholds a project must meet before it can be funded.\\n\\nBoth values must be 0\\xe2\\x80\\x93100. The default is 0 (no restriction), which preserves\\nbackwards compatibility until the admin explicitly raises the bar.\\nEmits `FundingThresholdsSet`. Admin-only.",
+      "name": "set_funding_thresholds",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "min_credit_quality",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "min_green_impact",
+          "type": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return the Unix timestamp (seconds) at which `account`'s deposit lock expires.\\n\\nReturns 0 if `account` has never deposited, meaning no lock is in force.\\nIf the returned timestamp is in the future, `withdraw` will reject the call\\nwith `DepositLocked`.",
+      "name": "get_deposit_lock_expiry",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "outputs": [
+        "u64"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Query whether a funding round is currently active (#38).",
+      "name": "is_funding_round_active",
+      "inputs": [],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Record a compliance or regulatory audit event in persistent storage (owner-only) (#184).",
+      "name": "record_compliance_event",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "event_type",
+          "type": "string"
+        },
+        {
+          "doc": "",
+          "name": "data",
+          "type": "string"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the price per carbon credit (carbon oracle only) (#184).\\n\\nInformational/reserved only (issue #456): this value is not read by\\n`calculate_carbon_credits`/`issue_carbon_credits` \\xe2\\x80\\x94 credit amounts are\\ncomputed purely from `project.green_impact`. It is stored and surfaced\\nvia `export_regulatory_data` for off-chain/future use, not as an\\non-chain input to credit issuance.",
+      "name": "set_carbon_credit_price",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "price",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Capture a snapshot of key vault metrics for regulatory reporting (owner-only) (#184).",
+      "name": "take_reporting_snapshot",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Transfer carbon credits between accounts (#184).",
+      "name": "transfer_carbon_credits",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Calculate carbon credit output based on investment amount and project green impact (#184).\\n\\nPanics with `AmountNotPositive` if `amount` is not positive (#403) -- a\\nnegative amount would otherwise silently produce a nonsensical negative\\n`credits` value with no error, and only `issue_carbon_credits` (a\\nseparate caller) happened to reject that afterward.\\n\\nEmits `CarbonCreditsCalculated` on every call intentionally (#403): this\\nis read-only and un-auth'd by design, mirroring `calculate_carbon_credits`\\nbeing usable as a quote/preview before committing to `issue_carbon_credits`,\\nso off-chain indexers can track calculation activity (e.g. for analytics\\non quoted-vs-issued credit volume) without requiring a state-mutating call.\\nEach call still costs the caller their own transaction fee, which is\\nsufficient to bound event-log spam for a function with no state to protect.",
+      "name": "calculate_carbon_credits",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": [
+        {
+          "udt": {
+            "name": "CarbonCreditCalculation"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Complete an inbound Wormhole cross-chain bridge transfer using a verified VAA (#184).",
+      "name": "complete_bridge_transfer",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "vaa",
+          "type": "bytes"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Enable secondary market trading for HBS shares. Admin-only.\\nOnce enabled, the flag is readable by external DEX integrations via\\n`is_trading_enabled`. HBS is natively SEP-41 tradeable on Stellar DEX;\\nthis flag signals to UIs and aggregators that the token is officially listed.",
+      "name": "enable_secondary_trading",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Initiate an outbound Wormhole cross-chain bridge transfer of HBS shares (#184).",
+      "name": "initiate_bridge_transfer",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "target_chain",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "nonce",
+          "type": "u64"
+        }
+      ],
+      "outputs": [
+        "u64"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the maximum transaction amount limit for compliance monitoring (owner-only) (#184).",
+      "name": "set_max_transaction_amount",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Transfer USDC from the vault to a registered project's owner with multi-sig admin approvals (#184).",
+      "name": "fund_project_with_approvals",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return USDC investment amounts for all projects 1..=`total_projects` (#35).\\n\\nEach tuple is `(project_id, invested_usdc)`. Projects with no recorded\\ninvestment are included with a value of 0 so the caller can always\\ncorrelate by position.",
+      "name": "get_all_project_investments",
+      "inputs": [],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": {
+              "tuple": {
+                "value_types": [
+                  "u32",
+                  "i128"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Deposit USDC yield into the vault using multi-sig admin approvals (#184, #436).\\n\\nMirrors `fund_project_with_approvals`/`claim_insurance_with_approvals`: this is\\nthe only usable path into `receive_yield_internal` once multisig is enabled,\\nsince `receive_yield` itself is permanently blocked by `require_multisig_disabled`\\nafter `set_multisig_admin` sets a threshold > 0.",
+      "name": "receive_yield_with_approvals",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Return USDC investment amounts for a list of project IDs in one call (#35).\\n\\nResults are returned in the same order as `project_ids`. Unknown or\\nunfunded projects return 0. Callers can map over the registry's\\n`total_projects()` count and call this once instead of issuing one\\ncross-contract call per project.",
+      "name": "get_project_investments_batch",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_ids",
+          "type": {
+            "vec": {
+              "element_type": "u32"
+            }
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": "i128"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Pay out an insurance claim for a defaulted project using multi-sig approvals (#184).",
+      "name": "claim_insurance_with_approvals",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "approvals",
+          "type": {
+            "vec": {
+              "element_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Set the maximum total USDC the vault may invest in any single project. Admin-only.\\n\\nDefaults to `MAX_INVESTMENT_PER_PROJECT` (5 M USDC) until explicitly changed.\\nPass 0 to restore the compile-time default.",
+      "name": "set_max_investment_per_project",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "cap",
+          "type": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "Structured error codes for the InvestmentVault contract (#75).\\nVariant values are stable \\xe2\\x80\\x94 never reorder or renumber after deployment,\\nas on-chain callers may inspect the numeric code.",
+      "lib": "",
+      "name": "VaultError",
+      "cases": [
+        {
+          "doc": "Deposit or transfer amount must be positive.",
+          "name": "AmountNotPositive",
+          "value": 1
+        },
+        {
+          "doc": "Deposit exceeds the per-deposit maximum (MAX_DEPOSIT).",
+          "name": "DepositExceedsMaximum",
+          "value": 2
+        },
+        {
+          "doc": "Requested funding exceeds available USDC (liquid minus insurance reserve).",
+          "name": "InsufficientDeployable",
+          "value": 3
+        },
+        {
+          "doc": "Shares to burn must be positive.",
+          "name": "SharesNotPositive",
+          "value": 4
+        },
+        {
+          "doc": "Requested withdrawal exceeds the utilization-based limit.",
+          "name": "WithdrawalExceedsLimit",
+          "value": 5
+        },
+        {
+          "doc": "Insufficient liquid USDC to settle withdrawal immediately.",
+          "name": "InsufficientLiquid",
+          "value": 6
+        },
+        {
+          "doc": "Yield amount must be positive.",
+          "name": "YieldAmountNotPositive",
+          "value": 7
+        },
+        {
+          "doc": "Cannot distribute yield when no shares are outstanding.",
+          "name": "NoSharesOutstanding",
+          "value": 8
+        },
+        {
+          "doc": "Insufficient liquid USDC to pay out yield claim.",
+          "name": "InsufficientLiquidYield",
+          "value": 9
+        },
+        {
+          "doc": "Insurance has already been claimed for this project.",
+          "name": "InsuranceAlreadyClaimed",
+          "value": 10
+        },
+        {
+          "doc": "Insurance fund balance is insufficient for the requested claim.",
+          "name": "InsufficientInsurance",
+          "value": 11
+        },
+        {
+          "doc": "Management fee exceeds MAX_MANAGEMENT_FEE_BPS.",
+          "name": "FeeExceedsMaximum",
+          "value": 12
+        },
+        {
+          "doc": "Share transfers to the vault contract address are not allowed.",
+          "name": "TransferToVaultBlocked",
+          "value": 13
+        },
+        {
+          "doc": "Management fee recipient address has not been set.",
+          "name": "FeeRecipientNotSet",
+          "value": 14
+        },
+        {
+          "doc": "Expected queue entry is missing from storage.",
+          "name": "QueueEntryMissing",
+          "value": 15
+        },
+        {
+          "doc": "Insurance claim amount must be positive.",
+          "name": "ClaimAmountNotPositive",
+          "value": 16
+        },
+        {
+          "doc": "Project credit quality is below the configured minimum threshold.",
+          "name": "BelowMinCreditQuality",
+          "value": 17
+        },
+        {
+          "doc": "Project green impact is below the configured minimum threshold.",
+          "name": "BelowMinGreenImpact",
+          "value": 18
+        },
+        {
+          "doc": "Funding threshold value is out of the 0\\xe2\\x80\\x93100 range.",
+          "name": "ThresholdOutOfRange",
+          "value": 19
+        },
+        {
+          "doc": "Bridge contract address is not set.",
+          "name": "BridgeNotSet",
+          "value": 20
+        },
+        {
+          "doc": "Wormhole core contract address is not set.",
+          "name": "WormholeCoreNotSet",
+          "value": 21
+        },
+        {
+          "doc": "Emitter is not trusted for cross-chain minting.",
+          "name": "EmitterNotTrusted",
+          "value": 22
+        },
+        {
+          "doc": "VAA has already been consumed.",
+          "name": "VaaAlreadyConsumed",
+          "value": 23
+        },
+        {
+          "doc": "Multi-sig threshold must be greater than 0 and no larger than signer count.",
+          "name": "InvalidMultiSigThreshold",
+          "value": 24
+        },
+        {
+          "doc": "Multi-sig signer set is larger than the contract limit.",
+          "name": "TooManyMultiSigSigners",
+          "value": 25
+        },
+        {
+          "doc": "Approval address is not configured as a multi-sig signer.",
+          "name": "NotMultiSigSigner",
+          "value": 26
+        },
+        {
+          "doc": "Approval set contains the same signer more than once.",
+          "name": "DuplicateApproval",
+          "value": 27
+        },
+        {
+          "doc": "The operation did not include enough multi-sig approvals.",
+          "name": "InsufficientApprovals",
+          "value": 28
+        },
+        {
+          "doc": "Contract state version does not match the expected version; migration required.",
+          "name": "UnsupportedStateVersion",
+          "value": 29
+        },
+        {
+          "doc": "The project_id does not correspond to an existing project in the registry.",
+          "name": "ProjectNotFound",
+          "value": 30
+        },
+        {
+          "doc": "Deposit amount is below the minimum allowed (MIN_DEPOSIT).",
+          "name": "DepositBelowMinimum",
+          "value": 31
+        },
+        {
+          "doc": "Withdraw shares amount is below the minimum allowed (MIN_WITHDRAW).",
+          "name": "WithdrawBelowMinimum",
+          "value": 32
+        },
+        {
+          "doc": "Slippage limit was exceeded during withdrawal.",
+          "name": "SlippageLimitExceeded",
+          "value": 33
+        },
+        {
+          "doc": "The vault is currently paused.",
+          "name": "Paused",
+          "value": 34
+        },
+        {
+          "doc": "The linked ProjectRegistry is paused; new investments are not allowed (#72).",
+          "name": "RegistryPaused",
+          "value": 35
+        },
+        {
+          "doc": "Withdrawal requested too soon after deposit.",
+          "name": "DepositLocked",
+          "value": 36
+        },
+        {
+          "doc": "Caller is neither the owner nor the configured emergency admin.",
+          "name": "NotEmergencyAdmin",
+          "value": 37
+        },
+        {
+          "doc": "Deposit would push total HBS share supply above MAX_HBS_SUPPLY.",
+          "name": "MaxSupplyExceeded",
+          "value": 38
+        },
+        {
+          "doc": "Attempted to fund a project owned by the vault's own admin (#14).",
+          "name": "SelfFundingNotAllowed",
+          "value": 39
+        },
+        {
+          "doc": "A batch funding request contains duplicate project IDs (#188).",
+          "name": "DuplicateProjectId",
+          "value": 40
+        },
+        {
+          "doc": "batch_deposit received an empty investor list (#178).",
+          "name": "EmptyBatchDeposit",
+          "value": 41
+        },
+        {
+          "doc": "Share transfers are blocked because a funding round is active (#38).",
+          "name": "FundingRoundActive",
+          "value": 42
+        },
+        {
+          "doc": "Funding would push cumulative investment in a project above its per-project cap (#32).",
+          "name": "InvestmentCapExceeded",
+          "value": 43
+        },
+        {
+          "doc": "Requested amount exceeds the configured MaxTransactionAmount compliance limit (#457).",
+          "name": "ExceedsMaxTransactionAmount",
+          "value": 44
+        },
+        {
+          "doc": "complete_bridge_transfer's decoded payload's token_address does not match\\nthis vault's own contract address (#453).",
+          "name": "BridgeTokenMismatch",
+          "value": 45
+        },
+        {
+          "doc": "complete_bridge_transfer's decoded payload targets a chain other than\\nStellar (#454).",
+          "name": "BridgeWrongTargetChain",
+          "value": 46
+        },
+        {
+          "doc": "batch_fund_projects received an empty fundings list (#445).",
+          "name": "EmptyBatchFunding",
+          "value": 47
+        },
+        {
+          "doc": "A batch deposit or fund-projects request exceeds the configured maximum\\nbatch size (#447).",
+          "name": "BatchTooLarge",
+          "value": 48
+        },
+        {
+          "doc": "set_flash_loan_fee's fee_bps argument is outside the allowed 0-1000 bps range (#402).",
+          "name": "FlashLoanFeeOutOfRange",
+          "value": 49
+        },
+        {
+          "doc": "execute_flash_loan's borrower callback returned false (repayment not honoured) (#402).",
+          "name": "FlashLoanCallbackFailed",
+          "value": 50
+        },
+        {
+          "doc": "set_carbon_credit_price called before set_carbon_oracle configured an oracle (#402).",
+          "name": "CarbonOracleNotSet",
+          "value": 51
+        },
+        {
+          "doc": "set_carbon_credit_price's price argument is not positive (#402).",
+          "name": "CarbonPriceNotPositive",
+          "value": 52
+        },
+        {
+          "doc": "issue_carbon_credits computed zero or fewer credits for the requested amount (#402).",
+          "name": "NoCarbonCreditsToIssue",
+          "value": 53
+        },
+        {
+          "doc": "transfer_carbon_credits: sender's balance is less than the requested amount (#402).",
+          "name": "InsufficientCarbonCredits",
+          "value": 54
+        },
+        {
+          "doc": "set_max_transaction_amount's amount argument is negative (#402).",
+          "name": "NegativeMaxTransactionAmount",
+          "value": 55
+        },
+        {
+          "doc": "get_compliance_event: no event exists for the requested sequence number (#402).",
+          "name": "ComplianceEventNotFound",
+          "value": 56
+        },
+        {
+          "doc": "get_latest_snapshot: no reporting snapshot has been taken yet (#402).",
+          "name": "NoSnapshotTaken",
+          "value": 57
+        },
+        {
+          "doc": "transfer_ownership: no owner is currently set on the contract (#402).",
+          "name": "OwnerNotSet",
+          "value": 58
+        },
+        {
+          "doc": "transfer_carbon_credits: from and to must be different addresses \\xe2\\x80\\x94\\na self-transfer previously let both balance reads snapshot the same\\npre-write value, and the second .set() overwrote the first, doubling\\n(or worse) the caller's balance for free (#564).",
+          "name": "SelfTransferNotAllowed",
+          "value": 59
+        },
+        {
+          "doc": "fund_project / repay_principal / settle_project: the project has\\nalready been settled at maturity and its books are closed (#631).",
+          "name": "ProjectAlreadySettled",
+          "value": 60
+        },
+        {
+          "doc": "settle_project: the registry does not report the project as mature\\nyet (or it has no maturity date) (#631).",
+          "name": "ProjectNotMature",
+          "value": 61
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Metadata returned for DEX listing and secondary market integration (#126).",
+      "lib": "",
+      "name": "HBSTokenInfo",
+      "fields": [
+        {
+          "doc": "Number of decimal places (7 for USDC-parity denominations).",
+          "name": "decimals",
+          "type": "u32"
+        },
+        {
+          "doc": "Human-readable token name.",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "doc": "Ticker symbol.",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "doc": "Whether the admin has enabled secondary trading.",
+          "name": "trading_enabled",
+          "type": "bool"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Consolidated operational status for monitoring/health-check integrations (#77).\\n\\nBundles the getters an off-chain monitor would otherwise have to poll\\nindividually into a single call.",
+      "lib": "",
+      "name": "HealthStatus",
+      "fields": [
+        {
+          "doc": "",
+          "name": "has_emergency_admin",
+          "type": "bool"
+        },
+        {
+          "doc": "",
+          "name": "is_paused",
+          "type": "bool"
+        },
+        {
+          "doc": "",
+          "name": "state_version",
+          "type": "u32"
+        },
+        {
+          "doc": "",
+          "name": "utilization_bps",
+          "type": "u32"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "On-chain portfolio snapshot for a single investor (#132).",
+      "lib": "",
+      "name": "PortfolioInfo",
+      "fields": [
+        {
+          "doc": "Unclaimed yield in USDC.",
+          "name": "claimable_yield",
+          "type": "i128"
+        },
+        {
+          "doc": "Shares as a fraction of total supply, in basis points (0-10 000).",
+          "name": "share_of_pool_bps",
+          "type": "i128"
+        },
+        {
+          "doc": "HBS shares currently held.",
+          "name": "shares",
+          "type": "i128"
+        },
+        {
+          "doc": "Lifetime USDC deposited by this investor.",
+          "name": "total_deposited",
+          "type": "i128"
+        },
+        {
+          "doc": "Current USDC redemption value of those shares.",
+          "name": "usdc_value",
+          "type": "i128"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Vault-side lifecycle position of a single project (#631).\\n\\n`funded = outstanding + repaid + impairment` always holds.",
+      "lib": "",
+      "name": "ProjectPosition",
+      "fields": [
+        {
+          "doc": "Total principal ever deployed to the project.",
+          "name": "funded",
+          "type": "i128"
+        },
+        {
+          "doc": "Principal written off at settlement because it was never repaid.",
+          "name": "impairment",
+          "type": "i128"
+        },
+        {
+          "doc": "Registry reports the project's maturity date has passed.",
+          "name": "mature",
+          "type": "bool"
+        },
+        {
+          "doc": "Principal still deployed (counted in `total_assets`).",
+          "name": "outstanding",
+          "type": "i128"
+        },
+        {
+          "doc": "Principal returned via `repay_principal`.",
+          "name": "repaid",
+          "type": "i128"
+        },
+        {
+          "doc": "`settle_project` has closed the project's books.",
+          "name": "settled",
+          "type": "bool"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A comprehensive regulatory data export combining the latest snapshot\\nwith recent compliance events.",
+      "lib": "",
+      "name": "RegulatoryReport",
+      "fields": [
+        {
+          "doc": "",
+          "name": "carbon_credit_price",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "max_transaction_amount",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "recent_events",
+          "type": {
+            "vec": {
+              "element_type": {
+                "udt": {
+                  "name": "ComplianceEventData"
+                }
+              }
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "snapshot",
+          "type": {
+            "udt": {
+              "name": "ReportingSnapshotData"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A recorded compliance event for audit trail purposes.",
+      "lib": "",
+      "name": "ComplianceEventData",
+      "fields": [
+        {
+          "doc": "",
+          "name": "data",
+          "type": "string"
+        },
+        {
+          "doc": "",
+          "name": "event_type",
+          "type": "string"
+        },
+        {
+          "doc": "",
+          "name": "seq",
+          "type": "u64"
+        },
+        {
+          "doc": "",
+          "name": "timestamp",
+          "type": "u64"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A periodic snapshot of the vault's key metrics for regulatory reporting.",
+      "lib": "",
+      "name": "ReportingSnapshotData",
+      "fields": [
+        {
+          "doc": "",
+          "name": "timestamp",
+          "type": "u64"
+        },
+        {
+          "doc": "",
+          "name": "total_assets",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "total_investments",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "total_supply",
+          "type": "i128"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "A carbon credit calculation result.",
+      "lib": "",
+      "name": "CarbonCreditCalculation",
+      "fields": [
+        {
+          "doc": "",
+          "name": "amount_invested",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "credits",
+          "type": "i128"
+        },
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32"
+        }
+      ]
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the vault is paused.",
+      "lib": "",
+      "name": "Paused",
+      "prefix_topics": [
+        "paused"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when an investor deposits USDC and receives vault shares.",
+      "lib": "",
+      "name": "Deposit",
+      "prefix_topics": [
+        "deposit"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "usdc_amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "shares_minted",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the vault is unpaused.",
+      "lib": "",
+      "name": "Unpaused",
+      "prefix_topics": [
+        "unpaused"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when an investor burns shares and withdraws USDC.",
+      "lib": "",
+      "name": "Withdraw",
+      "prefix_topics": [
+        "withdraw"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "shares_burned",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "usdc_returned",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BridgeSet",
+      "prefix_topics": [
+        "bridge_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "bridge",
+          "type": "address",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "FlashLoan",
+      "prefix_topics": [
+        "flash_loan"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "initiator",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "borrower",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "fee",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BridgeBurn",
+      "prefix_topics": [
+        "bridge_burn"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BridgeMint",
+      "prefix_topics": [
+        "bridge_mint"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a shareholder claims accumulated yield (#125).",
+      "lib": "",
+      "name": "YieldClaimed",
+      "prefix_topics": [
+        "yield_claimed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the vault funds a registered project.",
+      "lib": "",
+      "name": "ProjectFunded",
+      "prefix_topics": [
+        "project_funded"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when yield USDC is received from a project repayment (#125).",
+      "lib": "",
+      "name": "YieldReceived",
+      "prefix_topics": [
+        "yield_received"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a matured project's books are closed (#631). `impairment` is\\nthe principal that was still outstanding and has been written off.",
+      "lib": "",
+      "name": "ProjectSettled",
+      "prefix_topics": [
+        "project_settled"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "funded",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "repaid",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "impairment",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin enables secondary market trading for HBS (#126).",
+      "lib": "",
+      "name": "TradingEnabled",
+      "prefix_topics": [
+        "trading_enabled"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "enabled",
+          "type": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a withdrawal is queued because liquid USDC is insufficient (#3).\\nShares are burned immediately; USDC will be paid when claim() is called.",
+      "lib": "",
+      "name": "WithdrawQueued",
+      "prefix_topics": [
+        "withdraw_queued"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "shares_burned",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "usdc_owed",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "Total unpaid queue liabilities after this entry was added (#613).",
+          "name": "queued_liabilities",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CarbonOracleSet",
+      "prefix_topics": [
+        "carbon_oracle_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "oracle",
+          "type": "address",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "FlashLoanFeeSet",
+      "prefix_topics": [
+        "flash_loan_fee_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "fee_bps",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a project returns principal to the vault (#631).",
+      "lib": "",
+      "name": "PrincipalRepaid",
+      "prefix_topics": [
+        "principal_repaid"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "outstanding",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin replaces the ProjectRegistry dependency (#76).",
+      "lib": "",
+      "name": "RegistryChanged",
+      "prefix_topics": [
+        "registry_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_registry",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_registry",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a queued redemption claim is settled by claim() (#3).",
+      "lib": "",
+      "name": "WithdrawClaimed",
+      "prefix_topics": [
+        "withdraw_claimed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "usdc_paid",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "claim_index",
+          "type": "u64",
+          "location": "data"
+        },
+        {
+          "doc": "Total unpaid queue liabilities after this entry was paid (#613).",
+          "name": "queued_liabilities",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when an insurance payout is made for a defaulted project (#135).",
+      "lib": "",
+      "name": "InsuranceClaimed",
+      "prefix_topics": [
+        "insurance_claimed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin changes the per-project investment cap (#32).",
+      "lib": "",
+      "name": "InvestmentCapSet",
+      "prefix_topics": [
+        "investment_cap_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "cap",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin updates the management fee configuration (#7).",
+      "lib": "",
+      "name": "ManagementFeeSet",
+      "prefix_topics": [
+        "management_fee_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "fee_bps",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin closes a funding round (#38).",
+      "lib": "",
+      "name": "FundingRoundEnded",
+      "prefix_topics": [
+        "funding_round_ended"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when a cross-chain emitter is registered or unregistered (#48).",
+      "lib": "",
+      "name": "TrustedEmitterSet",
+      "prefix_topics": [
+        "trusted_emitter_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "chain_id",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "emitter",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          },
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "trusted",
+          "type": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when vault utilization crosses a high threshold during a withdrawal (#45).\\nOff-chain monitors should alert operators to consider replenishing liquidity.",
+      "lib": "",
+      "name": "UtilizationWarning",
+      "prefix_topics": [
+        "utilization_warning"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "utilization_bps",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin opens a funding round (#38).",
+      "lib": "",
+      "name": "FundingRoundStarted",
+      "prefix_topics": [
+        "funding_round_started"
+      ],
+      "params": [],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin changes the withdrawal sliding-window length (#36).",
+      "lib": "",
+      "name": "WithdrawalWindowSet",
+      "prefix_topics": [
+        "withdrawal_window_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "ledgers",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CarbonCreditPriceSet",
+      "prefix_topics": [
+        "carbon_credit_price_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "price",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin updates the minimum funding score thresholds (#47).",
+      "lib": "",
+      "name": "FundingThresholdsSet",
+      "prefix_topics": [
+        "funding_thresholds_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "min_credit_quality",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "min_green_impact",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin initiates an ownership transfer (#30).",
+      "lib": "",
+      "name": "OwnershipTransferred",
+      "prefix_topics": [
+        "ownership_transferred"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Emitted when the admin sets or clears the emergency-admin address (#43).",
+      "lib": "",
+      "name": "EmergencyAdminChanged",
+      "prefix_topics": [
+        "emergency_admin_changed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "new_emergency_admin",
+          "type": {
+            "option": {
+              "value_type": "address"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "ReportingSnapshotTaken",
+      "prefix_topics": [
+        "reporting_snapshot_taken"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "timestamp",
+          "type": "u64",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BridgeTransferCompleted",
+      "prefix_topics": [
+        "bridge_transfer_completed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "source_chain",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "emitter",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          },
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BridgeTransferInitiated",
+      "prefix_topics": [
+        "bridge_transfer_initiated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "target_chain",
+          "type": "u32",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "recipient",
+          "type": {
+            "bytes_n": {
+              "n": 32
+            }
+          },
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "sequence",
+          "type": "u64",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CarbonCreditsCalculated",
+      "prefix_topics": [
+        "carbon_credits_calculated"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "project_id",
+          "type": "u32",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount_invested",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "credits",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "ComplianceEventRecorded",
+      "prefix_topics": [
+        "compliance_event_recorded"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "seq",
+          "type": "u64",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "event_type",
+          "type": "string",
+          "location": "topic_list"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "MaxTransactionAmountSet",
+      "prefix_topics": [
+        "max_transaction_amount_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CarbonCreditsTransferred",
+      "prefix_topics": [
+        "carbon_credits_transferred"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when an ownership transfer is initiated.",
+      "lib": "",
+      "name": "OwnershipTransfer",
+      "prefix_topics": [
+        "ownership_transfer"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when ownership is renounced.",
+      "lib": "",
+      "name": "OwnershipRenounced",
+      "prefix_topics": [
+        "ownership_renounced"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "old_owner",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when an ownership transfer is completed.",
+      "lib": "",
+      "name": "OwnershipTransferCompleted",
+      "prefix_topics": [
+        "ownership_transfer_completed"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "new_owner",
+          "type": "address",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when tokens are burned.",
+      "lib": "",
+      "name": "Burn",
+      "prefix_topics": [
+        "burn"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when tokens are minted.",
+      "lib": "",
+      "name": "Mint",
+      "prefix_topics": [
+        "mint"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when an allowance is approved.",
+      "lib": "",
+      "name": "Approve",
+      "prefix_topics": [
+        "approve"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "owner",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "spender",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "live_until_ledger",
+          "type": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when tokens are transferred between addresses without a\\nmuxed destination.\\n\\nPer SEP-41, the event data is a bare `i128` when no muxed address is\\ninvolved. The `data_format = \"single-value\"` attribute ensures the\\n`amount` field is serialized as a bare value rather than a map.",
+      "lib": "",
+      "name": "Transfer",
+      "prefix_topics": [
+        "transfer"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Event emitted when tokens are transferred to a muxed address.\\n\\nPer SEP-41, when the destination is a [`MuxedAddress`] the event data\\ncarries both the amount and the muxed identifier so that off-chain\\nconsumers can attribute the transfer to the correct sub-account.\\n\\nUses `topics = [\"transfer\"]` so that both [`Transfer`] and\\n[`MuxedTransfer`] share the same `\"transfer\"` event symbol, as required\\nby SEP-41.",
+      "lib": "",
+      "name": "MuxedTransfer",
+      "prefix_topics": [
+        "transfer"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "from",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "to",
+          "type": "address",
+          "location": "topic_list"
+        },
+        {
+          "doc": "",
+          "name": "to_muxed_id",
+          "type": {
+            "option": {
+              "value_type": "u64"
+            }
+          },
+          "location": "data"
+        },
+        {
+          "doc": "",
+          "name": "amount",
+          "type": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "map"
+    }
+  },
+  {
+    "udt_error_enum_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "FungibleTokenError",
+      "cases": [
+        {
+          "doc": "Indicates an error related to the current balance of account from which\\ntokens are expected to be transferred.",
+          "name": "InsufficientBalance",
+          "value": 100
+        },
+        {
+          "doc": "Indicates a failure with the allowance mechanism when a given spender\\ndoesn't have enough allowance.",
+          "name": "InsufficientAllowance",
+          "value": 101
+        },
+        {
+          "doc": "Indicates an invalid value for `live_until_ledger` when setting an\\nallowance.",
+          "name": "InvalidLiveUntilLedger",
+          "value": 102
+        },
+        {
+          "doc": "Indicates an error when an input that must be >= 0",
+          "name": "LessThanZero",
+          "value": 103
+        },
+        {
+          "doc": "Indicates overflow when adding two values",
+          "name": "MathOverflow",
+          "value": 104
+        },
+        {
+          "doc": "Indicates access to uninitialized metadata",
+          "name": "UnsetMetadata",
+          "value": 105
+        },
+        {
+          "doc": "Indicates that the operation would have caused `total_supply` to exceed\\nthe `cap`.",
+          "name": "ExceededCap",
+          "value": 106
+        },
+        {
+          "doc": "Indicates the supplied `cap` is not a valid cap value.",
+          "name": "InvalidCap",
+          "value": 107
+        },
+        {
+          "doc": "Indicates the Cap was not set.",
+          "name": "CapNotSet",
+          "value": 108
+        },
+        {
+          "doc": "Indicates the SAC address was not set.",
+          "name": "SACNotSet",
+          "value": 109
+        },
+        {
+          "doc": "Indicates a SAC address different than expected.",
+          "name": "SACAddressMismatch",
+          "value": 110
+        },
+        {
+          "doc": "Indicates a missing function parameter in the SAC contract context.",
+          "name": "SACMissingFnParam",
+          "value": 111
+        },
+        {
+          "doc": "Indicates an invalid function parameter in the SAC contract context.",
+          "name": "SACInvalidFnParam",
+          "value": 112
+        },
+        {
+          "doc": "The user is not allowed to perform this operation",
+          "name": "UserNotAllowed",
+          "value": 113
+        },
+        {
+          "doc": "The user is blocked and cannot perform this operation",
+          "name": "UserBlocked",
+          "value": 114
+        }
+      ]
+    }
+  }
+]
