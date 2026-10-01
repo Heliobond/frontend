@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import type { xdr } from '@stellar/stellar-sdk'
+import { Address, nativeToScVal, type xdr } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -130,32 +130,55 @@ export async function checkIsAdmin(address: string | null): Promise<boolean> {
   return configuredList.includes(address.toUpperCase())
 }
 
-/** Check if contract deployment uses multisig */
-export async function isMultisigDeployment(address?: string): Promise<boolean> {
-  const contractId = VAULT_CONTRACT_ID || REGISTRY_CONTRACT_ID
-  if (!contractId || !address) return false
+export interface MultisigConfig {
+  signers: string[]
+  threshold: number
+  isMultisig: boolean
+}
+
+/** Fetch multisig configuration (signers and threshold) for contract */
+export async function getMultisigConfig(
+  contractId?: string,
+  address: string = DEMO_ADMIN_ADDRESS,
+): Promise<MultisigConfig> {
+  const targetId = contractId || VAULT_CONTRACT_ID || REGISTRY_CONTRACT_ID
+  if (!targetId || !address) return { signers: [], threshold: 0, isMultisig: false }
 
   try {
     const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
       await import('@stellar/stellar-sdk')
     const server = new rpc.Server(RPC_URL, { allowHttp: false })
-    const contract = new Contract(contractId)
+    const contract = new Contract(targetId)
     const source = new Account(address, '0')
     const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
 
     const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-      .addOperation(contract.call('is_multisig'))
+      .addOperation(contract.call('get_multisig_admin'))
       .setTimeout(0)
       .build()
 
     const sim = await withTimeout(server.simulateTransaction(tx), 'Simulate timed out', 3000)
     if ('result' in sim && sim.result?.retval) {
-      return Boolean(scValToNative(sim.result.retval))
+      const native = scValToNative(sim.result.retval)
+      if (Array.isArray(native) && native.length >= 2) {
+        const signers = Array.isArray(native[0]) ? native[0].map(String) : []
+        const threshold = Number(native[1]) || 0
+        return { signers, threshold, isMultisig: threshold > 0 }
+      }
     }
   } catch {
-    return false
+    return { signers: [], threshold: 0, isMultisig: false }
   }
-  return false
+  return { signers: [], threshold: 0, isMultisig: false }
+}
+
+/** Check if contract deployment uses multisig */
+export async function isMultisigDeployment(
+  address?: string,
+  contractId?: string,
+): Promise<boolean> {
+  const config = await getMultisigConfig(contractId, address)
+  return config.isMultisig
 }
 
 async function sendContractTx(
@@ -234,33 +257,61 @@ function simulateDemoTx(): Promise<string> {
   })
 }
 
+export function buildFundProjectCall(
+  projectId: number,
+  scaledAmount: bigint,
+  approvals: string[] = [],
+): { method: string; args: any[] } {
+  const isMultisig = approvals.length > 0
+  const method = isMultisig ? 'fund_project_with_approvals' : 'fund_project'
+  const args: any[] = [
+    nativeToScVal(projectId, { type: 'u32' }),
+    nativeToScVal(scaledAmount, { type: 'i128' }),
+  ]
+  if (isMultisig) {
+    args.push(nativeToScVal(approvals.map((a) => new Address(a))))
+  }
+  return { method, args }
+}
+
+export function buildUpdateScoresCall(
+  projectId: number,
+  credit: number,
+  green: number,
+  approvals: string[] = [],
+): { method: string; args: any[] } {
+  const isMultisig = approvals.length > 0
+  const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
+  const args: any[] = [
+    nativeToScVal(projectId, { type: 'u32' }),
+    nativeToScVal(credit, { type: 'u32' }),
+    nativeToScVal(green, { type: 'u32' }),
+  ]
+  if (isMultisig) {
+    args.push(nativeToScVal(approvals.map((a) => new Address(a))))
+  }
+  return { method, args }
+}
+
 /** Execute fund_project on InvestmentVault */
 export async function submitFundProject(
   projectId: number,
   amount: number,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
+  approvals: boolean | string[] = [],
 ): Promise<AdminTxResult> {
+  const approverAddrs = Array.isArray(approvals) ? approvals : []
+  const isMultisig = Array.isArray(approvals) ? approvals.length > 0 : Boolean(approvals)
   if (!VAULT_CONTRACT_ID) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash, approvalCount: isMultisig ? approverAddrs.length || 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'fund_project_approved' : 'fund_project'
   const scaledAmount = BigInt(Math.round(amount * 1e7))
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(scaledAmount, { type: 'i128' }),
-    ],
-    address,
-    sign,
-  )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  const { method, args } = buildFundProjectCall(projectId, scaledAmount, approverAddrs)
+  const hash = await sendContractTx(VAULT_CONTRACT_ID, method, args, address, sign)
+  return { hash, approvalCount: isMultisig ? approverAddrs.length || 1 : undefined }
 }
 
 /** Execute update_impact_score on ProjectRegistry / InvestmentVault */
@@ -270,28 +321,19 @@ export async function submitUpdateScores(
   green: number,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
+  approvals: boolean | string[] = [],
 ): Promise<AdminTxResult> {
+  const approverAddrs = Array.isArray(approvals) ? approvals : []
+  const isMultisig = Array.isArray(approvals) ? approvals.length > 0 : Boolean(approvals)
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash, approvalCount: isMultisig ? approverAddrs.length || 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
-  const hash = await sendContractTx(
-    targetContract,
-    method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(credit, { type: 'u32' }),
-      nativeToScVal(green, { type: 'u32' }),
-    ],
-    address,
-    sign,
-  )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  const { method, args } = buildUpdateScoresCall(projectId, credit, green, approverAddrs)
+  const hash = await sendContractTx(targetContract, method, args, address, sign)
+  return { hash, approvalCount: isMultisig ? approverAddrs.length || 1 : undefined }
 }
 
 /** Execute set_whitelist on ProjectRegistry */
@@ -300,24 +342,23 @@ export async function submitSetWhitelist(
   approved: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
+  _isMultisig = false,
 ): Promise<AdminTxResult> {
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'set_whitelist_approved' : 'set_whitelist'
+  const method = 'set_whitelist'
   const hash = await sendContractTx(
     targetContract,
     method,
-    [creatorAddress, nativeToScVal(approved)],
+    [new Address(creatorAddress).toScVal(), nativeToScVal(approved)],
     address,
     sign,
   )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  return { hash }
 }
 
 /** Execute pause on InvestmentVault */
@@ -325,21 +366,13 @@ export async function submitPause(
   paused: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
 ): Promise<AdminTxResult> {
   if (!VAULT_CONTRACT_ID) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'pause_approved' : 'pause'
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    [nativeToScVal(paused)],
-    address,
-    sign,
-  )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  const method = paused ? 'pause' : 'unpause'
+  const hash = await sendContractTx(VAULT_CONTRACT_ID, method, [], address, sign)
+  return { hash }
 }
