@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { rpc, nativeToScVal, Address } from '@stellar/stellar-sdk'
+import { rpc, nativeToScVal, Address, type Transaction, type xdr } from '@stellar/stellar-sdk'
 import { checkIsAdmin, getAdminRoles, type AdminRoles } from './admin'
 
 describe('On-chain admin and role checks (Issue #690)', () => {
@@ -10,6 +10,32 @@ describe('On-chain admin and role checks (Issue #690)', () => {
   const WHITELISTER_ADDR = 'GAMWDPHBEIUFOHQ3HOPBZS4QNFG7VCIKKGWRF3SLFLN6S5OQ3KIMJROH'
   const NON_ADMIN_ADDR = 'GBJVMAZ7KECYYVGCT5BUYPF2XPHSUSUVY7YQORK7ND5Z5TAQIBPM43DD'
 
+  type TxWithOp = Transaction & {
+    operations: Array<{
+      func: {
+        invokeContract: () => {
+          functionName: () => { toString: () => string }
+          contractAddress: () => xdr.ScAddress
+        }
+      }
+    }>
+  }
+
+  function getFunctionName(tx: unknown): string | null {
+    try {
+      const op = (tx as TxWithOp).operations[0]
+      return op.func.invokeContract().functionName().toString()
+    } catch {
+      return null
+    }
+  }
+
+  function makeSimResponse(retval: xdr.ScVal | null): rpc.Api.SimulateTransactionResponse {
+    return {
+      result: { retval: retval ?? undefined },
+    } as unknown as rpc.Api.SimulateTransactionResponse
+  }
+
   beforeEach(() => {
     vi.restoreAllMocks()
     delete process.env.NEXT_PUBLIC_ADMIN_ADDRESS
@@ -17,21 +43,13 @@ describe('On-chain admin and role checks (Issue #690)', () => {
     process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID = REGISTRY_ADDR
   })
 
-  function getFunctionName(tx: any): string | null {
-    try {
-      return tx.operations[0].func.invokeContract().functionName().toString()
-    } catch {
-      return null
-    }
-  }
-
   it('makes no calls to admin, owner, get_admin, or is_admin', async () => {
     const simulatedMethods: string[] = []
 
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx: any) => {
+    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
       const fn = getFunctionName(tx)
       if (fn) simulatedMethods.push(fn)
-      return { result: { retval: null } } as any
+      return makeSimResponse(null)
     })
 
     await getAdminRoles(NON_ADMIN_ADDR)
@@ -45,20 +63,17 @@ describe('On-chain admin and role checks (Issue #690)', () => {
   })
 
   it('grants admin access to vault get_owner() when NEXT_PUBLIC_ADMIN_ADDRESS is unset', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx: any) => {
+    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
       const fn = getFunctionName(tx)
       if (fn === 'get_owner') {
-        const scAddr = tx.operations[0].func.invokeContract().contractAddress()
+        const op = (tx as TxWithOp).operations[0]
+        const scAddr = op.func.invokeContract().contractAddress()
         const contractId = Address.fromScAddress(scAddr).toString()
         if (contractId === VAULT_ADDR) {
-          return {
-            result: {
-              retval: nativeToScVal(OWNER_ADDR, { type: 'address' }),
-            },
-          } as any
+          return makeSimResponse(nativeToScVal(OWNER_ADDR, { type: 'address' }))
         }
       }
-      return { result: { retval: null } } as any
+      return makeSimResponse(null)
     })
 
     const roles: AdminRoles = await getAdminRoles(OWNER_ADDR)
@@ -70,16 +85,12 @@ describe('On-chain admin and role checks (Issue #690)', () => {
   })
 
   it('grants admin access to whitelister even when not an owner', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx: any) => {
+    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
       const fn = getFunctionName(tx)
       if (fn === 'get_whitelister') {
-        return {
-          result: {
-            retval: nativeToScVal(WHITELISTER_ADDR, { type: 'address' }),
-          },
-        } as any
+        return makeSimResponse(nativeToScVal(WHITELISTER_ADDR, { type: 'address' }))
       }
-      return { result: { retval: null } } as any
+      return makeSimResponse(null)
     })
 
     const roles = await getAdminRoles(WHITELISTER_ADDR)
@@ -92,16 +103,12 @@ describe('On-chain admin and role checks (Issue #690)', () => {
   })
 
   it('denies access to non-admin wallets when RPC returns different owners', async () => {
-    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx: any) => {
+    vi.spyOn(rpc.Server.prototype, 'simulateTransaction').mockImplementation(async (tx) => {
       const fn = getFunctionName(tx)
       if (fn === 'get_owner') {
-        return {
-          result: {
-            retval: nativeToScVal(OWNER_ADDR, { type: 'address' }),
-          },
-        } as any
+        return makeSimResponse(nativeToScVal(OWNER_ADDR, { type: 'address' }))
       }
-      return { result: { retval: null } } as any
+      return makeSimResponse(null)
     })
 
     const roles = await getAdminRoles(NON_ADMIN_ADDR)

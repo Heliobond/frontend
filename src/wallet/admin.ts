@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import type { xdr } from '@stellar/stellar-sdk'
+import type { xdr, rpc } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -62,7 +62,7 @@ export interface AdminRoles {
 }
 
 async function queryMethodAddress(
-  server: any,
+  server: rpc.Server,
   contractId: string,
   method: string,
   sourceAddress: string,
@@ -82,7 +82,7 @@ async function queryMethodAddress(
       server.simulateTransaction(tx),
       `Simulate ${method} timed out`,
       3000,
-    )) as any
+    )) as { result?: { retval?: xdr.ScVal } }
     if (simResult && 'result' in simResult && simResult.result?.retval) {
       const res = scValToNative(simResult.result.retval)
       if (typeof res === 'string') return res

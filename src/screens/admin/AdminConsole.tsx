@@ -55,19 +55,18 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [isMultisig, setIsMultisig] = useState(false)
-  const [roles, setRoles] = useState<AdminRoles | undefined>(propRoles)
+  const [fetchedRoles, setFetchedRoles] = useState<AdminRoles | undefined>()
 
   useEffect(() => {
-    if (propRoles) {
-      setRoles(propRoles)
-      return
-    }
+    if (propRoles) return
     if (address) {
       getAdminRoles(address)
-        .then(setRoles)
+        .then(setFetchedRoles)
         .catch(() => {})
     }
   }, [propRoles, address])
+
+  const roles = propRoles ?? fetchedRoles
 
   const canFund = roles ? roles.isVaultOwner || roles.isConfiguredAdmin : true
   const canUpdateScores = roles ? roles.isRegistryOwner || roles.isConfiguredAdmin : true
