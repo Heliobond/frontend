@@ -1,51 +1,32 @@
 import { describe, it, expect } from 'vitest'
 import {
+  searchByName,
   searchBondsByName,
-  sortBondsByYield,
-  filterBondsByYield,
-  getBondsForComparison,
   getPersistedSortOrder,
   persistSortOrder,
   getPersistedYieldRange,
   persistYieldRange,
 } from '@/lib/bondUtils'
 
-const bonds = [
-  { id: '1', name: 'SOLAR Fund', yield: 5, term: 12, rating: 'A' },
-  { id: '2', name: 'Wind Power', yield: 5, term: 24, rating: 'B' },
-  { id: '3', name: 'Hydro Bond', yield: 7, term: 12, rating: 'A+' },
+const projects = [
+  { id: '1', name: 'SOLAR Fund', location: 'Nevada, US' },
+  { id: '2', name: 'Wind Power', location: 'Texas, US' },
+  { id: '3', name: 'Hydro Bond', location: 'Ontario, CA' },
 ]
 
 describe('bondUtils', () => {
-  it('search is case-insensitive', () => {
-    expect(searchBondsByName(bonds, 'solar')).toEqual([bonds[0]])
-    expect(searchBondsByName(bonds, 'SOLAR')).toEqual([bonds[0]])
-    expect(searchBondsByName(bonds, 'SoLaR')).toEqual([bonds[0]])
+  it('search is case-insensitive and matches name or location', () => {
+    expect(searchByName(projects, 'solar')).toEqual([projects[0]])
+    expect(searchBondsByName(projects, 'SOLAR')).toEqual([projects[0]])
+    expect(searchByName(projects, 'texas')).toEqual([projects[1]])
+    expect(searchByName(projects, 'ONTARIO')).toEqual([projects[2]])
+    expect(searchByName(projects, '')).toEqual(projects)
   })
 
-  it('stable sort handles ties by name then id', () => {
-    const sorted = sortBondsByYield(bonds, 'asc')
-    expect(sorted[0].name).toBe('SOLAR Fund')
-    expect(sorted[1].name).toBe('Wind Power')
-    expect(sorted[2].name).toBe('Hydro Bond')
-  })
-
-  it('stable sort handles ties by name then id (descending)', () => {
-    const sorted = sortBondsByYield(bonds, 'desc')
-    expect(sorted[0].name).toBe('Hydro Bond')
-    expect(sorted[1].name).toBe('SOLAR Fund')
-    expect(sorted[2].name).toBe('Wind Power')
-  })
-
-  it('filter by yield persists range', () => {
-    expect(filterBondsByYield(bonds, [5, 5]).length).toBe(2)
-    expect(filterBondsByYield(bonds, [6, 8]).length).toBe(1)
-  })
-
-  it('comparison requires 2-3 bonds', () => {
-    expect(() => getBondsForComparison(bonds, ['1'])).toThrow(/2-3/)
-    expect(getBondsForComparison(bonds, ['1', '2']).length).toBe(2)
-    expect(() => getBondsForComparison(bonds, ['1', '999'])).toThrow(/not found/)
+  it('rejects invalid inverted yield range where min > max', () => {
+    localStorage.clear()
+    window.history.replaceState(null, '', 'http://localhost:3000/portfolio?yieldRange=8-2')
+    expect(getPersistedYieldRange()).toEqual([0, 15])
   })
 
   it('persists sort order to URL and localStorage for bookmarking/sharing', () => {

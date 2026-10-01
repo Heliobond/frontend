@@ -218,7 +218,7 @@ the whole first paint.
 | `wallet/session.ts`         | connected address, wallet id, network | `WalletProvider`          |
 | `wallet/transactions.ts`    | pending transaction list              | `TransactionsProvider`    |
 | `lib/yieldAlerts.ts`        | saved yield alerts                    | `YieldAlertProvider`      |
-| `lib/bondUtils.ts`          | bond yield-range filter               | `useBondFilters`          |
+| `lib/bondUtils.ts`          | bond yield-range & search filter      | `Explore`, `Deposit`      |
 | `hooks/useHorizonHealth.ts` | Horizon reachability                  | `OfflineBanner`, `TopBar` |
 
 ### The snapshot stability rule

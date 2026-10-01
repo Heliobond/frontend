@@ -7,6 +7,7 @@ import { ProjectCard, Tag, WatchlistButton, DemoDataBadge } from '../components'
 import { type Project, type ProjectType } from '../data'
 import { selectProjects } from '../state/selectors'
 import { getProjectsPaginated } from '../lib/api'
+import { searchByName } from '../lib/bondUtils'
 
 /**
  * Explore — a living atlas, not a shop. Grid of all registered projects with
@@ -65,11 +66,8 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
     }
   }
 
-  const query = searchTerm.trim().toLowerCase()
   const filteredByType = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
-  const shown = filteredByType.filter(
-    (p) => p.name.toLowerCase().includes(query) || p.location.toLowerCase().includes(query),
-  )
+  const shown = searchByName(filteredByType, searchTerm)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const paged = shown.slice(0, visibleCount)
   const remaining = shown.length - visibleCount
