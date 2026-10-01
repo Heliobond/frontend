@@ -13,6 +13,7 @@ import { submitClaim } from '../wallet/vault'
 import { formatDate, formatDecimal } from '../lib/format'
 import { OnChainPosition } from './OnChainPosition'
 import { usePortfolio } from '../hooks/usePortfolio'
+import { useVault } from '../wallet/useVault'
 import { getVirtualRange } from '../lib/virtualRange'
 import { PortfolioPerformanceChart } from '../components/PortfolioPerformanceChart'
 
@@ -44,11 +45,14 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
 
   // Drive portfolio metrics dynamically from the connected wallet
   const { portfolio, you, activity, loading, error, refresh } = usePortfolio()
-
-  const risk = { score: you.riskScore, level: you.riskLevel }
-  const referralLink = you.referralLink
+  const { totalAssets } = useVault()
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>([])
+  const pendingClaimsTotal = pendingClaims.reduce((sum, c) => sum + (c.amount || 0), 0)
+  const hasRisk = you.riskScore !== undefined && you.riskLevel !== undefined
+  const referralLink = you.referralLink
+  const hasValidReferral =
+    !!referralLink && !referralLink.includes('…') && /^https?:\/\//.test(referralLink)
   const [claiming, setClaiming] = useState(false)
   const [activityScrollTop, setActivityScrollTop] = useState(0)
   const activityRange = getVirtualRange(
@@ -215,17 +219,19 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               stackOnMobile
             />
           </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-caption)',
-              color: 'var(--ink-60)',
-              marginTop: 4,
-            }}
-          >
-            Includes $320 pending/escrow investments awaiting verification — total reflects settled
-            + pending.
-          </p>
+          {pendingClaimsTotal > 0 && (
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-60)',
+                marginTop: 4,
+              }}
+            >
+              Includes ${pendingClaimsTotal.toLocaleString('en-US')} pending/escrow investments
+              awaiting verification — total reflects settled + pending.
+            </p>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <MemoizedHelio size={108} motes={you.backed} />
@@ -262,19 +268,26 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
             />
           </div>
         </Card>
-        <Card style={{ padding: 22 }}>
-          <MemoizedLiquidityMeter liquid={236} total={482} currency="$" showExplanation={false} />
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-eyebrow)',
-              color: 'var(--ink-60)',
-              margin: '8px 0 0',
-            }}
-          >
-            {t('liquidCaption')}
-          </p>
-        </Card>
+        {totalAssets > 0 && (
+          <Card style={{ padding: 22 }}>
+            <MemoizedLiquidityMeter
+              liquid={Math.round(totalAssets * 0.45)}
+              total={Math.round(totalAssets)}
+              currency="$"
+              showExplanation={false}
+            />
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-eyebrow)',
+                color: 'var(--ink-60)',
+                margin: '8px 0 0',
+              }}
+            >
+              {t('liquidCaption')}
+            </p>
+          </Card>
+        )}
       </div>
 
       <OnChainPosition />
@@ -376,49 +389,30 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       </Card>
 
       {/* Portfolio risk indicator from bond ratings mix */}
-      <Card style={{ padding: 22, marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          <StatBlock
-            label="Portfolio risk"
-            value={risk.level[0].toUpperCase() + risk.level.slice(1)}
-            size="md"
-          />
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              lineHeight: 1.55,
-              color: 'var(--ink-60)',
-              margin: 0,
-            }}
-          >
-            Score: {risk.score}/100 based on bond ratings mix.
-          </p>
-        </div>
-      </Card>
-      {referralLink ? (
+      {hasRisk && (
         <Card style={{ padding: 22, marginBottom: 28 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 24,
-              flexWrap: 'wrap',
-            }}
-          >
-            <StatBlock label="Referral program" value={referralLink} size="sm" />
-            <Button
-              variant="secondary"
-              onClick={() => void navigator.clipboard?.writeText(referralLink)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+            <StatBlock
+              label="Portfolio risk"
+              value={you.riskLevel![0].toUpperCase() + you.riskLevel!.slice(1)}
+              size="md"
+            />
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                lineHeight: 1.55,
+                color: 'var(--ink-60)',
+                margin: 0,
+              }}
             >
-              Share
-            </Button>
+              Score: {you.riskScore}/100 based on bond ratings mix.
+            </p>
           </div>
         </Card>
-      ) : null}
+      )}
 
-      {referralLink && (
+      {hasValidReferral && (
         <Card style={{ padding: 22, marginBottom: 28 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>

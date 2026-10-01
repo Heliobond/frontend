@@ -147,11 +147,9 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         poolSharePct: Number((portfolio.shareOfPoolBps / 100).toFixed(2)),
         weightedGreen: demoYou.weightedGreen,
         backed: portfolio.shares > 0 ? demoYou.backed : 0,
-        riskScore: demoYou.riskScore,
-        riskLevel: demoYou.riskLevel,
-        referralLink: address
-          ? `https://heliobond.fi/ref/${address.slice(0, 4)}…${address.slice(-4)}`
-          : demoYou.referralLink,
+        riskScore: undefined,
+        riskLevel: undefined,
+        referralLink: undefined,
       }
     : demoYou
 

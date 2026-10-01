@@ -196,4 +196,27 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
       expect(screen.getByText(/No active vault position found/i)).toBeInTheDocument()
     })
   })
+
+  it('asserts that $320 note and fixture risk are absent for an on-chain portfolio (#702)', async () => {
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({
+      shares: 300,
+      usdcValue: 350,
+      claimableYield: 15,
+      shareOfPoolBps: 75,
+      totalDeposited: 300,
+    })
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$350')
+    })
+
+    // $320 pending note must be absent
+    expect(screen.queryByText(/Includes \$320/i)).not.toBeInTheDocument()
+    // Fixture risk score must be absent
+    expect(screen.queryByText(/based on bond ratings mix/i)).not.toBeInTheDocument()
+    // Broken referral link with unicode ellipsis must be absent
+    expect(screen.queryByText(/heliobond\.fi\/ref\/.*…/i)).not.toBeInTheDocument()
+  })
 })

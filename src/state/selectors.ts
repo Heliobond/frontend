@@ -55,8 +55,8 @@ export interface YouSummary {
   poolSharePct: number
   weightedGreen: number
   backed: number
-  riskScore: number
-  riskLevel: 'conservative' | 'moderate' | 'aggressive'
+  riskScore?: number
+  riskLevel?: 'conservative' | 'moderate' | 'aggressive'
   referralLink?: string
 }
 
