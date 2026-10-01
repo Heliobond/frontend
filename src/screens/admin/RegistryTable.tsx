@@ -127,9 +127,13 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
               editing={editing === r.id}
               onEdit={() => setEditing(r.id)}
               onCancel={() => setEditing(null)}
-              onSave={(credit, green) => {
-                onSave(r.id, credit, green)
-                setEditing(null)
+              onSave={async (credit, green) => {
+                try {
+                  await onSave(r.id, credit, green)
+                  setEditing(null)
+                } catch {
+                  // Keep editor open on failure so admin can retry
+                }
               }}
               updateLabel={t('updateScores')}
               reVerifyLabel={t('reVerify', { name: r.name })}

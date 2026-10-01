@@ -70,17 +70,30 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
 
   const target = projects.find((p) => p.id === scoreId)
 
-  const submitScores = () => {
-    if (!scoresValid) return
-    onPushScores(scoreId, clampScore(credit), clampScore(green))
-    setCredit('')
-    setGreen('')
+  const [submittingScores, setSubmittingScores] = useState(false)
+  const [submittingFund, setSubmittingFund] = useState(false)
+
+  const submitScores = async () => {
+    if (!scoresValid || submittingScores) return
+    setSubmittingScores(true)
+    try {
+      await onPushScores(scoreId, clampScore(credit), clampScore(green))
+      setCredit('')
+      setGreen('')
+    } finally {
+      setSubmittingScores(false)
+    }
   }
 
-  const submitFund = () => {
-    if (!fundValid) return
-    onFund(fundId, amountN)
-    setAmount('')
+  const submitFund = async () => {
+    if (!fundValid || submittingFund) return
+    setSubmittingFund(true)
+    try {
+      await onFund(fundId, amountN)
+      setAmount('')
+    } finally {
+      setSubmittingFund(false)
+    }
   }
 
   return (
@@ -119,7 +132,8 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
         <Button
           size="sm"
           variant="primary"
-          disabled={!scoresValid}
+          disabled={!scoresValid || submittingScores}
+          loading={submittingScores}
           reason={t('scoresReason')}
           onClick={submitScores}
         >
@@ -171,7 +185,8 @@ export function OracleForms({ projects, liquid, onPushScores, onFund }: OracleFo
         <Button
           size="sm"
           variant="primary"
-          disabled={!fundValid}
+          disabled={!fundValid || submittingFund}
+          loading={submittingFund}
           reason={amountN > liquid ? t('fundReasonExceeds') : t('fundReasonEmpty')}
           onClick={submitFund}
         >

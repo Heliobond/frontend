@@ -102,12 +102,13 @@ export function AdminConsole() {
     registry.filter((r) => parseFundedNum(r.funded) > 0).length + OFF_SCREEN_PROJECTS_COUNT
 
   const updateScores = async (id: number, credit: number, green: number) => {
-    setRegistry((rows) =>
-      rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)),
-    )
+    const prevRegistry = registry
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
       const res = await submitUpdateScores(id, credit, green, address ?? '', sign, isMultisig)
+      setRegistry((rows) =>
+        rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)),
+      )
       toast({
         tone: 'success',
         title: t('toastScoresTitle'),
@@ -117,27 +118,32 @@ export function AdminConsole() {
         duration: 5000,
       })
     } catch (e) {
+      setRegistry(prevRegistry)
       toast({
         tone: 'error',
         title: 'Transaction failed',
         message: e instanceof Error ? e.message : 'Failed to update scores',
         duration: 5000,
       })
+      throw e
     }
   }
 
   const fundProject = async (id: number, amount: number) => {
     const safe = Math.min(amount, liquid)
-    setRegistry((rows) =>
-      rows.map((r) =>
-        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r,
-      ),
-    )
-    setLiquid((l) => l - safe)
-    setDeployed((d) => d + safe)
+    const prevRegistry = registry
+    const prevLiquid = liquid
+    const prevDeployed = deployed
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
       const res = await submitFundProject(id, safe, address ?? '', sign, isMultisig)
+      setRegistry((rows) =>
+        rows.map((r) =>
+          r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r,
+        ),
+      )
+      setLiquid((l) => l - safe)
+      setDeployed((d) => d + safe)
       toast({
         tone: 'solar',
         title: t('toastFundTitle'),
@@ -147,12 +153,16 @@ export function AdminConsole() {
         duration: 5000,
       })
     } catch (e) {
+      setRegistry(prevRegistry)
+      setLiquid(prevLiquid)
+      setDeployed(prevDeployed)
       toast({
         tone: 'error',
         title: 'Transaction failed',
         message: e instanceof Error ? e.message : 'Failed to fund project',
         duration: 5000,
       })
+      throw e
     }
   }
 

@@ -122,4 +122,36 @@ describe('AdminConsole funding and liquid accounting', () => {
     expect(state.deployed).toBe(totalAssets)
     expect(state.liquid + state.deployed).toBe(totalAssets)
   })
+
+  it('restores state on transaction failure and updates on resolution (Issue #692)', async () => {
+    let state = { ...initialState }
+    let projs = [{ id: 1, funded: 100_000 }]
+
+    const handleFundTransaction = async (id: number, amount: number, failTx: boolean) => {
+      const snapState = { ...state }
+      const snapProjs = [...projs]
+      const safe = Math.min(amount, state.liquid)
+      try {
+        if (failTx) throw new Error('Transaction rejected by user')
+        state = { liquid: state.liquid - safe, deployed: state.deployed + safe }
+        projs = projs.map((p) => (p.id === id ? { ...p, funded: p.funded + safe } : p))
+      } catch (e) {
+        state = snapState
+        projs = snapProjs
+        throw e
+      }
+    }
+
+    // Rejected transaction leaves stat cells unchanged
+    await expect(handleFundTransaction(1, 200_000, true)).rejects.toThrow('Transaction rejected')
+    expect(state.liquid).toBe(initialState.liquid)
+    expect(state.deployed).toBe(initialState.deployed)
+    expect(projs[0].funded).toBe(100_000)
+
+    // Resolved transaction updates stat cells
+    await expect(handleFundTransaction(1, 200_000, false)).resolves.not.toThrow()
+    expect(state.liquid).toBe(initialState.liquid - 200_000)
+    expect(state.deployed).toBe(initialState.deployed + 200_000)
+    expect(projs[0].funded).toBe(300_000)
+  })
 })
