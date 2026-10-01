@@ -190,9 +190,7 @@ describe('RegistryTable inline score validation', () => {
 
   function openBeninEditor(onSave: (id: number, credit: number, green: number) => void) {
     render(<RegistryTable rows={rows} onSave={onSave} />)
-    fireEvent.click(
-      screen.getAllByRole('button', { name: /update scores/i })[BENIN],
-    )
+    fireEvent.click(screen.getAllByRole('button', { name: /update scores/i })[BENIN])
   }
 
   function creditInput() {

@@ -236,8 +236,7 @@ function Row({
   const creditValid = isValidScoreInput(credit)
   const greenValid = isValidScoreInput(green)
   const scoresValid = creditValid && greenValid
-  const unchanged =
-    scoresValid && Number(credit) === row.credit && Number(green) === row.green
+  const unchanged = scoresValid && Number(credit) === row.credit && Number(green) === row.green
   const saveDisabled = !scoresValid || unchanged
   const saveReason = !scoresValid ? scoreErrorInvalidLabel : saveNoChangeLabel
   const creditErrorId = `score-error-credit-${uid}`
