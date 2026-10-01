@@ -57,7 +57,13 @@ export interface OracleFormsProps {
   onFund: (id: number, amount: number) => void
 }
 
-export function OracleForms({ projects, liquid, guardrails, onPushScores, onFund }: OracleFormsProps) {
+export function OracleForms({
+  projects,
+  liquid,
+  guardrails,
+  onPushScores,
+  onFund,
+}: OracleFormsProps) {
   const t = useTranslations('Admin')
   const first = projects[0]?.id ?? 0
 
@@ -175,7 +181,9 @@ export function OracleForms({ projects, liquid, guardrails, onPushScores, onFund
           </div>
           {isPaused && (
             <div role="status" style={warningBoxStyle}>
-              <p style={warningTextStyle}>Registry is currently paused. Project funding is disabled.</p>
+              <p style={warningTextStyle}>
+                Registry is currently paused. Project funding is disabled.
+              </p>
             </div>
           )}
           {!isPaused && overLiquid && (
@@ -184,8 +192,8 @@ export function OracleForms({ projects, liquid, guardrails, onPushScores, onFund
                 {amountN > afterReserve && reserve > 0
                   ? `Amount exceeds deployable balance after insurance reserve of $${formatMoney(reserve)}`
                   : amountN > capacity
-                  ? `Amount exceeds remaining capacity for this project ($${formatMoney(capacity)})`
-                  : t('fundExceeds')}
+                    ? `Amount exceeds remaining capacity for this project ($${formatMoney(capacity)})`
+                    : t('fundExceeds')}
               </p>
             </div>
           )}
@@ -202,8 +210,8 @@ export function OracleForms({ projects, liquid, guardrails, onPushScores, onFund
             isPaused
               ? 'Registry is paused'
               : overLiquid
-              ? 'Amount exceeds deployable limit'
-              : t('fundReasonEmpty')
+                ? 'Amount exceeds deployable limit'
+                : t('fundReasonEmpty')
           }
           onClick={submitFund}
         >
