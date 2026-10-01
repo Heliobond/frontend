@@ -13,7 +13,12 @@ import {
   selectProjectDetail,
   selectScoreHistory,
 } from '../state/selectors'
-import { SOROBAN_RPC_URL as RPC_URL, NETWORK_PASSPHRASE, allowHttpFor } from '../config/network'
+import {
+  SOROBAN_RPC_URL as RPC_URL,
+  NETWORK_PASSPHRASE,
+  HORIZON_URL,
+  allowHttpFor,
+} from '../config/network'
 import { reportError } from '../lib/errorReporting'
 
 function getRegistryContractId(): string | undefined {
@@ -152,12 +157,21 @@ export async function simulateRegistryCall(
 /** Compute hex SHA-256 hash in browser or Node environments.
  * Returns null if crypto.subtle is unavailable (e.g. non-secure context).
  */
-export async function computeSha256(content: ArrayBuffer | Uint8Array): Promise<string | null> {
+export async function computeSha256(
+  content: ArrayBuffer | Uint8Array | string,
+): Promise<string | null> {
   const subtle = typeof crypto !== 'undefined' ? crypto.subtle : undefined
   if (!subtle) {
     return null
   }
-  const data = content instanceof Uint8Array ? content : new Uint8Array(content)
+  let data: Uint8Array
+  if (typeof content === 'string') {
+    data = new TextEncoder().encode(content)
+  } else if (content instanceof Uint8Array) {
+    data = content
+  } else {
+    data = new Uint8Array(content)
+  }
   const hashBuffer = await subtle.digest('SHA-256', data as BufferSource)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray
@@ -585,5 +599,220 @@ export async function fetchScoreHistory(
     reportRegistryReadError('get_score_history', error)
     if (isProgrammingError(error)) throw error
     return selectScoreHistory(id)
+  }
+}
+
+export interface ValidationResult {
+  valid: boolean
+  error?: string
+}
+
+/**
+ * Validate metadata URI according to ProjectRegistry contract constraints:
+ * - 8 to 512 characters
+ * - Scheme must be ipfs://, https://, or ar://
+ */
+export function validateMetadataUri(uri: string): ValidationResult {
+  if (!uri || typeof uri !== 'string') {
+    return { valid: false, error: 'Metadata URI is required' }
+  }
+  const trimmed = uri.trim()
+  if (trimmed.length < 8) {
+    return { valid: false, error: 'URI must be at least 8 characters' }
+  }
+  if (trimmed.length > 512) {
+    return { valid: false, error: 'URI cannot exceed 512 characters' }
+  }
+  const hasValidScheme =
+    trimmed.startsWith('ipfs://') || trimmed.startsWith('https://') || trimmed.startsWith('ar://')
+  if (!hasValidScheme) {
+    return { valid: false, error: 'URI must start with ipfs://, https://, or ar://' }
+  }
+  return { valid: true }
+}
+
+/**
+ * Validate maturity date:
+ * - 0 is open-ended (valid)
+ * - If > 0, must be in the future (Unix timestamp in seconds)
+ */
+export function validateMaturityDate(
+  maturityDateSeconds: number,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): ValidationResult {
+  if (maturityDateSeconds === 0) {
+    return { valid: true }
+  }
+  if (maturityDateSeconds < 0 || !Number.isFinite(maturityDateSeconds)) {
+    return { valid: false, error: 'Invalid maturity date' }
+  }
+  if (maturityDateSeconds <= nowSeconds) {
+    return { valid: false, error: 'Maturity date must be in the future' }
+  }
+  return { valid: true }
+}
+
+export interface ProjectMetadataPayload {
+  name: string
+  location: string
+  type: string
+  story: string
+  fundingGoal: number
+}
+
+/**
+ * Build canonical JSON string for metadata so SHA-256 is deterministic
+ */
+export function buildCanonicalMetadata(payload: ProjectMetadataPayload): string {
+  return JSON.stringify(
+    {
+      name: payload.name.trim(),
+      location: payload.location.trim(),
+      type: payload.type,
+      story: payload.story.trim(),
+      fundingGoal: Number(payload.fundingGoal) || 0,
+    },
+    null,
+    2,
+  )
+}
+
+export class NotWhitelistedError extends Error {
+  constructor(message = 'Wallet is not whitelisted to create projects') {
+    super(message)
+    this.name = 'NotWhitelistedError'
+  }
+}
+
+/**
+ * Encode arguments for ProjectRegistry.create_project:
+ * creator: Address, uri: String, maturity_date: u64, metadata_hash: BytesN<32>
+ */
+export async function encodeCreateProjectArgs(
+  creator: string,
+  uri: string,
+  maturityDateSeconds: number,
+  metadataHashHex: string,
+) {
+  const { Address, nativeToScVal, xdr } = await import('@stellar/stellar-sdk')
+  const creatorScVal = new Address(creator).toScVal()
+  const uriScVal = nativeToScVal(uri, { type: 'string' })
+  const maturityScVal = nativeToScVal(BigInt(maturityDateSeconds), { type: 'u64' })
+
+  const cleanHash = normalizeHash(metadataHashHex)
+  if (!cleanHash) {
+    throw new Error('Invalid metadata hash: must be 32 bytes (64 hex characters)')
+  }
+  const hashBytes = Buffer.from(cleanHash, 'hex')
+  const hashScVal = xdr.ScVal.scvBytes(hashBytes)
+
+  return [creatorScVal, uriScVal, maturityScVal, hashScVal]
+}
+
+export interface CreateProjectResult {
+  projectId: number
+  hash: string
+}
+
+/**
+ * Simulates and submits create_project to ProjectRegistry contract.
+ * If contract is not configured, runs in demo mode.
+ */
+export async function submitCreateProject(
+  creator: string,
+  uri: string,
+  maturityDateSeconds: number,
+  metadataHashHex: string,
+  sign: (xdr: string) => Promise<string>,
+): Promise<CreateProjectResult> {
+  const uriCheck = validateMetadataUri(uri)
+  if (!uriCheck.valid) throw new Error(uriCheck.error)
+
+  const maturityCheck = validateMaturityDate(maturityDateSeconds)
+  if (!maturityCheck.valid) throw new Error(maturityCheck.error)
+
+  const contractId = getRegistryContractId()
+  if (!contractId) {
+    // Demo mode: simulate delay and return generated project ID
+    await new Promise((r) => setTimeout(r, 1000))
+    const mockId = Math.floor(100 + Math.random() * 900)
+    return {
+      projectId: mockId,
+      hash: `demo_create_${mockId}_${Date.now().toString(36)}`,
+    }
+  }
+
+  const { rpc, Contract, TransactionBuilder, Horizon, Transaction, scValToNative } =
+    await import('@stellar/stellar-sdk')
+
+  const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
+  const horizon = new Horizon.Server(HORIZON_URL)
+  const contract = new Contract(contractId)
+  const networkPassphrase = NETWORK_PASSPHRASE
+
+  const scArgs = await encodeCreateProjectArgs(creator, uri, maturityDateSeconds, metadataHashHex)
+
+  const account = await horizon.loadAccount(creator)
+
+  const tx = new TransactionBuilder(account, { fee: '100', networkPassphrase })
+    .addOperation(contract.call('create_project', ...scArgs))
+    .setTimeout(180)
+    .build()
+
+  const simResult = await server.simulateTransaction(tx)
+  if ('error' in simResult) {
+    const errStr = String(simResult.error)
+    if (errStr.includes('NotWhitelisted') || errStr.includes('Error(Contract, #1)')) {
+      throw new NotWhitelistedError()
+    }
+    if (
+      errStr.includes('UriTooShort') ||
+      errStr.includes('InvalidUriScheme') ||
+      errStr.includes('UriTooLong')
+    ) {
+      throw new Error(`Registry URI validation failed: ${errStr}`)
+    }
+    if (errStr.includes('MaturityDateInPast')) {
+      throw new Error('Maturity date must be in the future')
+    }
+    throw new Error(`Simulation failed: ${errStr}`)
+  }
+
+  if (simResult.result?.retval) {
+    const res = scValToNative(simResult.result.retval)
+    if (typeof res === 'object' && res !== null && 'error' in res) {
+      throw new Error(`Contract error: ${JSON.stringify(res)}`)
+    }
+  }
+
+  const assembled = rpc.assembleTransaction(tx, simResult).build()
+  const signedXdr = await sign(assembled.toXDR())
+  const signedTx = new Transaction(signedXdr, networkPassphrase)
+
+  const sendResult = await server.sendTransaction(signedTx)
+  if (sendResult.status === 'ERROR') {
+    throw new Error(`Send transaction failed: ${JSON.stringify(sendResult.errorResult)}`)
+  }
+
+  const deadline = Date.now() + 30000
+  let projectReturnId = 1
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 2000))
+    const txStatus = await server.getTransaction(sendResult.hash)
+    if (txStatus.status === rpc.Api.GetTransactionStatus.SUCCESS) {
+      if (txStatus.returnValue) {
+        projectReturnId = Number(scValToNative(txStatus.returnValue)) || 1
+      }
+      break
+    }
+    if (txStatus.status === rpc.Api.GetTransactionStatus.FAILED) {
+      throw new Error('Transaction failed on-chain')
+    }
+  }
+
+  clearRegistryCache()
+  return {
+    projectId: projectReturnId,
+    hash: sendResult.hash,
   }
 }
