@@ -60,8 +60,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
   const palette: Record<ButtonVariant, CSSProperties> = {
     primary: {
-      background: 'var(--primary-button-color)',
-      color: 'var(--button-primary-fg, #FFFFFF)',
+      background:
+        hover && !disabled
+          ? 'var(--button-primary-hover, var(--solar))'
+          : 'var(--button-primary-bg, var(--solar))',
+      color: 'var(--button-primary-fg, #0b2b23)',
       border: '1px solid transparent',
     },
     secondary: {

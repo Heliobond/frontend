@@ -46,10 +46,14 @@ describe('Button', () => {
     expect(screen.getByRole('button')).not.toHaveAttribute('title')
   })
 
-  it('renders primary variant by default', () => {
+  it('renders primary variant by default and uses design tokens', () => {
     render(<Button>Primary</Button>)
     const btn = screen.getByRole('button')
     expect(btn).toBeInTheDocument()
+    expect(btn).toHaveStyle({
+      background: 'var(--button-primary-bg, var(--solar))',
+      color: 'var(--button-primary-fg, #0b2b23)',
+    })
   })
 
   it('marks aria-busy when loading', () => {

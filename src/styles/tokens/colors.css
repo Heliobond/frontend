@@ -61,6 +61,11 @@
   --focus-ring: var(--solar); /* 2px solar ring + 1px ink offset      */
   --focus-offset: var(--ink);
 
+  /* --- Primary button tokens ------------------------------------------ */
+  --button-primary-bg: var(--solar);
+  --button-primary-fg: #0b2b23; /* fixed dark pine ink, passes AAA contrast on solar (> 8:1) */
+  --button-primary-hover: #e6a200;
+
   /* --- Shadows — ink-tinted, never gray-black ------------------------- */
   /* --- Overlay & backdrop --------------------------------------------- */
   --backdrop: rgba(11, 43, 35, 0.65); /* modal/dialog backdrop overlay */
@@ -99,6 +104,11 @@
   --solar-24: rgba(255, 180, 0, 0.26);
   --growth-12: rgba(93, 217, 154, 0.14);
   --ember-12: rgba(255, 155, 130, 0.14);
+
+  /* --- Primary button tokens ------------------------------------------ */
+  --button-primary-bg: var(--solar);
+  --button-primary-fg: #0b2b23; /* fixed dark pine ink, passes AAA contrast on solar (> 8:1) */
+  --button-primary-hover: #e6a200;
 
   /* --- Overlay & backdrop --------------------------------------------- */
   --backdrop: rgba(237, 242, 236, 0.65); /* modal/dialog backdrop overlay */
