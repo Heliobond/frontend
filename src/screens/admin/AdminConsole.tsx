@@ -63,7 +63,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       return
     }
     if (address) {
-      getAdminRoles(address).then(setRoles).catch(() => {})
+      getAdminRoles(address)
+        .then(setRoles)
+        .catch(() => {})
     }
   }, [propRoles, address])
 

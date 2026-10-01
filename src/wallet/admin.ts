@@ -68,7 +68,8 @@ async function queryMethodAddress(
   sourceAddress: string,
   networkPassphrase: string,
 ): Promise<string | null> {
-  const { Contract, TransactionBuilder, Account, scValToNative } = await import('@stellar/stellar-sdk')
+  const { Contract, TransactionBuilder, Account, scValToNative } =
+    await import('@stellar/stellar-sdk')
   try {
     const contract = new Contract(contractId)
     const source = new Account(sourceAddress, '0')
@@ -155,13 +156,23 @@ export async function getAdminRoles(address: string | null): Promise<AdminRoles>
         ? queryMethodAddress(server, registryContractId, 'get_owner', address, networkPassphrase)
         : Promise.resolve(null),
       registryContractId
-        ? queryMethodAddress(server, registryContractId, 'get_whitelister', address, networkPassphrase)
+        ? queryMethodAddress(
+            server,
+            registryContractId,
+            'get_whitelister',
+            address,
+            networkPassphrase,
+          )
         : Promise.resolve(null),
     ])
 
     const isVaultOwner = Boolean(vaultOwner && vaultOwner.toUpperCase() === address.toUpperCase())
-    const isRegistryOwner = Boolean(registryOwner && registryOwner.toUpperCase() === address.toUpperCase())
-    const isWhitelister = Boolean(whitelister && whitelister.toUpperCase() === address.toUpperCase())
+    const isRegistryOwner = Boolean(
+      registryOwner && registryOwner.toUpperCase() === address.toUpperCase(),
+    )
+    const isWhitelister = Boolean(
+      whitelister && whitelister.toUpperCase() === address.toUpperCase(),
+    )
     const isAdmin = isVaultOwner || isRegistryOwner || isWhitelister
 
     return {
