@@ -24,3 +24,21 @@ export function validateScores(credit: string, green: string): boolean {
   const greenN = Number(green)
   return creditN >= 0 && creditN <= 100 && greenN >= 0 && greenN <= 100
 }
+
+/**
+ * Checks a single score string is a plausible 0–100 value (moved from
+ * OracleForms so both write paths share one validator, #693).
+ */
+export function isSafeScore(value: string): boolean {
+  const n = Number(value)
+  return /^\d*\.?\d+$/.test(value) && Number.isFinite(n) && n >= 0 && n <= 100
+}
+
+/**
+ * Strict integer score check for the inline registry editor (#693):
+ * whole numbers from 0 to 100 only — rejects empties, decimals like 72.5,
+ * and out-of-range values like 150 or -1 instead of clamping them silently.
+ */
+export function isValidScoreInput(value: string): boolean {
+  return /^\d+$/.test(value) && isSafeScore(value)
+}

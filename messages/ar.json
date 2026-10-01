@@ -300,6 +300,8 @@
     "reVerify": "إعادة التحقق من {name}",
     "scoreFieldCredit": "جودة الائتمان",
     "scoreFieldGreen": "التأثير الأخضر",
+    "scoreErrorInvalid": "أدخل عددًا صحيحًا من 0 إلى 100.",
+    "saveNoChange": "لا توجد تغييرات للحفظ.",
     "actionCancel": "إلغاء",
     "actionSave": "حفظ",
     "revokeConfirm": "Yes, revoke",

@@ -291,6 +291,8 @@
     "reVerify": "Re-vérifier {name}",
     "scoreFieldCredit": "Qualité de crédit",
     "scoreFieldGreen": "Impact vert",
+    "scoreErrorInvalid": "Saisissez un nombre entier entre 0 et 100.",
+    "saveNoChange": "Aucune modification à enregistrer.",
     "actionCancel": "Annuler",
     "actionSave": "Enregistrer",
     "actionUndo": "Undo"

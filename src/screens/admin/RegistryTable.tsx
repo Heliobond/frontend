@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useId, useMemo, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
+import { errorText } from '@/theme'
 import { type RegistryEntry } from '@/data/admin'
-import { clampScore, parseFundedNum } from './utils'
+import { isValidScoreInput, parseFundedNum } from './utils'
 
 /**
  * RegistryTable — the dense project registry. A real <table> with a tinted,
@@ -137,6 +138,8 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
               greenFieldLabel={t('scoreFieldGreen')}
               cancelLabel={t('actionCancel')}
               saveLabel={t('actionSave')}
+              scoreErrorInvalidLabel={t('scoreErrorInvalid')}
+              saveNoChangeLabel={t('saveNoChange')}
             />
           ))}
         </tbody>
@@ -198,6 +201,8 @@ function Row({
   greenFieldLabel,
   cancelLabel,
   saveLabel,
+  scoreErrorInvalidLabel,
+  saveNoChangeLabel,
 }: {
   row: RegistryEntry
   editing: boolean
@@ -210,9 +215,12 @@ function Row({
   greenFieldLabel: string
   cancelLabel: string
   saveLabel: string
+  scoreErrorInvalidLabel: string
+  saveNoChangeLabel: string
 }) {
   const [credit, setCredit] = useState(String(row.credit))
   const [green, setGreen] = useState(String(row.green))
+  const uid = useId()
 
   // Reset draft to current values each time the editor opens.
   const open = () => {
@@ -220,6 +228,20 @@ function Row({
     setGreen(String(row.green))
     onEdit()
   }
+
+  // #693: validate the draft with the same validators as the "Push score
+  // update" panel instead of silently clamping. Save stays disabled while a
+  // field is empty, not a whole number, or outside 0–100 — or when nothing
+  // changed — so a bad value can never reach update_impact_score.
+  const creditValid = isValidScoreInput(credit)
+  const greenValid = isValidScoreInput(green)
+  const scoresValid = creditValid && greenValid
+  const unchanged =
+    scoresValid && Number(credit) === row.credit && Number(green) === row.green
+  const saveDisabled = !scoresValid || unchanged
+  const saveReason = !scoresValid ? scoreErrorInvalidLabel : saveNoChangeLabel
+  const creditErrorId = `score-error-credit-${uid}`
+  const greenErrorId = `score-error-green-${uid}`
 
   return (
     <>
@@ -248,8 +270,22 @@ function Row({
           <td colSpan={7} style={editingCellStyle}>
             <div style={editorFlexStyle}>
               <span style={reVerifySpanStyle}>{reVerifyLabel}</span>
-              <ScoreField label={creditFieldLabel} value={credit} onChange={setCredit} />
-              <ScoreField label={greenFieldLabel} value={green} onChange={setGreen} />
+              <ScoreField
+                label={creditFieldLabel}
+                value={credit}
+                onChange={setCredit}
+                invalid={!creditValid}
+                errorId={creditErrorId}
+                error={scoreErrorInvalidLabel}
+              />
+              <ScoreField
+                label={greenFieldLabel}
+                value={green}
+                onChange={setGreen}
+                invalid={!greenValid}
+                errorId={greenErrorId}
+                error={scoreErrorInvalidLabel}
+              />
               <div style={btnGroupStyle}>
                 <Button size="sm" variant="ghost" onClick={onCancel}>
                   {cancelLabel}
@@ -257,7 +293,9 @@ function Row({
                 <Button
                   size="sm"
                   variant="primary"
-                  onClick={() => onSave(clampScore(credit), clampScore(green))}
+                  disabled={saveDisabled}
+                  reason={saveReason}
+                  onClick={() => onSave(Number(credit), Number(green))}
                 >
                   {saveLabel}
                 </Button>
@@ -274,10 +312,16 @@ function ScoreField({
   label,
   value,
   onChange,
+  invalid,
+  errorId,
+  error,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
+  invalid: boolean
+  errorId: string
+  error: string
 }) {
   return (
     <label style={scoreLabelStyle}>
@@ -290,7 +334,14 @@ function ScoreField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         style={inputStyle}
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
       />
+      {invalid && (
+        <span id={errorId} role="alert" style={errorText}>
+          {error}
+        </span>
+      )}
     </label>
   )
 }

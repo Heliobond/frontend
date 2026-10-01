@@ -292,6 +292,8 @@
     "reVerify": "Re-verify {name}",
     "scoreFieldCredit": "Credit quality",
     "scoreFieldGreen": "Green impact",
+    "scoreErrorInvalid": "Enter a whole number from 0 to 100.",
+    "saveNoChange": "No changes to save.",
     "actionCancel": "Cancel",
     "actionSave": "Save"
   },

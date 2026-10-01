@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clampScore, parseFundedNum, validateScores } from './utils'
+import { clampScore, parseFundedNum, validateScores, isSafeScore, isValidScoreInput } from './utils'
 
 describe('admin utils', () => {
   describe('clampScore', () => {
@@ -90,5 +90,36 @@ describe('admin utils', () => {
     it('returns false for invalid numbers', () => {
       expect(validateScores('abc', '50')).toBe(false)
     })
+  })
+})
+
+describe('isSafeScore', () => {
+  it('accepts 0–100 numerics including decimals', () => {
+    expect(isSafeScore('0')).toBe(true)
+    expect(isSafeScore('100')).toBe(true)
+    expect(isSafeScore('72.5')).toBe(true)
+  })
+
+  it('rejects empties, non-numerics and out-of-range values', () => {
+    expect(isSafeScore('')).toBe(false)
+    expect(isSafeScore('abc')).toBe(false)
+    expect(isSafeScore('150')).toBe(false)
+    expect(isSafeScore('-1')).toBe(false)
+  })
+})
+
+describe('isValidScoreInput', () => {
+  it('accepts whole numbers from 0 to 100', () => {
+    expect(isValidScoreInput('0')).toBe(true)
+    expect(isValidScoreInput('82')).toBe(true)
+    expect(isValidScoreInput('100')).toBe(true)
+  })
+
+  it('rejects empties, decimals and out-of-range values (#693)', () => {
+    expect(isValidScoreInput('')).toBe(false)
+    expect(isValidScoreInput('72.5')).toBe(false)
+    expect(isValidScoreInput('150')).toBe(false)
+    expect(isValidScoreInput('-1')).toBe(false)
+    expect(isValidScoreInput('abc')).toBe(false)
   })
 })

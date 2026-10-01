@@ -20,13 +20,8 @@ import {
   panelBodyStyle,
 } from '@/theme'
 import { type RegistryEntry } from '@/data/admin'
-import { clampScore, validateScores } from './utils'
+import { clampScore, validateScores, isSafeScore } from './utils'
 import { formatMoney, parseAmount } from '@/lib/format'
-
-export function isSafeScore(value: string): boolean {
-  const n = Number(value)
-  return /^\d*\.?\d+$/.test(value) && Number.isFinite(n) && n >= 0 && n <= 100
-}
 
 export function isSafeAmount(value: string, liquid: number): boolean {
   if (!/^\d*\.?\d+$/.test(value)) return false

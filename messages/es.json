@@ -282,6 +282,8 @@
     "reVerify": "Reverificar {name}",
     "scoreFieldCredit": "Calidad crediticia",
     "scoreFieldGreen": "Impacto verde",
+    "scoreErrorInvalid": "Introduce un número entero entre 0 y 100.",
+    "saveNoChange": "Sin cambios para guardar.",
     "actionSave": "Guardar",
     "revokeConfirmTitle": "¿Revocar creador?",
     "revokeConfirm": "Sí, revocar",

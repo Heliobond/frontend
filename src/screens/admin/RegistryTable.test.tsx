@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, within } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
 import type { RegistryEntry } from '@/data/admin'
@@ -176,5 +176,74 @@ describe('RegistryTable aria-sort', () => {
       'aria-sort',
       'none',
     )
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Inline score editor validation (#693)
+// ---------------------------------------------------------------------------
+
+describe('RegistryTable inline score validation', () => {
+  // Default sort is credit desc: Mekong Hydro (91), Benin Solar Farm (82),
+  // Atacama Wind Park (74). Benin is the row we edit below (index 1).
+  const BENIN = 1
+
+  function openBeninEditor(onSave: (id: number, credit: number, green: number) => void) {
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    fireEvent.click(
+      screen.getAllByRole('button', { name: /update scores/i })[BENIN],
+    )
+  }
+
+  function creditInput() {
+    return screen.getByLabelText(/credit quality/i)
+  }
+
+  function saveButton() {
+    return screen.getByRole('button', { name: /^save$/i })
+  }
+
+  it('disables Save when nothing changed', () => {
+    openBeninEditor(() => {})
+    // Draft starts at the row's current values (82 / 90): no change yet.
+    expect(saveButton()).toBeDisabled()
+  })
+
+  it('disables Save and shows an error when a field is cleared', () => {
+    const onSave = vi.fn()
+    openBeninEditor(onSave)
+
+    fireEvent.change(creditInput(), { target: { value: '' } })
+
+    expect(creditInput()).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent(/whole number from 0 to 100/i)
+    expect(saveButton()).toBeDisabled()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it.each(['150', '-1', '72.5'])('rejects %s with a visible error instead of clamping', (value) => {
+    const onSave = vi.fn()
+    openBeninEditor(onSave)
+
+    fireEvent.change(creditInput(), { target: { value } })
+
+    expect(creditInput()).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent(/whole number from 0 to 100/i)
+    expect(saveButton()).toBeDisabled()
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('enables Save after a valid change and passes integers to onSave', () => {
+    const onSave = vi.fn()
+    openBeninEditor(onSave)
+
+    fireEvent.change(creditInput(), { target: { value: '83' } })
+
+    expect(creditInput()).not.toHaveAttribute('aria-invalid', 'true')
+    expect(saveButton()).not.toBeDisabled()
+
+    fireEvent.click(saveButton())
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave).toHaveBeenCalledWith(1, 83, 90)
   })
 })
