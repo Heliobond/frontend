@@ -16,11 +16,37 @@ export function parseFundedNum(s: string): number {
 }
 
 /**
- * Validates score inputs (credit and green scores must be between 0 and 100) (#414).
+ * Checks if a string represents a valid integer score between 0 and 100.
+ */
+export function isSafeScore(value: string): boolean {
+  if (typeof value !== 'string') return false
+  const trimmed = value.trim()
+  if (!/^\d+$/.test(trimmed)) return false
+  const n = Number(trimmed)
+  return Number.isInteger(n) && n >= 0 && n <= 100
+}
+
+/**
+ * Returns a descriptive error message if score is invalid, or null if valid.
+ */
+export function getScoreError(value: string): string | null {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return 'Score is required'
+  }
+  const trimmed = value.trim()
+  if (!/^\d+$/.test(trimmed)) {
+    return 'Score must be an integer between 0 and 100'
+  }
+  const n = Number(trimmed)
+  if (n < 0 || n > 100) {
+    return 'Score must be between 0 and 100'
+  }
+  return null
+}
+
+/**
+ * Validates score inputs (credit and green scores must be integers between 0 and 100).
  */
 export function validateScores(credit: string, green: string): boolean {
-  if (credit === '' || green === '') return false
-  const creditN = Number(credit)
-  const greenN = Number(green)
-  return creditN >= 0 && creditN <= 100 && greenN >= 0 && greenN <= 100
+  return isSafeScore(credit) && isSafeScore(green)
 }

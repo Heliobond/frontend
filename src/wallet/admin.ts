@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import { Address, type xdr } from '@stellar/stellar-sdk'
+import { Address, nativeToScVal, type xdr, type rpc } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -52,82 +52,146 @@ async function waitForTx(hash: string): Promise<void> {
   throw new Error('Admin transaction confirmation timed out')
 }
 
-/** Check if connected address is an authorized administrator */
-export async function checkIsAdmin(address: string | null): Promise<boolean> {
-  if (!address) return false
+export interface AdminRoles {
+  isVaultOwner: boolean
+  isRegistryOwner: boolean
+  isWhitelister: boolean
+  isMultisigSigner: boolean
+  isConfiguredAdmin: boolean
+  isAdmin: boolean
+}
 
-  const configuredList = (CONFIGURED_ADMIN_ADDR || '')
+async function queryMethodAddress(
+  server: rpc.Server,
+  contractId: string,
+  method: string,
+  sourceAddress: string,
+  networkPassphrase: string,
+): Promise<string | null> {
+  const { Contract, TransactionBuilder, Account, scValToNative } =
+    await import('@stellar/stellar-sdk')
+  try {
+    const contract = new Contract(contractId)
+    const source = new Account(sourceAddress, '0')
+    const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
+      .addOperation(contract.call(method))
+      .setTimeout(0)
+      .build()
+
+    const simResult = (await withTimeout(
+      server.simulateTransaction(tx),
+      `Simulate ${method} timed out`,
+      3000,
+    )) as { result?: { retval?: xdr.ScVal } }
+    if (simResult && 'result' in simResult && simResult.result?.retval) {
+      const res = scValToNative(simResult.result.retval)
+      if (typeof res === 'string') return res
+    }
+  } catch {
+    /* method call failed or timed out */
+  }
+  return null
+}
+
+/**
+ * Fetch granular administrative roles for the connected address by probing
+ * get_owner on the vault and registry, and get_whitelister on the registry.
+ */
+export async function getAdminRoles(address: string | null): Promise<AdminRoles> {
+  const emptyRoles: AdminRoles = {
+    isVaultOwner: false,
+    isRegistryOwner: false,
+    isWhitelister: false,
+    isMultisigSigner: false,
+    isConfiguredAdmin: false,
+    isAdmin: false,
+  }
+
+  if (!address) return emptyRoles
+
+  const configuredAdminAddr = process.env.NEXT_PUBLIC_ADMIN_ADDRESS ?? CONFIGURED_ADMIN_ADDR
+  const configuredList = (configuredAdminAddr || '')
     .split(',')
     .map((a) => a.trim().toUpperCase())
     .filter(Boolean)
 
-  if (configuredList.includes(address.toUpperCase())) {
-    return true
+  const isConfiguredAdmin = configuredList.includes(address.toUpperCase())
+  if (isConfiguredAdmin) {
+    return {
+      isVaultOwner: true,
+      isRegistryOwner: true,
+      isWhitelister: true,
+      isMultisigSigner: true,
+      isConfiguredAdmin: true,
+      isAdmin: true,
+    }
   }
 
-  const contractId = VAULT_CONTRACT_ID || REGISTRY_CONTRACT_ID
-  if (!contractId) {
-    return address.toUpperCase() === DEMO_ADMIN_ADDRESS.toUpperCase()
+  const vaultContractId = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
+  const registryContractId = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID
+
+  if (!vaultContractId && !registryContractId) {
+    const isDemo = address.toUpperCase() === DEMO_ADMIN_ADDRESS.toUpperCase()
+    return {
+      isVaultOwner: isDemo,
+      isRegistryOwner: isDemo,
+      isWhitelister: isDemo,
+      isMultisigSigner: false,
+      isConfiguredAdmin: false,
+      isAdmin: isDemo,
+    }
   }
 
   try {
-    const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
-      await import('@stellar/stellar-sdk')
-
+    const { rpc, Networks } = await import('@stellar/stellar-sdk')
     const server = new rpc.Server(RPC_URL, { allowHttp: false })
-    const contract = new Contract(contractId)
-    const source = new Account(address, '0')
     const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
 
-    for (const method of ['admin', 'owner', 'get_admin']) {
-      try {
-        const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-          .addOperation(contract.call(method))
-          .setTimeout(0)
-          .build()
+    // Run parallel reads in one RPC round trip
+    const [vaultOwner, registryOwner, whitelister] = await Promise.all([
+      vaultContractId
+        ? queryMethodAddress(server, vaultContractId, 'get_owner', address, networkPassphrase)
+        : Promise.resolve(null),
+      registryContractId
+        ? queryMethodAddress(server, registryContractId, 'get_owner', address, networkPassphrase)
+        : Promise.resolve(null),
+      registryContractId
+        ? queryMethodAddress(
+            server,
+            registryContractId,
+            'get_whitelister',
+            address,
+            networkPassphrase,
+          )
+        : Promise.resolve(null),
+    ])
 
-        const simResult = await withTimeout(
-          server.simulateTransaction(tx),
-          'Simulate timed out',
-          3000,
-        )
-        if ('result' in simResult && simResult.result?.retval) {
-          const owner = scValToNative(simResult.result.retval)
-          if (typeof owner === 'string' && owner.toUpperCase() === address.toUpperCase()) {
-            return true
-          }
-        }
-      } catch {
-        /* try next method */
-      }
-    }
+    const isVaultOwner = Boolean(vaultOwner && vaultOwner.toUpperCase() === address.toUpperCase())
+    const isRegistryOwner = Boolean(
+      registryOwner && registryOwner.toUpperCase() === address.toUpperCase(),
+    )
+    const isWhitelister = Boolean(
+      whitelister && whitelister.toUpperCase() === address.toUpperCase(),
+    )
+    const isAdmin = isVaultOwner || isRegistryOwner || isWhitelister
 
-    // Check parameterized is_admin(address)
-    try {
-      const { Address } = await import('@stellar/stellar-sdk')
-      const userScVal = new Address(address).toScVal()
-      const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-        .addOperation(contract.call('is_admin', userScVal))
-        .setTimeout(0)
-        .build()
-
-      const simResult = await withTimeout(
-        server.simulateTransaction(tx),
-        'Simulate timed out',
-        3000,
-      )
-      if ('result' in simResult && simResult.result?.retval) {
-        const res = scValToNative(simResult.result.retval)
-        if (Boolean(res)) return true
-      }
-    } catch {
-      /* ignore */
+    return {
+      isVaultOwner,
+      isRegistryOwner,
+      isWhitelister,
+      isMultisigSigner: false,
+      isConfiguredAdmin: false,
+      isAdmin,
     }
   } catch {
-    /* fallback to configured addresses */
+    return emptyRoles
   }
+}
 
-  return configuredList.includes(address.toUpperCase())
+/** Check if connected address is an authorized administrator */
+export async function checkIsAdmin(address: string | null): Promise<boolean> {
+  const roles = await getAdminRoles(address)
+  return roles.isAdmin
 }
 
 /** Check if contract deployment uses multisig */
@@ -234,6 +298,46 @@ function simulateDemoTx(): Promise<string> {
   })
 }
 
+/**
+ * Validate project ID is an integer within [1, 2^32 - 1]
+ */
+export function validateProjectId(id: number): number {
+  if (!Number.isInteger(id) || id < 1 || id > 0xffffffff) {
+    throw new Error(`Invalid project ID: ${id}. Must be an integer between 1 and 4294967295.`)
+  }
+  return id
+}
+
+/** Build ScVal arguments for fund_project (u32, i128) */
+export function buildFundProjectArgs(
+  projectId: number,
+  amount: number | bigint,
+): [xdr.ScVal, xdr.ScVal] {
+  validateProjectId(projectId)
+  const scaledAmount = typeof amount === 'bigint' ? amount : BigInt(Math.round(amount * 1e7))
+  return [nativeToScVal(projectId, { type: 'u32' }), nativeToScVal(scaledAmount, { type: 'i128' })]
+}
+
+/** Build ScVal arguments for update_impact_score (u32, u32, u32) */
+export function buildUpdateScoresArgs(
+  projectId: number,
+  credit: number,
+  green: number,
+): [xdr.ScVal, xdr.ScVal, xdr.ScVal] {
+  validateProjectId(projectId)
+  if (!Number.isInteger(credit) || credit < 0 || credit > 100) {
+    throw new Error(`Invalid credit score: ${credit}. Must be an integer between 0 and 100.`)
+  }
+  if (!Number.isInteger(green) || green < 0 || green > 100) {
+    throw new Error(`Invalid green score: ${green}. Must be an integer between 0 and 100.`)
+  }
+  return [
+    nativeToScVal(projectId, { type: 'u32' }),
+    nativeToScVal(credit, { type: 'u32' }),
+    nativeToScVal(green, { type: 'u32' }),
+  ]
+}
+
 /** Execute fund_project on InvestmentVault */
 export async function submitFundProject(
   projectId: number,
@@ -247,19 +351,9 @@ export async function submitFundProject(
     return { hash, approvalCount: isMultisig ? 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
   const method = isMultisig ? 'fund_project_approved' : 'fund_project'
-  const scaledAmount = BigInt(Math.round(amount * 1e7))
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(scaledAmount, { type: 'i128' }),
-    ],
-    address,
-    sign,
-  )
+  const args = buildFundProjectArgs(projectId, amount)
+  const hash = await sendContractTx(VAULT_CONTRACT_ID, method, args, address, sign)
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 
@@ -278,19 +372,9 @@ export async function submitUpdateScores(
     return { hash, approvalCount: isMultisig ? 1 : undefined }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
   const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
-  const hash = await sendContractTx(
-    targetContract,
-    method,
-    [
-      nativeToScVal(BigInt(projectId), { type: 'u64' }),
-      nativeToScVal(credit, { type: 'u32' }),
-      nativeToScVal(green, { type: 'u32' }),
-    ],
-    address,
-    sign,
-  )
+  const args = buildUpdateScoresArgs(projectId, credit, green)
+  const hash = await sendContractTx(targetContract, method, args, address, sign)
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 

@@ -39,17 +39,15 @@ import {
   submitSetPaused,
   fetchIsPaused,
   isMultisigDeployment,
+  getAdminRoles,
+  type AdminRoles,
 } from '@/wallet/admin'
 
-/**
- * AdminConsole — the internal admin / oracle surface. Same design system as the
- * consumer app, but DENSER: tighter padding, smaller type, hairline-separated
- * rows, mono tabular numerals on every figure, and a real registry table.
- * All interactivity is local in-memory state — these stand in for privileged
- * InvestmentVault + ProjectRegistry writes. Honest, plain-language confirms.
- */
+export interface AdminConsoleProps {
+  roles?: AdminRoles
+}
 
-export function AdminConsole() {
+export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -61,6 +59,24 @@ export function AdminConsole() {
   const [isMultisig, setIsMultisig] = useState(false)
   const [vaultPaused, setVaultPaused] = useState(false)
   const [registryPaused, setRegistryPaused] = useState(false)
+  const [fetchedRoles, setFetchedRoles] = useState<AdminRoles | undefined>()
+
+  useEffect(() => {
+    if (propRoles) return
+    if (address) {
+      getAdminRoles(address)
+        .then(setFetchedRoles)
+        .catch(() => {})
+    }
+  }, [propRoles, address])
+
+  const roles = propRoles ?? fetchedRoles
+
+  const canFund = roles ? roles.isVaultOwner || roles.isConfiguredAdmin : true
+  const canUpdateScores = roles ? roles.isRegistryOwner || roles.isConfiguredAdmin : true
+  const canManageWhitelist = roles
+    ? roles.isWhitelister || roles.isRegistryOwner || roles.isConfiguredAdmin
+    : true
 
   // Live contract reads on mount
   useEffect(() => {
@@ -149,22 +165,21 @@ export function AdminConsole() {
       })
       return
     }
-    const safe = Math.min(amount, liquid)
     setRegistry((rows) =>
       rows.map((r) =>
-        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r,
+        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + amount) } : r,
       ),
     )
-    setLiquid((l) => l - safe)
-    setDeployed((d) => d + safe)
+    setLiquid((l) => l - amount)
+    setDeployed((d) => d + amount)
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
-      const res = await submitFundProject(id, safe, address ?? '', sign, isMultisig)
+      const res = await submitFundProject(id, amount, address ?? '', sign, isMultisig)
       toast({
         tone: 'solar',
         title: t('toastFundTitle'),
         message:
-          t('toastFundMsg', { name, amount: sharedFormatMoney(safe) }) +
+          t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
           (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
         duration: 5000,
       })
@@ -403,11 +418,43 @@ export function AdminConsole() {
 
       {/* Project registry table */}
       <Section title={t('sectionRegistry')} caption={t('sectionRegistryCaption')}>
+        {!canUpdateScores && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            Registry owner permissions required to update scores.
+          </div>
+        )}
         <RegistryTable rows={registry} onSave={updateScores} />
       </Section>
 
       {/* Oracle actions */}
       <Section title={t('sectionOracle')} caption={t('sectionOracleCaption')}>
+        {(!canFund || !canUpdateScores) && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            {!canFund && !canUpdateScores
+              ? 'Vault owner or registry owner permissions required for privileged actions.'
+              : !canFund
+                ? 'Vault owner permissions required to fund projects.'
+                : 'Registry owner permissions required to update scores.'}
+          </div>
+        )}
         <OracleForms
           projects={registry}
           liquid={liquid}
@@ -418,6 +465,20 @@ export function AdminConsole() {
 
       {/* Whitelist management */}
       <Section title={t('sectionWhitelist')} caption={t('sectionWhitelistCaption')}>
+        {!canManageWhitelist && (
+          <div
+            style={{
+              padding: '8px 12px',
+              marginBottom: 12,
+              background: 'var(--ink-06)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+            }}
+          >
+            Whitelister permissions required to manage the creator whitelist.
+          </div>
+        )}
         <div>
           {whitelist.map((c, i) => (
             <div
@@ -440,6 +501,7 @@ export function AdminConsole() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!canManageWhitelist}
                     onClick={() => setCreatorStatus(c.address, 'pending')}
                   >
                     {t('actionRevoke')}
@@ -448,6 +510,7 @@ export function AdminConsole() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={!canManageWhitelist}
                     onClick={() => setCreatorStatus(c.address, 'approved')}
                   >
                     {t('actionApprove')}
