@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AdminConsole } from '@/screens/admin/AdminConsole'
 import { useWallet, shortAddress } from '@/wallet/WalletProvider'
-import { checkIsAdmin } from '@/wallet/admin'
+import { getAdminRoles, type AdminRoles } from '@/wallet/admin'
 import { Button, Card } from '@/components'
 
 export default function AdminPage() {
@@ -16,19 +16,30 @@ export default function AdminPage() {
    * switching wallets or reconnecting shows the "verifying" state instead of
    * briefly rendering the previous wallet's verdict (#598).
    */
-  const [result, setResult] = useState<{ address: string; allowed: boolean } | null>(null)
+  const [result, setResult] = useState<{ address: string; roles: AdminRoles } | null>(null)
 
   useEffect(() => {
     if (!connected || !address) return
 
     let active = true
 
-    checkIsAdmin(address)
-      .then((allowed) => {
-        if (active) setResult({ address, allowed })
+    getAdminRoles(address)
+      .then((roles) => {
+        if (active) setResult({ address, roles })
       })
       .catch(() => {
-        if (active) setResult({ address, allowed: false })
+        if (active)
+          setResult({
+            address,
+            roles: {
+              isVaultOwner: false,
+              isRegistryOwner: false,
+              isWhitelister: false,
+              isMultisigSigner: false,
+              isConfiguredAdmin: false,
+              isAdmin: false,
+            },
+          })
       })
 
     return () => {
@@ -37,8 +48,8 @@ export default function AdminPage() {
   }, [connected, address])
 
   const checking = connected && address !== null && result?.address !== address
-  const isAdmin =
-    !checking && address !== null && result?.address === address ? result.allowed : null
+  const roles = !checking && address !== null && result?.address === address ? result.roles : null
+  const isAdmin = roles ? roles.isAdmin : null
 
   if (!connected) {
     return (
@@ -147,7 +158,7 @@ export default function AdminPage() {
 
   return (
     <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 64px' }}>
-      <AdminConsole />
+      <AdminConsole roles={roles ?? undefined} />
     </main>
   )
 }
