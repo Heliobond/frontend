@@ -1,13 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import {
-  Keypair,
-  StrKey,
-  nativeToScVal,
-  xdr,
-  Contract,
-  Account,
-} from '@stellar/stellar-sdk'
+import { Keypair, StrKey, nativeToScVal, xdr, Contract, Account } from '@stellar/stellar-sdk'
 import vaultSpec from '../test/fixtures/contracts/investment_vault.spec.json'
 import registrySpec from '../test/fixtures/contracts/project_registry.spec.json'
 import { CONTRACTS_COMMIT_SHA } from '../test/fixtures/contracts/contracts-commit'
@@ -305,7 +298,9 @@ describe('Contract ABI fixtures and call-shape verification (#719)', () => {
 
     it('matches set_whitelist(account: address, status: bool)', async () => {
       const { submitSetWhitelist } = await import('./admin')
-      await submitSetWhitelist(USER_ADDR, true, USER_ADDR, async (xdr) => xdr, false).catch(() => {})
+      await submitSetWhitelist(USER_ADDR, true, USER_ADDR, async (xdr) => xdr, false).catch(
+        () => {},
+      )
       const whitelistCall = recordedCalls.find((c) => c.method === 'set_whitelist')
       expect(whitelistCall).toBeDefined()
       assertCallMatchesSpec(whitelistCall!, registryFunctions, 'ProjectRegistry')

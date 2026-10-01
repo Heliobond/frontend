@@ -101,9 +101,7 @@
           "type": "u32"
         }
       ],
-      "outputs": [
-        "bool"
-      ]
+      "outputs": ["bool"]
     }
   },
   {
@@ -111,9 +109,7 @@
       "doc": "Return whether the registry is currently paused.",
       "name": "is_paused",
       "inputs": [],
-      "outputs": [
-        "bool"
-      ]
+      "outputs": ["bool"]
     }
   },
   {
@@ -214,9 +210,7 @@
           "type": "u32"
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -243,9 +237,7 @@
       "doc": "Return the state schema version supported by this contract build.",
       "name": "state_version",
       "inputs": [],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -278,9 +270,7 @@
           }
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -313,9 +303,7 @@
           "type": "address"
         }
       ],
-      "outputs": [
-        "i128"
-      ]
+      "outputs": ["i128"]
     }
   },
   {
@@ -323,9 +311,7 @@
       "doc": "Return the current project counter (equals the highest assigned project ID).\\nReturns 0 when no projects have been created yet.",
       "name": "total_projects",
       "inputs": [],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -408,9 +394,7 @@
           }
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -434,9 +418,7 @@
           "type": "u64"
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -458,9 +440,7 @@
       "doc": "Return the current whitelister address.",
       "name": "get_whitelister",
       "inputs": [],
-      "outputs": [
-        "address"
-      ]
+      "outputs": ["address"]
     }
   },
   {
@@ -496,9 +476,7 @@
           "type": "u32"
         }
       ],
-      "outputs": [
-        "bool"
-      ]
+      "outputs": ["bool"]
     }
   },
   {
@@ -551,9 +529,7 @@
           "type": "u32"
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -876,9 +852,7 @@
       "doc": "Return the version recorded in instance storage. Unversioned deployments report 0.",
       "name": "stored_state_version",
       "inputs": [],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -901,9 +875,7 @@
           }
         }
       ],
-      "outputs": [
-        "bool"
-      ]
+      "outputs": ["bool"]
     }
   },
   {
@@ -917,9 +889,7 @@
           "type": "address"
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -933,9 +903,7 @@
           "type": "u32"
         }
       ],
-      "outputs": [
-        "u64"
-      ]
+      "outputs": ["u64"]
     }
   },
   {
@@ -974,11 +942,7 @@
             "vec": {
               "element_type": {
                 "tuple": {
-                  "value_types": [
-                    "u32",
-                    "u32",
-                    "u32"
-                  ]
+                  "value_types": ["u32", "u32", "u32"]
                 }
               }
             }
@@ -1052,11 +1016,7 @@
             "vec": {
               "element_type": {
                 "tuple": {
-                  "value_types": [
-                    "u32",
-                    "u32",
-                    "u32"
-                  ]
+                  "value_types": ["u32", "u32", "u32"]
                 }
               }
             }
@@ -1086,9 +1046,7 @@
           "type": "address"
         }
       ],
-      "outputs": [
-        "u32"
-      ]
+      "outputs": ["u32"]
     }
   },
   {
@@ -1661,9 +1619,7 @@
       "doc": "Emitted when a vote is cast on a proposal (#134).",
       "lib": "",
       "name": "VoteCast",
-      "prefix_topics": [
-        "vote_cast"
-      ],
+      "prefix_topics": ["vote_cast"],
       "params": [
         {
           "doc": "",
@@ -1698,9 +1654,7 @@
       "doc": "Emitted when a project's interest rate is recalculated (#129).",
       "lib": "",
       "name": "RateUpdated",
-      "prefix_topics": [
-        "rate_updated"
-      ],
+      "prefix_topics": ["rate_updated"],
       "params": [
         {
           "doc": "",
@@ -1723,9 +1677,7 @@
       "doc": "Emitted when impact scores change, with old and new values for off-chain\\ntracking of score history and rate recalculations (#6).",
       "lib": "",
       "name": "ScoreChanged",
-      "prefix_topics": [
-        "score_changed"
-      ],
+      "prefix_topics": ["score_changed"],
       "params": [
         {
           "doc": "",
@@ -1778,9 +1730,7 @@
       "doc": "Emitted when an account's whitelist status is changed.",
       "lib": "",
       "name": "WhitelistSet",
-      "prefix_topics": [
-        "whitelist_set"
-      ],
+      "prefix_topics": ["whitelist_set"],
       "params": [
         {
           "doc": "",
@@ -1803,9 +1753,7 @@
       "doc": "Emitted when a whitelisted creator registers a new project.",
       "lib": "",
       "name": "ProjectCreated",
-      "prefix_topics": [
-        "project_created"
-      ],
+      "prefix_topics": ["project_created"],
       "params": [
         {
           "doc": "",
@@ -1828,9 +1776,7 @@
       "doc": "Emitted when a project is deleted by the admin.",
       "lib": "",
       "name": "ProjectDeleted",
-      "prefix_topics": [
-        "project_deleted"
-      ],
+      "prefix_topics": ["project_deleted"],
       "params": [
         {
           "doc": "",
@@ -1847,9 +1793,7 @@
       "doc": "Emitted when the oracle updates a project's credit-quality / green-impact scores.",
       "lib": "",
       "name": "ProjectUpdated",
-      "prefix_topics": [
-        "project_updated"
-      ],
+      "prefix_topics": ["project_updated"],
       "params": [
         {
           "doc": "",
@@ -1878,9 +1822,7 @@
       "doc": "Emitted when the registry is paused (#72).",
       "lib": "",
       "name": "RegistryPaused",
-      "prefix_topics": [
-        "registry_paused"
-      ],
+      "prefix_topics": ["registry_paused"],
       "params": [],
       "data_format": "map"
     }
@@ -1890,9 +1832,7 @@
       "doc": "Emitted when a project is archived by the admin.",
       "lib": "",
       "name": "ProjectArchived",
-      "prefix_topics": [
-        "project_archived"
-      ],
+      "prefix_topics": ["project_archived"],
       "params": [
         {
           "doc": "",
@@ -1909,9 +1849,7 @@
       "doc": "Emitted when a governance proposal is created (#134).",
       "lib": "",
       "name": "ProposalCreated",
-      "prefix_topics": [
-        "proposal_created"
-      ],
+      "prefix_topics": ["proposal_created"],
       "params": [
         {
           "doc": "",
@@ -1940,9 +1878,7 @@
       "doc": "Emitted when a project's certification status is updated (#130).",
       "lib": "",
       "name": "ProjectCertified",
-      "prefix_topics": [
-        "project_certified"
-      ],
+      "prefix_topics": ["project_certified"],
       "params": [
         {
           "doc": "",
@@ -1969,9 +1905,7 @@
       "doc": "Emitted when project storage is compacted (#88).",
       "lib": "",
       "name": "ProjectCompacted",
-      "prefix_topics": [
-        "project_compacted"
-      ],
+      "prefix_topics": ["project_compacted"],
       "params": [
         {
           "doc": "",
@@ -1988,9 +1922,7 @@
       "doc": "Emitted when a proposal is finalised (#134).",
       "lib": "",
       "name": "ProposalExecuted",
-      "prefix_topics": [
-        "proposal_executed"
-      ],
+      "prefix_topics": ["proposal_executed"],
       "params": [
         {
           "doc": "",
@@ -2013,9 +1945,7 @@
       "doc": "Emitted when the registry is unpaused (#72).",
       "lib": "",
       "name": "RegistryUnpaused",
-      "prefix_topics": [
-        "registry_unpaused"
-      ],
+      "prefix_topics": ["registry_unpaused"],
       "params": [],
       "data_format": "map"
     }
@@ -2025,9 +1955,7 @@
       "doc": "Emitted when a creator's reputation score is updated (#46).",
       "lib": "",
       "name": "ReputationUpdated",
-      "prefix_topics": [
-        "reputation_updated"
-      ],
+      "prefix_topics": ["reputation_updated"],
       "params": [
         {
           "doc": "",
@@ -2050,9 +1978,7 @@
       "doc": "Emitted when collateral is released back to the project owner (#128).",
       "lib": "",
       "name": "CollateralReleased",
-      "prefix_topics": [
-        "collateral_released"
-      ],
+      "prefix_topics": ["collateral_released"],
       "params": [
         {
           "doc": "",
@@ -2087,9 +2013,7 @@
       "doc": "Emitted when the admin replaces the whitelister address (#76).",
       "lib": "",
       "name": "WhitelisterChanged",
-      "prefix_topics": [
-        "whitelister_changed"
-      ],
+      "prefix_topics": ["whitelister_changed"],
       "params": [
         {
           "doc": "",
@@ -2112,9 +2036,7 @@
       "doc": "Emitted when collateral is deposited for a project (#128).",
       "lib": "",
       "name": "CollateralDeposited",
-      "prefix_topics": [
-        "collateral_deposited"
-      ],
+      "prefix_topics": ["collateral_deposited"],
       "params": [
         {
           "doc": "",
@@ -2149,9 +2071,7 @@
       "doc": "Emitted when collateral is liquidated by the admin (#128).",
       "lib": "",
       "name": "CollateralLiquidated",
-      "prefix_topics": [
-        "collateral_liquidated"
-      ],
+      "prefix_topics": ["collateral_liquidated"],
       "params": [
         {
           "doc": "",
@@ -2186,9 +2106,7 @@
       "doc": "Emitted when the admin updates a project's credit-quality score independently (#6).",
       "lib": "",
       "name": "CreditQualityUpdated",
-      "prefix_topics": [
-        "credit_quality_updated"
-      ],
+      "prefix_topics": ["credit_quality_updated"],
       "params": [
         {
           "doc": "",
@@ -2211,9 +2129,7 @@
       "doc": "Emitted when the admin initiates an ownership transfer (#30).",
       "lib": "",
       "name": "OwnershipTransferred",
-      "prefix_topics": [
-        "ownership_transferred"
-      ],
+      "prefix_topics": ["ownership_transferred"],
       "params": [
         {
           "doc": "",
@@ -2236,9 +2152,7 @@
       "doc": "Emitted when a project's lifecycle status is changed via `set_project_status` (#329).",
       "lib": "",
       "name": "ProjectStatusChanged",
-      "prefix_topics": [
-        "project_status_changed"
-      ],
+      "prefix_topics": ["project_status_changed"],
       "params": [
         {
           "doc": "",
@@ -2275,9 +2189,7 @@
       "doc": "Emitted when the admin sets or clears the emergency-admin address (#43).",
       "lib": "",
       "name": "EmergencyAdminChanged",
-      "prefix_topics": [
-        "emergency_admin_changed"
-      ],
+      "prefix_topics": ["emergency_admin_changed"],
       "params": [
         {
           "doc": "",
@@ -2351,9 +2263,7 @@
       "doc": "Event emitted when an ownership transfer is initiated.",
       "lib": "",
       "name": "OwnershipTransfer",
-      "prefix_topics": [
-        "ownership_transfer"
-      ],
+      "prefix_topics": ["ownership_transfer"],
       "params": [
         {
           "doc": "",
@@ -2382,9 +2292,7 @@
       "doc": "Event emitted when ownership is renounced.",
       "lib": "",
       "name": "OwnershipRenounced",
-      "prefix_topics": [
-        "ownership_renounced"
-      ],
+      "prefix_topics": ["ownership_renounced"],
       "params": [
         {
           "doc": "",
@@ -2401,9 +2309,7 @@
       "doc": "Event emitted when an ownership transfer is completed.",
       "lib": "",
       "name": "OwnershipTransferCompleted",
-      "prefix_topics": [
-        "ownership_transfer_completed"
-      ],
+      "prefix_topics": ["ownership_transfer_completed"],
       "params": [
         {
           "doc": "",
