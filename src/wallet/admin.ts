@@ -5,7 +5,7 @@
  */
 
 import { STELLAR_NETWORK, SOROBAN_RPC_URL as RPC_URL, HORIZON_URL } from '../config/network'
-import type { xdr } from '@stellar/stellar-sdk'
+import { StrKey, Address, type xdr } from '@stellar/stellar-sdk'
 
 const VAULT_CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
 const REGISTRY_CONTRACT_ID = process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID
@@ -294,6 +294,12 @@ export async function submitUpdateScores(
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 
+/** Validate Stellar public key for creator address */
+export function isValidCreatorAddress(address: string): boolean {
+  if (!address || typeof address !== 'string') return false
+  return StrKey.isValidEd25519PublicKey(address)
+}
+
 /** Execute set_whitelist on ProjectRegistry */
 export async function submitSetWhitelist(
   creatorAddress: string,
@@ -302,6 +308,10 @@ export async function submitSetWhitelist(
   sign: (xdr: string) => Promise<string>,
   isMultisig = false,
 ): Promise<AdminTxResult> {
+  if (!isValidCreatorAddress(creatorAddress)) {
+    throw new Error(`Invalid Stellar creator address: ${creatorAddress}`)
+  }
+
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
@@ -309,11 +319,11 @@ export async function submitSetWhitelist(
   }
 
   const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'set_whitelist_approved' : 'set_whitelist'
+  const method = 'set_whitelist'
   const hash = await sendContractTx(
     targetContract,
     method,
-    [creatorAddress, nativeToScVal(approved)],
+    [new Address(creatorAddress).toScVal(), nativeToScVal(approved)],
     address,
     sign,
   )
