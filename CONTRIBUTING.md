@@ -388,3 +388,5 @@ the clone-wide opt-out. Contributors who skip the hook are still expected to run
 the checks in the [Development workflow](#development-workflow) section.
 
 By contributing, you agree to abide by the [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+> **Node.js Engine Alignment:** Ensure your local runtime satisfies the repository `engines.node` requirement (`>=20.9.0` / `.nvmrc`) before running `bun run build` or `bun test`.
