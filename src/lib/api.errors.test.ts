@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { selectProjectById, selectProjectDetail, selectProjects } from '../state/selectors'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { selectProjectById, selectProjects } from '../state/selectors'
+import { PROXY_BASE } from './apiClient'
 
 // Error and fallback branches of every exported api.ts function (#608).
 // API_URL is read at module load, so each test stubs the env and re-imports.
@@ -14,11 +17,50 @@ const API = 'https://api.example.test'
 
 type Api = typeof import('./api')
 
-/** Re-import api.ts with NEXT_PUBLIC_API_URL set (or unset when null). */
+/**
+ * Re-import api.ts with the backend configured (or unset when null).
+ * `HELIOBOND_API_URL` is read at module load, so the env is stubbed first.
+ */
 async function loadApi(apiUrl: string | null = API): Promise<Api> {
   vi.resetModules()
+  vi.stubEnv('HELIOBOND_API_URL', apiUrl ?? '')
   vi.stubEnv('NEXT_PUBLIC_API_URL', apiUrl ?? '')
   return import('./api')
+}
+
+/**
+ * Loads api.ts as if running on the server (no `window`), where the client calls
+ * the backend directly instead of going through the same-origin proxy.
+ */
+async function loadServerApi(apiUrl: string = API): Promise<Api> {
+  const api = await loadApi(apiUrl)
+  vi.stubGlobal('window', undefined)
+  return api
+}
+
+/** The URL the browser actually requests: the same-origin proxy, no secrets. */
+const proxyUrl = (path: string) => `${PROXY_BASE}${path}`
+
+/** A `GET /v1/projects` body, as the backend returns it. */
+function projectList(
+  rows: Array<{ id: number; credit_quality: number; green_impact: number }>,
+  extra: Record<string, unknown> = {},
+) {
+  return {
+    projects: rows.map((row) => ({
+      id: row.id,
+      credit_quality: row.credit_quality,
+      green_impact: row.green_impact,
+      power_output_kw: 1000,
+      efficiency_pct: 22,
+      forest_density_pct: 80,
+      ndvi_score: 0.7,
+      timestamp: 1_700_000_000_000,
+    })),
+    total: rows.length,
+    filtered_total: rows.length,
+    ...extra,
+  }
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -41,13 +83,14 @@ function hangingFetch(_url: RequestInfo | URL, init?: RequestInit): Promise<Resp
   })
 }
 
-type Failure = { name: string; mock: () => void; reason: RegExp }
+type Failure = { name: string; mock: () => void; reason: RegExp; status?: number }
 
 const failures: Failure[] = [
   {
     name: '4xx',
     mock: () => vi.mocked(fetch).mockResolvedValue(jsonResponse({ error: 'nope' }, 404)),
     reason: /\(HTTP 404\)/,
+    status: 404,
   },
   {
     name: '5xx',
@@ -104,7 +147,7 @@ describe('getProjects', () => {
     mock()
     await expect(api.getProjects()).rejects.toThrow()
     expect(fetch).toHaveBeenCalledWith(
-      `${API}/projects`,
+      proxyUrl('/v1/projects?cursor=0&limit=100'),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     expect(warn).not.toHaveBeenCalled()
@@ -136,11 +179,20 @@ describe('getProjects', () => {
     }
   })
 
-  it('returns the API payload on success', async () => {
+  it('returns the mapped payload on success', async () => {
     const api = await loadApi()
-    const remote = [{ ...selectProjects()[0], name: 'Remote project' }]
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(remote))
-    await expect(api.getProjects()).resolves.toEqual(remote)
+    const id = selectProjects()[0].id
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(projectList([{ id, credit_quality: 64, green_impact: 71 }])),
+    )
+    const projects = await api.getProjects()
+    expect(projects).toHaveLength(1)
+    expect(projects[0]).toMatchObject({
+      id,
+      credit: 64,
+      green: 71,
+      name: selectProjectById(id)?.name,
+    })
     expect(warn).not.toHaveBeenCalled()
   })
 })
@@ -150,7 +202,7 @@ describe('getProjectsPaginated', () => {
     const api = await loadApi()
     mock()
     await expect(api.getProjectsPaginated(1, 2)).rejects.toThrow()
-    expect(fetch).toHaveBeenCalledWith(`${API}/projects?page=1&limit=2`, expect.anything())
+    expect(fetch).toHaveBeenCalledWith(proxyUrl('/v1/projects?cursor=0&limit=2'), expect.anything())
     expect(warn).not.toHaveBeenCalled()
   })
 
@@ -159,20 +211,26 @@ describe('getProjectsPaginated', () => {
     await expect(withTimeout(api, () => api.getProjectsPaginated(2, 3))).rejects.toThrow()
   })
 
-  it('pages a plain array response client-side', async () => {
+  it('maps backend rows onto the app project shape', async () => {
     const api = await loadApi()
-    const all = selectProjects()
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(all))
-    const res = await api.getProjectsPaginated(2, 2)
-    expect(res.projects).toEqual(all.slice(2, 4))
-    expect(res.total).toBe(all.length)
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(projectList([{ id: 1, credit_quality: 77, green_impact: 88 }])),
+    )
+    const res = await api.getProjectsPaginated()
+    expect(res.projects).toHaveLength(1)
+    expect(res.projects[0]).toMatchObject({ id: 1, credit: 77, green: 88 })
+    expect(res.total).toBe(1)
+    expect(res.hasMore).toBe(false)
   })
 
-  it('passes a paginated response through', async () => {
+  it('translates the page number into a cursor and honours the next cursor', async () => {
     const api = await loadApi()
-    const body = { projects: [], total: 0, page: 1, pageSize: 12, hasMore: false }
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(body))
-    await expect(api.getProjectsPaginated()).resolves.toEqual(body)
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(projectList([{ id: 1, credit_quality: 10, green_impact: 20 }], { cursor: 2 })),
+    )
+    const res = await api.getProjectsPaginated(2, 2)
+    expect(fetch).toHaveBeenCalledWith(proxyUrl('/v1/projects?cursor=2&limit=2'), expect.anything())
+    expect(res.hasMore).toBe(true)
   })
 
   it('slices the local dataset when no API is configured', async () => {
@@ -186,72 +244,63 @@ describe('getProjectsPaginated', () => {
 describe('getProject', () => {
   const id = selectProjects()[0].id
 
-  it.each(failures)('surfaces production errors on $name', async ({ mock }) => {
-    const api = await loadApi()
-    mock()
-    await expect(api.getProject(id)).rejects.toThrow()
-    expect(fetch).toHaveBeenCalledWith(`${API}/projects/${id}`, expect.anything())
-    expect(warn).not.toHaveBeenCalled()
-  })
+  // A 404 is a legitimate "no such project" answer for a single project, so it
+  // resolves to null rather than raising (#588).
+  it.each(failures.filter((f) => f.status !== 404))(
+    'surfaces production errors on $name',
+    async ({ mock }) => {
+      const api = await loadApi()
+      mock()
+      await expect(api.getProject(id)).rejects.toThrow()
+      expect(fetch).toHaveBeenCalledWith(proxyUrl(`/v1/projects/${id}`), expect.anything())
+      expect(warn).not.toHaveBeenCalled()
+    },
+  )
 
   it('surfaces request timeouts', async () => {
     const api = await loadApi()
     await expect(withTimeout(api, () => api.getProject(id))).rejects.toThrow()
   })
 
-  it('surfaces not-found responses when there is no local project', async () => {
+  it('maps a backend project row onto the app shape', async () => {
     const api = await loadApi()
-    vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 404))
-    await expect(api.getProject(99999)).rejects.toThrow('HTTP 404')
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ ...projectList([{ id, credit_quality: 77, green_impact: 88 }]).projects[0] }),
+    )
+    const result = await api.getProject(id)
+    expect(result?.project).toMatchObject({
+      id,
+      credit: 77,
+      green: 88,
+      // Presentation fields still come from the local project.
+      name: selectProjectById(id)?.name,
+    })
+    expect(result?.verifiedMetadata).toBe('unverified')
   })
 
-  it('returns the API payload on success', async () => {
+  it('returns null when the backend has no such project', async () => {
     const api = await loadApi()
-    const body = { project: selectProjectById(id), detail: selectProjectDetail(id) }
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(body))
-    await expect(api.getProject(id)).resolves.toEqual(body)
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 404))
+    await expect(api.getProject(99999)).resolves.toBeNull()
   })
 })
 
-describe('createInvestment', () => {
-  const input = { projectId: 2, amount: 150 }
-
-  it.each(failures)('surfaces production errors on $name', async ({ mock }) => {
+describe('investment creation', () => {
+  // The backend never implemented POST /investments; the Stellar deposit
+  // transaction is the source of truth, so the endpoint is gone (#588).
+  it('does not expose a createInvestment client', async () => {
     const api = await loadApi()
-    mock()
-    await expect(api.createInvestment(input)).rejects.toThrow()
-    expect(fetch).toHaveBeenCalledWith(
-      `${API}/investments`,
-      expect.objectContaining({ method: 'POST', body: JSON.stringify(input) }),
-    )
-    expect(warn).not.toHaveBeenCalled()
+    expect('createInvestment' in api).toBe(false)
   })
 
-  it('surfaces request timeouts', async () => {
+  it('never posts to /investments', async () => {
     const api = await loadApi()
-    await expect(withTimeout(api, () => api.createInvestment(input))).rejects.toThrow()
-  })
-
-  it('returns the created investment with a normalised projectUrl', async () => {
-    const api = await loadApi()
-    vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ id: 7, projectId: 2, amount: 150, projectUrl: 'https://elsewhere' }),
-    )
-    await expect(api.createInvestment(input)).resolves.toEqual({
-      id: 7,
-      projectId: 2,
-      amount: 150,
-      projectUrl: '/projects/2',
-    })
-  })
-
-  it('rejects invalid input before calling the API', async () => {
-    const api = await loadApi()
-    await expect(api.createInvestment({ projectId: 0, amount: 1 })).rejects.toThrow(
-      'Invalid investment input',
-    )
-    await expect(api.createInvestment({ projectId: 1, amount: Infinity })).rejects.toThrow()
-    expect(fetch).not.toHaveBeenCalled()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    await api.getProjects().catch(() => undefined)
+    const posted = vi
+      .mocked(fetch)
+      .mock.calls.filter(([, init]) => (init as RequestInit | undefined)?.method === 'POST')
+    expect(posted).toHaveLength(0)
   })
 })
 
@@ -260,7 +309,7 @@ describe('getPriceHistory', () => {
     const api = await loadApi()
     mock()
     await expect(api.getPriceHistory(1)).rejects.toThrow()
-    expect(fetch).toHaveBeenCalledWith(`${API}/projects/1/price-history`, expect.anything())
+    expect(fetch).toHaveBeenCalledWith(proxyUrl('/v1/projects/1/history'), expect.anything())
     expect(warn).not.toHaveBeenCalled()
   })
 
@@ -269,22 +318,27 @@ describe('getPriceHistory', () => {
     await expect(withTimeout(api, () => api.getPriceHistory(1))).rejects.toThrow()
   })
 
-  it('rejects when the payload is not an array', async () => {
+  it('rejects when the payload has no entries array', async () => {
     const api = await loadApi()
-    vi.mocked(fetch).mockResolvedValue(jsonResponse({ points: [] }))
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ project_id: 1, count: 0 }))
     await expect(api.getPriceHistory(1)).rejects.toThrow()
   })
 
-  it('sorts API points chronologically', async () => {
+  it('maps history entries into chronologically ordered chart points', async () => {
     const api = await loadApi()
     vi.mocked(fetch).mockResolvedValue(
-      jsonResponse([
-        { date: '2026-03-02', price: 2 },
-        { date: '2026-03-01', price: 1 },
-      ]),
+      jsonResponse({
+        project_id: 1,
+        count: 2,
+        entries: [
+          { timestamp: Date.parse('2026-03-02T00:00:00Z'), credit_quality: 80, green_impact: 90 },
+          { timestamp: Date.parse('2026-03-01T00:00:00Z'), credit_quality: 70, green_impact: 60 },
+        ],
+      }),
     )
     const points = await api.getPriceHistory(1)
     expect(points.map((p) => p.date)).toEqual(['2026-03-01', '2026-03-02'])
+    expect(points[1].yield).toBeGreaterThan(points[0].yield ?? 0)
   })
 
   it('generates ascending mock history without an API', async () => {
@@ -292,6 +346,48 @@ describe('getPriceHistory', () => {
     const points = await api.getPriceHistory(2)
     expect(points).toHaveLength(30)
     expect(points[0].date < points[29].date).toBe(true)
+  })
+})
+
+describe('auth model (#588)', () => {
+  it('calls the backend directly on the server', async () => {
+    const api = await loadServerApi()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(projectList([])))
+    await api.getProjects()
+    expect(fetch).toHaveBeenCalledWith(
+      `${API}/v1/projects?cursor=0&limit=100`,
+      expect.objectContaining({ headers: expect.any(Object) }),
+    )
+  })
+
+  it('never asks the browser for the API key', async () => {
+    const api = await loadApi()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(projectList([])))
+    await api.getProjects()
+    for (const [, init] of vi.mocked(fetch).mock.calls) {
+      expect(JSON.stringify((init as RequestInit).headers)).not.toContain('X-API-Key')
+      expect(JSON.stringify((init as RequestInit).headers)).not.toContain(
+        process.env.HELIOBOND_API_KEY ?? 'never-set',
+      )
+    }
+  })
+
+  it('uses the same-origin proxy in the browser, so no secret is needed', async () => {
+    const api = await loadApi()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(projectList([])))
+    await api.getProjects()
+    expect(fetch).toHaveBeenCalledWith(
+      proxyUrl('/v1/projects?cursor=0&limit=100'),
+      expect.anything(),
+    )
+  })
+
+  it('does not read the key from a NEXT_PUBLIC_ variable', () => {
+    // The key must live in a server-only variable; a NEXT_PUBLIC_ one would be
+    // inlined into the client bundle.
+    const source = readFileSync(path.join(process.cwd(), 'src/lib/apiClient.ts'), 'utf-8')
+    expect(source).not.toMatch(/NEXT_PUBLIC_[A-Z_]*API_KEY/)
+    expect(source).toContain('process.env.HELIOBOND_API_KEY')
   })
 })
 

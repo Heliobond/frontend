@@ -25,6 +25,10 @@ export interface AmountInputProps {
   chips?: number[]
   /** Maximum allowed liquidity cap limit value. */
   cap?: number
+  /** Minimum valid amount for the screen using this input. */
+  min?: number
+  /** Maximum transaction amount for the screen using this input. */
+  max?: number
   /** Explanatory message displayed when input exceeds liquidity cap limit. */
   capMessage?: string
   /** Custom label for the Max chip button. */
@@ -49,6 +53,8 @@ export function AmountInput({
   balance,
   chips = [25, 50, 100],
   cap,
+  min,
+  max,
   capMessage,
   maxChipLabel,
   capActionLabel,
@@ -72,6 +78,8 @@ export function AmountInput({
   const liveMsg = overCap && !wasOverCap ? (capMessage ?? '') : ''
 
   const set = (v: number) => onChange?.(String(v))
+  const formatBound = (bound: number) =>
+    new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(bound)
 
   return (
     <div style={{ position: 'relative', ...style }}>
@@ -165,16 +173,23 @@ export function AmountInput({
         </span>
       </div>
 
-      <p
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 'var(--type-caption)',
-          color: 'var(--ink-60)',
-          margin: '8px 0 0',
-        }}
-      >
-        Min 1 USDC — Max {cap ?? '10,000'} USDC
-      </p>
+      {(min != null || max != null) && (
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-caption)',
+            color: 'var(--ink-60)',
+            margin: '8px 0 0',
+          }}
+        >
+          {[
+            min != null && `Min ${formatBound(min)} USDC`,
+            max != null && `Max ${formatBound(max)} USDC`,
+          ]
+            .filter(Boolean)
+            .join(' — ')}
+        </p>
+      )}
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         {chips.map((c) => (
           <button key={c} type="button" onClick={() => set(c)} style={chipStyle}>
@@ -296,6 +311,8 @@ AmountInput.propTypes = {
   balance: PropTypes.string,
   chips: PropTypes.arrayOf(PropTypes.number.isRequired),
   cap: PropTypes.number,
+  min: PropTypes.number,
+  max: PropTypes.number,
   capMessage: PropTypes.string,
   maxChipLabel: PropTypes.string,
   capActionLabel: PropTypes.string,

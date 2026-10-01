@@ -22,57 +22,57 @@ Use the CSS tokens in these files as the single source of truth:
 
 ### Color tokens
 
-| Token | Light value | Dark value | Used for |
-| :----- | :---------- | :--------- | :------- |
-| `--ink` | `#0b2b23` | `#edf2ec` | headings, body text, icons |
-| `--canvas` | `#f3f5f1` | `#0d1714` | page background |
-| `--surface` | `#fcfdfb` | `#13201b` | cards and elevated panels |
-| `--solar` | `#ffb400` | `#ffb400` | brand accent / highlight |
-| `--growth` | `#0e6f44` | `#5dd99a` | positive metrics |
-| `--ember` | `#b3361b` | `#ff9b82` | negative metrics and errors |
-| `--ink-60` | `rgba(11, 43, 35, 0.6)` | `rgba(237, 242, 236, 0.72)` | secondary text |
-| `--ink-40` | `rgba(11, 43, 35, 0.4)` | `rgba(237, 242, 236, 0.52)` | tertiary text and dividers |
+| Token       | Light value             | Dark value                  | Used for                    |
+| :---------- | :---------------------- | :-------------------------- | :-------------------------- |
+| `--ink`     | `#0b2b23`               | `#edf2ec`                   | headings, body text, icons  |
+| `--canvas`  | `#f3f5f1`               | `#0d1714`                   | page background             |
+| `--surface` | `#fcfdfb`               | `#13201b`                   | cards and elevated panels   |
+| `--solar`   | `#ffb400`               | `#ffb400`                   | brand accent / highlight    |
+| `--growth`  | `#0e6f44`               | `#5dd99a`                   | positive metrics            |
+| `--ember`   | `#b3361b`               | `#ff9b82`                   | negative metrics and errors |
+| `--ink-60`  | `rgba(11, 43, 35, 0.6)` | `rgba(237, 242, 236, 0.72)` | secondary text              |
+| `--ink-40`  | `rgba(11, 43, 35, 0.4)` | `rgba(237, 242, 236, 0.52)` | tertiary text and dividers  |
 
 ### Typography scale
 
-| Token | Value | Approx size |
-| :---- | :---- | :---------- |
-| `--font-display` | `'Cabinet Grotesk', ...` | display typeface |
-| `--font-body` | `'Hanken Grotesk', ...` | body typeface |
-| `--font-data` | `'Spline Sans Mono', ...` | numeric / data typeface |
-| `--type-display-xl` | `clamp(3.25rem, 7.5vw, 7.5rem)` | 52–120px |
-| `--type-display-m` | `clamp(2rem, 4vw, 3.5rem)` | 32–56px |
-| `--type-h3` | `1.5rem` | 24px |
-| `--type-body` | `1rem` | 16px |
-| `--type-small` | `0.875rem` | 14px |
-| `--type-caption` | `0.8125rem` | 13px |
-| `--type-eyebrow` | `0.75rem` | 12px |
-| `--type-data-l` | `2.25rem` | 36px |
-| `--type-data-display` | `1.875rem` | 30px |
-| `--type-data` | `0.9375rem` | 15px |
+| Token                 | Value                           | Approx size             |
+| :-------------------- | :------------------------------ | :---------------------- |
+| `--font-display`      | `'Cabinet Grotesk', ...`        | display typeface        |
+| `--font-body`         | `'Hanken Grotesk', ...`         | body typeface           |
+| `--font-data`         | `'Spline Sans Mono', ...`       | numeric / data typeface |
+| `--type-display-xl`   | `clamp(3.25rem, 7.5vw, 7.5rem)` | 52–120px                |
+| `--type-display-m`    | `clamp(2rem, 4vw, 3.5rem)`      | 32–56px                 |
+| `--type-h3`           | `1.5rem`                        | 24px                    |
+| `--type-body`         | `1rem`                          | 16px                    |
+| `--type-small`        | `0.875rem`                      | 14px                    |
+| `--type-caption`      | `0.8125rem`                     | 13px                    |
+| `--type-eyebrow`      | `0.75rem`                       | 12px                    |
+| `--type-data-l`       | `2.25rem`                       | 36px                    |
+| `--type-data-display` | `1.875rem`                      | 30px                    |
+| `--type-data`         | `0.9375rem`                     | 15px                    |
 
 ### Spacing, radius, and layout
 
-| Token | Value |
-| :---- | :---- |
-| `--space-1` | `4px` |
-| `--space-2` | `8px` |
-| `--space-3` | `12px` |
-| `--space-4` | `16px` |
-| `--space-6` | `24px` |
-| `--space-8` | `32px` |
-| `--space-12` | `48px` |
-| `--space-16` | `64px` |
-| `--space-24` | `96px` |
-| `--space-32` | `128px` |
-| `--radius-input` | `8px` |
-| `--radius-card` | `16px` |
-| `--radius-modal` | `24px` |
-| `--radius-pill` | `999px` |
-| `--content-max` | `90rem` (`1440px`) |
-| `--gutter-mobile` | `20px` |
-| `--gutter-desktop` | `32px` |
-| `--grid-columns` | `12` |
+| Token              | Value              |
+| :----------------- | :----------------- |
+| `--space-1`        | `4px`              |
+| `--space-2`        | `8px`              |
+| `--space-3`        | `12px`             |
+| `--space-4`        | `16px`             |
+| `--space-6`        | `24px`             |
+| `--space-8`        | `32px`             |
+| `--space-12`       | `48px`             |
+| `--space-16`       | `64px`             |
+| `--space-24`       | `96px`             |
+| `--space-32`       | `128px`            |
+| `--radius-input`   | `8px`              |
+| `--radius-card`    | `16px`             |
+| `--radius-modal`   | `24px`             |
+| `--radius-pill`    | `999px`            |
+| `--content-max`    | `90rem` (`1440px`) |
+| `--gutter-mobile`  | `20px`             |
+| `--gutter-desktop` | `32px`             |
+| `--grid-columns`   | `12`               |
 
 ### Breakpoints used in the app shell
 

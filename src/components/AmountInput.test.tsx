@@ -3,6 +3,19 @@ import { AmountInput } from './AmountInput'
 import { render, fireEvent } from '@testing-library/react'
 
 describe('AmountInput', () => {
+  describe('screen-specific amount bounds', () => {
+    it('renders the actual minimum and maximum provided by the screen', () => {
+      const { getByText } = render(<AmountInput min={100} max={2500} />)
+      expect(getByText('Min 100 USDC — Max 2,500 USDC')).toBeInTheDocument()
+    })
+
+    it('does not invent minimum or maximum values when bounds are omitted', () => {
+      const { queryByText } = render(<AmountInput />)
+      expect(queryByText(/Min .* USDC/)).not.toBeInTheDocument()
+      expect(queryByText(/Max .* USDC/)).not.toBeInTheDocument()
+    })
+  })
+
   describe('Input sanitization', () => {
     it('strips non-numeric characters except dots', () => {
       let onChangeValue = ''

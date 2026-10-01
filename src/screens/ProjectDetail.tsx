@@ -6,16 +6,21 @@ import {
   DemoDataBadge,
   PinIcon,
   ScoreGauge,
+  ShieldAlertIcon,
   ShieldCheckIcon,
   WatchlistButton,
   YieldAlertButton,
+  InfoTooltip,
 } from '../components'
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
 import { formatMoney } from '../lib/format'
+import { getExplorerUrl } from '../config/network'
+import { shortAddress } from '../wallet/WalletProvider'
 
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
+import { type MetadataVerificationStatus } from '../wallet/registry'
 
 /**
  * ProjectDetail — the full story of one project the pool funds. Hero, the
@@ -26,7 +31,7 @@ import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
 export interface ProjectDetailProps {
   project: Project
   detail: ProjectDetailData
-  verifiedMetadata?: boolean
+  verifiedMetadata?: MetadataVerificationStatus
   onInvest: () => Promise<string>
   onBack?: () => void
   children?: React.ReactNode
@@ -35,7 +40,7 @@ export interface ProjectDetailProps {
 export const ProjectDetail = memo(function ProjectDetail({
   project,
   detail,
-  verifiedMetadata = true,
+  verifiedMetadata = 'unverified',
   onInvest,
   onBack,
   children,
@@ -62,14 +67,8 @@ export const ProjectDetail = memo(function ProjectDetail({
   // at every use site.
   const { name: creatorName, since: creatorSince } = detail.creator
   const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
-  const creditHistory = useMemo(
-    () => creditPoints.map((p) => p.value),
-    [creditPoints],
-  )
-  const greenHistory = useMemo(
-    () => greenPoints.map((p) => p.value),
-    [greenPoints],
-  )
+  const creditHistory = useMemo(() => creditPoints.map((p) => p.value), [creditPoints])
+  const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       <DemoDataBadge style={{ marginBottom: 16 }} />
@@ -124,10 +123,18 @@ export const ProjectDetail = memo(function ProjectDetail({
             <Badge tone="growth" icon={<ShieldCheckIcon />}>
               {t('verifiedSince', { since: creatorSince })}
             </Badge>
-            {verifiedMetadata !== false && (
+            {verifiedMetadata === 'verified' && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>
-                Verified metadata
+                {t('verifiedMetadata')}
               </Badge>
+            )}
+            {verifiedMetadata === 'mismatch' && (
+              <Badge tone="ember" role="status" icon={<ShieldAlertIcon />}>
+                {t('metadataMismatch')}
+              </Badge>
+            )}
+            {verifiedMetadata === 'unverified' && (
+              <Badge tone="neutral">{t('unverifiedMetadata')}</Badge>
             )}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -239,29 +246,115 @@ export const ProjectDetail = memo(function ProjectDetail({
         <h2 style={sectionTitle}>{t('pricingTitle')}</h2>
         <div style={cardStyle}>
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={detail.priceHistory.map((p) => p.price)} aria-label={t('priceHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.priceHistory.length > 0 ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price) : '—'}</span>
+            <div
+              style={{
+                flex: '1 1 240px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Sparkline
+                points={detail.priceHistory.map((p) => p.price)}
+                aria-label={t('priceHistory')}
+              />
+              <span
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-data)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                {detail.priceHistory.length > 0
+                  ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price)
+                  : '—'}
+              </span>
               {detail.priceHistory.length > 1 && (
-                <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {detail.priceHistory[detail.priceHistory.length - 1].price >= detail.priceHistory[0].price ? '+' : '-'}{formatMoney(Math.abs(detail.priceHistory[detail.priceHistory.length - 1].price - detail.priceHistory[0].price))}
+                <span
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-fine)',
+                    color: 'var(--ink-40)',
+                  }}
+                >
+                  {detail.priceHistory[detail.priceHistory.length - 1].price >=
+                  detail.priceHistory[0].price
+                    ? '+'
+                    : '-'}
+                  {formatMoney(
+                    Math.abs(
+                      detail.priceHistory[detail.priceHistory.length - 1].price -
+                        detail.priceHistory[0].price,
+                    ),
+                  )}
                 </span>
               )}
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-fine)',
+                  color: 'var(--ink-40)',
+                }}
+              >
                 {t('priceLabel')}
               </span>
             </div>
-            <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Sparkline points={detail.priceHistory.map((p) => p.yield)} aria-label={t('yieldHistory')} />
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-data)', fontWeight: 600, color: 'var(--ink)' }}>{detail.priceHistory.length > 0 ? `${detail.priceHistory[detail.priceHistory.length - 1].yield.toFixed(2)}%` : '—'}</span>
+            <div
+              style={{
+                flex: '1 1 240px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Sparkline
+                points={detail.priceHistory.map((p) => p.yield)}
+                aria-label={t('yieldHistory')}
+              />
+              <span
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-data)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                }}
+              >
+                {detail.priceHistory.length > 0
+                  ? `${detail.priceHistory[detail.priceHistory.length - 1].yield.toFixed(2)}%`
+                  : '—'}
+              </span>
               {detail.priceHistory.length > 1 && (
-                <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
-                  {detail.priceHistory[detail.priceHistory.length - 1].yield >= detail.priceHistory[0].yield ? '+' : '-'}{Math.abs(detail.priceHistory[detail.priceHistory.length - 1].yield - detail.priceHistory[0].yield).toFixed(2)}%
+                <span
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-fine)',
+                    color: 'var(--ink-40)',
+                  }}
+                >
+                  {detail.priceHistory[detail.priceHistory.length - 1].yield >=
+                  detail.priceHistory[0].yield
+                    ? '+'
+                    : '-'}
+                  {Math.abs(
+                    detail.priceHistory[detail.priceHistory.length - 1].yield -
+                      detail.priceHistory[0].yield,
+                  ).toFixed(2)}
+                  %
                 </span>
               )}
-              <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-fine)', color: 'var(--ink-40)' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 'var(--type-fine)',
+                  color: 'var(--ink-40)',
+                }}
+              >
                 {t('yieldLabel')}
               </span>
+              <InfoTooltip label={t('yieldHelpLabel')} content={t('yieldHelp')} />
             </div>
           </div>
         </div>
@@ -376,14 +469,23 @@ export const ProjectDetail = memo(function ProjectDetail({
                     marginTop: 2,
                   }}
                 >
-                  <a
-                    href={`https://etherscan.io/tx/${event.hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'inherit', textDecoration: 'none' }}
-                  >
-                    {event.hash} ↗
-                  </a>
+                  {(() => {
+                    const explorerUrl = getExplorerUrl(event.hash)
+                    if (!explorerUrl) {
+                      return <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
+                    }
+                    return (
+                      <a
+                        href={explorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={event.hash}
+                        style={{ color: 'inherit', textDecoration: 'none' }}
+                      >
+                        {shortAddress(event.hash, 4, 4)} ↗
+                      </a>
+                    )
+                  })()}
                 </div>
               </div>
             </div>

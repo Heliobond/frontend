@@ -55,7 +55,7 @@ export function TaxReports() {
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       <DemoDataBadge style={{ marginBottom: 16 }} />
-      
+
       <div
         style={{
           display: 'flex',
@@ -171,8 +171,7 @@ export function TaxReports() {
                     style={{
                       padding: '14px 20px',
                       color: 'var(--ink)',
-                      borderBottom:
-                        index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                     }}
                   >
                     {line.quarter}
@@ -183,8 +182,7 @@ export function TaxReports() {
                       textAlign: 'right',
                       color: 'var(--ink)',
                       fontFeatureSettings: '"tnum" 1',
-                      borderBottom:
-                        index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                     }}
                   >
                     {t('currencyFormat', { amount: line.totalDeposits.toFixed(2) })}
@@ -195,8 +193,7 @@ export function TaxReports() {
                       textAlign: 'right',
                       color: 'var(--ink)',
                       fontFeatureSettings: '"tnum" 1',
-                      borderBottom:
-                        index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                     }}
                   >
                     {t('currencyFormat', { amount: line.totalWithdrawals.toFixed(2) })}
@@ -207,8 +204,7 @@ export function TaxReports() {
                       textAlign: 'right',
                       color: 'var(--ink)',
                       fontFeatureSettings: '"tnum" 1',
-                      borderBottom:
-                        index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                     }}
                   >
                     {t('currencyFormat', { amount: line.totalDistributions.toFixed(2) })}
@@ -219,8 +215,7 @@ export function TaxReports() {
                       textAlign: 'right',
                       color: 'var(--ink)',
                       fontFeatureSettings: '"tnum" 1',
-                      borderBottom:
-                        index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                     }}
                   >
                     {t('currencyFormat', { amount: line.realizedGainUSD.toFixed(2) })}

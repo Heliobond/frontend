@@ -40,9 +40,7 @@ instance/
 *.sqlite3
 
 # Uploaded user files (runtime artefacts, not source)
-static/uploads/*
-# …but keep the directory itself tracked
-!static/uploads/.gitkeep
+static/uploads/
 
 # Packaging
 *.egg-info/
@@ -65,3 +63,7 @@ dist/
 
 # e2e: cloned Heliobond/contracts for the local-network journey
 /.e2e
+
+# Local agent tooling, not part of the app.
+AGENTS.md
+CLAUDE.md

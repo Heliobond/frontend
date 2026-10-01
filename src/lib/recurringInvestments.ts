@@ -23,8 +23,14 @@ export function writeRecurringInvestments(plans: RecurringInvestmentPlan[]): voi
   }
 }
 
-export function saveRecurringInvestment(plan: Omit<RecurringInvestmentPlan, 'createdAt' | 'active'>): RecurringInvestmentPlan {
-  const next: RecurringInvestmentPlan = { ...plan, createdAt: new Date().toISOString(), active: true }
+export function saveRecurringInvestment(
+  plan: Omit<RecurringInvestmentPlan, 'createdAt' | 'active'>,
+): RecurringInvestmentPlan {
+  const next: RecurringInvestmentPlan = {
+    ...plan,
+    createdAt: new Date().toISOString(),
+    active: true,
+  }
   if (typeof window === 'undefined') return next
   const existing = readRecurringInvestments()
   writeRecurringInvestments([...existing, next])

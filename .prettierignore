@@ -3,3 +3,8 @@ node_modules
 public
 bun.lock
 package-lock.json
+pnpm-lock.yaml
+templates/
+static/
+coverage/
+.husky/

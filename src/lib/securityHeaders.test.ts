@@ -15,6 +15,8 @@ const base = {
   apiUrl: 'https://api.heliobond.test/v1',
   reportUrl: 'https://telemetry.heliobond.test/ingest',
   cspReportUri: undefined,
+  authUrl: 'https://auth.heliobond.test/login',
+  wsUrl: 'wss://ws.heliobond.test/events',
 }
 
 function directive(csp: string, name: string): string[] {
@@ -38,6 +40,8 @@ describe('buildCsp', () => {
         'https://soroban-testnet.stellar.org',
         'https://api.heliobond.test',
         'https://telemetry.heliobond.test',
+        'https://auth.heliobond.test',
+        'wss://ws.heliobond.test',
         'wss://*.walletconnect.org',
       ]),
     )

@@ -85,7 +85,7 @@ export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
       </h2>
       <p style={captionStyle}>
         {t('caption', {
-          range: history.length > 1 ? `${first.date} – ${last.date}` : last.date
+          range: history.length > 1 ? `${first.date} – ${last.date}` : last.date,
         })}
       </p>
 

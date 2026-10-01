@@ -6,7 +6,9 @@ describe('AddressVerificationForm', () => {
   it('does not submit when address contains XSS payload', () => {
     const onSubmit = vi.fn()
     render(<AddressVerificationForm onSubmit={onSubmit} />)
-    fireEvent.change(screen.getByLabelText('Street address *'), { target: { value: '<script>alert(1)</script>' } })
+    fireEvent.change(screen.getByLabelText('Street address *'), {
+      target: { value: '<script>alert(1)</script>' },
+    })
     fireEvent.change(screen.getByLabelText('City *'), { target: { value: 'Springfield' } })
     fireEvent.change(screen.getByLabelText('State / Province *'), { target: { value: 'IL' } })
     fireEvent.change(screen.getByLabelText('ZIP / Postal code *'), { target: { value: '62701' } })
@@ -19,7 +21,9 @@ describe('AddressVerificationForm', () => {
   it('does not submit when address contains SQL injection payload', () => {
     const onSubmit = vi.fn()
     render(<AddressVerificationForm onSubmit={onSubmit} />)
-    fireEvent.change(screen.getByLabelText('Street address *'), { target: { value: "'; DROP TABLE users; --" } })
+    fireEvent.change(screen.getByLabelText('Street address *'), {
+      target: { value: "'; DROP TABLE users; --" },
+    })
     fireEvent.change(screen.getByLabelText('City *'), { target: { value: 'Springfield' } })
     fireEvent.change(screen.getByLabelText('State / Province *'), { target: { value: 'IL' } })
     fireEvent.change(screen.getByLabelText('ZIP / Postal code *'), { target: { value: '62701' } })
@@ -32,7 +36,9 @@ describe('AddressVerificationForm', () => {
   it('submits valid address', () => {
     const onSubmit = vi.fn()
     render(<AddressVerificationForm onSubmit={onSubmit} />)
-    fireEvent.change(screen.getByLabelText('Street address *'), { target: { value: '123 Main St' } })
+    fireEvent.change(screen.getByLabelText('Street address *'), {
+      target: { value: '123 Main St' },
+    })
     fireEvent.change(screen.getByLabelText('City *'), { target: { value: 'Springfield' } })
     fireEvent.change(screen.getByLabelText('State / Province *'), { target: { value: 'IL' } })
     fireEvent.change(screen.getByLabelText('ZIP / Postal code *'), { target: { value: '62701' } })
@@ -46,7 +52,14 @@ describe('AddressVerificationForm', () => {
     fireEvent.change(screen.getByLabelText(label), { target: { value } })
   }
 
-  const fillForm = (values: { street: string; city: string; state: string; zip: string; country: string; apartment?: string }) => {
+  const fillForm = (values: {
+    street: string
+    city: string
+    state: string
+    zip: string
+    country: string
+    apartment?: string
+  }) => {
     setField('Street address *', values.street)
     setField('City *', values.city)
     setField('State / Province *', values.state)

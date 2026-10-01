@@ -54,7 +54,9 @@ export function useVault(): VaultState {
       .catch((e: unknown) => {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Could not read vault')
-        setFetchedAt(new Date())
+        // Do NOT advance `fetchedAt` on a failed read: the displayed values are
+        // whatever the last successful read produced, so keep their timestamp
+        // (issue #624).
       })
       .finally(() => {
         if (!cancelled) setCompletedRequest(requestKey)

@@ -6,34 +6,37 @@ Heliobond backend.
 
 ## Frontend Codes
 
-| Code | Meaning | Suggested action |
-| --- | --- | --- |
-| `insufficient_balance` | Wallet balance is too low for the requested amount. | Use a smaller amount or fund the wallet. |
-| `insufficient_funds` | Alias for an insufficient wallet balance. | Use a smaller amount or fund the wallet. |
-| `amount_too_low` | Deposit or withdrawal amount is below the minimum. | Enter at least the displayed minimum amount. |
-| `amount_exceeds_balance` | Requested amount is greater than the available balance. | Use Max or enter a smaller amount. |
-| `invalid_amount` | Amount input could not be parsed as a valid number. | Re-enter the amount using numeric characters. |
-| `wallet_not_connected` | A wallet-only action was attempted without an active wallet session. | Connect a wallet and retry. |
-| `timeout` | A network, wallet, or transaction confirmation request timed out. | Retry after checking network connectivity. |
-| `network_error` | The frontend could not reach the API, RPC, or wallet provider. | Check connectivity and retry. |
-| `simulation_failed` | Soroban transaction simulation failed before submission. | Retry; if it repeats, inspect the contract/RPC response. |
-| `tx_failed` | Submitted transaction failed or was rejected. | Review wallet details and retry. |
-| `slippage_limit_exceeded` | Price moved past the slippage tolerance. | Refresh the quote and retry. |
+| Code                      | Meaning                                                              | Suggested action                                         |
+| ------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- |
+| `insufficient_balance`    | Wallet balance is too low for the requested amount.                  | Use a smaller amount or fund the wallet.                 |
+| `insufficient_funds`      | Alias for an insufficient wallet balance.                            | Use a smaller amount or fund the wallet.                 |
+| `amount_too_low`          | Deposit or withdrawal amount is below the minimum.                   | Enter at least the displayed minimum amount.             |
+| `amount_exceeds_balance`  | Requested amount is greater than the available balance.              | Use Max or enter a smaller amount.                       |
+| `invalid_amount`          | Amount input could not be parsed as a valid number.                  | Re-enter the amount using numeric characters.            |
+| `wallet_not_connected`    | A wallet-only action was attempted without an active wallet session. | Connect a wallet and retry.                              |
+| `timeout`                 | A network, wallet, or transaction confirmation request timed out.    | Retry after checking network connectivity.               |
+| `network_error`           | The frontend could not reach the API, RPC, or wallet provider.       | Check connectivity and retry.                            |
+| `simulation_failed`       | Soroban transaction simulation failed before submission.             | Retry; if it repeats, inspect the contract/RPC response. |
+| `tx_failed`               | Submitted transaction failed or was rejected.                        | Review wallet details and retry.                         |
+| `memo_too_long`           | Stellar text memo exceeds protocol 28-byte limit.                    | Shorten the memo to 28 bytes or fewer.                   |
+| `invalid_memo`            | Memo format or length does not match expected memo type.             | Check memo format and length.                            |
+| `tx_malformed`            | Transaction format or operation parameters are invalid.              | Verify inputs and retry.                                 |
+| `slippage_limit_exceeded` | Price moved past the slippage tolerance.                             | Refresh the quote and retry.                             |
 
 ## API Codes
 
 The backend documents API responses as
 `{ "error": { "code": "<code>", "message": "<detail>" } }`. Common codes are:
 
-| Code | Meaning | Suggested action |
-| --- | --- | --- |
-| `bad_request` | Request parameters or body failed validation. | Fix the request input shown in the message. |
-| `unauthorized` | Missing or invalid admin/API bearer token. | Provide the expected token for protected routes. |
-| `not_found` | Route or resource was not found. | Confirm the route and resource identifier. |
-| `too_many_requests` | Rate limit exceeded. | Wait for the `Retry-After` window before retrying. |
-| `payload_too_large` | Request body exceeded the configured size limit. | Reduce payload size. |
-| `server_misconfigured` | Backend is missing required server-side configuration. | Configure the backend environment before retrying. |
-| `INTERNAL_ERROR` | Unexpected backend exception. | Check server logs; do not expose stack traces to users. |
+| Code                   | Meaning                                                | Suggested action                                        |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------------------------- |
+| `bad_request`          | Request parameters or body failed validation.          | Fix the request input shown in the message.             |
+| `unauthorized`         | Missing or invalid admin/API bearer token.             | Provide the expected token for protected routes.        |
+| `not_found`            | Route or resource was not found.                       | Confirm the route and resource identifier.              |
+| `too_many_requests`    | Rate limit exceeded.                                   | Wait for the `Retry-After` window before retrying.      |
+| `payload_too_large`    | Request body exceeded the configured size limit.       | Reduce payload size.                                    |
+| `server_misconfigured` | Backend is missing required server-side configuration. | Configure the backend environment before retrying.      |
+| `INTERNAL_ERROR`       | Unexpected backend exception.                          | Check server logs; do not expose stack traces to users. |
 
 ## Opaque `ERR_###` Codes
 
@@ -65,21 +68,21 @@ it can be read (`..._Util` keys).
 
 ### Vault (`VaultError`) - messages a user is likely to see
 
-| Code | Variant | Message summary / suggested action |
-| --- | --- | --- |
-| 1 | `AmountNotPositive` | Enter an amount greater than zero. |
-| 2 | `DepositExceedsMaximum` | Deposit is above the per-deposit maximum; use less. |
-| 5 | `WithdrawalExceedsLimit` | Liquidity is limited; try a smaller amount (shows utilization). |
-| 6 | `InsufficientLiquid` | Not enough liquid funds; try less or join the queue. |
-| 31 | `DepositBelowMinimum` | Deposit is below the minimum. |
-| 32 | `WithdrawBelowMinimum` | Withdrawal is below the minimum. |
-| 33 | `SlippageLimitExceeded` | Refresh the quote or raise the slippage tolerance. |
-| 34 | `Paused` | Vault paused for maintenance; retry later. |
-| 35 | `RegistryPaused` | New investments paused; retry later. |
-| 36 | `DepositLocked` | Recent deposit is still locked; withdraw after it ends. |
-| 38 | `MaxSupplyExceeded` | Pool is at maximum size; try less or later. |
-| 43 | `InvestmentCapExceeded` | Project hit its funding cap; pick less or another project. |
-| 44 | `ExceedsMaxTransactionAmount` | Over the per-transaction limit; split it up. |
+| Code | Variant                       | Message summary / suggested action                              |
+| ---- | ----------------------------- | --------------------------------------------------------------- |
+| 1    | `AmountNotPositive`           | Enter an amount greater than zero.                              |
+| 2    | `DepositExceedsMaximum`       | Deposit is above the per-deposit maximum; use less.             |
+| 5    | `WithdrawalExceedsLimit`      | Liquidity is limited; try a smaller amount (shows utilization). |
+| 6    | `InsufficientLiquid`          | Not enough liquid funds; try less or join the queue.            |
+| 31   | `DepositBelowMinimum`         | Deposit is below the minimum.                                   |
+| 32   | `WithdrawBelowMinimum`        | Withdrawal is below the minimum.                                |
+| 33   | `SlippageLimitExceeded`       | Refresh the quote or raise the slippage tolerance.              |
+| 34   | `Paused`                      | Vault paused for maintenance; retry later.                      |
+| 35   | `RegistryPaused`              | New investments paused; retry later.                            |
+| 36   | `DepositLocked`               | Recent deposit is still locked; withdraw after it ends.         |
+| 38   | `MaxSupplyExceeded`           | Pool is at maximum size; try less or later.                     |
+| 43   | `InvestmentCapExceeded`       | Project hit its funding cap; pick less or another project.      |
+| 44   | `ExceedsMaxTransactionAmount` | Over the per-transaction limit; split it up.                    |
 
 Every other `VaultError` code (1-61) maps to a category or specific message in
 `src/lib/contractErrorCodes.ts`. A test (`contractErrors.test.ts`) fails if a

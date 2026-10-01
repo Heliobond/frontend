@@ -132,7 +132,8 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
   const escapedRecipient = recipientName ? escapeHtml(recipientName) : null
   const escapedSupportUrl = escapeHtml(sanitizeUrl(supportUrl))
 
-  const baseTime = typeof requestTimestamp === 'number' ? requestTimestamp : requestTimestamp.getTime()
+  const baseTime =
+    typeof requestTimestamp === 'number' ? requestTimestamp : requestTimestamp.getTime()
   const expiresAt = new Date(baseTime + Math.max(1, expiresInMinutes) * 60 * 1000)
   const formattedTtl = formatTtlDuration(expiresInMinutes, locale)
   const formattedUtc = formatUtcTime(expiresAt)
@@ -153,8 +154,7 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
       ignoreNotice:
         'If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.',
       supportLabel: 'Need help?',
-      supportCopy:
-        'If you did not request this reset or need assistance, contact support:',
+      supportCopy: 'If you did not request this reset or need assistance, contact support:',
       footerBrand: 'Heliobond — Sunlight made financial.',
     },
     fr: {

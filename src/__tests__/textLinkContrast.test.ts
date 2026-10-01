@@ -17,7 +17,7 @@ describe('text link contrast styling', () => {
     expect(css).toContain('--text-link: var(--ink-60);')
     expect(css).toContain('--text-link-hover: var(--ink);')
     expect(css).toContain('--border-link-underline: var(--ink-40);')
-    expect(css).toContain(':root[data-theme=\'dark\']')
+    expect(css).toContain(":root[data-theme='dark']")
     expect(css).toContain('--text-link: var(--ink-60);')
     expect(css).toContain('--text-link-hover: var(--ink);')
     expect(css).toContain('--border-link-underline: var(--ink-40);')

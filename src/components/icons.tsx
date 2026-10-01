@@ -59,6 +59,17 @@ export function ShieldCheckIcon({ size = 13, strokeWidth = 1.8, ...rest }: IconP
   )
 }
 
+/** Shield with an exclamation / alert — metadata mismatch badge. */
+export function ShieldAlertIcon({ size = 13, strokeWidth = 1.8, ...rest }: IconProps) {
+  return (
+    <Icon size={size} strokeWidth={strokeWidth} {...rest}>
+      <path d="M12 3 5 6v5c0 4 3 6.5 7 8 4-1.5 7-4 7-8V6l-7-3Z" />
+      <path d="M12 8v4" />
+      <path d="M12 15h.01" />
+    </Icon>
+  )
+}
+
 /** Sun — light-theme toggle glyph. */
 export function SunIcon({ size = 18, ...rest }: IconProps) {
   return (

@@ -1,10 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import {
-  type AuthProviderType,
-  getProviderDisplayName,
-} from '../lib/auth/accountProviderDetection'
+import { type AuthProviderType, getProviderDisplayName } from '../lib/auth/accountProviderDetection'
 import { Button } from './Button'
 
 export interface SocialAccountConflictWarningProps {
@@ -100,11 +97,7 @@ export function SocialAccountConflictWarning({
           marginTop: 4,
         }}
       >
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => onContinueWithProvider(provider)}
-        >
+        <Button variant="primary" size="sm" onClick={() => onContinueWithProvider(provider)}>
           {t('continueWithProvider', { provider: providerName })}
         </Button>
 

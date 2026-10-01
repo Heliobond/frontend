@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from './Button'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 export interface SessionTimeoutModalProps {
   /** Whether the modal is currently visible. */
@@ -29,53 +30,8 @@ export function SessionTimeoutModal({
   const extendBtnRef = useRef<HTMLButtonElement | null>(null)
   const modalRef = useRef<HTMLDivElement | null>(null)
 
-  // Auto-focus the primary extend button when modal opens
-  useEffect(() => {
-    if (open) {
-      const prevActive = document.activeElement as HTMLElement | null
-      const timer = setTimeout(() => {
-        extendBtnRef.current?.focus()
-      }, 50)
-
-      return () => {
-        clearTimeout(timer)
-        prevActive?.focus()
-      }
-    }
-  }, [open])
-
-  // Trap focus & keyboard escape handler
-  useEffect(() => {
-    if (!open) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // Esc extends the session by default to prevent accidental data loss
-        onExtend()
-      }
-
-      if (e.key === 'Tab' && modalRef.current) {
-        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        )
-        if (focusables.length === 0) return
-
-        const first = focusables[0]
-        const last = focusables[focusables.length - 1]
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [open, onExtend])
+  // Escape keeps the existing safe default: extend rather than log out.
+  useFocusTrap(open, modalRef, extendBtnRef, onExtend)
 
   if (!open) return null
 

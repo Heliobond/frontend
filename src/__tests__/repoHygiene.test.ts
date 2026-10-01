@@ -95,3 +95,70 @@ describe('README accuracy (#659)', () => {
     expect(readme).toMatch(/fixture/i)
   })
 })
+
+/**
+ * CONTRIBUTING.md and the PR template drifted from the repo too (#725): they
+ * described an opt-in Husky hook that actually installs itself, CI jobs that
+ * don't exist, two locales instead of five, and none of the test:coverage /
+ * test:e2e:* commands. These checks fail when the docs go stale again.
+ */
+describe('contributor docs accuracy (#725)', () => {
+  const contributing = readFileSync(path.join(ROOT, 'CONTRIBUTING.md'), 'utf8')
+  const prTemplate = readFileSync(path.join(ROOT, '.github/PULL_REQUEST_TEMPLATE.md'), 'utf8')
+  const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
+  const preCommit = readFileSync(path.join(ROOT, '.husky/pre-commit'), 'utf8')
+  const ci = readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8')
+
+  it('lists every shipped locale catalog', () => {
+    for (const file of readdirSync(path.join(ROOT, 'messages'))) {
+      expect(contributing).toContain(file)
+      expect(prTemplate).toContain(file)
+    }
+  })
+
+  it('no longer tells contributors to update only en and fr', () => {
+    for (const doc of [contributing, prTemplate]) {
+      expect(doc).not.toMatch(/\bboth\b[^.\n]*en\.json/i)
+      expect(doc).not.toMatch(/\bboth\b[^.\n]*fr\.json/i)
+    }
+  })
+
+  it('names the CI jobs that exist and does not claim CI lints', () => {
+    for (const job of ['build', 'unit tests + coverage']) {
+      expect(contributing).toContain(job)
+      expect(ci).toContain(job)
+    }
+    expect(contributing).toMatch(/no CI job for\s*\n?\s*lint/i)
+    expect(contributing).not.toMatch(/CI runs build, typecheck, lint/i)
+  })
+
+  it('describes the hook that is actually installed', () => {
+    // .husky/pre-commit runs lint-staged and typecheck — no tests.
+    expect(preCommit).toContain('lint-staged')
+    expect(preCommit).toContain('typecheck')
+    expect(preCommit).not.toContain('run test')
+
+    expect(contributing).toContain('bunx lint-staged')
+    expect(contributing).toContain('HUSKY=0')
+    expect(contributing).toContain('--no-verify')
+    expect(contributing).toMatch(/already active/i)
+    // The stale version claimed the hook runs the full suite and needs opt-in.
+    expect(contributing).not.toMatch(/full test suite on every commit/i)
+    expect(contributing).not.toMatch(/not\*\* installed unless you run/i)
+  })
+
+  it('documents every test command that exists', () => {
+    for (const script of ['test:coverage', 'test:e2e:production', 'test:e2e:chain']) {
+      expect(pkg.scripts[script]).toBeDefined()
+      expect(contributing).toContain(`bun run ${script}`)
+    }
+  })
+
+  it('references only bun scripts that exist', () => {
+    const referenced = [...contributing.matchAll(/bun run ([a-z][a-z0-9:]*)/g)].map((m) => m[1])
+    expect(referenced.length).toBeGreaterThan(5)
+    for (const script of new Set(referenced)) {
+      expect(Object.keys(pkg.scripts)).toContain(script)
+    }
+  })
+})

@@ -63,6 +63,62 @@ export function writeAlerts(alerts: YieldAlert[]): void {
   }
 }
 
+const NO_ALERTS: YieldAlert[] = []
+
+let snapshot: YieldAlert[] = NO_ALERTS
+const listeners = new Set<() => void>()
+
+function refresh(): void {
+  snapshot = readAlerts()
+}
+
+/**
+ * Subscribes to the alerts list, including changes made in another tab.
+ *
+ * The list is exposed as an external store so the provider reads it through
+ * `useSyncExternalStore` instead of copying localStorage into state from an
+ * effect (#598). The snapshot is cached and only recomputed on write or on a
+ * `storage` event, which keeps it referentially stable between renders.
+ */
+export function subscribeAlerts(listener: () => void): () => void {
+  if (!listeners.size) refresh()
+  listeners.add(listener)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', onStorageEvent)
+    window.addEventListener('focus', listener)
+  }
+  return () => {
+    listeners.delete(listener)
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', onStorageEvent)
+      window.removeEventListener('focus', listener)
+    }
+  }
+}
+
+/** Ignores unrelated keys so unrelated storage writes do not churn the list. */
+function onStorageEvent(event: StorageEvent): void {
+  if (event.key !== null && event.key !== YIELD_ALERTS_STORAGE_KEY) return
+  refresh()
+  listeners.forEach((listener) => listener())
+}
+
+export function getAlerts(): YieldAlert[] {
+  return snapshot
+}
+
+/** No alerts on the server, so the first client render matches the server HTML. */
+export function getServerAlerts(): YieldAlert[] {
+  return NO_ALERTS
+}
+
+/** Replaces the list and notifies subscribers. */
+export function setAlerts(next: YieldAlert[]): void {
+  snapshot = next
+  writeAlerts(next)
+  listeners.forEach((listener) => listener())
+}
+
 /**
  * Compute the effective yield for a project based on its oracle scores.
  * Uses `(credit + green) / 2` as a percentage, giving each project a
@@ -77,10 +133,7 @@ export function getEffectiveYield(project: Pick<Project, 'credit' | 'green'>): n
  * that have crossed their threshold. Applies a 60-second cooldown to
  * avoid spamming the same alert repeatedly.
  */
-export function evaluateAlerts(
-  alerts: YieldAlert[],
-  projects: Project[],
-): TriggeredAlert[] {
+export function evaluateAlerts(alerts: YieldAlert[], projects: Project[]): TriggeredAlert[] {
   const now = Date.now()
   const COOLDOWN_MS = 60_000
 
@@ -93,9 +146,7 @@ export function evaluateAlerts(
     const currentYield = getEffectiveYield(project)
 
     const crossed =
-      alert.operator === 'above'
-        ? currentYield > alert.threshold
-        : currentYield < alert.threshold
+      alert.operator === 'above' ? currentYield > alert.threshold : currentYield < alert.threshold
 
     if (!crossed) continue
 

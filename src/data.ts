@@ -1,5 +1,5 @@
 // Heliobond — fake data for the click-through. Not production: these stand in
- // for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
+// for live reads from the InvestmentVault + ProjectRegistry Soroban contracts.
 
 export type ProjectType = 'Solar' | 'Wind' | 'Hydro'
 
@@ -102,7 +102,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Sokoto community solar',
     location: 'Sokoto, Nigeria',
     type: 'Solar',
-    credit:82,
+    credit: 82,
     green: 91,
     funded: '$420,000',
     fundedAmount: 420000,
@@ -122,7 +122,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Ría de Vigo tidal array',
     location: 'Galicia, Spain',
     type: 'Hydro',
-    credit:74,
+    credit: 74,
     green: 88,
     funded: '$1,180,000',
     fundedAmount: 1180000,
@@ -142,7 +142,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Atacama agrivoltaics',
     location: 'Antofagasta, Chile',
     type: 'Solar',
-    credit:88,
+    credit: 88,
     green: 79,
     funded: '$640,000',
     fundedAmount: 640000,
@@ -162,7 +162,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Jämtland wind co-op',
     location: 'Östersund, Sweden',
     type: 'Wind',
-    credit:91,
+    credit: 91,
     green: 84,
     funded: '$960,000',
     fundedAmount: 960000,
@@ -182,7 +182,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Kerala micro-hydro',
     location: 'Idukki, India',
     type: 'Hydro',
-    credit:69,
+    credit: 69,
     green: 93,
     funded: '$310,000',
     fundedAmount: 310000,
@@ -202,7 +202,7 @@ const INITIAL_PROJECTS: Project[] = [
     name: 'Oaxaca roottop network',
     location: 'Oaxaca, Mexico',
     type: 'Solar',
-    credit:77,
+    credit: 77,
     green: 86,
     funded: '$520,000',
     fundedAmount: 520000,
@@ -227,13 +227,17 @@ export const OFF_SCREEN_PROJECTS_COUNT = 8
 // Credit scores are 0–100; higher credit = lower risk.
 // The risk score is inverted so a higher number means higher risk, and the
 // risk level is determined by the share of holdings in each credit band.
-function getRiskIndicator(projects: Project[]): { riskScore: number; riskLevel: 'conservative' | 'moderate' | 'aggressive' } {
+function getRiskIndicator(projects: Project[]): {
+  riskScore: number
+  riskLevel: 'conservative' | 'moderate' | 'aggressive'
+} {
   const totalFunded = projects.reduce((sum, p) => sum + p.fundedAmount, 0)
   if (totalFunded === 0) {
     return { riskScore: 0, riskLevel: 'conservative' }
   }
 
-  const weightedCredit = projects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / totalFunded
+  const weightedCredit =
+    projects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / totalFunded
   const riskScore = Math.round((100 - weightedCredit) * 10) / 10
 
   // Determine the mix of holdings by rating class.
@@ -290,5 +294,5 @@ export const HB_DATA: HeliobondData = {
   },
   projects: INITIAL_PROJECTS,
   activity: [],
-  search: (_query: string) => INITIAL_PROJECTS,
+  search: () => INITIAL_PROJECTS,
 }

@@ -21,15 +21,6 @@ const STORAGE_KEY = 'hb_pending_deposit'
 /** Maximum age (ms) for a pending deposit record to be considered active. */
 const PENDING_TTL_MS = 5 * 60 * 1000 // 5 minutes
 
-/**
- * Deposit amount limits (USDC).
- * These constants centralize the numeric limits used by the deposit flow.
- * TODO: Move to a shared config module if these are used outside this hook.
- */
-export const MIN_DEPOSIT_AMOUNT = 2000
-export const DEFAULT_DEPOSIT_AMOUNT = 5000
-export const MAX_DEPOSIT_AMOUNT = 10000
-
 export interface PendingDeposit {
   /** USDC amount of the in-flight deposit. */
   amount: number

@@ -33,9 +33,7 @@ export function validateNetwork(rawNetwork?: string): StellarNetworkName {
   if (normalized === 'testnet' || normalized === 'public') {
     return normalized
   }
-  throw new Error(
-    `Unknown Stellar network: "${rawNetwork}". Expected "testnet" or "public".`,
-  )
+  throw new Error(`Unknown Stellar network: "${rawNetwork}". Expected "testnet" or "public".`)
 }
 
 export const STELLAR_NETWORK: StellarNetworkName = validateNetwork(

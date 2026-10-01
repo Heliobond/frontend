@@ -18,7 +18,6 @@ describe('pendingClaims storage', () => {
       id: 'claim-1',
       hash: '0xabc123',
       amount: 150,
-      position: 1,
       timestamp: 1700000000000,
       address: 'GUSER123',
     })
@@ -26,7 +25,19 @@ describe('pendingClaims storage', () => {
     const claims = getPendingClaims()
     expect(claims).toHaveLength(1)
     expect(claims[0].amount).toBe(150)
-    expect(claims[0].position).toBe(1)
+    expect(claims[0]).not.toHaveProperty('position')
+  })
+
+  it('stores queued claims when the owed amount is unavailable', () => {
+    addPendingClaim({
+      id: 'claim-1',
+      hash: '0xabc123',
+      timestamp: 1700000000000,
+    })
+
+    expect(getPendingClaims()).toEqual([
+      { id: 'claim-1', hash: '0xabc123', timestamp: 1700000000000 },
+    ])
   })
 
   it('filters claims by address', () => {
@@ -34,7 +45,6 @@ describe('pendingClaims storage', () => {
       id: 'claim-1',
       hash: '0xabc123',
       amount: 150,
-      position: 1,
       timestamp: 1700000000000,
       address: 'GUSER1',
     })
@@ -42,7 +52,6 @@ describe('pendingClaims storage', () => {
       id: 'claim-2',
       hash: '0xdef456',
       amount: 250,
-      position: 2,
       timestamp: 1700000001000,
       address: 'GUSER2',
     })
@@ -58,7 +67,6 @@ describe('pendingClaims storage', () => {
       id: 'claim-1',
       hash: '0xabc123',
       amount: 150,
-      position: 1,
       timestamp: 1700000000000,
     })
 

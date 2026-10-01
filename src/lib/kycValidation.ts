@@ -22,32 +22,45 @@ const DATE_REGEXES = [
   /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/, //MM/DD/YYYY
   /^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])-(19|20)\d{2}$/, //MM-DD-YYYY
   /^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/, //YYYY-MM-DD
-];
+]
 
 /**
  * Checks if a string contains common XSS or SQL injection patterns.
  * Used to reject malicious input in form fields.
  */
 export function hasMaliciousContent(value: string): boolean {
-  const htmlTag = /<[^>]*>/i;
-  const jsProtocol = /javascript\s*:/i;
-  const eventHandler = /(?:\s|^)on\w+\s*=/i;
-  const htmlEntity = /&(?:lt|gt|#0*60|#0*62|#x0*3[cCE]|#x0*3[eE]);/i;
-  const sqlInjection = /(['<g;]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all|from)\b)|(\/\.*\/)|(\b(?:or|and)\b\s*[\d'"])|(\bunion\b)|(\bselect\b\s+[\w*]+\s+\bfrom\b)/i;
-  return htmlTag.test(value) || jsProtocol.test(value) || eventHandler.test(value) || htmlEntity.test(value) || sqlInjection.test(value);
+  const htmlTag = /<[^>]*>/i
+  const jsProtocol = /javascript\s*:/i
+  const eventHandler = /(?:\s|^)on\w+\s*=/i
+  const htmlEntity = /&(?:lt|gt|#0*60|#0*62|#x0*3[cCE]|#x0*3[eE]);/i
+  const sqlInjection =
+    /(['<g;]\s*--)|(;\s*(?:drop|delete|insert|update|select)\s)|(\b(?:union)\b.*\b(?:select|all|from)\b)|(\/\.*\/)|(\b(?:or|and)\b\s*[\d'"])|(\bunion\b)|(\bselect\b\s+[\w*]+\s+\bfrom\b)/i
+  return (
+    htmlTag.test(value) ||
+    jsProtocol.test(value) ||
+    eventHandler.test(value) ||
+    htmlEntity.test(value) ||
+    sqlInjection.test(value)
+  )
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"]/g, (c) => {
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => {
     switch (c) {
-      case '&': return '&amp;';
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '"': return '&quot;';
-      case "'": return '&#39;';
-      default: return c;
+      case '&':
+        return '&amp;'
+      case '<':
+        return '&lt;'
+      case '>':
+        return '&gt;'
+      case '"':
+        return '&quot;'
+      case "'":
+        return '&#39;'
+      default:
+        return c
     }
-  });
+  })
 }
 
 export function validateDobFormat(value: string): DobValidationResult {
@@ -97,11 +110,11 @@ function getAge(dob: Date): number {
   return age
 }
 export function formatDobForDisplay(value: string): string {
-  const trimmed = value.trim();
-  const parsed = parseDob(trimmed);
-  if (!parsed) return escapeHtml(trimmed);
-  const { year, month, day } = parsed;
-  return `${String(month).padStart(2, "0") }/${String(day).padStart(2, "0") }/${year}`;
+  const trimmed = value.trim()
+  const parsed = parseDob(trimmed)
+  if (!parsed) return escapeHtml(trimmed)
+  const { year, month, day } = parsed
+  return `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`
 }
 export interface AddressValues {
   street: string
@@ -111,7 +124,19 @@ export interface AddressValues {
   country: string
   apartment?: string
 }
-export type AddressErrors = Partial<Record<keyof AddressValues, string>>;
+export type AddressErrors = Partial<Record<keyof AddressValues, string>>
+
+const ADDRESS_MAX_LENGTH = 200
+const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'&-]+$/u
+
+/** Addresses are validated by shape; database safety belongs to parameterized backend queries. */
+export function hasInvalidAddressCharacters(value: string): boolean {
+  return (
+    value.length > ADDRESS_MAX_LENGTH ||
+    /[\u0000-\u001f\u007f<>]/u.test(value) ||
+    !ADDRESS_ALLOWED_CHARACTERS.test(value)
+  )
+}
 
 /**
  * Validates address fields according to KYC requirements (#414).
@@ -119,27 +144,32 @@ export type AddressErrors = Partial<Record<keyof AddressValues, string>>;
  * Rejects input that contains XSS or SQL injection patterns.
  */
 export function validateAddress(values: AddressValues): AddressErrors {
-  const errors: AddressErrors = {};
-  const trim = (s: string) => s.trim();
-  const street = trim(values.street);
-  const city = trim(values.city);
-  const state = trim(values.state);
-  const zip = trim(values.zip);
-  const country = trim(values.country);
-  const apartment = values.apartment ? trim(values.apartment) : '';
+  const errors: AddressErrors = {}
+  const trim = (s: string) => s.trim()
+  const street = trim(values.street)
+  const city = trim(values.city)
+  const state = trim(values.state)
+  const zip = trim(values.zip)
+  const country = trim(values.country)
+  const apartment = values.apartment ? trim(values.apartment) : ''
 
-  if (!street) errors.street = "Street address is required";
-  if (!city) errors.city = "City is required";
-  if (!state) errors.state = "State is required";
-  if (!zip) errors.zip = "ZIP code is required";
-  if (!country) errors.country = "Country is required";
+  if (!street) errors.street = 'Street address is required'
+  if (!city) errors.city = 'City is required'
+  if (!state) errors.state = 'State is required'
+  if (!zip) errors.zip = 'ZIP code is required'
+  if (!country) errors.country = 'Country is required'
 
-  if (street && hasMaliciousContent(street)) errors.street = "Street address contains invalid characters";
-  if (city && hasMaliciousContent(city)) errors.city = "City contains invalid characters";
-  if (state && hasMaliciousContent(state)) errors.state = "State / Province contains invalid characters";
-  if (zip && hasMaliciousContent(zip)) errors.zip = "ZIP / Postal code contains invalid characters";
-  if (country && hasMaliciousContent(country)) errors.country = "Country contains invalid characters";
-  if (apartment && hasMaliciousContent(apartment)) errors.apartment = "Apartment contains invalid characters";
+  if (street && hasInvalidAddressCharacters(street))
+    errors.street = 'Street address contains invalid characters'
+  if (city && hasInvalidAddressCharacters(city)) errors.city = 'City contains invalid characters'
+  if (state && hasInvalidAddressCharacters(state))
+    errors.state = 'State / Province contains invalid characters'
+  if (zip && hasInvalidAddressCharacters(zip))
+    errors.zip = 'ZIP / Postal code contains invalid characters'
+  if (country && hasInvalidAddressCharacters(country))
+    errors.country = 'Country contains invalid characters'
+  if (apartment && hasInvalidAddressCharacters(apartment))
+    errors.apartment = 'Apartment contains invalid characters'
 
-  return errors;
+  return errors
 }

@@ -22,20 +22,20 @@ const LEGACY_FONT_ORIGINS = [
 
 describe('webfont loading strategy', () => {
   it('loads fonts through next/font instead of remote CSS imports', () => {
-    const module = readFile(fontsModulePath)
+    const source = readFile(fontsModulePath)
 
-    expect(module).toContain("from 'next/font/google'")
-    expect(module).toContain('Hanken_Grotesk(')
-    expect(module).toContain('Spline_Sans_Mono(')
-    expect(module).toContain("from 'next/font/local'")
+    expect(source).toContain("from 'next/font/google'")
+    expect(source).toContain('Hanken_Grotesk(')
+    expect(source).toContain('Spline_Sans_Mono(')
+    expect(source).toContain("from 'next/font/local'")
   })
 
   it('self-hosts Cabinet Grotesk with the display weights (500/700/800)', () => {
-    const module = readFile(fontsModulePath)
+    const source = readFile(fontsModulePath)
 
-    expect(module).toContain('cabinet-grotesk-500.woff2')
-    expect(module).toContain('cabinet-grotesk-700.woff2')
-    expect(module).toContain('cabinet-grotesk-800.woff2')
+    expect(source).toContain('cabinet-grotesk-500.woff2')
+    expect(source).toContain('cabinet-grotesk-700.woff2')
+    expect(source).toContain('cabinet-grotesk-800.woff2')
   })
 
   it('removes the render-blocking CDN @imports from fonts.css', () => {

@@ -1,38 +1,84 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'vitest'
 
-import { validateDobFormat, formatDobForDisplay, validateAddress, hasMaliciousContent, type AddressValues } from './kycValidation';
+import {
+  validateDobFormat,
+  formatDobForDisplay,
+  validateAddress,
+  hasMaliciousContent,
+  escapeHtml,
+  type AddressValues,
+} from './kycValidation'
 
 describe('security validation edge cases', () => {
   it('rejects XSS in DOB', () => {
     for (const value of ['<script>alert(1)</script>', 'javascript:alert(1)', '%3Cscript%3E']) {
-      expect(validateDobFormat(value).valid).toBe(false);
+      expect(validateDobFormat(value).valid).toBe(false)
     }
-  });
+  })
 
   it('rejects SQL injection in DOB', () => {
-    expect(validateDobFormat("'; DROP TABLE users;--").valid).toBe(false);
-  });
+    expect(validateDobFormat("'; DROP TABLE users;--").valid).toBe(false)
+  })
 
   it('escapes malicious input in DOB display', () => {
-    expect(formatDobForDisplay('<script>alert(1)</script>')).toBe('&lt;script&gt;alert(1)&lt;/script&gt;');
-    expect(formatDobForDisplay('"><img src=x onerror=alert(1)>')).toBe('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;');
-  });
+    expect(formatDobForDisplay('<script>alert(1)</script>')).toBe(
+      '&lt;script&gt;alert(1)&lt;/script&gt;',
+    )
+    expect(formatDobForDisplay('"><img src=x onerror=alert(1)>')).toBe(
+      '&quot;&gt;&lt;img src=x onerror=alert(1)&gt;',
+    )
+  })
 
   it('detects XSS and SQL attack patterns', () => {
-    expect(hasMaliciousContent('<SCRIPT>alert(1)</SCRIPT>')).toBe(true);
-    expect(hasMaliciousContent('JaVaScRiPt:alert(1)')).toBe(true);
-    expect(hasMaliciousContent("1 OR 1=1")).toBe(true);
-    expect(hasMaliciousContent("admin' --")).toBe(true);
-    expect(hasMaliciousContent('Springfield IL')).toBe(false);
-  });
+    expect(hasMaliciousContent('<SCRIPT>alert(1)</SCRIPT>')).toBe(true)
+    expect(hasMaliciousContent('JaVaScRiPt:alert(1)')).toBe(true)
+    expect(hasMaliciousContent('1 OR 1=1')).toBe(true)
+    expect(hasMaliciousContent("admin' --")).toBe(true)
+    expect(hasMaliciousContent('Springfield IL')).toBe(false)
+  })
 
   it('rejects malicious address fields', () => {
-    const valid: AddressValues = { street: '123 Main St', city: 'Springfield', state: 'IL', zip: '62701', country: 'US' };
-    expect(validateAddress({ ...valid, street: '<script>x</script>' }).street).toBe('Street address contains invalid characters');
-    expect(validateAddress({ ...valid, city: "'; DROP TABLE users;--" }).city).toBe('City contains invalid characters');
-    expect(validateAddress({ ...valid, state: '<svg/onload=alert(1)>' }).state).toBe('State / Province contains invalid characters');
-    expect(validateAddress({ ...valid, zip: "1 UNION SELECT" }).zip).toBe('ZIP / Postal code contains invalid characters');
-    expect(validateAddress({ ...valid, country: '"><img src=x onerror=alert(1)>' }).country).toBe('Country contains invalid characters');
-    expect(validateAddress({ ...valid, apartment: '<script>x</script>' }).apartment).toBe('Apartment contains invalid characters');
-  });
-});
+    const valid: AddressValues = {
+      street: '123 Main St',
+      city: 'Springfield',
+      state: 'IL',
+      zip: '62701',
+      country: 'US',
+    }
+    expect(validateAddress({ ...valid, street: '<script>x</script>' }).street).toBe(
+      'Street address contains invalid characters',
+    )
+    expect(validateAddress({ ...valid, city: "'; DROP TABLE users;--" }).city).toBe(
+      'City contains invalid characters',
+    )
+    expect(validateAddress({ ...valid, state: '<svg/onload=alert(1)>' }).state).toBe(
+      'State / Province contains invalid characters',
+    )
+    expect(validateAddress({ ...valid, zip: '<script>x</script>' }).zip).toBe(
+      'ZIP / Postal code contains invalid characters',
+    )
+    expect(validateAddress({ ...valid, country: '"><img src=x onerror=alert(1)>' }).country).toBe(
+      'Country contains invalid characters',
+    )
+    expect(validateAddress({ ...valid, apartment: '<script>x</script>' }).apartment).toBe(
+      'Apartment contains invalid characters',
+    )
+  })
+
+  it('accepts ordinary address words that resemble SQL keywords', () => {
+    const valid: AddressValues = {
+      street: '12 Union Street',
+      city: 'Union City',
+      state: 'NJ',
+      zip: '07001',
+      country: 'US',
+      apartment: 'Flat 2, Building 3 and 4',
+    }
+    expect(validateAddress(valid)).toEqual({})
+    expect(validateAddress({ ...valid, street: '1 Main St and 2nd Ave' })).toEqual({})
+  })
+
+  it('escapes apostrophes in display output', () => {
+    expect(escapeHtml("'")).toBe('&#39;')
+  })
+})

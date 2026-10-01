@@ -44,8 +44,7 @@ function makeProjects(count: number, type: ProjectType = 'Solar', offset = 0): P
 const cards = () => screen.queryAllByTestId('card')
 
 /** The "load more" control, labeled with the chunk size it will add. */
-const loadMoreButton = (count: number) =>
-  screen.getByRole('button', { name: `Show ${count} more` })
+const loadMoreButton = (count: number) => screen.getByRole('button', { name: `Show ${count} more` })
 
 describe('Explore — pagination', () => {
   beforeEach(() => {

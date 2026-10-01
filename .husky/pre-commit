@@ -1,7 +1,7 @@
 set -e
 
-npm run typecheck
-npm run lint
-npm run format:check
-npm run typecheck:coverage
-npm run test
+# Run lint-staged for fast, staged-only linting and formatting
+bunx lint-staged
+
+# Quick typecheck (full tests run in CI/pre-push)
+bun run typecheck

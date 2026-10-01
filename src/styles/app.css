@@ -116,11 +116,72 @@
   }
 }
 
-/* --- Top-bar: hide secondary nav on phones (Connect + mark stay) ---------- */
+/* --- Top-bar: replace desktop navigation with an accessible phone menu ----- */
 @media (max-width: 680px) {
   .hb-topbar-nav {
     display: none !important;
   }
+  .hb-topbar {
+    gap: 12px;
+    padding: 0 16px;
+    height: 60px;
+  }
+  .hb-topbar__actions {
+    display: none !important;
+  }
+  .hb-mobile-menu-button {
+    display: inline-flex;
+    margin-inline-start: auto;
+  }
+  .hb-mobile-menu-panel {
+    display: flex;
+  }
+}
+
+.hb-mobile-menu-button {
+  display: none;
+  align-items: center;
+  border: 1px solid var(--ink-12);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font: 600 var(--type-small) var(--font-body);
+  padding: 8px 12px;
+}
+
+.hb-mobile-menu-panel {
+  position: absolute;
+  top: 60px;
+  inset-inline: 16px;
+  z-index: 400;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--ink-12);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.hb-mobile-menu-link {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius-input);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: 500 var(--type-data) var(--font-body);
+  padding: 10px 12px;
+  text-align: start;
+  text-decoration: none;
+}
+
+.hb-mobile-menu-link:hover,
+.hb-mobile-menu-link:focus-visible {
+  background: var(--ink-06);
 }
 
 /* Form layout helper — stacks field wrappers with the design-system gap ------ */
@@ -234,6 +295,10 @@ h1 {
   font-weight: var(--font-weight-bold, 700);
 }
 
-h2, h3, h4, h5, h6 {
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: var(--font-weight-semibold, 600);
 }

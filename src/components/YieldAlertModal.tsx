@@ -1,10 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from './Button'
 import { CloseIcon } from './icons'
 import { type AlertOperator } from '../lib/yieldAlerts'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 
 /**
  * YieldAlertModal — dialog for creating or editing a yield alert on a
@@ -41,57 +42,27 @@ export function YieldAlertModal({
   const [operator, setOperator] = useState<AlertOperator>(initialOperator)
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstInputRef = useRef<HTMLInputElement>(null)
+  useFocusTrap(open, dialogRef, firstInputRef, onClose)
 
-  // Reset form when modal opens with new values.
-  useEffect(() => {
+  // Reseed the form when the modal opens with new values. Adjusting during
+  // render is React's sanctioned way to reset state for a changed prop, and
+  // avoids a wasted render pass (#598).
+  const [seed, setSeed] = useState<{ open: boolean; threshold: number; operator: AlertOperator }>({
+    open,
+    threshold: initialThreshold,
+    operator: initialOperator,
+  })
+  if (
+    seed.open !== open ||
+    seed.threshold !== initialThreshold ||
+    seed.operator !== initialOperator
+  ) {
+    setSeed({ open, threshold: initialThreshold, operator: initialOperator })
     if (open) {
       setThreshold(String(initialThreshold))
       setOperator(initialOperator)
-      // Focus the threshold input on open.
-      requestAnimationFrame(() => firstInputRef.current?.focus())
     }
-  }, [open, initialThreshold, initialOperator])
-
-  // Close on Escape.
-  useEffect(() => {
-    if (!open) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [open, onClose])
-
-  // Trap focus within the modal.
-  useEffect(() => {
-    if (!open || !dialogRef.current) return
-    const dialog = dialogRef.current
-    const focusableSelector =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-
-    const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return
-      const focusable = dialog.querySelectorAll<HTMLElement>(focusableSelector)
-      if (focusable.length === 0) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault()
-          last.focus()
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault()
-          first.focus()
-        }
-      }
-    }
-
-    document.addEventListener('keydown', handleTab)
-    return () => document.removeEventListener('keydown', handleTab)
-  }, [open])
+  }
 
   const handleSave = useCallback(() => {
     const parsed = parseFloat(threshold)

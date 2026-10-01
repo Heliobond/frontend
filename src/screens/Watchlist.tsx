@@ -39,10 +39,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
   const availableCount = saved.filter(isBondAvailable).length
 
   return (
-    <main
-      id="main-content"
-      style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}
-    >
+    <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
       <div style={{ marginBottom: 28 }}>
         <h1
           style={{
@@ -83,7 +80,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
             color: 'var(--ink-60)',
           }}
         >
-           {t('availableBanner', { count: availableCount })}
+          {t('availableBanner', { count: availableCount })}
         </div>
       )}
 

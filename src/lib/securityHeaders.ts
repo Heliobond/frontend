@@ -48,6 +48,8 @@ export interface CspOptions {
   reportUrl?: string
   /** Where the browser posts CSP violation reports. */
   cspReportUri?: string
+  authUrl?: string
+  wsUrl?: string
 }
 
 export function buildCsp(options: CspOptions): string {
@@ -59,10 +61,12 @@ export function buildCsp(options: CspOptions): string {
     apiUrl = process.env.NEXT_PUBLIC_API_URL,
     reportUrl = process.env.NEXT_PUBLIC_ERROR_REPORT_URL,
     cspReportUri = process.env.NEXT_PUBLIC_CSP_REPORT_URI,
+    authUrl = process.env.NEXT_PUBLIC_AUTH_URL,
+    wsUrl = process.env.NEXT_PUBLIC_WS_URL,
   } = options
 
   const connect = new Set<string>(["'self'", ...WALLETCONNECT_CONNECT])
-  for (const url of [horizonUrl, rpcUrl, apiUrl, reportUrl]) {
+  for (const url of [horizonUrl, rpcUrl, apiUrl, reportUrl, authUrl, wsUrl]) {
     const origin = originOf(url)
     if (origin) connect.add(origin)
   }

@@ -25,15 +25,15 @@ Base URL: `NEXT_PUBLIC_AUTH_URL`, falling back to `NEXT_PUBLIC_API_URL`.
 
 All requests use `credentials: 'include'` so the HttpOnly refresh cookie is sent.
 
-| Endpoint | Body | Response |
-| --- | --- | --- |
-| `POST /auth/challenge` | `{ address }` | `{ type: 'message' \| 'transaction', challenge, networkPassphrase? }` — a SEP-53 message, or a SEP-10 challenge transaction XDR |
-| `POST /auth/verify` | `{ address, type, challenge, signature }` | `{ token, expiresIn }` (seconds) and sets the refresh cookie. `signature` is the signed message, or the signed challenge XDR |
-| `POST /auth/refresh` | `{}` | `{ token, expiresIn }`, or `401` when there is no valid refresh cookie |
-| `POST /auth/logout` | `{}` | `204`, clears the cookie |
-| `GET /me/watchlist` / `PUT /me/watchlist` | `number[]` | `number[]` |
-| `GET /me/alerts` / `PUT /me/alerts` | `YieldAlert[]` | `YieldAlert[]` |
-| `GET /me/recurring` / `PUT /me/recurring` | `RecurringInvestmentPlan[]` | `RecurringInvestmentPlan[]` |
+| Endpoint                                  | Body                                      | Response                                                                                                                        |
+| ----------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /auth/challenge`                    | `{ address }`                             | `{ type: 'message' \| 'transaction', challenge, networkPassphrase? }` — a SEP-53 message, or a SEP-10 challenge transaction XDR |
+| `POST /auth/verify`                       | `{ address, type, challenge, signature }` | `{ token, expiresIn }` (seconds) and sets the refresh cookie. `signature` is the signed message, or the signed challenge XDR    |
+| `POST /auth/refresh`                      | `{}`                                      | `{ token, expiresIn }`, or `401` when there is no valid refresh cookie                                                          |
+| `POST /auth/logout`                       | `{}`                                      | `204`, clears the cookie                                                                                                        |
+| `GET /me/watchlist` / `PUT /me/watchlist` | `number[]`                                | `number[]`                                                                                                                      |
+| `GET /me/alerts` / `PUT /me/alerts`       | `YieldAlert[]`                            | `YieldAlert[]`                                                                                                                  |
+| `GET /me/recurring` / `PUT /me/recurring` | `RecurringInvestmentPlan[]`               | `RecurringInvestmentPlan[]`                                                                                                     |
 
 `/me/*` requires `Authorization: Bearer <token>` and is scoped to the token's
 G-address. A `401` triggers one silent refresh and retry.

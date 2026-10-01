@@ -91,8 +91,8 @@ describe('Withdraw', () => {
 
     render(<Withdraw onDone={onDone} onBack={vi.fn()} />)
 
-    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '50' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw $50' }))
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '150' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw $150' }))
 
     await expect(
       screen.findByRole('heading', { name: 'Withdrawal settled' }),
@@ -122,16 +122,13 @@ describe('Withdraw', () => {
     expect(
       screen.getByText(/Requested amount exceeds immediately available liquid balance/),
     ).toBeVisible()
-    expect(
-      screen.getByRole('button', { name: 'Enqueue withdrawal for $300.00' }),
-    ).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Enqueue withdrawal for $300.00' })).toBeEnabled()
   })
 
-  test('renders queued state with position and estimated amount when withdrawal is queued', async () => {
+  test('renders queued state and owed amount without inventing a position', async () => {
     vi.mocked(submitWithdraw).mockResolvedValue({
       hash: FULL_TX_HASH,
       queued: true,
-      position: 3,
       estimatedAmount: 300,
       toString: () => FULL_TX_HASH,
     })
@@ -141,13 +138,9 @@ describe('Withdraw', () => {
     fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '300' } })
     fireEvent.click(screen.getByRole('button', { name: 'Enqueue withdrawal for $300.00' }))
 
-    await expect(
-      screen.findByRole('heading', { name: 'Withdrawal queued' }),
-    ).resolves.toBeVisible()
+    await expect(screen.findByRole('heading', { name: 'Withdrawal queued' })).resolves.toBeVisible()
 
-    expect(
-      screen.getByText(/Queued — position #3, est\. amount \$300\.00 USDC/),
-    ).toBeVisible()
+    expect(screen.getByText('Queued — owed amount $300.00 USDC')).toBeVisible()
     expect(screen.getByText('abcdef…567890')).toBeVisible()
   })
 })

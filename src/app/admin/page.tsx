@@ -3,33 +3,43 @@
 import { useEffect, useState } from 'react'
 import { AdminConsole } from '@/screens/admin/AdminConsole'
 import { useWallet, shortAddress } from '@/wallet/WalletProvider'
-import { checkIsAdmin } from '@/wallet/admin'
+import { getAdminRoles, type AdminRoles } from '@/wallet/admin'
 import { Button, Card } from '@/components'
 
 export default function AdminPage() {
   const { connected, address, connect, disconnect } = useWallet()
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
-  const [checking, setChecking] = useState(false)
+
+  /**
+   * The admin check result, keyed by the wallet it was made for.
+   *
+   * `isAdmin` is null until a check for the *current* address has completed, so
+   * switching wallets or reconnecting shows the "verifying" state instead of
+   * briefly rendering the previous wallet's verdict (#598).
+   */
+  const [result, setResult] = useState<{ address: string; roles: AdminRoles } | null>(null)
 
   useEffect(() => {
-    if (!connected || !address) {
-      setIsAdmin(false)
-      setChecking(false)
-      return
-    }
+    if (!connected || !address) return
 
     let active = true
-    setChecking(true)
 
-    checkIsAdmin(address)
-      .then((allowed) => {
-        if (active) setIsAdmin(allowed)
+    getAdminRoles(address)
+      .then((roles) => {
+        if (active) setResult({ address, roles })
       })
       .catch(() => {
-        if (active) setIsAdmin(false)
-      })
-      .finally(() => {
-        if (active) setChecking(false)
+        if (active)
+          setResult({
+            address,
+            roles: {
+              isVaultOwner: false,
+              isRegistryOwner: false,
+              isWhitelister: false,
+              isMultisigSigner: false,
+              isConfiguredAdmin: false,
+              isAdmin: false,
+            },
+          })
       })
 
     return () => {
@@ -37,12 +47,13 @@ export default function AdminPage() {
     }
   }, [connected, address])
 
+  const checking = connected && address !== null && result?.address !== address
+  const roles = !checking && address !== null && result?.address === address ? result.roles : null
+  const isAdmin = roles ? roles.isAdmin : null
+
   if (!connected) {
     return (
-      <main
-        id="main-content"
-        style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px' }}
-      >
+      <main id="main-content" style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px' }}>
         <Card style={{ padding: 32, textAlign: 'center' }}>
           <div className="hb-eyebrow" style={{ marginBottom: 12 }}>
             Privileged Area
@@ -92,10 +103,7 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <main
-        id="main-content"
-        style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px' }}
-      >
+      <main id="main-content" style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px' }}>
         <Card style={{ padding: 32, textAlign: 'center' }}>
           <div
             style={{
@@ -131,7 +139,9 @@ export default function AdminPage() {
               margin: '0 0 24px',
             }}
           >
-            Connected wallet <strong style={{ color: 'var(--ink)' }}>{shortAddress(address ?? '')}</strong> is not an authorized administrator on this contract.
+            Connected wallet{' '}
+            <strong style={{ color: 'var(--ink)' }}>{shortAddress(address ?? '')}</strong> is not an
+            authorized administrator on this contract.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <Button variant="secondary" onClick={() => disconnect()}>
@@ -148,7 +158,7 @@ export default function AdminPage() {
 
   return (
     <main id="main-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px 64px' }}>
-      <AdminConsole />
+      <AdminConsole roles={roles ?? undefined} />
     </main>
   )
 }

@@ -7,7 +7,8 @@ export interface ApiErrorShape {
   cause?: unknown
 }
 
-export type ApiErrorPayload = ApiErrorShape | { error?: ApiErrorShape | string } | string | Error | null | undefined
+export type ApiErrorPayload =
+  ApiErrorShape | { error?: ApiErrorShape | string } | string | Error | null | undefined
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -99,12 +100,18 @@ export class ApiError extends Error {
     this.code = normalizeCode(normalized.code, 'unknown_error')
     this.status = normalizeStatus(normalized.status)
     this.details = normalizeDetails(normalized.details)
-    this.retryable = typeof normalized.retryable === 'boolean' ? normalized.retryable : isRetryableStatus(this.status)
+    this.retryable =
+      typeof normalized.retryable === 'boolean'
+        ? normalized.retryable
+        : isRetryableStatus(this.status)
     this.cause = normalized.cause
   }
 }
 
-export function normalizeApiError(payload: ApiErrorPayload = {}, fallbackMessage = 'Something went wrong'): ApiError {
+export function normalizeApiError(
+  payload: ApiErrorPayload = {},
+  fallbackMessage = 'Something went wrong',
+): ApiError {
   return new ApiError(payload, fallbackMessage)
 }
 

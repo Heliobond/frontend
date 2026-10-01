@@ -6,8 +6,7 @@
 export interface PendingClaim {
   id: string
   hash: string
-  amount: number
-  position: number
+  amount?: number
   timestamp: number
   address?: string
 }

@@ -15,7 +15,9 @@ describe('SocialAccountConflictWarning', () => {
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(screen.getByText('Existing Google account detected')).toBeInTheDocument()
     expect(
-      screen.getByText(/The email alex.doe@gmail.com is already registered using your Google account/),
+      screen.getByText(
+        /The email alex.doe@gmail.com is already registered using your Google account/,
+      ),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign in with Google' })).toBeInTheDocument()
   })

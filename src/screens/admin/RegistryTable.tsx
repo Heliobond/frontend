@@ -4,7 +4,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
-import { clampScore, parseFundedNum } from './utils'
+import { parseFundedNum, isSafeScore, getScoreError } from './utils'
 
 /**
  * RegistryTable — the dense project registry. A real <table> with a tinted,
@@ -178,10 +178,7 @@ function Th({
         <span className="hb-eyebrow" style={active ? thLabelActive : thLabelInactive}>
           {label}
         </span>
-        <span
-          aria-hidden="true"
-          style={active ? thIndicatorActive : thIndicatorInactive}
-        >
+        <span aria-hidden="true" style={active ? thIndicatorActive : thIndicatorInactive}>
           {active ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
         </span>
       </button>
@@ -224,14 +221,19 @@ function Row({
     onEdit()
   }
 
+  const creditValid = isSafeScore(credit)
+  const greenValid = isSafeScore(green)
+  const creditError = getScoreError(credit)
+  const greenError = getScoreError(green)
+  const isChanged = Number(credit) !== row.credit || Number(green) !== row.green
+  const canSave = creditValid && greenValid && isChanged
+
   return (
     <>
       <tr style={rowBorderStyle}>
         <td style={tdStyle}>
           <div style={nameStyle}>{row.name}</div>
-          <div style={locationStyle}>
-            {row.location}
-          </div>
+          <div style={locationStyle}>{row.location}</div>
         </td>
         <td style={tdStyle}>
           <span style={typePill}>{row.type}</span>
@@ -252,11 +254,21 @@ function Row({
         <tr style={editingRowStyle}>
           <td colSpan={7} style={editingCellStyle}>
             <div style={editorFlexStyle}>
-              <span style={reVerifySpanStyle}>
-                {reVerifyLabel}
-              </span>
-              <ScoreField label={creditFieldLabel} value={credit} onChange={setCredit} />
-              <ScoreField label={greenFieldLabel} value={green} onChange={setGreen} />
+              <span style={reVerifySpanStyle}>{reVerifyLabel}</span>
+              <ScoreField
+                id={`credit-${row.id}`}
+                label={creditFieldLabel}
+                value={credit}
+                error={creditError}
+                onChange={setCredit}
+              />
+              <ScoreField
+                id={`green-${row.id}`}
+                label={greenFieldLabel}
+                value={green}
+                error={greenError}
+                onChange={setGreen}
+              />
               <div style={btnGroupStyle}>
                 <Button size="sm" variant="ghost" onClick={onCancel}>
                   {cancelLabel}
@@ -264,7 +276,12 @@ function Row({
                 <Button
                   size="sm"
                   variant="primary"
-                  onClick={() => onSave(clampScore(credit), clampScore(green))}
+                  disabled={!canSave}
+                  onClick={() => {
+                    if (canSave) {
+                      onSave(Number(credit), Number(green))
+                    }
+                  }}
                 >
                   {saveLabel}
                 </Button>
@@ -278,27 +295,40 @@ function Row({
 }
 
 function ScoreField({
+  id,
   label,
   value,
+  error,
   onChange,
 }: {
+  id: string
   label: string
   value: string
+  error: string | null
   onChange: (v: string) => void
 }) {
+  const errorId = `${id}-error`
   return (
-    <label style={scoreLabelStyle}>
-      <span className="hb-eyebrow">{label}</span>
-      <input
-        type="number"
-        min={0}
-        max={100}
-        inputMode="numeric"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={inputStyle}
-      />
-    </label>
+    <div style={scoreFieldContainerStyle}>
+      <label htmlFor={id} style={scoreLabelStyle}>
+        <span className="hb-eyebrow">{label}</span>
+        <input
+          id={id}
+          type="text"
+          inputMode="numeric"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={error !== null}
+          aria-describedby={error !== null ? errorId : undefined}
+          style={error !== null ? inputErrorStyle : inputStyle}
+        />
+      </label>
+      {error !== null && (
+        <span id={errorId} role="alert" style={errorTextStyle}>
+          {error}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -431,3 +461,17 @@ const btnGroupStyle: CSSProperties = {
 
 // ── ScoreField static styles ─────────────────────────────────────────────────
 const scoreLabelStyle: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4 }
+const scoreFieldContainerStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+}
+const inputErrorStyle: CSSProperties = {
+  ...inputStyle,
+  borderColor: 'var(--coral, #e53e3e)',
+}
+const errorTextStyle: CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: 'var(--type-micro, 11px)',
+  color: 'var(--coral, #e53e3e)',
+  marginTop: 4,
+}

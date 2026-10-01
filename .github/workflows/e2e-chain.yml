@@ -36,11 +36,14 @@ jobs:
           docker run -d --rm -p 8000:8000 --name stellar stellar/quickstart:latest \
             --local --enable core,rpc,horizon --limits unlimited
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        # bun.lock is out of sync with package.json (#600); don't freeze it yet.
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Install Playwright Chromium
         run: bunx playwright install --with-deps chromium

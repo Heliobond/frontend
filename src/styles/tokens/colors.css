@@ -81,7 +81,12 @@
   --growth: #5dd99a; /* lifted further for AA contrast (4.68:1 on surface) */
   --ember: #ff9b82; /* lifted for AA contrast (4.52:1 on surface)   */
 
-  --ink-60: rgba(237, 242, 236, 0.72); /* lifted for AA/AAA link and secondary text contrast (11.8:1 on surface) */
+  --ink-60: rgba(
+    237,
+    242,
+    236,
+    0.72
+  ); /* lifted for AA/AAA link and secondary text contrast (11.8:1 on surface) */
   --ink-40: rgba(237, 242, 236, 0.52); /* lifted for improved hairline and auxiliary contrast */
   --ink-12: rgba(237, 242, 236, 0.14);
   --ink-06: rgba(237, 242, 236, 0.06);

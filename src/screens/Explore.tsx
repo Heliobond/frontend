@@ -67,8 +67,8 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
 
   const query = searchTerm.trim().toLowerCase()
   const filteredByType = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
-  const shown = filteredByType.filter((p) =>
-    p.name.toLowerCase().includes(query) || p.location.toLowerCase().includes(query),
+  const shown = filteredByType.filter(
+    (p) => p.name.toLowerCase().includes(query) || p.location.toLowerCase().includes(query),
   )
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const paged = shown.slice(0, visibleCount)

@@ -11,8 +11,9 @@
     "url": "git+https://github.com/Heliobond/frontend.git"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=22.0.0"
   },
+  "packageManager": "bun@1.2.4",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -28,7 +29,7 @@
     "test:e2e:production": "E2E_PRODUCTION=true playwright test e2e/security-headers.spec.ts",
     "test:e2e:chain": "playwright test --config playwright.chain.config.ts",
     "bundle:check": "node scripts/check-bundle-size.js",
-    "typecheck:coverage": "node scripts/check-type-coverage.js",
+    "typecheck:coverage": "node scripts/check-type-coverage.mjs",
     "prepare": "husky"
   },
   "dependencies": {
@@ -62,6 +63,7 @@
     "eslint-config-next": "^16.2.9",
     "husky": "^9.1.7",
     "jsdom": "^24.0.0",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.1",
     "typescript": "^6.0.3",
     "vite": "^6.4.3",

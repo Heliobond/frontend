@@ -18,15 +18,38 @@ export interface PaginationProps {
   onPageChange: (page: number) => void
 }
 
-export function Pagination({ currentPage, totalPages, totalItems, pageSize, onPageChange }: PaginationProps) {
+export function Pagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+}: PaginationProps) {
   if (totalPages <= 1) return null
 
   const start = (currentPage - 1) * pageSize + 1
   const end = Math.min(currentPage * pageSize, totalItems)
 
   return (
-    <nav aria-label="Pagination" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginTop: 24 }}>
-      <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--type-small)', color: 'var(--ink-60)' }} aria-live="polite">
+    <nav
+      aria-label="Pagination"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 12,
+        marginTop: 24,
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--type-small)',
+          color: 'var(--ink-60)',
+        }}
+        aria-live="polite"
+      >
         Page {currentPage} of {totalPages} — showing {start}-{end} of {totalItems}
       </span>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -39,7 +62,15 @@ export function Pagination({ currentPage, totalPages, totalItems, pageSize, onPa
         >
           Previous
         </button>
-        <span style={{ fontFamily: 'var(--font-data)', fontSize: 'var(--type-small)', color: 'var(--ink)', padding: '0 8px' }} aria-current="page">
+        <span
+          style={{
+            fontFamily: 'var(--font-data)',
+            fontSize: 'var(--type-small)',
+            color: 'var(--ink)',
+            padding: '0 8px',
+          }}
+          aria-current="page"
+        >
           {currentPage} / {totalPages}
         </span>
         <button

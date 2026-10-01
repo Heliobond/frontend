@@ -62,9 +62,7 @@ export function detectEmailAuthProvider(
 
   // A conflict exists if the email is registered via a social/OAuth provider
   const hasConflict =
-    existingProvider !== null &&
-    existingProvider !== 'email' &&
-    existingProvider !== 'wallet'
+    existingProvider !== null && existingProvider !== 'email' && existingProvider !== 'wallet'
 
   return {
     email,

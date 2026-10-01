@@ -79,9 +79,9 @@ export default function PasswordResetEmailPreviewPage() {
           color: 'var(--ink-60)',
         }}
       >
-        This frontend-only route showcases the generator that would be used by a backend auth
-        flow, so the TTL disclaimer, stale-link guidance, and support fallback stay aligned with
-        the real template.
+        This frontend-only route showcases the generator that would be used by a backend auth flow,
+        so the TTL disclaimer, stale-link guidance, and support fallback stay aligned with the real
+        template.
       </p>
 
       <div
@@ -101,18 +101,34 @@ export default function PasswordResetEmailPreviewPage() {
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <h2 style={{ margin: '0 0 12px', fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <h2
+            style={{ margin: '0 0 12px', fontFamily: 'var(--font-display)', color: 'var(--ink)' }}
+          >
             Snapshot
           </h2>
           <dl style={{ margin: 0, display: 'grid', gap: 10 }}>
             <div>
-              <dt style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-40)' }}>
+              <dt
+                style={{
+                  fontSize: 12,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--ink-40)',
+                }}
+              >
                 Subject
               </dt>
               <dd style={{ margin: 0, color: 'var(--ink)' }}>{preview.subject}</dd>
             </div>
             <div>
-              <dt style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-40)' }}>
+              <dt
+                style={{
+                  fontSize: 12,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--ink-40)',
+                }}
+              >
                 Expires
               </dt>
               <dd style={{ margin: 0, color: 'var(--ink)' }}>{preview.expirationNotice}</dd>
