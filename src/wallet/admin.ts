@@ -330,13 +330,13 @@ export function buildSetPausedCall(
   paused: boolean,
   address: string,
   isEmergency = false,
-): { contractId: string | undefined; method: string; args: any[] } {
+): { contractId: string | undefined; method: string; args: unknown[] } {
   const contractId =
     contractType === 'vault'
       ? (process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID)
       : (process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
   let method: string
-  let args: any[] = []
+  let args: unknown[] = []
 
   if (isEmergency) {
     method = paused ? 'emergency_pause' : 'emergency_unpause'
