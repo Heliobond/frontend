@@ -49,7 +49,9 @@ describe('ProjectBuilder on-chain publishing (#697)', () => {
     fireEvent.blur(uriInput)
 
     await waitFor(() => {
-      expect(screen.getByText(/must start with ipfs:\/\/, https:\/\/, or ar:\/\//i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/must start with ipfs:\/\/, https:\/\/, or ar:\/\//i),
+      ).toBeInTheDocument()
     })
   })
 
@@ -94,7 +96,9 @@ describe('ProjectBuilder on-chain publishing (#697)', () => {
     await waitFor(() => {
       expect(screen.getByText(/project published on-chain/i)).toBeInTheDocument()
       expect(screen.getByText(/#42/)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /view transaction on stellar explorer/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: /view transaction on stellar explorer/i }),
+      ).toBeInTheDocument()
     })
   })
 })

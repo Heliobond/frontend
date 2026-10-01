@@ -13,7 +13,12 @@ import {
   selectProjectDetail,
   selectScoreHistory,
 } from '../state/selectors'
-import { SOROBAN_RPC_URL as RPC_URL, NETWORK_PASSPHRASE, HORIZON_URL, allowHttpFor } from '../config/network'
+import {
+  SOROBAN_RPC_URL as RPC_URL,
+  NETWORK_PASSPHRASE,
+  HORIZON_URL,
+  allowHttpFor,
+} from '../config/network'
 import { reportError } from '../lib/errorReporting'
 
 function getRegistryContractId(): string | undefined {
@@ -152,7 +157,9 @@ export async function simulateRegistryCall(
 /** Compute hex SHA-256 hash in browser or Node environments.
  * Returns null if crypto.subtle is unavailable (e.g. non-secure context).
  */
-export async function computeSha256(content: ArrayBuffer | Uint8Array | string): Promise<string | null> {
+export async function computeSha256(
+  content: ArrayBuffer | Uint8Array | string,
+): Promise<string | null> {
   const subtle = typeof crypto !== 'undefined' ? crypto.subtle : undefined
   if (!subtle) {
     return null
@@ -617,9 +624,7 @@ export function validateMetadataUri(uri: string): ValidationResult {
     return { valid: false, error: 'URI cannot exceed 512 characters' }
   }
   const hasValidScheme =
-    trimmed.startsWith('ipfs://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('ar://')
+    trimmed.startsWith('ipfs://') || trimmed.startsWith('https://') || trimmed.startsWith('ar://')
   if (!hasValidScheme) {
     return { valid: false, error: 'URI must start with ipfs://, https://, or ar://' }
   }
@@ -737,26 +742,15 @@ export async function submitCreateProject(
     }
   }
 
-  const {
-    rpc,
-    Contract,
-    TransactionBuilder,
-    Horizon,
-    Transaction,
-    scValToNative,
-  } = await import('@stellar/stellar-sdk')
+  const { rpc, Contract, TransactionBuilder, Horizon, Transaction, scValToNative } =
+    await import('@stellar/stellar-sdk')
 
   const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
   const horizon = new Horizon.Server(HORIZON_URL)
   const contract = new Contract(contractId)
   const networkPassphrase = NETWORK_PASSPHRASE
 
-  const scArgs = await encodeCreateProjectArgs(
-    creator,
-    uri,
-    maturityDateSeconds,
-    metadataHashHex,
-  )
+  const scArgs = await encodeCreateProjectArgs(creator, uri, maturityDateSeconds, metadataHashHex)
 
   const account = await horizon.loadAccount(creator)
 
@@ -822,4 +816,3 @@ export async function submitCreateProject(
     hash: sendResult.hash,
   }
 }
-

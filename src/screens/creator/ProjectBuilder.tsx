@@ -46,7 +46,9 @@ export function ProjectBuilder() {
   const [goalError, setGoalError] = useState<string | null>(null)
 
   // URI and maturity date fields for ProjectRegistry.create_project
-  const [uri, setUri] = useState('ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi')
+  const [uri, setUri] = useState(
+    'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+  )
   const [uriTouched, setUriTouched] = useState(false)
   const [uriError, setUriError] = useState<string | null>(null)
   const uriErrorId = useId()
@@ -198,7 +200,10 @@ export function ProjectBuilder() {
       )
       setPublishResult(res)
     } catch (err: unknown) {
-      if (err instanceof NotWhitelistedError || (err instanceof Error && err.name === 'NotWhitelistedError')) {
+      if (
+        err instanceof NotWhitelistedError ||
+        (err instanceof Error && err.name === 'NotWhitelistedError')
+      ) {
         setNotWhitelisted(true)
       } else {
         setPublishError(err instanceof Error ? err.message : String(err))
@@ -324,7 +329,8 @@ export function ProjectBuilder() {
             On-Chain Project Publishing
           </h4>
           <p style={{ ...subtle, margin: '0 0 16px', fontSize: 13 }}>
-            Pin your project metadata to IPFS/HTTPS/Arweave and publish to the Soroban ProjectRegistry contract.
+            Pin your project metadata to IPFS/HTTPS/Arweave and publish to the Soroban
+            ProjectRegistry contract.
           </p>
 
           {/* Metadata URI */}
@@ -359,7 +365,8 @@ export function ProjectBuilder() {
               </p>
             )}
             <p style={{ ...hintText, margin: '6px 0 0' }}>
-              Must start with <code>ipfs://</code>, <code>https://</code>, or <code>ar://</code> (8 to 512 characters).
+              Must start with <code>ipfs://</code>, <code>https://</code>, or <code>ar://</code> (8
+              to 512 characters).
             </p>
           </Field>
 
@@ -406,14 +413,18 @@ export function ProjectBuilder() {
               border: '1px solid var(--ink-12)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Canonical Metadata JSON</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleDownloadMetadata}
-                type="button"
-              >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 8,
+              }}
+            >
+              <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>
+                Canonical Metadata JSON
+              </span>
+              <Button variant="secondary" size="sm" onClick={handleDownloadMetadata} type="button">
                 Download metadata.json
               </Button>
             </div>
@@ -455,7 +466,8 @@ export function ProjectBuilder() {
                 Wallet Not Whitelisted
               </div>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-80)' }}>
-                Your connected wallet is not whitelisted by the registry oracle. You must be an approved creator to publish projects on-chain.
+                Your connected wallet is not whitelisted by the registry oracle. You must be an
+                approved creator to publish projects on-chain.
               </p>
               <div>
                 <a
@@ -511,7 +523,8 @@ export function ProjectBuilder() {
                 🎉 Project Published On-Chain!
               </div>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--ink)' }}>
-                Successfully created in <strong>ProjectRegistry</strong> with ID <strong>#{publishResult.projectId}</strong>.
+                Successfully created in <strong>ProjectRegistry</strong> with ID{' '}
+                <strong>#{publishResult.projectId}</strong>.
               </p>
               {publishResult.hash && (
                 <div style={{ fontSize: 12 }}>
