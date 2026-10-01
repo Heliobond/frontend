@@ -139,4 +139,70 @@ describe('OracleForms validation', () => {
     fireEvent.click(screen.getByText('Fund from the vault'))
     expect(onFund).toHaveBeenCalledWith(1, 25000)
   })
+
+  describe('Issue #694: Funding guardrails', () => {
+    it('disables fund submission and shows warning when registry is paused', () => {
+      render(
+        <OracleForms
+          projects={mockProjects}
+          liquid={50_000}
+          guardrails={{ isRegistryPaused: true }}
+          onPushScores={noop}
+          onFund={noop}
+        />,
+      )
+      const amountInput = screen.getByPlaceholderText('0.00')
+      fireEvent.change(amountInput, { target: { value: '10000' } })
+      const submitBtn = screen.getByText('Fund from the vault')
+      expect(submitBtn).toBeDisabled()
+      expect(
+        screen.getByText('Registry is currently paused. Project funding is disabled.'),
+      ).toBeInTheDocument()
+    })
+
+    it('enforces insurance reserve deducting from liquid deployable balance', () => {
+      render(
+        <OracleForms
+          projects={mockProjects}
+          liquid={50_000}
+          guardrails={{ insuranceReserve: 20_000 }} // deployable is 30,000
+          onPushScores={noop}
+          onFund={noop}
+        />,
+      )
+      const amountInput = screen.getByPlaceholderText('0.00')
+      fireEvent.change(amountInput, { target: { value: '35000' } })
+      const submitBtn = screen.getByText('Fund from the vault')
+      expect(submitBtn).toBeDisabled()
+      expect(
+        screen.getByText(/Amount exceeds deployable balance after insurance reserve of \$20,000/),
+      ).toBeInTheDocument()
+
+      fireEvent.change(amountInput, { target: { value: '25000' } })
+      expect(submitBtn).not.toBeDisabled()
+    })
+
+    it('enforces per-project investment capacity cap', () => {
+      render(
+        <OracleForms
+          projects={mockProjects}
+          liquid={50_000}
+          guardrails={{ investmentCapacities: { 1: 15_000 } }}
+          onPushScores={noop}
+          onFund={noop}
+        />,
+      )
+      const amountInput = screen.getByPlaceholderText('0.00')
+      fireEvent.change(amountInput, { target: { value: '20000' } })
+      const submitBtn = screen.getByText('Fund from the vault')
+      expect(submitBtn).toBeDisabled()
+      expect(
+        screen.getByText(/Amount exceeds remaining capacity for this project \(\$15,000\)/),
+      ).toBeInTheDocument()
+
+      fireEvent.change(amountInput, { target: { value: '12000' } })
+      expect(submitBtn).not.toBeDisabled()
+    })
+  })
 })
+

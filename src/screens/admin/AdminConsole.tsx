@@ -127,22 +127,21 @@ export function AdminConsole() {
   }
 
   const fundProject = async (id: number, amount: number) => {
-    const safe = Math.min(amount, liquid)
     setRegistry((rows) =>
       rows.map((r) =>
-        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + safe) } : r,
+        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + amount) } : r,
       ),
     )
-    setLiquid((l) => l - safe)
-    setDeployed((d) => d + safe)
+    setLiquid((l) => l - amount)
+    setDeployed((d) => d + amount)
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
-      const res = await submitFundProject(id, safe, address ?? '', sign, isMultisig)
+      const res = await submitFundProject(id, amount, address ?? '', sign, isMultisig)
       toast({
         tone: 'solar',
         title: t('toastFundTitle'),
         message:
-          t('toastFundMsg', { name, amount: sharedFormatMoney(safe) }) +
+          t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
           (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
         duration: 5000,
       })
