@@ -140,6 +140,7 @@
     "stepDone": "Hecho",
     "amountLabel": "Importe",
     "balanceLabel": "Saldo",
+    "balanceUnavailable": "Saldo no disponible",
     "amountH1": "¿Cuánto te gustaría invertir?",
     "preview": "Recibirás ≈ <num>{shares} HBS</num> · precio de la participación <num>{price}</num> · comisión de red <num>< $0.01</num>",
     "projection": "Rentabilidad del bono proyectada en 1 año: ≈ {amount} USDC al {rate}% de rentabilidad anual",

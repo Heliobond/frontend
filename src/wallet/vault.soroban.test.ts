@@ -612,6 +612,40 @@ describe('view calls', () => {
     })
   })
 
+  it('fetchUsdcBalance simulates balance(id) on SAC and scales i128 stroops (#698)', async () => {
+    const SAC_ID = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', SAC_ID)
+    const vault = await loadVault()
+    rpcMock.simulateTransaction.mockResolvedValue(
+      okSimulation(nativeToScVal(2_400_000_000n, { type: 'i128' })),
+    )
+    await expect(vault.fetchUsdcBalance(USER)).resolves.toBe(240)
+    expect(invocation(simulatedTx())).toMatchObject({
+      contract: SAC_ID,
+      method: 'balance',
+      argTypes: ['scvAddress'],
+      args: [USER],
+    })
+  })
+
+  it('fetchUsdcBalance scales fractional stroops correctly (#698)', async () => {
+    const SAC_ID = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', SAC_ID)
+    const vault = await loadVault()
+    rpcMock.simulateTransaction.mockResolvedValue(
+      okSimulation(nativeToScVal(1_505_000_000n, { type: 'i128' })),
+    )
+    await expect(vault.fetchUsdcBalance(USER)).resolves.toBe(150.5)
+  })
+
+  it('fetchUsdcBalance throws when NEXT_PUBLIC_USDC_SAC_ID is not set (#698)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', '')
+    const vault = await loadVault()
+    await expect(vault.fetchUsdcBalance(USER)).rejects.toThrow(
+      'NEXT_PUBLIC_USDC_SAC_ID not set',
+    )
+  })
+
   it('a simulate error does not mark offline, and reads retry instead of short-circuiting (#624)', async () => {
     const vault = await loadVault()
     rpcMock.simulateTransaction.mockResolvedValue(

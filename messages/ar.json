@@ -152,6 +152,7 @@
     "stepDone": "تم",
     "amountLabel": "المبلغ",
     "balanceLabel": "الرصيد",
+    "balanceUnavailable": "الرصيد غير متوفر",
     "amountH1": "كم تريد أن تستثمر؟",
     "preview": "ستحصل على ≈ <num>{shares} HBS</num> · سعر الحصة <num>{price}</num> · رسوم الشبكة <num>< $0.01</num>",
     "projection": "العائد المتوقع في سنة واحدة: ≈ ${amount} USDC بمعدل {rate}% سنوياً",

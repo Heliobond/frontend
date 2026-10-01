@@ -68,3 +68,5 @@ export function useVault(): VaultState {
 
   return { sharePrice, totalAssets, loading, error: loading ? null : error, fetchedAt, refresh }
 }
+
+export { useUsdcBalance, DEMO_USDC_BALANCE } from './useUsdcBalance'

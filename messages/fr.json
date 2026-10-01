@@ -141,6 +141,7 @@
     "stepDone": "Terminé",
     "amountLabel": "Montant",
     "balanceLabel": "Solde",
+    "balanceUnavailable": "Solde non disponible",
     "amountH1": "Combien souhaitez-vous investir ?",
     "preview": "Vous recevrez ≈ <num>{shares} HBS</num> · prix de la part <num>{price}</num> · frais réseau <num>< $0.01</num>",
     "projection": "Rendement projeté sur 1 an : ≈ {amount} $ USDC à {rate} % de rendement annuel",

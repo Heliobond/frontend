@@ -140,6 +140,7 @@
     "stepDone": "Done",
     "amountLabel": "Amount",
     "balanceLabel": "Balance",
+    "balanceUnavailable": "Balance unavailable",
     "amountH1": "How much would you like to invest?",
     "preview": "You'll receive ≈ <num>{shares} HBS</num> · share price <num>{price}</num> · network fee <num>< $0.01</num>",
     "projection": "Projected return in 1 year: ≈ ${amount} USDC at {rate}% APY",

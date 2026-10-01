@@ -111,3 +111,9 @@ export function getExplorerUrl(value: string): string | undefined {
   }
   return undefined
 }
+
+/**
+ * USDC Stellar Asset Contract ID (#698).
+ * Used to query live on-chain USDC balance for connected wallets.
+ */
+export const USDC_SAC_ID: string | undefined = process.env.NEXT_PUBLIC_USDC_SAC_ID

@@ -110,7 +110,7 @@ export function AmountInput({
               color: 'var(--ink-60)',
             }}
           >
-            {balanceLabel} {balance} {currency}
+            {[balanceLabel, balance, currency].filter(Boolean).join(' ')}
           </span>
         )}
       </div>

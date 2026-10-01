@@ -29,6 +29,7 @@ import {
   NETWORK_PASSPHRASE,
   allowHttpFor,
   passphraseForNetwork,
+  USDC_SAC_ID as CONFIG_USDC_SAC_ID,
 } from '../config/network'
 import type { xdr as XdrTypes } from '@stellar/stellar-sdk'
 import { notifyTransactionConfirmed } from './vaultEvents'
@@ -138,6 +139,7 @@ export const vault = {
 // ---------------------------------------------------------------------------
 
 const CONTRACT_ID = process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID
+const USDC_SAC_ID = process.env.NEXT_PUBLIC_USDC_SAC_ID || CONFIG_USDC_SAC_ID
 
 /** Max time to wait for a Stellar RPC/Horizon response before treating it as offline. */
 const RPC_TIMEOUT_MS = 5000
@@ -222,11 +224,12 @@ async function sorobanSimulate(
   method: string,
   args: XdrTypes.ScVal[] = [],
   network: string = STELLAR_NETWORK,
+  targetContractId: string = CONTRACT_ID!,
 ): Promise<XdrTypes.ScVal> {
   const { rpc, Contract, TransactionBuilder, Account } = await loadSdk()
 
   const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
-  const contract = new Contract(CONTRACT_ID!)
+  const contract = new Contract(targetContractId)
   // Sequence '0' is fine for simulation — only the address format matters.
   const source = new Account(sourceAddress, '0')
   const networkPassphrase = passphraseForNetwork(network === 'public' ? 'PUBLIC' : 'TESTNET')
@@ -421,6 +424,33 @@ export async function fetchClaimableYield(
       'claimable_yield',
       [new Address(account).toScVal()],
       network,
+    )
+    return Number(scValToNative(retval)) / SCALE
+  } catch (e) {
+    if (isTransportError(e)) setOffline(true)
+    throw e instanceof Error ? e : new Error(String(e))
+  }
+}
+
+/**
+ * Read the connected wallet's on-chain USDC token balance from the USDC SAC contract.
+ * Simulates balance(id) on the SAC and scales from i128 stroops (10^7 decimals).
+ * Throws when NEXT_PUBLIC_USDC_SAC_ID is not set or when simulation fails.
+ */
+export async function fetchUsdcBalance(
+  address: string,
+  network = STELLAR_NETWORK,
+): Promise<number> {
+  const usdcSacId = process.env.NEXT_PUBLIC_USDC_SAC_ID || USDC_SAC_ID
+  if (!usdcSacId) throw new Error('NEXT_PUBLIC_USDC_SAC_ID not set')
+  const { Address, scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const retval = await sorobanSimulate(
+      address,
+      'balance',
+      [new Address(address).toScVal()],
+      network,
+      usdcSacId,
     )
     return Number(scValToNative(retval)) / SCALE
   } catch (e) {
