@@ -320,26 +320,95 @@ export async function submitSetWhitelist(
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 
-/** Execute pause on InvestmentVault */
+/**
+ * Build contract call parameters for pause/unpause.
+ * - pause() and unpause() take no arguments
+ * - emergency_pause(caller) and emergency_unpause(caller) take caller Address
+ */
+export async function buildSetPausedCall(
+  contractType: 'vault' | 'registry',
+  paused: boolean,
+  address: string,
+  isEmergency = false,
+): Promise<{ contractId: string | undefined; method: string; args: any[] }> {
+  const contractId =
+    (contractType === 'vault'
+      ? process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
+      : process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
+  let method: string
+  let args: any[] = []
+
+  if (isEmergency) {
+    method = paused ? 'emergency_pause' : 'emergency_unpause'
+    const { Address } = await import('@stellar/stellar-sdk')
+    args = [new Address(address).toScVal()]
+  } else {
+    method = paused ? 'pause' : 'unpause'
+    args = [] // pause() and unpause() take no arguments on-chain
+  }
+
+  return { contractId, method, args }
+}
+
+/**
+ * Execute pause or unpause on InvestmentVault or ProjectRegistry.
+ */
+export async function submitSetPaused(
+  contractType: 'vault' | 'registry',
+  paused: boolean,
+  address: string,
+  sign: (xdr: string) => Promise<string>,
+  isEmergency = false,
+): Promise<AdminTxResult> {
+  const call = await buildSetPausedCall(contractType, paused, address, isEmergency)
+  if (!call.contractId) {
+    const hash = await simulateDemoTx()
+    return { hash }
+  }
+
+  const hash = await sendContractTx(call.contractId, call.method, call.args, address, sign)
+  return { hash }
+}
+
+/** Backward compatibility helper */
 export async function submitPause(
   paused: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
 ): Promise<AdminTxResult> {
-  if (!VAULT_CONTRACT_ID) {
-    const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
-  }
+  return submitSetPaused('vault', paused, address, sign)
+}
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'pause_approved' : 'pause'
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    [nativeToScVal(paused)],
-    address,
-    sign,
-  )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+/** Check if contract is currently paused on-chain */
+export async function fetchIsPaused(
+  contractType: 'vault' | 'registry',
+  sourceAddress = DEMO_ADMIN_ADDRESS,
+): Promise<boolean> {
+  const contractId =
+    (contractType === 'vault'
+      ? process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID ?? VAULT_CONTRACT_ID
+      : process.env.NEXT_PUBLIC_REGISTRY_CONTRACT_ID ?? REGISTRY_CONTRACT_ID)
+  if (!contractId) return false
+
+  try {
+    const { rpc, Contract, TransactionBuilder, Networks, Account, scValToNative } =
+      await import('@stellar/stellar-sdk')
+    const server = new rpc.Server(RPC_URL, { allowHttp: false })
+    const contract = new Contract(contractId)
+    const source = new Account(sourceAddress, '0')
+    const networkPassphrase = STELLAR_NETWORK === 'public' ? Networks.PUBLIC : Networks.TESTNET
+
+    const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
+      .addOperation(contract.call('is_paused'))
+      .setTimeout(0)
+      .build()
+
+    const sim = await withTimeout(server.simulateTransaction(tx), 'Simulate timed out', 3000)
+    if ('result' in sim && sim.result?.retval) {
+      return Boolean(scValToNative(sim.result.retval))
+    }
+  } catch {
+    return false
+  }
+  return false
 }
