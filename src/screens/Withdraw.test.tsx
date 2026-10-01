@@ -17,6 +17,55 @@ vi.mock('../wallet/WalletProvider', () => ({
   }),
 }))
 
+vi.mock('../hooks/usePortfolio', () => ({
+  usePortfolio: () => ({
+    you: {
+      value: 500,
+      deltaAbs: 100,
+      deltaPct: 25,
+      hbs: 450,
+      poolSharePct: 0.1,
+      weightedGreen: 90,
+      backed: 3,
+      riskScore: 20,
+      riskLevel: 'conservative' as const,
+    },
+    portfolio: {
+      address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
+      shares: 450,
+      usdcValue: 500,
+      holdings: [],
+    },
+    claimableYield: 0,
+    activity: [],
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+  }),
+}))
+
+vi.mock('../wallet/useVaultLimits', () => ({
+  useVaultLimits: () => ({
+    minWithdrawShares: 1,
+    paused: false,
+    maxTx: 1000,
+    lockExpiresAt: 0,
+    utilizationBps: 5000,
+    loading: false,
+  }),
+}))
+
+vi.mock('../wallet/useVault', () => ({
+  useVault: () => ({
+    sharePrice: 1.1,
+    totalAssets: 400,
+    loading: false,
+    error: null,
+    refresh: vi.fn(),
+    fetchedAt: new Date(),
+  }),
+}))
+
 vi.mock('../wallet/vault', () => ({
   submitWithdraw: vi.fn(),
   estimateTransactionFee: vi.fn().mockResolvedValue(0.00001),
@@ -49,11 +98,13 @@ vi.mock('../components', async () => {
       children,
       disabled,
       onClick,
+      reason,
     }: {
       children: React.ReactNode
       disabled?: boolean
       onClick?: () => void
-    }) => React.createElement('button', { disabled, onClick }, children),
+      reason?: string
+    }) => React.createElement('button', { disabled, onClick, 'data-reason': reason }, children),
     LiquidityMeter: () => React.createElement('div', null, 'Available to withdraw now'),
     useToast: () => ({ toast: vi.fn() }),
   }
@@ -142,5 +193,26 @@ describe('Withdraw', () => {
 
     expect(screen.getByText('Queued — owed amount $300.00 USDC')).toBeVisible()
     expect(screen.getByText('abcdef…567890')).toBeVisible()
+  })
+
+  test('blocks amount larger than user position with clear reason', async () => {
+    render(<Withdraw onDone={vi.fn()} onBack={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '600' } })
+
+    const btn = screen.getByRole('button', { name: 'Withdraw' })
+    expect(btn).toBeDisabled()
+    expect(btn).toHaveAttribute('data-reason', 'Amount exceeds your position')
+  })
+
+  test('does not show queue warning when amount is within liquid balance', async () => {
+    render(<Withdraw onDone={vi.fn()} onBack={vi.fn()} />)
+
+    fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '150' } })
+
+    expect(
+      screen.queryByText(/Requested amount exceeds immediately available liquid balance/),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Withdraw $150' })).toBeEnabled()
   })
 })

@@ -14,16 +14,8 @@ import { addPendingClaim } from '../wallet/pendingClaims'
 import { getExplorerTxUrl } from '../config/network'
 import { useVault } from '../wallet/useVault'
 import { useVaultLimits } from '../wallet/useVaultLimits'
+import { usePortfolio } from '../hooks/usePortfolio'
 
-const LIQUID_SHARE = 236
-const QUICK_WITHDRAW_AMOUNT_SMALL = 2000
-const QUICK_WITHDRAW_AMOUNT_MEDIUM = 5000
-const QUICK_WITHDRAW_AMOUNT_LARGE = 10000
-const QUICK_WITHDRAW_AMOUNTS = [
-  QUICK_WITHDRAW_AMOUNT_SMALL,
-  QUICK_WITHDRAW_AMOUNT_MEDIUM,
-  QUICK_WITHDRAW_AMOUNT_LARGE,
-]
 const DISPLAY_DECIMALS = 2
 const DEFAULT_SLIPPAGE_TOLERANCE = 0.005 // 0.5%
 
@@ -44,9 +36,21 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const tErr = useTranslations('ContractErrors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
-  const { sharePrice } = useVault()
-  const { minWithdrawShares, paused, maxTx, lockExpiresAt } = useVaultLimits()
-  const liquid = LIQUID_SHARE // your liquid share, $
+  const { you, portfolio } = usePortfolio()
+  const userValue = portfolio?.usdcValue ?? you?.value ?? 0
+  const { totalAssets, sharePrice } = useVault()
+  const { minWithdrawShares, paused, maxTx, lockExpiresAt, utilizationBps } = useVaultLimits()
+  const vaultLiquidUsdc = Math.max(0, (totalAssets || 0) * (1 - (utilizationBps || 0) / 10000))
+  const liquid = vaultLiquidUsdc
+  const cap = Math.min(userValue, maxTx)
+  const quickWithdrawChips =
+    userValue > 0
+      ? [
+          Math.floor(userValue * 0.25 * 100) / 100,
+          Math.floor(userValue * 0.5 * 100) / 100,
+          Math.floor(userValue * 100) / 100,
+        ].filter((v) => v > 0)
+      : []
   const [step, setStep] = useState<WithdrawStep>('amount')
   const [amount, setAmount] = useState('')
   const [txHash, setTxHash] = useState<string | null>(null)
@@ -135,16 +139,16 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               label={t('amountLabel')}
               currency="USDC"
               balanceLabel={t('yourValue')}
-              balance={maxTx.toFixed(2)}
-              chips={QUICK_WITHDRAW_AMOUNTS}
+              balance={userValue.toFixed(DISPLAY_DECIMALS)}
+              chips={quickWithdrawChips}
               min={minWithdrawUsdc}
               max={maxTx}
-              cap={liquid}
-              capMessage={t('capMessage', { cap: liquid })}
+              cap={cap}
+              capMessage={t('capMessage', { cap: formatDecimal(cap, DISPLAY_DECIMALS) })}
               maxChipLabel={t('maxChip')}
               capActionLabel={t('withdrawMaxAvailable')}
             />
-            {n > liquid && n <= maxTx && (
+            {n > vaultLiquidUsdc && n <= cap && (
               <div
                 role="status"
                 style={{
@@ -159,8 +163,9 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 }}
               >
                 <strong>Warning:</strong> Requested amount exceeds immediately available liquid
-                balance (${liquid}.00). Your withdrawal will be placed in the FIFO queue
-                (WithdrawQueued) and will be claimable once vault liquidity is replenished.
+                balance (${formatDecimal(vaultLiquidUsdc, DISPLAY_DECIMALS)}). Your withdrawal will
+                be placed in the FIFO queue (WithdrawQueued) and will be claimable once vault
+                liquidity is replenished.
               </div>
             )}
             {n > maxTx && (
@@ -223,17 +228,21 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               variant="primary"
               size="lg"
               style={{ width: '100%', marginTop: 20, background: 'var(--primary)' }}
-              disabled={n < minWithdrawUsdc || n > maxTx || paused || isLocked}
+              disabled={n < minWithdrawUsdc || n > maxTx || n > userValue || paused || isLocked}
               reason={
                 paused
                   ? 'Vault paused'
                   : isLocked
                     ? lockText
-                    : n > maxTx
-                      ? 'Amount exceeds pool limit'
-                      : n < minWithdrawUsdc
-                        ? t('reasonMin', { min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS) })
-                        : undefined
+                    : n > userValue
+                      ? 'Amount exceeds your position'
+                      : n > maxTx
+                        ? 'Amount exceeds pool limit'
+                        : n < minWithdrawUsdc
+                          ? t('reasonMin', {
+                              min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS),
+                            })
+                          : undefined
               }
               onClick={async () => {
                 changeStep('pending')
@@ -326,9 +335,9 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 }
               }}
             >
-              {n >= minWithdrawUsdc && n <= liquid && !paused && !isLocked
+              {n >= minWithdrawUsdc && n <= liquid && n <= userValue && !paused && !isLocked
                 ? t('withdrawCta', { amount: n })
-                : n > liquid && n <= maxTx && !paused && !isLocked
+                : n > liquid && n <= cap && !paused && !isLocked
                   ? `Enqueue withdrawal for $${formatDecimal(n, DISPLAY_DECIMALS)}`
                   : t('withdrawCtaEmpty')}
             </Button>
