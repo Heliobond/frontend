@@ -36,8 +36,10 @@ export function IconButton({
 
   const palette: Record<IconButtonVariant, CSSProperties> = {
     solid: {
-      background: hover ? 'color-mix(in srgb, var(--solar) 92%, var(--ink))' : 'var(--solar)',
-      color: 'var(--ink)',
+      background: hover
+        ? 'color-mix(in srgb, var(--solar) 92%, var(--text-on-solar))'
+        : 'var(--solar)',
+      color: 'var(--text-on-solar)',
       border: '1px solid transparent',
     },
     outline: {

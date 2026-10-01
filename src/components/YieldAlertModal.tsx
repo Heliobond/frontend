@@ -232,7 +232,7 @@ export function YieldAlertModal({
                   fontWeight: 600,
                   transition: 'all 0.15s ease',
                   background: operator === op ? 'var(--solar)' : 'var(--surface)',
-                  color: operator === op ? 'var(--ink)' : 'var(--ink-60)',
+                  color: operator === op ? 'var(--text-on-solar)' : 'var(--ink-60)',
                 }}
               >
                 {op === 'above' ? t('operatorAbove') : t('operatorBelow')}
