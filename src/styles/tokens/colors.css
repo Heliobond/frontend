@@ -8,7 +8,7 @@
 
    HARD RULES (enforced in copy + components, restated here):
    · --solar is NEVER text on light backgrounds and never carries meaning alone.
-   · Text on solar fills is --ink (passes AAA).
+   · Text on solar fills is --text-on-solar (passes AAA in both light and dark themes).
    · --growth / --ember as text only at >=14px / 600, always with a +/- glyph.
    =========================================================================== */
 
@@ -22,6 +22,7 @@
   --solar: #ffb400; /* the sun — brand accent                        */
   --growth: #0e6f44; /* positive deltas / success (semantic only)     */
   --ember: #b3361b; /* errors / negative deltas (calm, not alarmist) */
+  --on-solar: #0b2b23; /* fixed deep pine — guaranteed >=8:1 contrast on --solar in both themes */
 
   /* --- Ink-derived neutrals (opacity ramps over canvas) --------------- */
   --ink-60: rgba(11, 43, 35, 0.6); /* secondary text                   */
@@ -45,7 +46,7 @@
   --text-strong: var(--ink);
   --text-secondary: var(--ink-60);
   --text-tertiary: var(--ink-40);
-  --text-on-solar: var(--ink);
+  --text-on-solar: var(--on-solar);
   --text-positive: var(--growth);
   --text-negative: var(--ember);
   --text-link: var(--ink-60);
@@ -80,6 +81,8 @@
   --solar: #ffb400; /* unchanged — large text / icons only on dark  */
   --growth: #5dd99a; /* lifted further for AA contrast (4.68:1 on surface) */
   --ember: #ff9b82; /* lifted for AA contrast (4.52:1 on surface)   */
+  --on-solar: #0b2b23; /* fixed deep pine — guaranteed >=8:1 contrast on --solar in both themes */
+  --text-on-solar: var(--on-solar);
 
   --ink-60: rgba(
     237,

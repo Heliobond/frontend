@@ -12,6 +12,8 @@ export const lightPalette = {
   solar: '#ffb400',
   growth: '#0e6f44',
   ember: '#b3361b',
+  onSolar: '#0b2b23',
+  textOnSolar: '#0b2b23',
 
   // Ink-derived neutrals
   ink60: 'rgba(11, 43, 35, 0.6)',
@@ -33,6 +35,8 @@ export const darkPalette = {
   solar: '#ffb400',
   growth: '#5dd99a',
   ember: '#ff9b82',
+  onSolar: '#0b2b23',
+  textOnSolar: '#0b2b23',
 
   // Lifted neutrals for AA/AAA contrast
   ink60: 'rgba(237, 242, 236, 0.72)',
@@ -80,6 +84,7 @@ export const colors = {
   textStrong: 'var(--text-strong)',
   textSecondary: 'var(--text-secondary)',
   textTertiary: 'var(--text-tertiary)',
+  onSolar: 'var(--on-solar)',
   textOnSolar: 'var(--text-on-solar)',
   textPositive: 'var(--text-positive)',
   textNegative: 'var(--text-negative)',

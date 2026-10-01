@@ -36,6 +36,8 @@ describe('Heliobond Theme Configuration', () => {
       expect(colors.ink12).toBe('var(--ink-12)')
       expect(colors.ink06).toBe('var(--ink-06)')
       expect(colors.focusRing).toBe('var(--focus-ring)')
+      expect(colors.onSolar).toBe('var(--on-solar)')
+      expect(colors.textOnSolar).toBe('var(--text-on-solar)')
     })
 
     it('matches light palette constants with design system colors.css', () => {
@@ -45,6 +47,8 @@ describe('Heliobond Theme Configuration', () => {
       expect(lightPalette.solar).toBe('#ffb400')
       expect(lightPalette.growth).toBe('#0e6f44')
       expect(lightPalette.ember).toBe('#b3361b')
+      expect(lightPalette.onSolar).toBe('#0b2b23')
+      expect(lightPalette.textOnSolar).toBe('#0b2b23')
     })
 
     it('matches dark palette constants with design system colors.css', () => {
@@ -54,6 +58,8 @@ describe('Heliobond Theme Configuration', () => {
       expect(darkPalette.solar).toBe('#ffb400')
       expect(darkPalette.growth).toBe('#5dd99a')
       expect(darkPalette.ember).toBe('#ff9b82')
+      expect(darkPalette.onSolar).toBe('#0b2b23')
+      expect(darkPalette.textOnSolar).toBe('#0b2b23')
     })
   })
 

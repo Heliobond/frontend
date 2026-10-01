@@ -78,7 +78,7 @@ export default function NotFound() {
           lineHeight: 1,
           borderRadius: 'var(--radius-pill)',
           background: 'var(--solar)',
-          color: 'var(--ink)',
+          color: 'var(--text-on-solar)',
           textDecoration: 'none',
           border: '1px solid transparent',
           transition: 'background var(--dur-press) var(--ease-out)',
