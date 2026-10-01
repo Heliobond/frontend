@@ -245,13 +245,13 @@ export function validateProjectId(id: number): number {
 }
 
 /** Build ScVal arguments for fund_project (u32, i128) */
-export function buildFundProjectArgs(projectId: number, amount: number | bigint): [xdr.ScVal, xdr.ScVal] {
+export function buildFundProjectArgs(
+  projectId: number,
+  amount: number | bigint,
+): [xdr.ScVal, xdr.ScVal] {
   validateProjectId(projectId)
   const scaledAmount = typeof amount === 'bigint' ? amount : BigInt(Math.round(amount * 1e7))
-  return [
-    nativeToScVal(projectId, { type: 'u32' }),
-    nativeToScVal(scaledAmount, { type: 'i128' }),
-  ]
+  return [nativeToScVal(projectId, { type: 'u32' }), nativeToScVal(scaledAmount, { type: 'i128' })]
 }
 
 /** Build ScVal arguments for update_impact_score (u32, u32, u32) */
@@ -289,13 +289,7 @@ export async function submitFundProject(
 
   const method = isMultisig ? 'fund_project_approved' : 'fund_project'
   const args = buildFundProjectArgs(projectId, amount)
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    args,
-    address,
-    sign,
-  )
+  const hash = await sendContractTx(VAULT_CONTRACT_ID, method, args, address, sign)
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 
@@ -316,13 +310,7 @@ export async function submitUpdateScores(
 
   const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
   const args = buildUpdateScoresArgs(projectId, credit, green)
-  const hash = await sendContractTx(
-    targetContract,
-    method,
-    args,
-    address,
-    sign,
-  )
+  const hash = await sendContractTx(targetContract, method, args, address, sign)
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 

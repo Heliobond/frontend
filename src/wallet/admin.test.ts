@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  validateProjectId,
-  buildFundProjectArgs,
-  buildUpdateScoresArgs,
-} from './admin'
+import { validateProjectId, buildFundProjectArgs, buildUpdateScoresArgs } from './admin'
 
 describe('admin arg encoding (Issue #688)', () => {
   describe('validateProjectId', () => {
