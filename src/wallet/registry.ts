@@ -201,27 +201,28 @@ export function normalizeHash(
  * funding amounts — those come from the off-chain `uri` metadata.
  */
 export interface OnChainProjectRaw {
-  owner: string
-  uri: string
-  credit_quality: number | bigint
-  green_impact: number | bigint
-  maturity_date: number | bigint
-  certification_status: number | bigint
-  last_update_timestamp: number | bigint
-  /** `ProjectStatus` enum: Pending=0, Active=1, Funded=2, Completed=3, Archived=4 */
-  status: number | bigint
-  created_at: number | bigint
-  metadata_hash: string | Uint8Array
-}
-
-/** A `(u32, ProjectData)` element from `get_projects_page`. */
-export type OnChainProjectTuple = [number | bigint, OnChainProjectRaw]
-
-/** A single `ScoreHistoryEntry` from `get_score_history`. */
-export interface OnChainScoreHistoryEntryRaw {
-  timestamp: number | bigint
-  credit_quality: number | bigint
-  green_impact: number | bigint
+  // Contract returns (u32, ProjectData) tuples — id comes from the tuple,
+  // not from ProjectData itself.
+  id?: number | bigint
+  // ProjectData struct fields (from contract types.rs):
+  owner?: string
+  uri?: string
+  credit_quality?: number | bigint
+  green_impact?: number | bigint
+  maturity_date?: number | bigint
+  certification_status?: number | bigint
+  last_update_timestamp?: number | bigint
+  status?: number | bigint
+  created_at?: number | bigint
+  metadata_hash?: string | Uint8Array
+  // Legacy fields (kept for fixture/demo compatibility):
+  name?: string
+  creator?: string
+  metadata_uri?: string
+  credit_score?: number | bigint
+  green_score?: number | bigint
+  funded_amount?: number | bigint
+  target_amount?: number | bigint
 }
 
 export interface OffChainMetadata {
@@ -440,9 +441,9 @@ export async function fetchProjectWithDetails(
     let verifiedMetadata: MetadataVerificationStatus = 'unverified'
     let offChainMetadata: OffChainMetadata | undefined
 
-    if (raw.uri) {
+    if (raw.metadata_uri || raw.uri) {
       try {
-        const res = await fetch(raw.uri)
+        const res = await fetch(raw.metadata_uri || raw.uri)
         if (res.ok) {
           const rawBytes = await res.arrayBuffer()
           const expected = normalizeHash(raw.metadata_hash)
