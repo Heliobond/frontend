@@ -261,10 +261,10 @@ export function buildFundProjectCall(
   projectId: number,
   scaledAmount: bigint,
   approvals: string[] = [],
-): { method: string; args: any[] } {
+): { method: string; args: unknown[] } {
   const isMultisig = approvals.length > 0
   const method = isMultisig ? 'fund_project_with_approvals' : 'fund_project'
-  const args: any[] = [
+  const args: unknown[] = [
     nativeToScVal(projectId, { type: 'u32' }),
     nativeToScVal(scaledAmount, { type: 'i128' }),
   ]
@@ -279,10 +279,10 @@ export function buildUpdateScoresCall(
   credit: number,
   green: number,
   approvals: string[] = [],
-): { method: string; args: any[] } {
+): { method: string; args: unknown[] } {
   const isMultisig = approvals.length > 0
   const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
-  const args: any[] = [
+  const args: unknown[] = [
     nativeToScVal(projectId, { type: 'u32' }),
     nativeToScVal(credit, { type: 'u32' }),
     nativeToScVal(green, { type: 'u32' }),
@@ -342,8 +342,9 @@ export async function submitSetWhitelist(
   approved: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  _isMultisig = false,
+  _isMultisig?: boolean,
 ): Promise<AdminTxResult> {
+  void _isMultisig
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
