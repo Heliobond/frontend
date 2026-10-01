@@ -1,6 +1,7 @@
 'use client'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { ThemeProvider } from '../theme/ThemeProvider'
 import { WalletProvider, useWallet } from '../wallet/WalletProvider'
 import { TransactionsProvider } from '../wallet/TransactionsProvider'
@@ -37,6 +38,7 @@ function Telemetry() {
 function SessionWatcher() {
   const { connected, disconnect } = useWallet()
   const { toast } = useToast()
+  const tTimeout = useTranslations('SessionTimeoutExtra')
 
   const { isWarningOpen, formattedRemaining, extendSession, expireNow } = useSessionTimeout({
     enabled: connected,
@@ -44,8 +46,8 @@ function SessionWatcher() {
       disconnect()
       toast({
         tone: 'error',
-        title: 'Session expired',
-        message: 'You have been disconnected due to inactivity.',
+        title: tTimeout('sessionExpired'),
+        message: tTimeout('inactivityDisconnect'),
       })
     },
   })
@@ -67,6 +69,7 @@ function SessionWatcher() {
 export function OfflineBanner() {
   const { connected, lastDisconnectReason } = useWallet()
   const { isOnline } = useHorizonHealth()
+  const tShell = useTranslations('Shell')
 
   // A session the user ended on purpose must not raise a false alarm (#595).
   // An unexpected drop — or a plain network outage — still does.
@@ -89,7 +92,7 @@ export function OfflineBanner() {
         fontSize: '0.875rem',
       }}
     >
-      <strong>Offline</strong> &mdash; Showing cached data. Attempting to reconnect...
+      <strong>{tShell('offline')}</strong> &mdash; {tShell('offlineShowingCached')}
     </div>
   )
 }

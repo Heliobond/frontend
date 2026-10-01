@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
-import { getLocale, getMessages } from 'next-intl/server'
+import { getLocale, getMessages, getTranslations } from 'next-intl/server'
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
 import { Providers } from './providers'
@@ -74,6 +74,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
   const messages = await getMessages()
+  const tShell = await getTranslations('Shell')
   // Per-request CSP nonce set by src/proxy.ts (#601); the inline theme script needs it.
   const nonce = (await headers()).get('x-nonce') ?? undefined
 
@@ -91,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LocaleProvider initialLocale={locale as Locale} initialMessages={messages as Messages}>
           <Providers>
             <a href="#main-content" className="hb-skip-link">
-              Skip to content
+              {tShell('skipToContent')}
             </a>
             <Suspense fallback={null}>
               <TopBar />

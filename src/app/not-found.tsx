@@ -1,12 +1,15 @@
 import Link from 'next/link'
+import { getTranslations } from 'next-intl/server'
 import { Helio } from '../brand/Helio'
 
 /**
  * App-level 404 — unknown routes fall here instead of the framework default.
  * Branded: Helio orb at reduced size, display-type heading, solar accent, back
- * to the landing CTA. Pure Server Component — no client hooks needed.
+ * to the landing CTA. Pure Server Component — localized with getTranslations.
  */
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations('NotFound')
+
   return (
     <main
       id="main-content"
@@ -48,7 +51,7 @@ export default function NotFound() {
           margin: '0 0 14px',
         }}
       >
-        Page not found
+        {t('h1')}
       </h1>
 
       <p
@@ -61,7 +64,7 @@ export default function NotFound() {
           margin: '0 0 36px',
         }}
       >
-        The route you followed doesn&apos;t exist — it may have moved or never existed.
+        {t('body')}
       </p>
 
       <Link
@@ -84,7 +87,7 @@ export default function NotFound() {
           transition: 'background var(--dur-press) var(--ease-out)',
         }}
       >
-        Back to Heliobond
+        {t('backHome')}
       </Link>
     </main>
   )

@@ -591,5 +591,40 @@
       "title": "Proyecto no encontrado",
       "description": "No se ha encontrado el proyecto de energía verde solicitado."
     }
+  },
+  "Shell": {
+    "skipToContent": "Saltar al contenido",
+    "homeLabel": "Heliobond — inicio",
+    "networkOnline": "Red: {network} en línea",
+    "offline": "Desconectado",
+    "offlineCached": "Desconectado — mostrando datos en caché",
+    "activityHistory": "Historial de actividad de transacciones",
+    "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}",
+    "activity": "Actividad",
+    "signingBlocked": "La firma está bloqueada hasta que coincidan.",
+    "checkAgain": "Comprobar de nuevo",
+    "syncingWithStellar": "Sincronizando con Stellar",
+    "syncingWithStellarEllipsis": "Sincronizando con Stellar…",
+    "offlineShowingCached": "Mostrando datos en caché. Intentando reconectar..."
+  },
+  "Errors": {
+    "somethingWentWrong": "Algo salió mal",
+    "youreOffline": "Estás desconectado",
+    "lostConnection": "Se perdió la conexión con Stellar",
+    "unexpectedError": "Ocurrió un error inesperado",
+    "offlineBody": "La aplicación no pudo conectarse al nodo Stellar. Comprueba tu conexión o inténtalo de nuevo.",
+    "unexpectedBody": "La aplicación encontró un problema inesperado. Puedes intentar recuperar o volver al inicio.",
+    "errorRef": "Ref. de error: {digest}",
+    "tryAgain": "Intentar de nuevo",
+    "goHome": "Ir al inicio"
+  },
+  "NotFound": {
+    "h1": "Página no encontrada",
+    "body": "La ruta que seguiste no existe: puede que se haya movido o nunca haya existido.",
+    "backHome": "Volver a Heliobond"
+  },
+  "SessionTimeoutExtra": {
+    "sessionExpired": "Sesión expirada",
+    "inactivityDisconnect": "Has sido desconectado por inactividad."
   }
 }

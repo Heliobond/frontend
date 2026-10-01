@@ -39,6 +39,7 @@ export function TopBar() {
   const pathname = usePathname()
   const router = useRouter()
   const t = useTranslations('Nav')
+  const tShell = useTranslations('Shell')
   useLocaleSwitcher()
   const {
     connected,
@@ -118,7 +119,7 @@ export function TopBar() {
   return (
     <>
       <header className="hb-topbar">
-        <Link href="/" aria-label="Heliobond — home" className="hb-topbar__home">
+        <Link href="/" aria-label={tShell('homeLabel')} className="hb-topbar__home">
           {mounted && pathname === '/' ? <Mark /> : null}
           <span
             style={{
@@ -164,7 +165,7 @@ export function TopBar() {
 
           <span
             role="status"
-            aria-label={networkOnline ? `Network: ${NETWORK_NAME} online` : 'Offline'}
+            aria-label={networkOnline ? tShell('networkOnline', { network: NETWORK_NAME }) : tShell('offline')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -187,7 +188,7 @@ export function TopBar() {
                 boxShadow: networkOnline ? '0 0 0 3px var(--growth-12)' : 'none',
               }}
             />
-            {networkOnline ? null : 'Offline'}
+            {networkOnline ? null : tShell('offline')}
           </span>
 
           <PreferencesDropdown />
@@ -196,8 +197,8 @@ export function TopBar() {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              aria-label="Transaction activity history"
-              title="Transaction activity history"
+              aria-label={tShell('activityHistory')}
+              title={tShell('activityHistory')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -228,7 +229,7 @@ export function TopBar() {
                   }}
                 />
               )}
-              {pendingCount > 0 ? `${pendingCount} Pending` : 'Activity'}
+              {pendingCount > 0 ? tShell('pendingCount', { count: pendingCount }) : tShell('activity')}
             </button>
           )}
 
@@ -300,7 +301,7 @@ export function TopBar() {
             fontWeight: 500,
           }}
         >
-          Offline — showing cached data
+          {tShell('offlineCached')}
         </div>
       )}
       {networkMismatch && walletNetworkPassphrase && (
@@ -325,8 +326,7 @@ export function TopBar() {
           }}
         >
           <span>
-            {networkMismatchMessage(walletNetworkPassphrase, NETWORK_PASSPHRASE)} Signing is blocked
-            until they match.
+            {networkMismatchMessage(walletNetworkPassphrase, NETWORK_PASSPHRASE)} {tShell('signingBlocked')}
           </span>
           <button
             type="button"
@@ -343,7 +343,7 @@ export function TopBar() {
               cursor: 'pointer',
             }}
           >
-            Check again
+            {tShell('checkAgain')}
           </button>
         </div>
       )}
@@ -639,6 +639,7 @@ function WalletMenu({
   syncing?: boolean
 }) {
   const t = useTranslations('Nav')
+  const tShell = useTranslations('Shell')
   const { toast } = useToast()
   const router = useRouter()
   const { disconnect } = useWallet()
@@ -819,8 +820,8 @@ function WalletMenu({
         {syncing ? (
           <span
             role="status"
-            aria-label="Syncing with Stellar"
-            title="Syncing with Stellar…"
+            aria-label={tShell('syncingWithStellar')}
+            title={tShell('syncingWithStellarEllipsis')}
             style={{
               width: 16,
               height: 16,

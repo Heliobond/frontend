@@ -591,5 +591,40 @@
       "title": "Projeto não encontrado",
       "description": "Não foi possível encontrar o projeto de energia verde solicitado."
     }
+  },
+  "Shell": {
+    "skipToContent": "Pular para o conteúdo",
+    "homeLabel": "Heliobond — início",
+    "networkOnline": "Rede: {network} online",
+    "offline": "Offline",
+    "offlineCached": "Offline — mostrando dados em cache",
+    "activityHistory": "Histórico de atividades de transações",
+    "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+    "activity": "Atividade",
+    "signingBlocked": "A assinatura está bloqueada até corresponderem.",
+    "checkAgain": "Verificar novamente",
+    "syncingWithStellar": "Sincronizando com Stellar",
+    "syncingWithStellarEllipsis": "Sincronizando com Stellar…",
+    "offlineShowingCached": "Mostrando dados em cache. Tentando reconectar..."
+  },
+  "Errors": {
+    "somethingWentWrong": "Algo deu errado",
+    "youreOffline": "Você está offline",
+    "lostConnection": "Conexão perdida com Stellar",
+    "unexpectedError": "Ocorreu um erro inesperado",
+    "offlineBody": "O aplicativo não conseguiu alcançar o nó Stellar. Verifique sua conexão ou tente novamente.",
+    "unexpectedBody": "O aplicativo encontrou um problema inesperado. Tente recuperar ou volte ao início.",
+    "errorRef": "Ref. de erro: {digest}",
+    "tryAgain": "Tentar novamente",
+    "goHome": "Voltar ao início"
+  },
+  "NotFound": {
+    "h1": "Página não encontrada",
+    "body": "A página que você seguiu não existe — pode ter sido movida ou nunca existiu.",
+    "backHome": "Voltar para Heliobond"
+  },
+  "SessionTimeoutExtra": {
+    "sessionExpired": "Sessão expirada",
+    "inactivityDisconnect": "Você foi desconectado por inatividade."
   }
 }

@@ -591,5 +591,40 @@
       "title": "Project not found",
       "description": "The requested green energy project could not be found."
     }
+  },
+  "Shell": {
+    "skipToContent": "Skip to content",
+    "homeLabel": "Heliobond — home",
+    "networkOnline": "Network: {network} online",
+    "offline": "Offline",
+    "offlineCached": "Offline — showing cached data",
+    "activityHistory": "Transaction activity history",
+    "pendingCount": "{count, plural, one {# Pending} other {# Pending}}",
+    "activity": "Activity",
+    "signingBlocked": "Signing is blocked until they match.",
+    "checkAgain": "Check again",
+    "syncingWithStellar": "Syncing with Stellar",
+    "syncingWithStellarEllipsis": "Syncing with Stellar…",
+    "offlineShowingCached": "Showing cached data. Attempting to reconnect..."
+  },
+  "Errors": {
+    "somethingWentWrong": "Something went wrong",
+    "youreOffline": "You're offline",
+    "lostConnection": "Lost connection to Stellar",
+    "unexpectedError": "An unexpected error occurred",
+    "offlineBody": "The app couldn't reach the Stellar node. Check your connection or try again. You can still access cached views.",
+    "unexpectedBody": "The application hit an unexpected problem. You can try recovering, or go back to the home page.",
+    "errorRef": "Error ref: {digest}",
+    "tryAgain": "Try again",
+    "goHome": "Go home"
+  },
+  "NotFound": {
+    "h1": "Page not found",
+    "body": "The route you followed doesn't exist — it may have moved or never existed.",
+    "backHome": "Back to Heliobond"
+  },
+  "SessionTimeoutExtra": {
+    "sessionExpired": "Session expired",
+    "inactivityDisconnect": "You have been disconnected due to inactivity."
   }
 }

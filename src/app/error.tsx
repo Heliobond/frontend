@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Helio } from '../brand/Helio'
 import { reportError } from '../lib/errorReporting'
 import { useHorizonHealth } from '../hooks/useHorizonHealth'
@@ -45,6 +46,7 @@ export default function GlobalError({
   const { isOnline } = useHorizonHealth()
   const browserOnline = useBrowserOnline()
   const isOffline = !isOnline || !browserOnline
+  const t = useTranslations('Errors')
 
   useEffect(() => {
     console.error('[Heliobond] unhandled error:', error)
@@ -81,7 +83,7 @@ export default function GlobalError({
           textTransform: 'uppercase',
         }}
       >
-        {isOffline ? "You're offline" : 'Something went wrong'}
+        {isOffline ? t('youreOffline') : t('somethingWentWrong')}
       </p>
 
       <h1
@@ -95,7 +97,7 @@ export default function GlobalError({
           margin: '0 0 14px',
         }}
       >
-        {isOffline ? 'Lost connection to Stellar' : 'An unexpected error occurred'}
+        {isOffline ? t('lostConnection') : t('unexpectedError')}
       </h1>
 
       <p
@@ -108,9 +110,7 @@ export default function GlobalError({
           margin: '0 0 8px',
         }}
       >
-        {isOffline
-          ? "The app couldn't reach the Stellar node. Check your connection or try again. You can still access cached views."
-          : 'The application hit an unexpected problem. You can try recovering, or go back to the home page.'}
+{isOffline ? t('offlineBody') : t('unexpectedBody')}
       </p>
 
       {error.digest && (
@@ -122,7 +122,7 @@ export default function GlobalError({
             margin: '0 0 32px',
           }}
         >
-          Error ref: {error.digest}
+          {t('errorRef', { digest: error.digest })}
         </p>
       )}
       {!error.digest && <div style={{ marginBottom: 32 }} />}
@@ -149,7 +149,7 @@ export default function GlobalError({
             transition: 'background var(--dur-press) var(--ease-out)',
           }}
         >
-          Try again
+          {t('tryAgain')}
         </button>
 
         <Link
@@ -172,7 +172,7 @@ export default function GlobalError({
             transition: 'background var(--dur-press) var(--ease-out)',
           }}
         >
-          Go home
+          {t('goHome')}
         </Link>
       </div>
     </main>

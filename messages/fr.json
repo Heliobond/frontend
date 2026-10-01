@@ -22,7 +22,7 @@
     "watchlist": "Liste de suivi",
     "copyAddress": "Copier l'adresse",
     "copied": "Copié",
-    "viewInvestment": "Voir votre investissement",
+    "viewInvestment": "View your investment",
     "viewOnExplorer": "Voir sur Stellar Expert",
     "disconnect": "Se déconnecter",
     "disconnectConfirm": "Oui, se déconnecter",
@@ -30,8 +30,7 @@
     "disconnectCancel": "Annuler",
     "demoSession": "Session démo",
     "referral": "Referral",
-    "shareLink": "Share your referral link",
-    "viewInvestment": "View your investment"
+    "shareLink": "Share your referral link"
   },
   "Footer": {
     "trustLinks": "Liens de confiance",
@@ -169,10 +168,9 @@
     "pendingTx": "tx a91f…3c0d · voir sur Stellar Expert ↗",
     "successH1": "Bienvenue dans le pool",
     "successBody": "Vous avez reçu <num>{shares} HBS</num> et soutenez désormais <b>{count} projets vérifiés</b>.",
-    "viewInvestment": "Voir votre investissement",
+    "viewInvestment": "View your investment",
     "viewExpert": "Voir sur Stellar Expert",
-    "goPortfolio": "Aller au portefeuille",
-    "viewInvestment": "View your investment"
+    "goPortfolio": "Aller au portefeuille"
   },
   "Portfolio": {
     "eyebrow": "Votre portefeuille",
@@ -187,18 +185,13 @@
     "impactBody": "Votre participation aide à financer <b>{count} projets vérifiés</b> dans 6 pays.",
     "projectsBacked": "Projets soutenus",
     "weightedGreen": "Score vert pondéré",
-    "riskScore": "Score de risque du portefeuille",
-    "riskTierConservative": "Conservateur",
-    "riskTierModerate": "Modéré",
-    "riskTierAggressive": "Agressif",
-    "riskCaption": "Basé sur la répartition des notations d'obligations dans vos avoirs.",
-    "activityTitle": "Activité",
-    "activityNote": "chaque entrée → Stellar Expert",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",
     "riskTierAggressive": "Aggressive",
     "riskCaption": "Based on the mix of bond ratings in your holdings.",
+    "activityTitle": "Activité",
+    "activityNote": "chaque entrée → Stellar Expert",
     "referralProgram": "Referral program",
     "referralLink": "Your referral link",
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
@@ -598,5 +591,40 @@
       "title": "Projet introuvable",
       "description": "Le projet d’énergie verte demandé est introuvable."
     }
+  },
+  "Shell": {
+    "skipToContent": "Passer au contenu",
+    "homeLabel": "Heliobond — accueil",
+    "networkOnline": "Réseau : {network} en ligne",
+    "offline": "Hors ligne",
+    "offlineCached": "Hors ligne — affichage des données en cache",
+    "activityHistory": "Historique des transactions",
+    "pendingCount": "{count, plural, one {# en attente} other {# en attente}}",
+    "activity": "Activité",
+    "signingBlocked": "La signature est bloquée jusqu'à correspondance.",
+    "checkAgain": "Vérifier à nouveau",
+    "syncingWithStellar": "Synchronisation avec Stellar",
+    "syncingWithStellarEllipsis": "Synchronisation avec Stellar…",
+    "offlineShowingCached": "Affichage des données en cache. Tentative de reconnexion..."
+  },
+  "Errors": {
+    "somethingWentWrong": "Un problème est survenu",
+    "youreOffline": "Vous êtes hors ligne",
+    "lostConnection": "Connexion à Stellar perdue",
+    "unexpectedError": "Une erreur inattendue est survenue",
+    "offlineBody": "L'application n'a pas pu joindre le nœud Stellar. Vérifiez votre connexion ou réessayez.",
+    "unexpectedBody": "L'application a rencontré un problème inattendu. Vous pouvez réessayer ou revenir à l'accueil.",
+    "errorRef": "Réf. erreur : {digest}",
+    "tryAgain": "Réessayer",
+    "goHome": "Retour à l'accueil"
+  },
+  "NotFound": {
+    "h1": "Page non trouvée",
+    "body": "La page demandée n'existe pas — elle a peut-être été déplacée ou supprimée.",
+    "backHome": "Retour à Heliobond"
+  },
+  "SessionTimeoutExtra": {
+    "sessionExpired": "Session expirée",
+    "inactivityDisconnect": "Vous avez été déconnecté pour cause d'inactivité."
   }
 }
