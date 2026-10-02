@@ -247,3 +247,8 @@ Run the suites with `bun run test` (unit + jsdom), `bun run test:e2e` and
 
 Implemented from the _Heliobond Design System_ handoff bundle exported from
 Claude Design. The reference bundle lives under `.design-handoff/` (gitignored).
+
+
+## Contributing
+
+Please check [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and development workflow.
