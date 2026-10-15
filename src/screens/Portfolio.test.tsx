@@ -296,7 +296,9 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
 
     await waitFor(() => {
       expect(screen.getByText('$7,500')).toBeInTheDocument()
-      expect(screen.getByText(/Your liquid share\. The rest is working in projects\./i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Your liquid share\. The rest is working in projects\./i),
+      ).toBeInTheDocument()
     })
   })
 })
