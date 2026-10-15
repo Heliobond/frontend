@@ -222,11 +222,14 @@ async function sorobanSimulate(
   method: string,
   args: XdrTypes.ScVal[] = [],
   network: string = STELLAR_NETWORK,
+  targetContractId: string | undefined = CONTRACT_ID,
 ): Promise<XdrTypes.ScVal> {
+  const contractIdToUse = targetContractId ?? CONTRACT_ID
+  if (!contractIdToUse) throw new Error('Contract ID not configured')
   const { rpc, Contract, TransactionBuilder, Account } = await loadSdk()
 
   const server = new rpc.Server(RPC_URL, { allowHttp: allowHttpFor(RPC_URL) })
-  const contract = new Contract(CONTRACT_ID!)
+  const contract = new Contract(contractIdToUse)
   // Sequence '0' is fine for simulation — only the address format matters.
   const source = new Account(sourceAddress, '0')
   const networkPassphrase = passphraseForNetwork(network === 'public' ? 'PUBLIC' : 'TESTNET')
@@ -309,6 +312,34 @@ export async function fetchUtilizationBps(
   try {
     const retval = await sorobanSimulate(sourceAddress, 'get_utilization_bps', [], network)
     return Number(scValToNative(retval))
+  } catch (e) {
+    if (isTransportError(e)) setOffline(true)
+    throw e instanceof Error ? e : new Error(String(e))
+  }
+}
+
+/**
+ * Read the wallet's on-chain USDC balance from the Stellar Asset Contract (SAC).
+ * Simulates balance(id) on the SAC and scales the i128 stroops result by 10^7 (#698).
+ * Throws when NEXT_PUBLIC_USDC_SAC_ID is not set.
+ */
+export async function fetchUsdcBalance(
+  sourceAddress: string,
+  network = STELLAR_NETWORK,
+): Promise<number> {
+  const sacId = process.env.NEXT_PUBLIC_USDC_SAC_ID
+  if (!sacId) throw new Error('NEXT_PUBLIC_USDC_SAC_ID not set')
+  const { Address, scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const retval = await sorobanSimulate(
+      sourceAddress,
+      'balance',
+      [new Address(sourceAddress).toScVal()],
+      network,
+      sacId,
+    )
+    const raw = scValToNative(retval)
+    return Number(raw) / SCALE
   } catch (e) {
     if (isTransportError(e)) setOffline(true)
     throw e instanceof Error ? e : new Error(String(e))

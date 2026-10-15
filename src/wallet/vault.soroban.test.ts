@@ -581,6 +581,27 @@ describe('view calls', () => {
     expect(invocation(simulatedTx())).toMatchObject({ method: 'get_utilization_bps', args: [] })
   })
 
+  it('fetchUsdcBalance() simulates balance(id) on SAC and scales i128 stroops (#698)', async () => {
+    const sacId = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', sacId)
+    const vault = await loadVault()
+    rpcMock.simulateTransaction.mockResolvedValue(
+      okSimulation(nativeToScVal(5_000_0000000n, { type: 'i128' })),
+    )
+    await expect(vault.fetchUsdcBalance(USER)).resolves.toBe(5000)
+    expect(invocation(simulatedTx())).toMatchObject({
+      contract: sacId,
+      method: 'balance',
+      args: [USER],
+    })
+  })
+
+  it('fetchUsdcBalance() rejects when NEXT_PUBLIC_USDC_SAC_ID is not set (#698)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', '')
+    const vault = await loadVault()
+    await expect(vault.fetchUsdcBalance(USER)).rejects.toThrow('NEXT_PUBLIC_USDC_SAC_ID not set')
+  })
+
   it('get_portfolio(account: Address) maps the PortfolioInfo struct', async () => {
     const vault = await loadVault()
     const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' })
