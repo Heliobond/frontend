@@ -21,6 +21,8 @@ vi.mock('../wallet/vault', async (importOriginal) => {
     ...actual,
     fetchPortfolio: vi.fn(),
     fetchClaimableYield: vi.fn(),
+    fetchTotalAssets: vi.fn(),
+    fetchUtilizationBps: vi.fn(),
     submitClaim: vi.fn(),
   }
 })
@@ -37,6 +39,10 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
     vi.mocked(vault.fetchPortfolio).mockReset()
     vi.mocked(vault.fetchClaimableYield).mockReset()
     vi.mocked(vault.fetchClaimableYield).mockResolvedValue(0)
+    vi.mocked(vault.fetchTotalAssets).mockReset()
+    vi.mocked(vault.fetchUtilizationBps).mockReset()
+    vi.mocked(vault.fetchTotalAssets).mockResolvedValue(0)
+    vi.mocked(vault.fetchUtilizationBps).mockResolvedValue(0)
   })
 
   afterEach(() => {
@@ -194,6 +200,103 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
     await waitFor(() => {
       expect(screen.getByTestId('portfolio-empty')).toBeInTheDocument()
       expect(screen.getByText(/No active vault position found/i)).toBeInTheDocument()
+    })
+  })
+
+  it('asserts that the $320 note and fixture risk are absent for an on-chain portfolio (#702)', async () => {
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({
+      shares: 100,
+      usdcValue: 120,
+      claimableYield: 5,
+      shareOfPoolBps: 10,
+      totalDeposited: 100,
+    })
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$120')
+    })
+
+    // Assert $320 note is absent
+    expect(
+      screen.queryByText(/Includes \$320 pending\/escrow investments/i),
+    ).not.toBeInTheDocument()
+
+    // Assert fixture risk score and card are absent
+    expect(screen.queryByText(/Portfolio risk/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/based on bond ratings mix/i)).not.toBeInTheDocument()
+
+    // Assert hardcoded 236/482 figures are absent
+    expect(screen.queryByText('$236')).not.toBeInTheDocument()
+    expect(screen.queryByText('$482')).not.toBeInTheDocument()
+  })
+
+  it('does not render broken truncated referral links and renders at most one referral card when valid (#702)', async () => {
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({
+      shares: 100,
+      usdcValue: 120,
+      claimableYield: 5,
+      shareOfPoolBps: 10,
+      totalDeposited: 100,
+    })
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$120')
+    })
+
+    // Assert broken truncated link with Unicode ellipsis is not rendered
+    expect(screen.queryByText(/…/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^share$/i })).not.toBeInTheDocument()
+
+    // Assert referral cards are absent by default
+    expect(screen.queryByText(/Referral program/i)).not.toBeInTheDocument()
+  })
+
+  it('renders at most one referral card with working URL when feature flag is enabled (#702)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_REFERRALS', 'true')
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({
+      shares: 100,
+      usdcValue: 120,
+      claimableYield: 5,
+      shareOfPoolBps: 10,
+      totalDeposited: 100,
+    })
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$120')
+    })
+
+    // Assert at most one referral card renders
+    const copyButtons = screen.queryAllByRole('button', { name: /copy link/i })
+    expect(copyButtons.length).toBe(1)
+
+    // And it has a valid URL without ellipsis
+    const input = screen.getByRole('textbox') as HTMLInputElement
+    expect(input.value).toBe(`https://heliobond.fi/ref/${mockWallet.address}`)
+    expect(input.value).not.toContain('…')
+  })
+
+  it('renders dynamic vault liquidity when vault total assets and utilization are available (#702)', async () => {
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({
+      shares: 100,
+      usdcValue: 120,
+      claimableYield: 5,
+      shareOfPoolBps: 10,
+      totalDeposited: 100,
+    })
+    vi.mocked(vault.fetchTotalAssets).mockResolvedValue(10000)
+    vi.mocked(vault.fetchUtilizationBps).mockResolvedValue(2500) // 25% utilized -> 75% liquid = 7,500
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('$7,500')).toBeInTheDocument()
+      expect(screen.getByText(/Your liquid share\. The rest is working in projects\./i)).toBeInTheDocument()
     })
   })
 })

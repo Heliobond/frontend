@@ -1,10 +1,21 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useWallet } from '../wallet/WalletProvider'
 import { useVaultRefresh } from '../wallet/useVaultRefresh'
-import { fetchPortfolio, fetchClaimableYield, type OnChainPortfolio } from '../wallet/vault'
-import { selectYou, selectActivity, type YouSummary } from '../state/selectors'
+import {
+  fetchPortfolio,
+  fetchClaimableYield,
+  fetchTotalAssets,
+  fetchUtilizationBps,
+  type OnChainPortfolio,
+} from '../wallet/vault'
+import { selectYou, selectActivity, selectPoolSummary, type YouSummary } from '../state/selectors'
 import { type Activity } from '../data'
 import { apiFetch } from '../lib/api'
+
+export interface VaultLiquidity {
+  liquid: number
+  total: number
+}
 
 export interface UsePortfolioResult {
   portfolio: OnChainPortfolio | null
@@ -14,6 +25,7 @@ export interface UsePortfolioResult {
   loading: boolean
   error: string | null
   refresh: () => void
+  vaultLiquidity: VaultLiquidity | null
 }
 
 /**
@@ -31,6 +43,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
   const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
   const [claimableYield, setClaimableYield] = useState<number>(0)
+  const [vaultLiquidity, setVaultLiquidity] = useState<VaultLiquidity | null>(null)
   const [activityFeed, setActivityFeed] = useState<Activity[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -54,11 +67,14 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
       const key = `${address}:${reloads}`
       try {
-        // Fetch Soroban portfolio & claimable yield in parallel for time complexity O(1)
-        const [portResult, yieldResult] = await Promise.allSettled([
-          fetchPortfolio(address),
-          fetchClaimableYield(address),
-        ])
+        // Fetch Soroban portfolio, yield, and pool liquidity in parallel for time complexity O(1)
+        const [portResult, yieldResult, totalAssetsResult, utilBpsResult] =
+          await Promise.allSettled([
+            fetchPortfolio(address),
+            fetchClaimableYield(address),
+            fetchTotalAssets(address),
+            fetchUtilizationBps(address),
+          ])
 
         if (isCancelled()) return
 
@@ -82,6 +98,15 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
               ? yieldResult.reason.message
               : 'Could not load claimable yield',
           )
+        }
+
+        if (totalAssetsResult.status === 'fulfilled' && totalAssetsResult.value > 0) {
+          const total = totalAssetsResult.value
+          const bps = utilBpsResult.status === 'fulfilled' ? utilBpsResult.value : 0
+          const liquid = total * (1 - bps / 10000)
+          setVaultLiquidity({ liquid, total })
+        } else {
+          setVaultLiquidity(null)
         }
 
         if (portResult.status === 'fulfilled' && yieldResult.status === 'fulfilled') {
@@ -126,6 +151,17 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
   // Derive YouSummary structure for UI compatibility
   const demoYou = selectYou()
   const demoActivity = selectActivity()
+  const demoPool = selectPoolSummary()
+  const demoVaultLiquidity: VaultLiquidity = {
+    liquid: demoPool.liquid,
+    total: demoPool.totalAssets,
+  }
+
+  const isReferralEnabled = process.env.NEXT_PUBLIC_ENABLE_REFERRALS === 'true'
+  const liveReferralLink =
+    isReferralEnabled && address
+      ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://heliobond.fi'}/ref/${address}`
+      : undefined
 
   const derivedYou: YouSummary = portfolio
     ? {
@@ -147,11 +183,8 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         poolSharePct: Number((portfolio.shareOfPoolBps / 100).toFixed(2)),
         weightedGreen: demoYou.weightedGreen,
         backed: portfolio.shares > 0 ? demoYou.backed : 0,
-        riskScore: demoYou.riskScore,
-        riskLevel: demoYou.riskLevel,
-        referralLink: address
-          ? `https://heliobond.fi/ref/${address.slice(0, 4)}…${address.slice(-4)}`
-          : demoYou.referralLink,
+        // Do NOT copy demoYou.riskScore or demoYou.riskLevel for on-chain positions (#702)
+        referralLink: liveReferralLink,
       }
     : demoYou
 
@@ -165,5 +198,6 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
     loading: enabled ? loading : false,
     error: enabled ? error : null,
     refresh: triggerVaultRefresh,
+    vaultLiquidity: enabled ? vaultLiquidity : demoVaultLiquidity,
   }
 }

@@ -23,6 +23,17 @@ const ACTIVITY_ROW_HEIGHT = 84
 const ACTIVITY_VIEWPORT_HEIGHT = 504
 const ACTIVITY_OVERSCAN = 2
 
+function isWorkingReferralUrl(link?: string): boolean {
+  if (!link) return false
+  if (link.includes('…') || link.includes('...')) return false
+  try {
+    const parsed = new URL(link)
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+  } catch {
+    return false
+  }
+}
+
 /**
  * Portfolio — calm dashboard. Headline value with delta since deposit, the
  * personal mini-Helio, and three always-visible figures including the permanent
@@ -43,9 +54,8 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
   const { toast } = useToast()
 
   // Drive portfolio metrics dynamically from the connected wallet
-  const { portfolio, you, activity, loading, error, refresh } = usePortfolio()
+  const { portfolio, you, activity, loading, error, refresh, vaultLiquidity } = usePortfolio()
 
-  const risk = { score: you.riskScore, level: you.riskLevel }
   const referralLink = you.referralLink
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>([])
@@ -215,17 +225,6 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               stackOnMobile
             />
           </div>
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-caption)',
-              color: 'var(--ink-60)',
-              marginTop: 4,
-            }}
-          >
-            Includes $320 pending/escrow investments awaiting verification — total reflects settled
-            + pending.
-          </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <MemoizedHelio size={108} motes={you.backed} />
@@ -262,19 +261,26 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
             />
           </div>
         </Card>
-        <Card style={{ padding: 22 }}>
-          <MemoizedLiquidityMeter liquid={236} total={482} currency="$" showExplanation={false} />
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-eyebrow)',
-              color: 'var(--ink-60)',
-              margin: '8px 0 0',
-            }}
-          >
-            {t('liquidCaption')}
-          </p>
-        </Card>
+        {vaultLiquidity && (
+          <Card style={{ padding: 22 }}>
+            <MemoizedLiquidityMeter
+              liquid={vaultLiquidity.liquid}
+              total={vaultLiquidity.total}
+              currency="$"
+              showExplanation={false}
+            />
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-eyebrow)',
+                color: 'var(--ink-60)',
+                margin: '8px 0 0',
+              }}
+            >
+              {t('liquidCaption')}
+            </p>
+          </Card>
+        )}
       </div>
 
       <OnChainPosition />
@@ -376,49 +382,30 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       </Card>
 
       {/* Portfolio risk indicator from bond ratings mix */}
-      <Card style={{ padding: 22, marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-          <StatBlock
-            label="Portfolio risk"
-            value={risk.level[0].toUpperCase() + risk.level.slice(1)}
-            size="md"
-          />
-          <p
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              lineHeight: 1.55,
-              color: 'var(--ink-60)',
-              margin: 0,
-            }}
-          >
-            Score: {risk.score}/100 based on bond ratings mix.
-          </p>
-        </div>
-      </Card>
-      {referralLink ? (
+      {you.riskScore !== undefined && you.riskLevel !== undefined && (
         <Card style={{ padding: 22, marginBottom: 28 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 24,
-              flexWrap: 'wrap',
-            }}
-          >
-            <StatBlock label="Referral program" value={referralLink} size="sm" />
-            <Button
-              variant="secondary"
-              onClick={() => void navigator.clipboard?.writeText(referralLink)}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+            <StatBlock
+              label="Portfolio risk"
+              value={you.riskLevel[0].toUpperCase() + you.riskLevel.slice(1)}
+              size="md"
+            />
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                lineHeight: 1.55,
+                color: 'var(--ink-60)',
+                margin: 0,
+              }}
             >
-              Share
-            </Button>
+              Score: {you.riskScore}/100 based on bond ratings mix.
+            </p>
           </div>
         </Card>
-      ) : null}
+      )}
 
-      {referralLink && (
+      {isWorkingReferralUrl(referralLink) && (
         <Card style={{ padding: 22, marginBottom: 28 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
