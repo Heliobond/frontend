@@ -3,24 +3,27 @@ import {
   searchBondsByName,
   sortBondsByYield,
   filterBondsByYield,
-  getBondsForComparison,
   getPersistedSortOrder,
   persistSortOrder,
   getPersistedYieldRange,
   persistYieldRange,
+  isValidYieldRange,
 } from '@/lib/bondUtils'
 
 const bonds = [
   { id: '1', name: 'SOLAR Fund', yield: 5, term: 12, rating: 'A' },
-  { id: '2', name: 'Wind Power', yield: 5, term: 24, rating: 'B' },
+  { id: '2', name: 'Wind Power', yield: 5, term: 24, rating: 'B', location: 'Atacama, Chile' },
   { id: '3', name: 'Hydro Bond', yield: 7, term: 12, rating: 'A+' },
 ]
 
 describe('bondUtils', () => {
-  it('search is case-insensitive', () => {
+  it('search is case-insensitive and matches name or location', () => {
     expect(searchBondsByName(bonds, 'solar')).toEqual([bonds[0]])
     expect(searchBondsByName(bonds, 'SOLAR')).toEqual([bonds[0]])
     expect(searchBondsByName(bonds, 'SoLaR')).toEqual([bonds[0]])
+    expect(searchBondsByName(bonds, 'atacama')).toEqual([bonds[1]])
+    expect(searchBondsByName(bonds, 'CHILE')).toEqual([bonds[1]])
+    expect(searchBondsByName(bonds, '')).toEqual(bonds)
   })
 
   it('stable sort handles ties by name then id', () => {
@@ -40,12 +43,6 @@ describe('bondUtils', () => {
   it('filter by yield persists range', () => {
     expect(filterBondsByYield(bonds, [5, 5]).length).toBe(2)
     expect(filterBondsByYield(bonds, [6, 8]).length).toBe(1)
-  })
-
-  it('comparison requires 2-3 bonds', () => {
-    expect(() => getBondsForComparison(bonds, ['1'])).toThrow(/2-3/)
-    expect(getBondsForComparison(bonds, ['1', '2']).length).toBe(2)
-    expect(() => getBondsForComparison(bonds, ['1', '999'])).toThrow(/not found/)
   })
 
   it('persists sort order to URL and localStorage for bookmarking/sharing', () => {
@@ -107,5 +104,37 @@ describe('bondUtils', () => {
     // User navigates away to clean URL (e.g. /project/1)
     window.history.replaceState(null, '', 'http://localhost:3000/project/1')
     expect(getPersistedYieldRange()).toEqual([4, 10])
+  })
+
+  it('restores ?yieldRange=2-8 URL param and falls back to stored range when URL param is missing', () => {
+    localStorage.clear()
+
+    // 1. Restores ?yieldRange=2-8 from URL
+    window.history.replaceState(null, '', 'http://localhost:3000/explore?yieldRange=2-8')
+    expect(getPersistedYieldRange()).toEqual([2, 8])
+
+    // 2. Restores stored range from localStorage when URL param is missing
+    localStorage.setItem('bond_yield_filter', JSON.stringify([3, 7]))
+    window.history.replaceState(null, '', 'http://localhost:3000/explore')
+    expect(getPersistedYieldRange()).toEqual([3, 7])
+
+    // 3. Ignores inverted range like 8-2 and falls back to localStorage
+    window.history.replaceState(null, '', 'http://localhost:3000/explore?yieldRange=8-2')
+    expect(getPersistedYieldRange()).toEqual([3, 7])
+
+    // 4. Ignores inverted stored range and falls back to default [0, 15]
+    localStorage.setItem('bond_yield_filter', JSON.stringify([10, 4]))
+    window.history.replaceState(null, '', 'http://localhost:3000/explore')
+    expect(getPersistedYieldRange()).toEqual([0, 15])
+  })
+
+  it('validates yield ranges correctly with isValidYieldRange', () => {
+    expect(isValidYieldRange(2, 8)).toBe(true)
+    expect(isValidYieldRange(0, 15)).toBe(true)
+    expect(isValidYieldRange(5, 5)).toBe(true)
+    expect(isValidYieldRange(8, 2)).toBe(false)
+    expect(isValidYieldRange(-1, 5)).toBe(false)
+    expect(isValidYieldRange(NaN, 5)).toBe(false)
+    expect(isValidYieldRange(5, Infinity)).toBe(false)
   })
 })

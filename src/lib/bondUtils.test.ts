@@ -54,6 +54,20 @@ describe('bond yield range store', () => {
     expect(getPersistedYieldRange()).toEqual([0, 15])
   })
 
+  it('restores ?yieldRange=2-8 URL param and falls back to stored range', () => {
+    window.history.replaceState(null, '', '/?yieldRange=2-8')
+    expect(getPersistedYieldRange()).toEqual([2, 8])
+
+    // Fall back to storage when URL has no range
+    window.localStorage.setItem('bond_yield_filter', JSON.stringify([5, 10]))
+    window.history.replaceState(null, '', '/')
+    expect(getPersistedYieldRange()).toEqual([5, 10])
+
+    // Inverted range in URL falls back to storage
+    window.history.replaceState(null, '', '/?yieldRange=12-3')
+    expect(getPersistedYieldRange()).toEqual([5, 10])
+  })
+
   it('notifies subscribers when the range changes', () => {
     const listener = vi.fn()
     const unsubscribe = subscribeYieldRange(listener)
