@@ -11,8 +11,8 @@ function readFile(path: string) {
   return readFileSync(path, 'utf8')
 }
 
-/** Origins the old webfont CDNs served from. None of these should still be
- *  referenced by the app now that fonts are self-hosted via `next/font`. */
+/** Origins the old webfont CDNs served from. None should be referenced now
+ * that all typefaces are self-hosted. */
 const LEGACY_FONT_ORIGINS = [
   'https://api.fontshare.com',
   'https://cdn.fontshare.com',
@@ -21,13 +21,14 @@ const LEGACY_FONT_ORIGINS = [
 ]
 
 describe('webfont loading strategy', () => {
-  it('loads fonts through next/font instead of remote CSS imports', () => {
+  it('uses local font assets instead of remote font imports', () => {
     const source = readFile(fontsModulePath)
+    const css = readFile(fontsCssPath)
 
-    expect(source).toContain("from 'next/font/google'")
-    expect(source).toContain('Hanken_Grotesk(')
-    expect(source).toContain('Spline_Sans_Mono(')
     expect(source).toContain("from 'next/font/local'")
+    expect(source).not.toContain("from 'next/font/google'")
+    expect(css).toContain('hanken-grotesk-latin.woff2')
+    expect(css).toContain('spline-sans-mono-latin.woff2')
   })
 
   it('self-hosts Cabinet Grotesk with the display weights (500/700/800)', () => {
