@@ -31,25 +31,19 @@ export function useUsdcBalance(): UsdcBalanceState {
   const sacId = process.env.NEXT_PUBLIC_USDC_SAC_ID
   const enabled = Boolean(sacId) && !isDemo && Boolean(address)
 
-  const [balance, setBalance] = useState<number | null>(() => (isDemo ? DEMO_FIXTURE_BALANCE : null))
-  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<{
+    key: string
+    balance: number | null
+    error: string | null
+  } | null>(null)
 
   const { tick, refresh } = useVaultRefresh(enabled)
 
   const requestKey = enabled && address ? `${address}:${network}:${tick}` : null
-  const [settledKey, setSettledKey] = useState<string | null>(null)
-  const loading = requestKey !== null && settledKey !== requestKey
+  const loading = requestKey !== null && result?.key !== requestKey
 
   useEffect(() => {
-    if (isDemo) {
-      setBalance(DEMO_FIXTURE_BALANCE)
-      setError(null)
-      return
-    }
-
     if (!enabled || !address) {
-      setBalance(null)
-      setError(null)
       return
     }
 
@@ -61,19 +55,16 @@ export function useUsdcBalance(): UsdcBalanceState {
     fetchUsdcBalance(address, network)
       .then((bal) => {
         if (!cancelled) {
-          setBalance(bal)
-          setError(null)
+          setResult({ key, balance: bal, error: null })
         }
       })
       .catch((e: unknown) => {
         if (!cancelled) {
-          setBalance(null)
-          setError(e instanceof Error ? e.message : 'Could not read USDC balance')
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setSettledKey(key)
+          setResult({
+            key,
+            balance: null,
+            error: e instanceof Error ? e.message : 'Could not read USDC balance',
+          })
         }
       })
 
@@ -83,9 +74,13 @@ export function useUsdcBalance(): UsdcBalanceState {
   }, [address, enabled, isDemo, network, tick])
 
   return {
-    balance: isDemo ? DEMO_FIXTURE_BALANCE : balance,
+    balance: isDemo
+      ? DEMO_FIXTURE_BALANCE
+      : requestKey && result?.key === requestKey
+        ? result.balance
+        : null,
     loading: isDemo ? false : loading,
-    error: isDemo ? null : error,
+    error: isDemo || !requestKey || result?.key !== requestKey ? null : result.error,
     refresh,
   }
 }
