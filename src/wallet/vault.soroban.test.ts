@@ -620,7 +620,9 @@ describe('view calls', () => {
   it('fetchVaultLiquidUsdc() rejects when NEXT_PUBLIC_USDC_SAC_ID is unset (#699)', async () => {
     vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', '')
     const vault = await loadVault()
-    await expect(vault.fetchVaultLiquidUsdc(USER)).rejects.toThrow('NEXT_PUBLIC_USDC_SAC_ID not set')
+    await expect(vault.fetchVaultLiquidUsdc(USER)).rejects.toThrow(
+      'NEXT_PUBLIC_USDC_SAC_ID not set',
+    )
   })
 
   it('fetchVaultLiquidUsdc() rejects when CONTRACT_ID is unset (#699)', async () => {
