@@ -427,7 +427,9 @@
     "columnWithdrawals": "Withdrawals",
     "columnDistributions": "Distributions",
     "columnRealizedGain": "Realized Gain",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "skippedBadge": "Notice",
+    "skippedAlert": "{count, plural, one {# event with an invalid date was excluded from this report.} other {# events with invalid dates were excluded from this report.}}"
   },
   "PasswordResetEmail": {
     "subject": "Reset your Heliobond password",

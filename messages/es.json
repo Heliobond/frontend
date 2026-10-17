@@ -420,7 +420,9 @@
     "columnWithdrawals": "Retiros",
     "columnDistributions": "Distribuciones",
     "columnRealizedGain": "Ganancia realizada",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "skippedBadge": "Aviso",
+    "skippedAlert": "{count, plural, one {# evento con fecha no válida fue excluido de este informe.} other {# eventos con fechas no válidas fueron excluidos de este informe.}}"
   },
   "PasswordResetEmail": {
     "subject": "Restablece tu contraseña de Heliobond",

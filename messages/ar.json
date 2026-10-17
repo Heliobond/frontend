@@ -438,7 +438,9 @@
     "columnWithdrawals": "السحوبات",
     "columnDistributions": "التوزيعات",
     "columnRealizedGain": "الربح المحقق",
-    "currencyFormat": "{amount} $"
+    "currencyFormat": "{amount} $",
+    "skippedBadge": "تنبيه",
+    "skippedAlert": "{count, plural, one {تم استبعاد حدث واحد ذي تاريخ غير صالح من هذا التقرير.} other {تم استبعاد # أحداث ذات تواريخ غير صالحة من هذا التقرير.}}"
   },
   "PasswordResetEmail": {
     "subject": "إعادة تعيين كلمة مرور Heliobond",
