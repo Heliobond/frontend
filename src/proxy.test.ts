@@ -10,8 +10,8 @@ describe('request security proxy (#723)', () => {
     const firstCsp = first.headers.get(header)
     const secondCsp = second.headers.get(header)
 
-    expect(firstCsp).toMatch(/nonce-[A-Za-z0-9_-]+/)
-    expect(secondCsp).toMatch(/nonce-[A-Za-z0-9_-]+/)
+    expect(firstCsp).toMatch(/nonce-[A-Za-z0-9+/=_-]+/)
+    expect(secondCsp).toMatch(/nonce-[A-Za-z0-9+/=_-]+/)
     expect(firstCsp).not.toBe(secondCsp)
   })
 })
