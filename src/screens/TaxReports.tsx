@@ -1,19 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, Card, DemoDataBadge } from '@/components'
+import { useWallet } from '@/wallet/WalletProvider'
+import { usePortfolio } from '@/hooks/usePortfolio'
 import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
   downloadCsv,
+  activityToInvestmentEvents,
   type InvestmentEvent,
 } from '@/lib/tax-report'
 
-// TODO: replace with the real investor history source (likely something in
-// `src/data.ts` / `src/data/`, or the wallet/vault service) once wired up.
-// Kept local and clearly-marked so this screen renders correctly today
-// without depending on data shapes elsewhere in the app.
 const PLACEHOLDER_EVENTS: InvestmentEvent[] = [
   { id: '1', projectName: 'Solar Farm A', date: '2025-01-10', type: 'deposit', amountUSD: 1000 },
   {
@@ -43,9 +42,25 @@ const PLACEHOLDER_EVENTS: InvestmentEvent[] = [
   },
 ]
 
-export function TaxReports() {
+export interface TaxReportsProps {
+  events?: InvestmentEvent[]
+}
+
+export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
   const t = useTranslations('TaxReports')
-  const [report] = useState(() => computeQuarterlyTaxReport(PLACEHOLDER_EVENTS))
+  const { isDemo, connected } = useWallet()
+  const { activity } = usePortfolio()
+
+  // Demo badge appears only in demo mode (or when no real wallet is connected)
+  const isDemoMode = isDemo || !connected
+
+  const effectiveEvents = useMemo(() => {
+    if (propEvents) return propEvents
+    if (isDemoMode) return PLACEHOLDER_EVENTS
+    return activityToInvestmentEvents(activity)
+  }, [propEvents, isDemoMode, activity])
+
+  const report = useMemo(() => computeQuarterlyTaxReport(effectiveEvents), [effectiveEvents])
 
   function handleExport() {
     const csv = quarterlyReportToCsv(report)
@@ -54,7 +69,7 @@ export function TaxReports() {
 
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
-      <DemoDataBadge style={{ marginBottom: 16 }} />
+      {isDemoMode && <DemoDataBadge style={{ marginBottom: 16 }} />}
 
       <div
         style={{
@@ -165,63 +180,85 @@ export function TaxReports() {
               </tr>
             </thead>
             <tbody>
-              {report.map((line, index) => (
-                <tr key={line.quarter}>
+              {report.length === 0 ? (
+                <tr>
                   <td
+                    colSpan={5}
                     style={{
-                      padding: '14px 20px',
-                      color: 'var(--ink)',
-                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      padding: '32px 20px',
+                      textAlign: 'center',
+                      color: 'var(--ink-40)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--type-small)',
                     }}
                   >
-                    {line.quarter}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px 20px',
-                      textAlign: 'right',
-                      color: 'var(--ink)',
-                      fontFeatureSettings: '"tnum" 1',
-                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
-                    }}
-                  >
-                    {t('currencyFormat', { amount: line.totalDeposits.toFixed(2) })}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px 20px',
-                      textAlign: 'right',
-                      color: 'var(--ink)',
-                      fontFeatureSettings: '"tnum" 1',
-                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
-                    }}
-                  >
-                    {t('currencyFormat', { amount: line.totalWithdrawals.toFixed(2) })}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px 20px',
-                      textAlign: 'right',
-                      color: 'var(--ink)',
-                      fontFeatureSettings: '"tnum" 1',
-                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
-                    }}
-                  >
-                    {t('currencyFormat', { amount: line.totalDistributions.toFixed(2) })}
-                  </td>
-                  <td
-                    style={{
-                      padding: '14px 20px',
-                      textAlign: 'right',
-                      color: 'var(--ink)',
-                      fontFeatureSettings: '"tnum" 1',
-                      borderBottom: index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
-                    }}
-                  >
-                    {t('currencyFormat', { amount: line.realizedGainUSD.toFixed(2) })}
+                    {t('emptyState')}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                report.map((line, index) => (
+                  <tr key={line.quarter}>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        color: 'var(--ink)',
+                        borderBottom:
+                          index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      }}
+                    >
+                      {line.quarter}
+                    </td>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        textAlign: 'right',
+                        color: 'var(--ink)',
+                        fontFeatureSettings: '"tnum" 1',
+                        borderBottom:
+                          index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      }}
+                    >
+                      {t('currencyFormat', { amount: line.totalDeposits.toFixed(2) })}
+                    </td>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        textAlign: 'right',
+                        color: 'var(--ink)',
+                        fontFeatureSettings: '"tnum" 1',
+                        borderBottom:
+                          index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      }}
+                    >
+                      {t('currencyFormat', { amount: line.totalWithdrawals.toFixed(2) })}
+                    </td>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        textAlign: 'right',
+                        color: 'var(--ink)',
+                        fontFeatureSettings: '"tnum" 1',
+                        borderBottom:
+                          index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      }}
+                    >
+                      {t('currencyFormat', { amount: line.totalDistributions.toFixed(2) })}
+                    </td>
+                    <td
+                      style={{
+                        padding: '14px 20px',
+                        textAlign: 'right',
+                        color: 'var(--ink)',
+                        fontFeatureSettings: '"tnum" 1',
+                        borderBottom:
+                          index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
+                      }}
+                    >
+                      {t('currencyFormat', { amount: line.realizedGainUSD.toFixed(2) })}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

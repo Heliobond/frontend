@@ -427,7 +427,8 @@
     "columnWithdrawals": "Retraits",
     "columnDistributions": "Distributions",
     "columnRealizedGain": "Gain réalisé",
-    "currencyFormat": "{amount} $"
+    "currencyFormat": "{amount} $",
+    "emptyState": "Aucune activité d'investissement enregistrée pour ce portefeuille."
   },
   "PasswordResetEmail": {
     "subject": "Réinitialisez votre mot de passe Heliobond",

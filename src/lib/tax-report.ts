@@ -6,6 +6,8 @@
 // allocated to that event. Deposits establish cost basis and are not
 // themselves taxable events.
 
+import type { Activity } from '../data'
+
 export type InvestmentEventType = 'deposit' | 'withdrawal' | 'distribution'
 
 export interface InvestmentEvent {
@@ -30,11 +32,76 @@ export interface QuarterlyTaxLine {
   events: InvestmentEvent[]
 }
 
-export function getQuarter(dateStr: string): { year: number; quarterNumber: 1 | 2 | 3 | 4 } {
+/**
+ * Maps portfolio activity feed items into InvestmentEvent models for tax accounting.
+ * Filters out non-taxable events (e.g. score updates) and parses numeric amounts and dates.
+ */
+export function activityToInvestmentEvents(activity: Activity[]): InvestmentEvent[] {
+  const events: InvestmentEvent[] = []
+
+  for (const item of activity) {
+    if (!item || typeof item !== 'object') continue
+    const kindLower = (item.kind || '').toLowerCase()
+    let type: InvestmentEventType | null = null
+
+    if (kindLower.includes('deposit')) {
+      type = 'deposit'
+    } else if (kindLower.includes('withdraw')) {
+      type = 'withdrawal'
+    } else if (
+      kindLower.includes('distribution') ||
+      kindLower.includes('yield') ||
+      kindLower.includes('claim')
+    ) {
+      type = 'distribution'
+    } else {
+      continue
+    }
+
+    const cleanAmount =
+      typeof item.amount === 'string'
+        ? item.amount.replace(/[^0-9.-]+/g, '')
+        : String(item.amount ?? '')
+    const amountUSD = Math.abs(parseFloat(cleanAmount)) || 0
+
+    let date = item.when
+    if (!date) {
+      date = new Date().toISOString().split('T')[0]
+    } else if (/^\d+$/.test(date)) {
+      const num = Number(date)
+      const ms = num < 1e11 ? num * 1000 : num
+      date = new Date(ms).toISOString().split('T')[0]
+    } else {
+      const parsed = new Date(date)
+      if (!Number.isNaN(parsed.getTime())) {
+        date = parsed.toISOString().split('T')[0]
+      }
+    }
+
+    events.push({
+      id: item.hash || `${type}-${date}-${amountUSD}-${events.length}`,
+      projectName: (item as unknown as { projectName?: string }).projectName || 'Heliobond Vault',
+      date,
+      type,
+      amountUSD,
+      costBasisUSD:
+        (item as unknown as { costBasisUSD?: number }).costBasisUSD ??
+        (type === 'withdrawal' ? amountUSD : 0),
+    })
+  }
+
+  return events
+}
+
+export function getQuarter(dateStr: string): { year: number; quarterNumber: 1 | 2 | 3 | 4 } | null {
+  if (!dateStr || typeof dateStr !== 'string') return null
   const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return null
   const month = date.getUTCMonth() // 0-11
   const quarterNumber = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4
-  return { year: date.getUTCFullYear(), quarterNumber }
+  const year = date.getUTCFullYear()
+  if (Number.isNaN(year) || Number.isNaN(quarterNumber)) return null
+  return { year, quarterNumber }
 }
 
 function realizedGain(event: InvestmentEvent): number {
@@ -48,7 +115,9 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
   const byQuarter = new Map<string, QuarterlyTaxLine>()
 
   for (const event of events) {
-    const { year, quarterNumber } = getQuarter(event.date)
+    const quarterInfo = getQuarter(event?.date)
+    if (!quarterInfo) continue
+    const { year, quarterNumber } = quarterInfo
     const key = `${year}-Q${quarterNumber}`
 
     if (!byQuarter.has(key)) {

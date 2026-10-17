@@ -4,8 +4,10 @@ import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
   getQuarter,
+  activityToInvestmentEvents,
   type InvestmentEvent,
 } from './tax-report'
+import type { Activity } from '../data'
 
 describe('getQuarter', () => {
   it('maps January to Q1', () => {
@@ -168,5 +170,52 @@ describe('quarterlyReportToCsv', () => {
     ]
     const csv = quarterlyReportToCsv(computeQuarterlyTaxReport(events))
     expect(csv.split('\n')[1]).toBe('2025-Q1,Quarter Summary,0.00,100.00,0.00,-100.00,,,,')
+  })
+})
+
+describe('activityToInvestmentEvents (#787)', () => {
+  it('converts portfolio activity feed items into investment events', () => {
+    const activity: Activity[] = [
+      {
+        kind: 'Deposit',
+        amount: '$1,000.00',
+        shares: '1,000 HBS',
+        when: '2025-01-15',
+        hash: '0xhash1',
+      },
+      {
+        kind: 'Withdrawal',
+        amount: '$400.00',
+        shares: '400 HBS',
+        when: '2025-04-10',
+        hash: '0xhash2',
+      },
+      {
+        kind: 'Score update',
+        amount: '',
+        shares: '',
+        when: '2025-05-01',
+        hash: '0xhash3',
+      },
+    ]
+
+    const events = activityToInvestmentEvents(activity)
+    expect(events).toHaveLength(2)
+    expect(events[0]).toMatchObject({
+      id: '0xhash1',
+      type: 'deposit',
+      amountUSD: 1000,
+      date: '2025-01-15',
+    })
+    expect(events[1]).toMatchObject({
+      id: '0xhash2',
+      type: 'withdrawal',
+      amountUSD: 400,
+      date: '2025-04-10',
+    })
+  })
+
+  it('handles empty activity list', () => {
+    expect(activityToInvestmentEvents([])).toEqual([])
   })
 })

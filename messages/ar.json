@@ -438,7 +438,8 @@
     "columnWithdrawals": "السحوبات",
     "columnDistributions": "التوزيعات",
     "columnRealizedGain": "الربح المحقق",
-    "currencyFormat": "{amount} $"
+    "currencyFormat": "{amount} $",
+    "emptyState": "لا يوجد نشاط استثماري مسجل لهذه المحفظة."
   },
   "PasswordResetEmail": {
     "subject": "إعادة تعيين كلمة مرور Heliobond",

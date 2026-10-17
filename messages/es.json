@@ -420,7 +420,8 @@
     "columnWithdrawals": "Retiros",
     "columnDistributions": "Distribuciones",
     "columnRealizedGain": "Ganancia realizada",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "emptyState": "No hay actividad de inversión registrada para esta billetera."
   },
   "PasswordResetEmail": {
     "subject": "Restablece tu contraseña de Heliobond",

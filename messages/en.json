@@ -427,7 +427,8 @@
     "columnWithdrawals": "Withdrawals",
     "columnDistributions": "Distributions",
     "columnRealizedGain": "Realized Gain",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "emptyState": "No investment activity recorded for this wallet."
   },
   "PasswordResetEmail": {
     "subject": "Reset your Heliobond password",

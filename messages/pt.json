@@ -420,7 +420,8 @@
     "columnWithdrawals": "Retiradas",
     "columnDistributions": "Distribuições",
     "columnRealizedGain": "Ganho realizado",
-    "currencyFormat": "US$ {amount}"
+    "currencyFormat": "US$ {amount}",
+    "emptyState": "Nenhuma atividade de investimento registrada para esta carteira."
   },
   "PasswordResetEmail": {
     "subject": "Redefinição de Senha - Heliobond",
