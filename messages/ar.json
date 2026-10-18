@@ -242,7 +242,7 @@
     "sectionOracleCaption": "كتابات امتيازية في السجل والخزينة.",
     "sectionWhitelist": "قائمة المبدعين البيضاء",
     "sectionWhitelistCaption": "المبدعون المعتمدون فقط يمكنهم تسجيل المشاريع في ProjectRegistry.",
-    "liveProject": "{count, plural, zero {مشروع نشط} one {مشروع نشط} two {مشروعان نشطان} few {مشاريع نشطة} many {مشروعًا نشطًا} other {مشروع نشط}}",
+    "liveProject": "{count, plural, zero {مشاريع نشطة} one {مشروع نشط} two {مشروعان نشطان} few {مشاريع نشطة} many {مشروعًا نشطًا} other {مشروع نشط}}",
     "statusApproved": "معتمد",
     "statusPending": "قيد الانتظار",
     "statusRejected": "مرفوض",
