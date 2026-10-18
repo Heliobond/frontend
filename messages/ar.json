@@ -3,15 +3,14 @@
     "copyAddress": "نسخ {label}",
     "copied": "تم النسخ",
     "viewInvestment": "عرض استثمارك",
-    "viewOnExplorer": "عرض {label} على Stellar Expert",
-    "viewInvestment": "View your investment"
+    "viewOnExplorer": "عرض {label} على Stellar Expert"
   },
   "Referral": {
     "title": "برنامج الإحالة",
     "shareLink": "مشاركة رابط الإحالة",
     "copyLink": "نسخ رابط الإحالة",
     "copied": "تم نسخ رابط الإحالة",
-    "yourReferralLink": "Your referral link"
+    "yourReferralLink": "رابط الإحالة الخاص بك"
   },
   "Nav": {
     "explore": "استكشاف",
@@ -28,7 +27,6 @@
     "preferences": "التفضيلات",
     "language": "اللغة",
     "account": "الحساب",
-    "watchlist": "قائمة المراقبة",
     "copyAddress": "نسخ العنوان",
     "copied": "تم النسخ",
     "viewInvestment": "عرض استثمارك",
@@ -39,9 +37,7 @@
     "disconnectConfirmBody": "قطع الاتصال ينهي جلستك الحالية. أصولك على السلسلة آمنة على Stellar، لكن ستحتاج إلى إعادة توصيل محفظتك للوصول إلى محفظتك أو الاستثمار أو السحب.",
     "disconnectCancel": "إلغاء",
     "demoSession": "جلسة تجريبية",
-    "referral": "Referral",
-    "watchlist": "Watchlist",
-    "viewInvestment": "View your investment"
+    "referral": "الإحالة"
   },
   "Footer": {
     "trustLinks": "روابط الثقة",
@@ -127,8 +123,7 @@
     "emptyTitle": "لم يتم العثور على مشاريع",
     "emptySub": "لا توجد مشاريع تطابق فئة \"{filter}\" في المجمع حالياً.",
     "loadMore": "عرض {count} المزيد",
-    "showingCount": "عرض {shown} من {total} مشاريع",
-    "searchLabel": "Search projects"
+    "showingCount": "عرض {shown} من {total} مشاريع"
   },
   "Watchlist": {
     "title": "قائمة المراقبة الخاصة بك",
@@ -140,7 +135,7 @@
     "removed": "تمت الإزالة من قائمة المراقبة",
     "saveLabel": "إضافة {name} إلى قائمة المراقبة",
     "removeLabel": "إزالة {name} من قائمة المراقبة",
-    "availableBanner": "{count, plural, one {سند واحد متابع مفتوح للتمويل الآن.} other {# سندات متابعة مفتوحة للتمويل الآن.}}",
+    "availableBanner": "{count, plural, zero {لا تتوفر الآن أي سندات محفوظة للتمويل.} one {يتوفر الآن سند محفوظ واحد للتمويل.} two {يتوفر الآن سندان محفوظان للتمويل.} few {تتوفر الآن # سندات محفوظة للتمويل.} many {يتوفر الآن # سندًا محفوظًا للتمويل.} other {يتوفر الآن # سند محفوظ للتمويل.}}",
     "statusOpen": "مفتوح للتمويل",
     "statusUpcoming": "غير متاح بعد",
     "notYetAvailable": "سنشير هنا بمجرد فتحه."
@@ -182,8 +177,7 @@
     "successBody": "حصلت على <num>{shares} HBS</num> وتدعم الآن <b>{count} مشاريع مؤكدة</b>.",
     "viewInvestment": "عرض استثمارك",
     "viewExpert": "عرض على Stellar Expert",
-    "goPortfolio": "انتقل إلى المحفظة",
-    "viewInvestment": "View your investment"
+    "goPortfolio": "انتقل إلى المحفظة"
   },
   "Portfolio": {
     "eyebrow": "محفظتك",
@@ -205,16 +199,11 @@
     "riskCaption": "بناءً على مزيج تصنيفات السندات في حيازاتك.",
     "activityTitle": "النشاط",
     "activityNote": "كل إدخال → Stellar Expert",
-    "riskScore": "Portfolio risk score",
-    "riskTierConservative": "Conservative",
-    "riskTierModerate": "Moderate",
-    "riskTierAggressive": "Aggressive",
-    "riskCaption": "Based on the mix of bond ratings in your holdings.",
-    "referralProgram": "Referral program",
-    "referralLink": "Your referral link",
-    "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
-    "copyLink": "Copy link",
-    "copied": "Copied",
+    "referralProgram": "برنامج الإحالة",
+    "referralLink": "رابط الإحالة الخاص بك",
+    "referralCaption": "شارك رابطك لدعوة أصدقائك. ستحصلان كلاكما على مكافآت عندما يستثمرون.",
+    "copyLink": "نسخ الرابط",
+    "copied": "تم النسخ",
     "taxReports": "التقارير الضريبية"
   },
   "Withdraw": {
@@ -253,7 +242,7 @@
     "sectionOracleCaption": "كتابات امتيازية في السجل والخزينة.",
     "sectionWhitelist": "قائمة المبدعين البيضاء",
     "sectionWhitelistCaption": "المبدعون المعتمدون فقط يمكنهم تسجيل المشاريع في ProjectRegistry.",
-    "liveProject": "{count, plural, other {مشاريع نشطة}}",
+    "liveProject": "{count, plural, zero {مشروع نشط} one {مشروع نشط} two {مشروعان نشطان} few {مشاريع نشطة} many {مشروعًا نشطًا} other {مشروع نشط}}",
     "statusApproved": "معتمد",
     "statusPending": "قيد الانتظار",
     "statusRejected": "مرفوض",
@@ -302,9 +291,9 @@
     "scoreFieldGreen": "التأثير الأخضر",
     "actionCancel": "إلغاء",
     "actionSave": "حفظ",
-    "revokeConfirm": "Yes, revoke",
-    "revokeCancel": "Cancel",
-    "actionUndo": "Undo"
+    "revokeConfirm": "نعم، إلغاء",
+    "revokeCancel": "إلغاء",
+    "actionUndo": "تراجع"
   },
   "Creator": {
     "goalInvalid": "أدخل هدف تمويل أكبر من 0",
@@ -471,40 +460,25 @@
     "close": "إغلاق"
   },
   "YieldAlert": {
-    "modalTitle": "Set yield alert",
-    "editTitle": "Edit yield alert",
-    "conditionLabel": "Alert when yield goes",
-    "thresholdLabel": "Threshold",
-    "operatorAbove": "Above",
-    "operatorBelow": "Below",
-    "previewText": "Alert me when {name} yield goes {direction} {threshold}%",
-    "saveCta": "Save alert",
-    "deleteCta": "Delete",
-    "cancelCta": "Cancel",
-    "addLabel": "Set yield alert for {name}",
-    "editLabel": "Edit yield alert for {name}",
-    "createdToastTitle": "Yield alert set",
-    "createdToastMessage": "You'll be notified when {name} yield crosses {threshold}%.",
-    "updatedToastTitle": "Yield alert updated",
-    "updatedToastMessage": "Alert for {name} updated to {threshold}%.",
-    "deletedToastTitle": "Yield alert removed",
-    "triggeredToastTitle": "🔔 Yield alert triggered",
-    "triggeredToastMessage": "{name} yield is {yield}% — {direction} your {threshold}% threshold."
-  },
-  "Watchlist": {
-    "title": "Your watchlist",
-    "sub": "Bonds you're tracking. Saving one doesn't invest — it just keeps it close, and flags when it opens for funding.",
-    "cardFundedFromPool": "Funded from the pool",
-    "emptyTitle": "Nothing saved yet",
-    "emptySub": "Open a bond from Explore and tap the star to add it here. We'll show you when a saved bond is open for funding.",
-    "added": "Added to watchlist",
-    "removed": "Removed from watchlist",
-    "saveLabel": "Add {name} to watchlist",
-    "removeLabel": "Remove {name} from watchlist",
-    "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
-    "statusOpen": "Open for funding",
-    "statusUpcoming": "Not yet available",
-    "notYetAvailable": "We'll flag it here when it opens."
+    "modalTitle": "تعيين تنبيه العائد",
+    "editTitle": "تعديل تنبيه العائد",
+    "conditionLabel": "التنبيه عندما يصبح العائد",
+    "thresholdLabel": "الحد",
+    "operatorAbove": "أعلى من",
+    "operatorBelow": "أقل من",
+    "previewText": "نبّهني عندما يصبح عائد {name} {direction} {threshold}%",
+    "saveCta": "حفظ التنبيه",
+    "deleteCta": "حذف",
+    "cancelCta": "إلغاء",
+    "addLabel": "تعيين تنبيه العائد لـ {name}",
+    "editLabel": "تعديل تنبيه العائد لـ {name}",
+    "createdToastTitle": "تم تعيين تنبيه العائد",
+    "createdToastMessage": "سيتم إشعارك عندما يتجاوز عائد {name} نسبة {threshold}%.",
+    "updatedToastTitle": "تم تحديث تنبيه العائد",
+    "updatedToastMessage": "تم تحديث التنبيه الخاص بـ {name} إلى {threshold}%.",
+    "deletedToastTitle": "تمت إزالة تنبيه العائد",
+    "triggeredToastTitle": "🔔 تم تفعيل تنبيه العائد",
+    "triggeredToastMessage": "عائد {name} هو {yield}% — {direction} الحد الذي عيّنته وهو {threshold}%."
   },
   "ContractErrors": {
     "vault_AmountNotPositive": "أدخل مبلغًا أكبر من صفر.",
