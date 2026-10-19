@@ -118,7 +118,7 @@ export function TopBar() {
   return (
     <>
       <header className="hb-topbar">
-        <Link href="/" aria-label="Heliobond — home" className="hb-topbar__home">
+        <Link href="/" aria-label={t('brandHome')} className="hb-topbar__home">
           {mounted && pathname === '/' ? <Mark /> : null}
           <span
             style={{
@@ -278,7 +278,6 @@ export function TopBar() {
             <PreferencesDropdown />
           </div>
         )}
-
         <TransactionsDrawer open={drawerOpen} onClose={closeDrawer} />
       </header>
       {!networkOnline && (
@@ -300,7 +299,7 @@ export function TopBar() {
             fontWeight: 500,
           }}
         >
-          Offline — showing cached data
+          {t('offlineCached')}
         </div>
       )}
       {networkMismatch && walletNetworkPassphrase && (
@@ -325,8 +324,8 @@ export function TopBar() {
           }}
         >
           <span>
-            {networkMismatchMessage(walletNetworkPassphrase, NETWORK_PASSPHRASE)} Signing is blocked
-            until they match.
+            {networkMismatchMessage(walletNetworkPassphrase, NETWORK_PASSPHRASE)}{' '}
+            {t('signingBlocked')}
           </span>
           <button
             type="button"
@@ -343,7 +342,7 @@ export function TopBar() {
               cursor: 'pointer',
             }}
           >
-            Check again
+            {t('checkAgain')}
           </button>
         </div>
       )}

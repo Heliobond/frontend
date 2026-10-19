@@ -1,8 +1,11 @@
 import { act, render, waitFor } from '@testing-library/react'
+import { Account, Asset, Operation, TransactionBuilder } from '@stellar/stellar-sdk'
 import { useEffect, useSyncExternalStore } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { NETWORK_PASSPHRASE } from '../config/network'
 
 const WALLET_ADDRESS = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+const MESSAGE_CHALLENGE = `Sign in to Heliobond\n${WALLET_ADDRESS}`
 
 const signMessage = vi.fn(async () => 'signed-message')
 const sign = vi.fn(async () => 'signed-xdr')
@@ -95,7 +98,8 @@ describe('SessionProvider', () => {
   it('signs in with a SEP-53 message signature and keeps the token out of storage', async () => {
     fetchMock.mockImplementation(async (url: string) => {
       if (url.endsWith('/auth/refresh')) return json({}, 401)
-      if (url.endsWith('/auth/challenge')) return json({ type: 'message', challenge: 'hello G...' })
+      if (url.endsWith('/auth/challenge'))
+        return json({ type: 'message', challenge: MESSAGE_CHALLENGE })
       if (url.endsWith('/auth/verify')) return json({ token: 'jwt-1', expiresIn: 900 })
       if (url.endsWith('/me/watchlist')) return json([1, 2])
       return json({}, 404)
@@ -108,7 +112,7 @@ describe('SessionProvider', () => {
     )
 
     await waitFor(() => expect(session.isAuthenticated).toBe(true))
-    expect(signMessage).toHaveBeenCalledWith('hello G...')
+    expect(signMessage).toHaveBeenCalledWith(MESSAGE_CHALLENGE)
     const verifyBody = JSON.parse(
       fetchMock.mock.calls.find((c) => String(c[0]).endsWith('/auth/verify'))![1].body,
     )
@@ -581,5 +585,103 @@ describe('SessionProvider', () => {
     await expect(act(() => session.authedFetch<number[]>('/me/watchlist'))).rejects.toThrow(
       'Not signed in',
     )
+  })
+
+  /** A sequence-0 transaction that is a payment, not a SEP-10 manageData op. */
+  function paymentChallengeXdr(): string {
+    const account = new Account(WALLET_ADDRESS, '-1')
+    const builder = new TransactionBuilder(account, {
+      fee: '100',
+      networkPassphrase: NETWORK_PASSPHRASE,
+      timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 120 },
+    })
+    builder.addOperation(
+      Operation.payment({
+        destination: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN',
+        asset: Asset.native(),
+        amount: '1',
+      }),
+    )
+    return builder.build().toXDR()
+  }
+
+  it('rejects a payment transaction challenge before calling the wallet (#834)', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/auth/refresh')) return json({}, 401)
+      if (url.endsWith('/auth/challenge')) {
+        return json({ type: 'transaction', challenge: paymentChallengeXdr() })
+      }
+      return json({}, 404)
+    })
+
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+
+    await waitFor(() => expect(session.error).toBeTruthy())
+    expect(sign).not.toHaveBeenCalled()
+    expect(session.isAuthenticated).toBe(false)
+  })
+
+  it('does not adopt a refresh token bound to a different wallet (#835)', async () => {
+    const OTHER = 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN'
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/auth/refresh')) {
+        // The browser's cookie still belongs to wallet A.
+        return json({ token: 'jwt-A', expiresIn: 900, address: WALLET_ADDRESS })
+      }
+      if (url.endsWith('/auth/logout')) return json({})
+      if (url.endsWith('/auth/challenge')) {
+        const body = JSON.parse(String(init?.body))
+        return json({ type: 'message', challenge: `Sign in to Heliobond\n${body.address}` })
+      }
+      if (url.endsWith('/auth/verify')) {
+        const body = JSON.parse(String(init?.body))
+        return json({ token: 'jwt-B', expiresIn: 900, address: body.address })
+      }
+      return json({}, 404)
+    })
+
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+    await waitFor(() => expect(session.isAuthenticated).toBe(true))
+    expect(session.address).toBe(WALLET_ADDRESS)
+
+    act(() => walletMock.setAddress(OTHER))
+
+    await waitFor(() => expect(session.address).toBe(OTHER))
+    expect(session.isAuthenticated).toBe(true)
+    expect(signMessage).toHaveBeenCalledWith(expect.stringContaining(OTHER))
+    const logoutCalls = fetchMock.mock.calls.filter((c) => String(c[0]).endsWith('/auth/logout'))
+    expect(logoutCalls.length).toBeGreaterThan(0)
+  })
+
+  it('clears the refresh cookie when the wallet disconnects (#835)', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/auth/refresh')) {
+        return json({ token: 'jwt-A', expiresIn: 900, address: WALLET_ADDRESS })
+      }
+      if (url.endsWith('/auth/logout')) return json({})
+      return json({}, 404)
+    })
+
+    render(
+      <SessionProvider>
+        <Probe />
+      </SessionProvider>,
+    )
+    await waitFor(() => expect(session.isAuthenticated).toBe(true))
+
+    act(() => walletMock.setAddress(null))
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('/auth/logout'))).toBe(true),
+    )
+    expect(session.isAuthenticated).toBe(false)
   })
 })

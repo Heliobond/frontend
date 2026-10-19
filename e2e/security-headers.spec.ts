@@ -99,9 +99,7 @@ test.describe('Production CSP enforcement (#663)', () => {
       })
 
       await page.goto(route)
-      await page.waitForLoadState('load')
-      // Wait a bit for any async resources to trigger violations
-      await page.waitForTimeout(2000)
+      await page.waitForLoadState('networkidle')
 
       // Check for violations
       const capturedViolations = await page.evaluate<CapturedViolation[]>(

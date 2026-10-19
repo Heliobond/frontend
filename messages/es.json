@@ -30,7 +30,17 @@
     "disconnectCancel": "Cancelar",
     "demoSession": "Sesión de demostración",
     "referral": "Referidos",
-    "shareLink": "Comparte tu enlace de referidos"
+    "shareLink": "Comparte tu enlace de referidos",
+    "brandHome": "Heliobond - inicio",
+    "offline": "Sin conexión",
+    "offlineCached": "Sin conexión - mostrando datos en caché",
+    "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}",
+    "activity": "Actividad",
+    "activityHistory": "Historial de actividad de transacciones",
+    "signingBlocked": "La firma está bloqueada hasta que coincidan.",
+    "checkAgain": "Comprobar de nuevo",
+    "syncing": "Sincronizando con Stellar",
+    "skipToContent": "Saltar al contenido"
   },
   "Footer": {
     "trustLinks": "Enlaces de confianza",
@@ -116,7 +126,8 @@
     "emptyTitle": "No se encontraron proyectos",
     "emptySub": "No hay proyectos que coincidan con la categoría \"{filter}\" en el fondo ahora mismo.",
     "loadMore": "Mostrar {count} más",
-    "showingCount": "Mostrando {shown} de {total} proyectos"
+    "showingCount": "Mostrando {shown} de {total} proyectos",
+    "filterLoadedNotice": "Cubriendo los {loaded} proyectos cargados hasta ahora"
   },
   "Watchlist": {
     "title": "Tu lista de seguimiento",
@@ -131,7 +142,10 @@
     "availableBanner": "{count, plural, one {# bono guardado está abierto a financiación ahora mismo.} other {# bonos guardados están abiertos a financiación ahora mismo.}}",
     "statusOpen": "Abierto a financiación",
     "statusUpcoming": "Aún no disponible",
-    "notYetAvailable": "Te avisaremos aquí cuando se abra."
+    "notYetAvailable": "Te avisaremos aquí cuando se abra.",
+    "noLongerAvailable": "El proyecto #{id} ya no está disponible",
+    "removeUnavailable": "Eliminar el proyecto #{id} de la lista de seguimiento",
+    "remove": "Eliminar"
   },
   "Deposit": {
     "stepAmount": "Importe",
@@ -420,7 +434,9 @@
     "columnWithdrawals": "Retiros",
     "columnDistributions": "Distribuciones",
     "columnRealizedGain": "Ganancia realizada",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "skippedBadge": "Aviso",
+    "skippedAlert": "{count, plural, one {# evento con fecha no válida fue excluido de este informe.} other {# eventos con fechas no válidas fueron excluidos de este informe.}}"
   },
   "PasswordResetEmail": {
     "subject": "Restablece tu contraseña de Heliobond",
@@ -439,7 +455,9 @@
     "body": "Has estado inactivo un tiempo. Para proteger tus cambios sin guardar y la seguridad de tu cuenta, tu sesión caducará automáticamente.",
     "expiresIn": "La sesión caduca en",
     "extendCta": "Seguir conectado",
-    "logoutCta": "Desconectar ahora"
+    "logoutCta": "Desconectar ahora",
+    "expiredTitle": "Sesión expirada",
+    "expiredBody": "Has sido desconectado debido a la inactividad."
   },
   "AccountConflict": {
     "modalTitle": "Inicia sesión con tu correo",
@@ -591,5 +609,36 @@
       "title": "Proyecto no encontrado",
       "description": "No se ha encontrado el proyecto de energía verde solicitado."
     }
+  },
+  "Errors": {
+    "offlineEyebrow": "Estás desconectado",
+    "errorEyebrow": "Algo salió mal",
+    "offlineTitle": "Conexión a Stellar perdida",
+    "errorTitle": "Ocurrió un error inesperado",
+    "offlineBody": "La aplicación no pudo comunicarse con el nodo de Stellar. Comprueba tu conexión o inténtalo de nuevo. Todavía puedes acceder a las vistas en caché.",
+    "errorBody": "La aplicación encontró un problema inesperado. Puedes intentar recuperarte o volver a la página de inicio.",
+    "errorRef": "Ref. del error: {digest}",
+    "tryAgain": "Reintentar",
+    "viewCached": "Ver vistas en caché",
+    "goHome": "Ir al inicio"
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Página no encontrada",
+    "body": "La ruta que seguiste no existe; puede que se haya movido o que nunca haya existido.",
+    "backHome": "Volver a Heliobond"
+  },
+  "Shell": {
+    "skipToContent": "Saltar al contenido",
+    "offlineBanner": "Sin conexión - Mostrando datos en caché. Intentando reconectar...",
+    "offlineBadge": "Sin conexión",
+    "offlineCached": "Sin conexión - mostrando datos en caché",
+    "brandHome": "Heliobond - inicio",
+    "pendingCount": "{count, plural, one {# pendiente} other {# pendientes}}",
+    "activity": "Actividad",
+    "activityHistory": "Historial de actividad de transacciones",
+    "signingBlocked": "La firma está bloqueada hasta que coincidan.",
+    "checkAgain": "Comprobar de nuevo",
+    "syncing": "Sincronizando con Stellar"
   }
 }

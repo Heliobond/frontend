@@ -30,7 +30,17 @@
     "disconnectConfirm": "Yes, disconnect",
     "disconnectConfirmBody": "Disconnecting ends your current session. Your on-chain assets are safe on Stellar, but you will need to reconnect your wallet to access your portfolio, invest, or withdraw.",
     "disconnectCancel": "Cancel",
-    "demoSession": "Demo session"
+    "demoSession": "Demo session",
+    "brandHome": "Heliobond - home",
+    "offline": "Offline",
+    "offlineCached": "Offline - showing cached data",
+    "pendingCount": "{count, plural, one {# pending} other {# pending}}",
+    "activity": "Activity",
+    "activityHistory": "Transaction activity history",
+    "signingBlocked": "Signing is blocked until they match.",
+    "checkAgain": "Check again",
+    "syncing": "Syncing with Stellar",
+    "skipToContent": "Skip to content"
   },
   "Footer": {
     "trustLinks": "Trust links",
@@ -116,7 +126,8 @@
     "emptyTitle": "No projects found",
     "emptySub": "There are no projects matching the \"{filter}\" category in the pool right now.",
     "loadMore": "Show {count} more",
-    "showingCount": "Showing {shown} of {total} projects"
+    "showingCount": "Showing {shown} of {total} projects",
+    "filterLoadedNotice": "Covering the {loaded} projects loaded so far"
   },
   "Watchlist": {
     "title": "Your watchlist",
@@ -131,7 +142,10 @@
     "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
     "statusOpen": "Open for funding",
     "statusUpcoming": "Not yet available",
-    "notYetAvailable": "We'll flag it here when it opens."
+    "notYetAvailable": "We'll flag it here when it opens.",
+    "noLongerAvailable": "Project #{id} is no longer available",
+    "removeUnavailable": "Remove project #{id} from watchlist",
+    "remove": "Remove"
   },
   "Deposit": {
     "stepAmount": "Amount",
@@ -427,7 +441,9 @@
     "columnWithdrawals": "Withdrawals",
     "columnDistributions": "Distributions",
     "columnRealizedGain": "Realized Gain",
-    "currencyFormat": "${amount}"
+    "currencyFormat": "${amount}",
+    "skippedBadge": "Notice",
+    "skippedAlert": "{count, plural, one {# event with an invalid date was excluded from this report.} other {# events with invalid dates were excluded from this report.}}"
   },
   "PasswordResetEmail": {
     "subject": "Reset your Heliobond password",
@@ -446,7 +462,9 @@
     "body": "You have been inactive for a while. To protect your unsaved changes and account security, your session will automatically expire.",
     "expiresIn": "Session expiring in",
     "extendCta": "Stay connected",
-    "logoutCta": "Disconnect now"
+    "logoutCta": "Disconnect now",
+    "expiredTitle": "Session expired",
+    "expiredBody": "You have been disconnected due to inactivity."
   },
   "AccountConflict": {
     "modalTitle": "Sign in with email",
@@ -591,5 +609,36 @@
       "title": "Project not found",
       "description": "The requested green energy project could not be found."
     }
+  },
+  "Errors": {
+    "offlineEyebrow": "You're offline",
+    "errorEyebrow": "Something went wrong",
+    "offlineTitle": "Lost connection to Stellar",
+    "errorTitle": "An unexpected error occurred",
+    "offlineBody": "The app couldn't reach the Stellar node. Check your connection or try again. You can still access cached views.",
+    "errorBody": "The application hit an unexpected problem. You can try recovering, or go back to the home page.",
+    "errorRef": "Error ref: {digest}",
+    "tryAgain": "Try again",
+    "viewCached": "View cached views",
+    "goHome": "Go home"
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Page not found",
+    "body": "The route you followed doesn't exist - it may have moved or never existed.",
+    "backHome": "Back to Heliobond"
+  },
+  "Shell": {
+    "skipToContent": "Skip to content",
+    "offlineBanner": "Offline - Showing cached data. Attempting to reconnect...",
+    "offlineBadge": "Offline",
+    "offlineCached": "Offline - showing cached data",
+    "brandHome": "Heliobond - home",
+    "pendingCount": "{count, plural, one {# pending} other {# pending}}",
+    "activity": "Activity",
+    "activityHistory": "Transaction activity history",
+    "signingBlocked": "Signing is blocked until they match.",
+    "checkAgain": "Check again",
+    "syncing": "Syncing with Stellar"
   }
 }

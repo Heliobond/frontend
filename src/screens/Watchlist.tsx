@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Badge, ProjectCard, WatchlistButton } from '../components'
 import { type Project } from '../data'
-import { selectProjects } from '../state/selectors'
-import { getProjects } from '../lib/api'
+import { getProject } from '../lib/api'
 import { getBondStatus, isBondAvailable } from '../lib/watchlist'
 import { useWatchlist } from '../watchlist/WatchlistProvider'
 
@@ -18,23 +17,63 @@ export interface WatchlistProps {
   onOpen: (project: Project) => void
 }
 
+interface WatchlistItem {
+  id: number
+  project: Project | null
+}
+
 export function Watchlist({ onOpen }: WatchlistProps) {
   const t = useTranslations('Watchlist')
-  const { ids } = useWatchlist()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
+  const { ids, remove } = useWatchlist()
+  const [items, setItems] = useState<WatchlistItem[]>([])
+  const [loading, setLoading] = useState(ids.length > 0)
 
   useEffect(() => {
-    getProjects()
-      .then(setProjects)
-      .catch(() => setProjects(selectProjects()))
-      .finally(() => setLoading(false))
-  }, [])
+    let active = true
 
-  const saved = useMemo(() => {
-    const byId = new Map(projects.map((p) => [p.id, p]))
-    return ids.map((id) => byId.get(id)).filter((p): p is Project => p !== undefined)
-  }, [projects, ids])
+    async function loadWatchlist() {
+      if (ids.length === 0) {
+        if (active) {
+          setItems([])
+          setLoading(false)
+        }
+        return
+      }
+
+      setLoading(true)
+      try {
+        const resolved = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const res = await getProject(id)
+              return { id, project: res?.project ?? null }
+            } catch {
+              return { id, project: null }
+            }
+          }),
+        )
+        if (active) setItems(resolved)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    void loadWatchlist()
+
+    return () => {
+      active = false
+    }
+  }, [ids])
+
+  const saved = useMemo(
+    () =>
+      items
+        .filter((item): item is { id: number; project: Project } => item.project !== null)
+        .map((item) => item.project),
+    [items],
+  )
+
+  const unresolved = useMemo(() => items.filter((item) => item.project === null), [items])
 
   const availableCount = saved.filter(isBondAvailable).length
 
@@ -84,7 +123,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
         </div>
       )}
 
-      {!loading && saved.length === 0 ? (
+      {!loading && items.length === 0 ? (
         <div
           style={{
             display: 'flex',
@@ -171,6 +210,48 @@ export function Watchlist({ onOpen }: WatchlistProps) {
                 </div>
               )
             })}
+            {unresolved.map(({ id }) => (
+              <div
+                key={`unresolved-${id}`}
+                data-testid={`watchlist-unresolved-${id}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  borderRadius: 'var(--radius-card)',
+                  background: 'var(--surface)',
+                  border: '1px solid var(--ink-12)',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-small)',
+                  color: 'var(--ink-60)',
+                  gap: 12,
+                  minWidth: 0,
+                  gridColumn: '1 / -1',
+                }}
+              >
+                <span>{t('noLongerAvailable', { id })}</span>
+                <button
+                  type="button"
+                  onClick={() => remove(id)}
+                  aria-label={t('removeUnavailable', { id })}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--ink-12)',
+                    borderRadius: 'var(--radius-pill)',
+                    padding: '6px 14px',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--type-caption)',
+                    fontWeight: 600,
+                    color: 'var(--ember)',
+                    cursor: 'pointer',
+                    transition: 'background var(--dur-press) var(--ease-out)',
+                  }}
+                >
+                  {t('remove')}
+                </button>
+              </div>
+            ))}
           </div>
         )
       )}

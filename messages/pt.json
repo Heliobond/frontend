@@ -30,7 +30,17 @@
     "disconnectCancel": "Cancel",
     "demoSession": "Demo session",
     "referral": "Referral",
-    "shareLink": "Share your referral link"
+    "shareLink": "Share your referral link",
+    "brandHome": "Heliobond - início",
+    "offline": "Offline",
+    "offlineCached": "Offline - mostrando dados em cache",
+    "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+    "activity": "Atividade",
+    "activityHistory": "Histórico de atividades de transações",
+    "signingBlocked": "A assinatura está bloqueada até que correspondam.",
+    "checkAgain": "Verificar novamente",
+    "syncing": "Sincronizando com a Stellar",
+    "skipToContent": "Pular para o conteúdo"
   },
   "Footer": {
     "risk": "Aviso de Risco",
@@ -116,7 +126,8 @@
     "emptyTitle": "No projects found",
     "emptySub": "There are no projects matching the \"{filter}\" category in the pool right now.",
     "loadMore": "Show {count} more",
-    "showingCount": "Showing {shown} of {total} projects"
+    "showingCount": "Showing {shown} of {total} projects",
+    "filterLoadedNotice": "Cobrindo os {loaded} projetos carregados até agora"
   },
   "Watchlist": {
     "title": "Projetos Salvos",
@@ -131,7 +142,10 @@
     "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
     "statusOpen": "Open for funding",
     "statusUpcoming": "Not yet available",
-    "notYetAvailable": "We'll flag it here when it opens."
+    "notYetAvailable": "We'll flag it here when it opens.",
+    "noLongerAvailable": "O projeto #{id} não está mais disponível",
+    "removeUnavailable": "Remover o projeto #{id} da lista de observação",
+    "remove": "Remover"
   },
   "Deposit": {
     "amountLabel": "Valor do Investimento",
@@ -420,7 +434,9 @@
     "columnWithdrawals": "Retiradas",
     "columnDistributions": "Distribuições",
     "columnRealizedGain": "Ganho realizado",
-    "currencyFormat": "US$ {amount}"
+    "currencyFormat": "US$ {amount}",
+    "skippedBadge": "Aviso",
+    "skippedAlert": "{count, plural, one {# evento com data inválida foi excluído deste relatório.} other {# eventos com datas inválidas foram excluídos deste relatório.}}"
   },
   "PasswordResetEmail": {
     "subject": "Redefinição de Senha - Heliobond",
@@ -439,7 +455,9 @@
     "body": "You have been inactive for a while. To protect your unsaved changes and account security, your session will automatically expire.",
     "expiresIn": "Session expiring in",
     "extendCta": "Stay connected",
-    "logoutCta": "Disconnect now"
+    "logoutCta": "Disconnect now",
+    "expiredTitle": "Sessão expirada",
+    "expiredBody": "Você foi desconectado devido à inatividade."
   },
   "AccountConflict": {
     "modalTitle": "Sign in with email",
@@ -591,5 +609,36 @@
       "title": "Projeto não encontrado",
       "description": "Não foi possível encontrar o projeto de energia verde solicitado."
     }
+  },
+  "Errors": {
+    "offlineEyebrow": "Você está offline",
+    "errorEyebrow": "Algo deu errado",
+    "offlineTitle": "Conexão com a Stellar perdida",
+    "errorTitle": "Ocorreu um erro inesperado",
+    "offlineBody": "O aplicativo não conseguiu acessar o nó da Stellar. Verifique sua conexão ou tente novamente. Você ainda pode acessar as exibições em cache.",
+    "errorBody": "O aplicativo encontrou um problema inesperado. Você pode tentar se recuperar ou voltar para a página inicial.",
+    "errorRef": "Ref. do erro: {digest}",
+    "tryAgain": "Tentar novamente",
+    "viewCached": "Ver visualizações em cache",
+    "goHome": "Ir para o início"
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Página não encontrada",
+    "body": "A rota que você acessou não existe - ela pode ter sido movida ou nunca existiu.",
+    "backHome": "Voltar para Heliobond"
+  },
+  "Shell": {
+    "skipToContent": "Pular para o conteúdo",
+    "offlineBanner": "Offline - Mostrando dados em cache. Tentando reconectar...",
+    "offlineBadge": "Offline",
+    "offlineCached": "Offline - mostrando dados em cache",
+    "brandHome": "Heliobond - início",
+    "pendingCount": "{count, plural, one {# pendente} other {# pendentes}}",
+    "activity": "Atividade",
+    "activityHistory": "Histórico de atividades de transações",
+    "signingBlocked": "A assinatura está bloqueada até que correspondam.",
+    "checkAgain": "Verificar novamente",
+    "syncing": "Sincronizando com a Stellar"
   }
 }

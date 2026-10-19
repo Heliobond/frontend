@@ -162,3 +162,43 @@ describe('contributor docs accuracy (#725)', () => {
     }
   })
 })
+
+/**
+ * Bun version parity (#790). Pinned versions drifted across package.json,
+ * README, CONTRIBUTING, and GitHub Actions workflows, causing local/CI lockfile
+ * divergence. These checks ensure the version is single-sourced from package.json
+ * and all workflows reference it via bun-version-file.
+ */
+describe('bun version parity (#790)', () => {
+  const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
+  const readme = readFileSync(path.join(ROOT, 'README.md'), 'utf8')
+  const contributing = readFileSync(path.join(ROOT, 'CONTRIBUTING.md'), 'utf8')
+  const ci = readFileSync(path.join(ROOT, '.github/workflows/ci.yml'), 'utf8')
+  const e2eChain = readFileSync(path.join(ROOT, '.github/workflows/e2e-chain.yml'), 'utf8')
+
+  it('declares the canonical bun version in packageManager', () => {
+    expect(pkg.packageManager).toMatch(/^bun@\d+\.\d+\.\d+$/)
+    const version = pkg.packageManager.replace('bun@', '')
+
+    expect(readme).toContain(`bun**](https://bun.sh) **${version}**`)
+    expect(contributing).toContain(`bun**](https://bun.sh) **${version}**`)
+  })
+
+  it('uses bun-version-file: package.json in all workflow setup-bun steps', () => {
+    // Neither workflow should hard-code BUN_VERSION or bun-version strings
+    expect(ci).not.toContain('BUN_VERSION:')
+    expect(ci).not.toMatch(/bun-version:\s*['"]?\d+\.\d+/i)
+    expect(e2eChain).not.toMatch(/bun-version:\s*['"]?\d+\.\d+/i)
+
+    // Every oven-sh/setup-bun step must specify bun-version-file: package.json
+    const ciSetupBunCount = (ci.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    const ciVersionFileCount = (ci.match(/bun-version-file:\s*package\.json/g) || []).length
+    expect(ciSetupBunCount).toBe(4)
+    expect(ciVersionFileCount).toBe(ciSetupBunCount)
+
+    const e2eSetupBunCount = (e2eChain.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    const e2eVersionFileCount = (e2eChain.match(/bun-version-file:\s*package\.json/g) || []).length
+    expect(e2eSetupBunCount).toBe(1)
+    expect(e2eVersionFileCount).toBe(e2eSetupBunCount)
+  })
+})

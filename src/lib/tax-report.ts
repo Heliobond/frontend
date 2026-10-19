@@ -30,11 +30,26 @@ export interface QuarterlyTaxLine {
   events: InvestmentEvent[]
 }
 
-export function getQuarter(dateStr: string): { year: number; quarterNumber: 1 | 2 | 3 | 4 } {
+export interface QuarterlyTaxReport extends Array<QuarterlyTaxLine> {
+  skippedCount: number
+  skippedEvents: InvestmentEvent[]
+}
+
+export interface TaxReportSummary {
+  lines: QuarterlyTaxLine[]
+  skippedCount: number
+  skippedEvents: InvestmentEvent[]
+}
+
+export function getQuarter(dateStr: string): { year: number; quarterNumber: 1 | 2 | 3 | 4 } | null {
+  if (!dateStr || typeof dateStr !== 'string') return null
   const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return null
   const month = date.getUTCMonth() // 0-11
   const quarterNumber = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4
-  return { year: date.getUTCFullYear(), quarterNumber }
+  const year = date.getUTCFullYear()
+  if (Number.isNaN(year) || Number.isNaN(quarterNumber)) return null
+  return { year, quarterNumber }
 }
 
 function realizedGain(event: InvestmentEvent): number {
@@ -44,11 +59,18 @@ function realizedGain(event: InvestmentEvent): number {
 
 export { realizedGain }
 
-export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyTaxLine[] {
+export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyTaxReport {
   const byQuarter = new Map<string, QuarterlyTaxLine>()
+  const skippedEvents: InvestmentEvent[] = []
 
   for (const event of events) {
-    const { year, quarterNumber } = getQuarter(event.date)
+    const quarterInfo = getQuarter(event?.date)
+    if (!quarterInfo) {
+      skippedEvents.push(event)
+      continue
+    }
+
+    const { year, quarterNumber } = quarterInfo
     const key = `${year}-Q${quarterNumber}`
 
     if (!byQuarter.has(key)) {
@@ -74,9 +96,54 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
     line.realizedGainUSD += realizedGain(event)
   }
 
-  return Array.from(byQuarter.values()).sort((a, b) =>
+  const result = Array.from(byQuarter.values()).sort((a, b) =>
     a.year !== b.year ? a.year - b.year : a.quarterNumber - b.quarterNumber,
-  )
+  ) as QuarterlyTaxReport
+
+  Object.defineProperties(result, {
+    skippedCount: {
+      value: skippedEvents.length,
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    },
+    skippedEvents: {
+      value: skippedEvents,
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    },
+  })
+
+  return result
+}
+
+export function computeQuarterlyTaxReportDetailed(events: InvestmentEvent[]): TaxReportSummary {
+  const lines = computeQuarterlyTaxReport(events)
+  return {
+    lines,
+    skippedCount: lines.skippedCount,
+    skippedEvents: lines.skippedEvents,
+  }
+}
+
+const NUMERIC = /^-?\d+(?:\.\d+)?$/
+
+/**
+ * Escapes one CSV field: quotes every field, doubles embedded quotes and
+ * prefixes spreadsheet formula triggers with an apostrophe so a project name
+ * like `=cmd|...` cannot execute when the file is opened.
+ */
+function csvField(raw: string): string {
+  let value = raw
+  const formulaLeading = /^[=+@]/.test(value) || (value.startsWith('-') && !NUMERIC.test(value))
+  if (formulaLeading) value = `'${value}`
+  if (/["\r\n,]/.test(value)) value = `"${value.replace(/"/g, '""')}"`
+  return value
+}
+
+function csvRow(fields: string[]): string {
+  return fields.map(csvField).join(',')
 }
 
 export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
@@ -87,7 +154,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
   for (const line of lines) {
     // Quarter header row
     detailRows.push(
-      [
+      csvRow([
         line.quarter,
         'Quarter Summary',
         line.totalDeposits.toFixed(2),
@@ -98,13 +165,13 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
         '', // type (empty for summary)
         '', // amount (empty for summary)
         '', // cost basis (empty for summary)
-      ].join(','),
+      ]),
     )
 
     // Event-level details for transparency and full audit trail
     for (const event of line.events) {
       detailRows.push(
-        [
+        csvRow([
           '', // quarter (empty for detail rows)
           'Event Detail',
           '', // total deposits (empty for detail)
@@ -115,12 +182,12 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
           event.type,
           event.amountUSD.toFixed(2),
           (event.costBasisUSD ?? 0).toFixed(2),
-        ].join(','),
+        ]),
       )
     }
   }
 
-  const header = [
+  const header = csvRow([
     'Quarter',
     'Type',
     'Total Deposits (USD)',
@@ -131,7 +198,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
     'Event Type',
     'Amount (USD)',
     'Cost Basis (USD)',
-  ].join(',')
+  ])
 
   return [header, ...detailRows].join('\n')
 }

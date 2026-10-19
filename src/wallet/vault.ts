@@ -346,6 +346,56 @@ export async function fetchUsdcBalance(
   }
 }
 
+/**
+ * Read the vault contract's liquid USDC balance from the Stellar Asset Contract (SAC).
+ * Simulates balance(vault_contract_id) on the SAC and scales the i128 stroops result by 10^7 (#699).
+ * Throws when NEXT_PUBLIC_USDC_SAC_ID or NEXT_PUBLIC_VAULT_CONTRACT_ID is not set.
+ */
+export async function fetchVaultLiquidUsdc(
+  sourceAddress: string,
+  network = STELLAR_NETWORK,
+): Promise<number> {
+  const sacId = process.env.NEXT_PUBLIC_USDC_SAC_ID
+  if (!sacId) throw new Error('NEXT_PUBLIC_USDC_SAC_ID not set')
+  if (!CONTRACT_ID) throw new Error('NEXT_PUBLIC_VAULT_CONTRACT_ID not set')
+  const { Address, scValToNative } = await import('@stellar/stellar-sdk')
+  try {
+    const retval = await sorobanSimulate(
+      sourceAddress,
+      'balance',
+      [new Address(CONTRACT_ID).toScVal()],
+      network,
+      sacId,
+    )
+    const raw = scValToNative(retval)
+    return Number(raw) / SCALE
+  } catch (e) {
+    if (isTransportError(e)) setOffline(true)
+    throw e instanceof Error ? e : new Error(String(e))
+  }
+}
+
+/**
+ * Compute the maximum single withdrawal allowed under the vault's graduated utilization tier (#45, #699).
+ * Utilization tier thresholds defined in investment_vault/src/lib.rs:
+ * - >= 90% (9000 bps): 10% of liquid USDC
+ * - >= 70% (7000 bps): 25% of liquid USDC
+ * - >= 50% (5000 bps): 50% of liquid USDC
+ * - < 50% (5000 bps): unconstrained by tier limit (Infinity)
+ */
+export function calculateWithdrawTierLimit(liquid: number, utilizationBps: number): number {
+  if (utilizationBps >= 9000) {
+    return (liquid * 10) / 100
+  }
+  if (utilizationBps >= 7000) {
+    return (liquid * 25) / 100
+  }
+  if (utilizationBps >= 5000) {
+    return (liquid * 50) / 100
+  }
+  return Infinity
+}
+
 export interface VaultLimits {
   paused: boolean
   minDeposit: number

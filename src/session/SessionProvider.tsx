@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useWallet } from '../wallet/WalletProvider'
+import { assertValidMessageChallenge, assertValidTransactionChallenge } from './challengeGuard'
 import {
   AuthError,
   authBaseUrl,
@@ -125,6 +126,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     const promise = (async () => {
       try {
         const token = await refreshSession()
+        // The refresh cookie belongs to the browser, not the connected wallet.
+        // A token bound to a different address (e.g. wallet A's session adopted
+        // after switching to wallet B) must never be adopted (#835).
+        if (targetAddress && token.address && token.address !== targetAddress) {
+          void endSession(token.token)
+          throw new AuthError('Refresh token belongs to a different wallet')
+        }
         // If the session was cleared or the address changed while in flight,
         // do not resurrect the cleared session.
         if (
@@ -161,9 +169,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const challenge = await requestChallenge(address)
       let signature: string
       if (challenge.type === 'transaction') {
-        signature = await sign(challenge.challenge, challenge.networkPassphrase)
-      } else {
+        await assertValidTransactionChallenge(
+          challenge.challenge,
+          address,
+          challenge.networkPassphrase,
+        )
+        signature = await sign(challenge.challenge)
+      } else if (challenge.type === 'message') {
+        assertValidMessageChallenge(challenge.challenge, address)
         signature = await signMessage(challenge.challenge)
+      } else {
+        throw new AuthError('Unknown sign-in challenge type')
       }
       const token = await verifyChallenge(address, challenge, signature)
       sessionEpochRef.current += 1
@@ -185,6 +201,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await endSession(token)
   }, [clear])
 
+  // Tracks the wallet the browser's refresh cookie belongs to, and lets the
+  // connect effect wait for the stale cookie to be cleared first (#835).
+  const cookieAddressRef = useRef<string | null>(address)
+  const pendingLogoutRef = useRef<Promise<void> | null>(null)
+
+  useEffect(() => {
+    const previous = cookieAddressRef.current
+    cookieAddressRef.current = address
+    if (previous === address || previous === null) return
+    // Wallet disconnected or switched: the backend cookie still holds the old
+    // session, so end it rather than letting a later connect adopt it.
+    clear()
+    pendingLogoutRef.current = endSession(null)
+  }, [address, clear])
+
   // Address changed or wallet disconnected: handled by `activeSession` above,
   // so the stale token stops being usable without an extra render pass (#598).
 
@@ -196,6 +227,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     void (async () => {
       try {
+        if (pendingLogoutRef.current) {
+          await pendingLogoutRef.current
+          pendingLogoutRef.current = null
+        }
         await refreshCurrentSession()
       } catch {
         if (!cancelled && isMountedRef.current && !sessionRef.current) {

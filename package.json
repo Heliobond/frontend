@@ -26,7 +26,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:production": "E2E_PRODUCTION=true playwright test e2e/security-headers.spec.ts",
+    "test:e2e:production": "CSP_MODE=enforce E2E_PRODUCTION=true playwright test --project=production e2e/security-headers.spec.ts",
     "test:e2e:chain": "playwright test --config playwright.chain.config.ts",
     "bundle:check": "node scripts/check-bundle-size.js",
     "typecheck:coverage": "node scripts/check-type-coverage.mjs",
@@ -45,6 +45,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/eslintrc": "^3.3.5",
     "@playwright/test": "^1.61.1",
     "@testing-library/dom": "^10.4.2",

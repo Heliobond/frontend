@@ -6,6 +6,7 @@ import {
   fetchClaimableYield,
   fetchTotalAssets,
   fetchUtilizationBps,
+  fetchVaultLiquidUsdc,
   type OnChainPortfolio,
 } from '../wallet/vault'
 import { selectYou, selectActivity, selectPoolSummary, type YouSummary } from '../state/selectors'
@@ -68,12 +69,13 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
       const key = `${address}:${reloads}`
       try {
         // Fetch Soroban portfolio, yield, and pool liquidity in parallel for time complexity O(1)
-        const [portResult, yieldResult, totalAssetsResult, utilBpsResult] =
+        const [portResult, yieldResult, totalAssetsResult, utilBpsResult, liquidResult] =
           await Promise.allSettled([
             fetchPortfolio(address),
             fetchClaimableYield(address),
             fetchTotalAssets(address),
             fetchUtilizationBps(address),
+            fetchVaultLiquidUsdc(address),
           ])
 
         if (isCancelled()) return
@@ -103,7 +105,8 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         if (totalAssetsResult.status === 'fulfilled' && totalAssetsResult.value > 0) {
           const total = totalAssetsResult.value
           const bps = utilBpsResult.status === 'fulfilled' ? utilBpsResult.value : 0
-          const liquid = total * (1 - bps / 10000)
+          const liquid =
+            liquidResult.status === 'fulfilled' ? liquidResult.value : total * (1 - bps / 10000)
           setVaultLiquidity({ liquid, total })
         } else {
           setVaultLiquidity(null)

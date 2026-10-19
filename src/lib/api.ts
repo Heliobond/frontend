@@ -32,6 +32,12 @@ import {
 
 export { API_TIMEOUT_MS }
 
+export interface Investment {
+  id: number
+  projectId: number
+  amount: number
+  projectUrl: string
+}
 const DEMO_MODE = !isBackendConfigured()
 
 function isDemoMode(): boolean {

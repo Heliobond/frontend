@@ -141,4 +141,41 @@ describe('Explore — pagination', () => {
     await waitFor(() => expect(cards().length).toBe(12))
     expect(cards()[0]).toHaveTextContent('Project 21')
   })
+  it('fetches a second page when hasMore is true and reaches all projects beyond 50', async () => {
+    const user = userEvent.setup()
+    const allProjects = makeProjects(60)
+
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      const start = (page - 1) * pageSize
+      const slice = allProjects.slice(start, start + pageSize)
+      return Promise.resolve({
+        projects: slice,
+        total: allProjects.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < allProjects.length,
+      })
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+
+    await waitFor(() => expect(screen.getByText('60 projects')).toBeInTheDocument())
+    expect(cards().length).toBe(12)
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(24))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(36))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(48))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(60))
+
+    expect(mockGetProjectsPaginated).toHaveBeenCalledWith(2, 50)
+    expect(cards()[59]).toHaveTextContent('Project 60')
+    expect(screen.queryByRole('button', { name: /more/i })).not.toBeInTheDocument()
+  })
 })

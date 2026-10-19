@@ -17,6 +17,23 @@ export interface SessionToken {
   token: string
   /** Epoch milliseconds when the token stops being valid. */
   expiresAt: number
+  /** G-address the token is bound to, when the token or response exposes it. */
+  address?: string
+}
+
+/** Reads the `address`/`sub` claim from an (unverified) JWT payload. */
+export function tokenAddress(token: string): string | null {
+  const parts = token.split('.')
+  if (parts.length !== 3) return null
+  try {
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')
+    const payload = JSON.parse(atob(padded)) as { address?: unknown; sub?: unknown }
+    const claim = payload.address ?? payload.sub
+    return typeof claim === 'string' && claim ? claim : null
+  } catch {
+    return null
+  }
 }
 
 export class AuthError extends Error {
@@ -65,6 +82,7 @@ function toSessionToken(payload: {
   token?: unknown
   expiresIn?: unknown
   expiresAt?: unknown
+  address?: unknown
 }): SessionToken {
   if (typeof payload.token !== 'string' || !payload.token) {
     throw new AuthError('Malformed session response')
@@ -73,7 +91,11 @@ function toSessionToken(payload: {
   if (typeof payload.expiresIn === 'number') expiresAt = Date.now() + payload.expiresIn * 1000
   else if (typeof payload.expiresAt === 'number') expiresAt = payload.expiresAt
   else throw new AuthError('Malformed session response')
-  return { token: payload.token, expiresAt }
+  const address =
+    typeof payload.address === 'string' && payload.address
+      ? payload.address
+      : (tokenAddress(payload.token) ?? undefined)
+  return { token: payload.token, expiresAt, address }
 }
 
 export function requestChallenge(address: string, signal?: AbortSignal): Promise<Challenge> {
@@ -87,27 +109,31 @@ export async function verifyChallenge(
   signature: string,
   signal?: AbortSignal,
 ): Promise<SessionToken> {
-  const payload = await request<{ token?: unknown; expiresIn?: unknown; expiresAt?: unknown }>(
-    '/auth/verify',
-    {
-      body: {
-        address,
-        type: challenge.type,
-        challenge: challenge.challenge,
-        signature,
-      },
-      signal,
+  const payload = await request<{
+    token?: unknown
+    expiresIn?: unknown
+    expiresAt?: unknown
+    address?: unknown
+  }>('/auth/verify', {
+    body: {
+      address,
+      type: challenge.type,
+      challenge: challenge.challenge,
+      signature,
     },
-  )
+    signal,
+  })
   return toSessionToken(payload)
 }
 
 /** Silent refresh through the HttpOnly refresh cookie. Rejects when there is none. */
 export async function refreshSession(signal?: AbortSignal): Promise<SessionToken> {
-  const payload = await request<{ token?: unknown; expiresIn?: unknown; expiresAt?: unknown }>(
-    '/auth/refresh',
-    { method: 'POST', body: {}, signal },
-  )
+  const payload = await request<{
+    token?: unknown
+    expiresIn?: unknown
+    expiresAt?: unknown
+    address?: unknown
+  }>('/auth/refresh', { method: 'POST', body: {}, signal })
   return toSessionToken(payload)
 }
 

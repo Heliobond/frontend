@@ -1,3 +1,5 @@
+export const AUTH_ROUTES = ['/deposit', '/withdraw', '/portfolio'] as const
+
 import type { Metadata } from 'next'
 import { siteUrl } from './siteUrl'
 
