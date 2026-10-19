@@ -172,25 +172,29 @@ session state the flow needs, `page.goto()` the route, then assert each step
 of the flow in order with `expect(locator).toBeVisible()` /
 `toBeDisabled()`.
 
-#### Production CSP enforcement
+#### Production CSP and security headers
+
+To test CSP and security headers against an enforce-mode production build without colliding with the backend API on port 3001:
 
 ```bash
 bun run test:e2e:production
 ```
 
-The run above sets `E2E_PRODUCTION=true` and targets only
-`e2e/security-headers.spec.ts`. That flag makes `playwright.config.ts` build the
-app and serve it on **port 3001** with `CSP_MODE=enforce`, so the extra
-assertions run against the enforcing `Content-Security-Policy` header instead of
-the `Content-Security-Policy-Report-Only` variant the app ships by default
-(`src/lib/securityHeaders.ts`): no `'unsafe-eval'`, no `ws:` and no
-`http://localhost` anywhere in the policy, `upgrade-insecure-requests` present,
-and no CSP violations recorded on `/` or `/explore`.
+This starts a fresh production server on dedicated port 3200 (configurable via `E2E_PRODUCTION_PORT`), disables server reuse (`reuseExistingServer: false`), and verifies security headers without interference from `.env.local` or running backends on port 3001.
 
-Run it whenever you touch `src/proxy.ts`, `src/lib/securityHeaders.ts` or
-anything inlined into `<head>`. It needs a full build, so it is slower than
-`bun run test:e2e`, port 3001 must be free, and it is **not** part of CI — the
-nightly workflow doesn't run it either.
+The run sets `E2E_PRODUCTION=true` and targets `e2e/security-headers.spec.ts`. That flag makes `playwright.config.ts` build the app and serve it on dedicated port 3200 with `CSP_MODE=enforce`, so assertions run against the enforcing `Content-Security-Policy` header instead of the `Content-Security-Policy-Report-Only` variant: no `'unsafe-eval'`, no `ws:` and no `http://localhost` anywhere in the policy, `upgrade-insecure-requests` present, and no CSP violations recorded on tested routes.
+
+Run it whenever you touch `src/proxy.ts`, `src/lib/securityHeaders.ts` or anything inlined into `<head>`. It needs a full build, so it is slower than `bun run test:e2e`, and it is not part of standard CI.
+
+### Automated accessibility checks (Axe)
+
+Heliobond includes automated accessibility tests powered by `@axe-core/playwright` in `e2e/a11y.spec.ts`. The audit checks all public routes and authenticated flows across both light and dark themes against WCAG 2.0 and 2.1 AA rules.
+
+```bash
+bun run test:e2e    # runs the full Playwright suite including a11y specs
+```
+
+The test fails on any serious or critical violation. Detailed results and violation objects are attached to the Playwright test report. Known pre-existing issues are tracked in the commented `KNOWN_VIOLATIONS` allowlist with links to their tracking GitHub issues.
 
 #### On-chain journey (local Stellar network)
 
@@ -231,8 +235,8 @@ script's env knobs. It provisions `e2e-admin`, `e2e-issuer` and `e2e-investor`
 via friendbot, issues and deploys USDC, then deploys `ProjectRegistry` and
 `InvestmentVault`.
 
-The journey itself is one long test (connect → explore → project → deposit →
-portfolio → withdraw → claim yield) with a 5-minute timeout and 30s expect
+The journey itself is one long test (connect -> explore -> project -> deposit ->
+portfolio -> withdraw -> claim yield) with a 5-minute timeout and 30s expect
 timeouts, single worker, traces and video retained on failure under
 `test-results/chain` and `playwright-report/chain`. Tear the network down with
 `docker rm -f stellar` when you're done.

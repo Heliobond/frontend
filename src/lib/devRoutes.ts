@@ -1,5 +1,5 @@
 /**
- * Dev-only routes (#606) — internal tooling pages such as the contrast-audit
+ * Dev-only routes (#606) - internal tooling pages such as the contrast-audit
  * harness and the email template preview live under `src/app/(dev)`. They are
  * reachable in `next dev`, and return 404 in production builds unless
  * NEXT_PUBLIC_ENABLE_DEV_ROUTES=true (e.g. for a preview deployment).

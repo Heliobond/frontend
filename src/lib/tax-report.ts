@@ -32,61 +32,42 @@ export interface QuarterlyTaxLine {
   events: InvestmentEvent[]
 }
 
-/**
- * Maps portfolio activity feed items into InvestmentEvent models for tax accounting.
- * Filters out non-taxable events (e.g. score updates) and parses numeric amounts and dates.
- */
+export interface QuarterlyTaxReport extends Array<QuarterlyTaxLine> {
+  skippedCount: number
+  skippedEvents: InvestmentEvent[]
+}
+
+export interface TaxReportSummary {
+  lines: QuarterlyTaxLine[]
+  skippedCount: number
+  skippedEvents: InvestmentEvent[]
+}
+
+/** Maps portfolio activity feed items into investment events for tax reporting. */
 export function activityToInvestmentEvents(activity: Activity[]): InvestmentEvent[] {
   const events: InvestmentEvent[] = []
 
   for (const item of activity) {
-    if (!item || typeof item !== 'object') continue
-    const kindLower = (item.kind || '').toLowerCase()
-    let type: InvestmentEventType | null = null
+    const kind = item.kind.toLowerCase()
+    const type = kind.includes('deposit')
+      ? 'deposit'
+      : kind.includes('withdraw')
+        ? 'withdrawal'
+        : kind.includes('distribution') || kind.includes('yield') || kind.includes('claim')
+          ? 'distribution'
+          : null
+    if (!type) continue
 
-    if (kindLower.includes('deposit')) {
-      type = 'deposit'
-    } else if (kindLower.includes('withdraw')) {
-      type = 'withdrawal'
-    } else if (
-      kindLower.includes('distribution') ||
-      kindLower.includes('yield') ||
-      kindLower.includes('claim')
-    ) {
-      type = 'distribution'
-    } else {
-      continue
-    }
-
-    const cleanAmount =
-      typeof item.amount === 'string'
-        ? item.amount.replace(/[^0-9.-]+/g, '')
-        : String(item.amount ?? '')
-    const amountUSD = Math.abs(parseFloat(cleanAmount)) || 0
-
-    let date = item.when
-    if (!date) {
-      date = new Date().toISOString().split('T')[0]
-    } else if (/^\d+$/.test(date)) {
-      const num = Number(date)
-      const ms = num < 1e11 ? num * 1000 : num
-      date = new Date(ms).toISOString().split('T')[0]
-    } else {
-      const parsed = new Date(date)
-      if (!Number.isNaN(parsed.getTime())) {
-        date = parsed.toISOString().split('T')[0]
-      }
-    }
+    const amount = typeof item.amount === 'string' ? item.amount.replace(/[^0-9.-]+/g, '') : item.amount
+    const amountUSD = Math.abs(Number.parseFloat(String(amount))) || 0
 
     events.push({
-      id: item.hash || `${type}-${date}-${amountUSD}-${events.length}`,
-      projectName: (item as unknown as { projectName?: string }).projectName || 'Heliobond Vault',
-      date,
+      id: item.hash || `${type}-${item.when}-${amountUSD}-${events.length}`,
+      projectName: 'Heliobond Vault',
+      date: item.when,
       type,
       amountUSD,
-      costBasisUSD:
-        (item as unknown as { costBasisUSD?: number }).costBasisUSD ??
-        (type === 'withdrawal' ? amountUSD : 0),
+      costBasisUSD: type === 'withdrawal' ? amountUSD : 0,
     })
   }
 
@@ -111,12 +92,17 @@ function realizedGain(event: InvestmentEvent): number {
 
 export { realizedGain }
 
-export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyTaxLine[] {
+export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyTaxReport {
   const byQuarter = new Map<string, QuarterlyTaxLine>()
+  const skippedEvents: InvestmentEvent[] = []
 
   for (const event of events) {
     const quarterInfo = getQuarter(event?.date)
-    if (!quarterInfo) continue
+    if (!quarterInfo) {
+      skippedEvents.push(event)
+      continue
+    }
+
     const { year, quarterNumber } = quarterInfo
     const key = `${year}-Q${quarterNumber}`
 
@@ -143,9 +129,35 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
     line.realizedGainUSD += realizedGain(event)
   }
 
-  return Array.from(byQuarter.values()).sort((a, b) =>
+  const result = Array.from(byQuarter.values()).sort((a, b) =>
     a.year !== b.year ? a.year - b.year : a.quarterNumber - b.quarterNumber,
-  )
+  ) as QuarterlyTaxReport
+
+  Object.defineProperties(result, {
+    skippedCount: {
+      value: skippedEvents.length,
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    },
+    skippedEvents: {
+      value: skippedEvents,
+      enumerable: false,
+      writable: true,
+      configurable: true,
+    },
+  })
+
+  return result
+}
+
+export function computeQuarterlyTaxReportDetailed(events: InvestmentEvent[]): TaxReportSummary {
+  const lines = computeQuarterlyTaxReport(events)
+  return {
+    lines,
+    skippedCount: lines.skippedCount,
+    skippedEvents: lines.skippedEvents,
+  }
 }
 
 const NUMERIC = /^-?\d+(?:\.\d+)?$/

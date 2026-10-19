@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { useTranslations } from 'next-intl'
-import { Button, Card, DemoDataBadge } from '@/components'
+import { Badge, Button, Card, DemoDataBadge } from '@/components'
 import { useWallet } from '@/wallet/WalletProvider'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import {
@@ -109,6 +109,29 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
       >
         {t('disclaimer')}
       </p>
+
+      {report.skippedCount > 0 && (
+        <div
+          role="status"
+          data-testid="tax-reports-skipped-alert"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '12px 16px',
+            borderRadius: 'var(--radius-card, 8px)',
+            background: 'var(--ember-12)',
+            border: '1px solid var(--ember-strong, #b45309)',
+            color: 'var(--ink)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-small)',
+            marginBottom: 24,
+          }}
+        >
+          <Badge tone="ember">{t('skippedBadge')}</Badge>
+          <span>{t('skippedAlert', { count: report.skippedCount })}</span>
+        </div>
+      )}
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
