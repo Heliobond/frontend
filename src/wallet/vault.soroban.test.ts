@@ -581,6 +581,86 @@ describe('view calls', () => {
     expect(invocation(simulatedTx())).toMatchObject({ method: 'get_utilization_bps', args: [] })
   })
 
+  it('fetchUsdcBalance() simulates balance(id) on SAC and scales i128 stroops (#698)', async () => {
+    const sacId = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', sacId)
+    const vault = await loadVault()
+    rpcMock.simulateTransaction.mockResolvedValue(
+      okSimulation(nativeToScVal(5_000_0000000n, { type: 'i128' })),
+    )
+    await expect(vault.fetchUsdcBalance(USER)).resolves.toBe(5000)
+    expect(invocation(simulatedTx())).toMatchObject({
+      contract: sacId,
+      method: 'balance',
+      args: [USER],
+    })
+  })
+
+  it('fetchUsdcBalance() rejects when NEXT_PUBLIC_USDC_SAC_ID is not set (#698)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', '')
+    const vault = await loadVault()
+    await expect(vault.fetchUsdcBalance(USER)).rejects.toThrow('NEXT_PUBLIC_USDC_SAC_ID not set')
+  })
+
+  it('fetchVaultLiquidUsdc() simulates balance(CONTRACT_ID) on SAC and scales i128 stroops (#699)', async () => {
+    const sacId = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', sacId)
+    const vault = await loadVault()
+    rpcMock.simulateTransaction.mockResolvedValue(
+      okSimulation(nativeToScVal(1_420_300_0000000n, { type: 'i128' })),
+    )
+    await expect(vault.fetchVaultLiquidUsdc(USER)).resolves.toBe(1_420_300)
+    expect(invocation(simulatedTx())).toMatchObject({
+      contract: sacId,
+      method: 'balance',
+      args: [CONTRACT_ID],
+    })
+  })
+
+  it('fetchVaultLiquidUsdc() rejects when NEXT_PUBLIC_USDC_SAC_ID is unset (#699)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', '')
+    const vault = await loadVault()
+    await expect(vault.fetchVaultLiquidUsdc(USER)).rejects.toThrow(
+      'NEXT_PUBLIC_USDC_SAC_ID not set',
+    )
+  })
+
+  it('fetchVaultLiquidUsdc() rejects when CONTRACT_ID is unset (#699)', async () => {
+    const sacId = StrKey.encodeContract(Buffer.alloc(32, 9))
+    vi.stubEnv('NEXT_PUBLIC_USDC_SAC_ID', sacId)
+    const vault = await loadVault(null)
+    await expect(vault.fetchVaultLiquidUsdc(USER)).rejects.toThrow(
+      'NEXT_PUBLIC_VAULT_CONTRACT_ID not set',
+    )
+  })
+
+  describe('calculateWithdrawTierLimit (#699)', () => {
+    it('applies 10% limit when utilization is at or above 90% (9000 bps)', async () => {
+      const vault = await loadVault()
+      expect(vault.calculateWithdrawTierLimit(1000, 9500)).toBe(100)
+      expect(vault.calculateWithdrawTierLimit(1000, 9000)).toBe(100)
+    })
+
+    it('applies 25% limit when utilization is at or above 70% and below 90%', async () => {
+      const vault = await loadVault()
+      expect(vault.calculateWithdrawTierLimit(1000, 7500)).toBe(250)
+      expect(vault.calculateWithdrawTierLimit(1000, 7000)).toBe(250)
+      expect(vault.calculateWithdrawTierLimit(1000, 8999)).toBe(250)
+    })
+
+    it('applies 50% limit when utilization is at or above 50% and below 70%', async () => {
+      const vault = await loadVault()
+      expect(vault.calculateWithdrawTierLimit(1000, 5000)).toBe(500)
+      expect(vault.calculateWithdrawTierLimit(1000, 6999)).toBe(500)
+    })
+
+    it('returns Infinity (unconstrained tier) when utilization is below 50%', async () => {
+      const vault = await loadVault()
+      expect(vault.calculateWithdrawTierLimit(1000, 4999)).toBe(Infinity)
+      expect(vault.calculateWithdrawTierLimit(1000, 0)).toBe(Infinity)
+    })
+  })
+
   it('get_portfolio(account: Address) maps the PortfolioInfo struct', async () => {
     const vault = await loadVault()
     const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' })

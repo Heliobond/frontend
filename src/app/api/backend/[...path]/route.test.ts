@@ -118,6 +118,50 @@ describe('proxy request shaping', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
+  it('rejects encoded traversal segments before contacting the backend', async () => {
+    const route = await loadRoute()
+    // Next.js decodes %2e%2e to ".." and %2f to "/" before the handler runs.
+    const response = await invoke(route, '/v1/projects/%2e%2e/%2e%2e/admin')
+    expect(response.status).toBe(404)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('rejects ".", "..", slashes, backslashes and empty segments', async () => {
+    const route = await loadRoute()
+    for (const segments of [
+      ['v1', 'projects', '.'],
+      ['v1', 'projects', '..'],
+      ['v1', 'projects', '%2e%2e'],
+      ['v1', 'projects', '%2f'],
+      ['v1', 'projects', '%5c'],
+      ['v1', 'projects', ''],
+    ]) {
+      const response = await route.GET(new Request('http://localhost:3000/api/backend'), {
+        params: Promise.resolve({ path: segments }),
+      })
+      expect(response.status, `expected ${segments.join('/')} to be rejected`).toBe(404)
+    }
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('forwards a legitimate history request with an allowlisted query', async () => {
+    const route = await loadRoute()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ entries: [] }))
+    const response = await invoke(route, '/v1/projects/1/history', { search: '?limit=5' })
+    expect(response.status).toBe(200)
+    expect(fetch).toHaveBeenCalledWith(
+      `${BACKEND}/v1/projects/1/history?limit=5`,
+      expect.anything(),
+    )
+  })
+
+  it('drops query parameters outside the allowlist', async () => {
+    const route = await loadRoute()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [] }))
+    await invoke(route, '/v1/projects', { search: '?cursor=1&admin=true&limit=5&redirect=/x' })
+    expect(fetch).toHaveBeenCalledWith(`${BACKEND}/v1/projects?cursor=1&limit=5`, expect.anything())
+  })
+
   it('reports 502 when the backend is unreachable', async () => {
     const route = await loadRoute()
     vi.mocked(fetch).mockRejectedValue(new TypeError('fetch failed'))

@@ -22,7 +22,7 @@
     "watchlist": "Liste de suivi",
     "copyAddress": "Copier l'adresse",
     "copied": "Copié",
-    "viewInvestment": "Voir votre investissement",
+    "viewInvestment": "View your investment",
     "viewOnExplorer": "Voir sur Stellar Expert",
     "disconnect": "Se déconnecter",
     "disconnectConfirm": "Oui, se déconnecter",
@@ -31,7 +31,16 @@
     "demoSession": "Session démo",
     "referral": "Referral",
     "shareLink": "Share your referral link",
-    "viewInvestment": "View your investment"
+    "brandHome": "Heliobond - accueil",
+    "offline": "Hors ligne",
+    "offlineCached": "Hors ligne - affichage des données en cache",
+    "pendingCount": "{count, plural, one {# en attente} other {# en attente}}",
+    "activity": "Activité",
+    "activityHistory": "Historique de l'activité des transactions",
+    "signingBlocked": "La signature est bloquée jusqu'à ce qu'ils correspondent.",
+    "checkAgain": "Vérifier à nouveau",
+    "syncing": "Synchronisation avec Stellar",
+    "skipToContent": "Passer au contenu"
   },
   "Footer": {
     "trustLinks": "Liens de confiance",
@@ -117,7 +126,8 @@
     "emptyTitle": "Aucun projet trouvé",
     "emptySub": "Il n'y a aucun projet correspondant à la catégorie \"{filter}\" dans le pool en ce moment.",
     "loadMore": "Afficher {count} de plus",
-    "showingCount": "{shown} projets sur {total} affichés"
+    "showingCount": "{shown} projets sur {total} affichés",
+    "filterLoadedNotice": "Couvre les {loaded} projets chargés jusqu'à présent"
   },
   "Watchlist": {
     "title": "Votre liste de suivi",
@@ -132,7 +142,10 @@
     "availableBanner": "{count, plural, one {# obligation suivie est ouverte au financement en ce moment.} other {# obligations suivies sont ouvertes au financement en ce moment.}}",
     "statusOpen": "Ouverte au financement",
     "statusUpcoming": "Pas encore disponible",
-    "notYetAvailable": "Nous le signalerons ici dès son ouverture."
+    "notYetAvailable": "Nous le signalerons ici dès son ouverture.",
+    "noLongerAvailable": "Le projet #{id} n'est plus disponible",
+    "removeUnavailable": "Retirer le projet #{id} de la liste de suivi",
+    "remove": "Supprimer"
   },
   "Deposit": {
     "stepAmount": "Montant",
@@ -169,10 +182,9 @@
     "pendingTx": "tx a91f…3c0d · voir sur Stellar Expert ↗",
     "successH1": "Bienvenue dans le pool",
     "successBody": "Vous avez reçu <num>{shares} HBS</num> et soutenez désormais <b>{count} projets vérifiés</b>.",
-    "viewInvestment": "Voir votre investissement",
+    "viewInvestment": "View your investment",
     "viewExpert": "Voir sur Stellar Expert",
-    "goPortfolio": "Aller au portefeuille",
-    "viewInvestment": "View your investment"
+    "goPortfolio": "Aller au portefeuille"
   },
   "Portfolio": {
     "eyebrow": "Votre portefeuille",
@@ -187,18 +199,13 @@
     "impactBody": "Votre participation aide à financer <b>{count} projets vérifiés</b> dans 6 pays.",
     "projectsBacked": "Projets soutenus",
     "weightedGreen": "Score vert pondéré",
-    "riskScore": "Score de risque du portefeuille",
-    "riskTierConservative": "Conservateur",
-    "riskTierModerate": "Modéré",
-    "riskTierAggressive": "Agressif",
-    "riskCaption": "Basé sur la répartition des notations d'obligations dans vos avoirs.",
-    "activityTitle": "Activité",
-    "activityNote": "chaque entrée → Stellar Expert",
     "riskScore": "Portfolio risk score",
     "riskTierConservative": "Conservative",
     "riskTierModerate": "Moderate",
     "riskTierAggressive": "Aggressive",
     "riskCaption": "Based on the mix of bond ratings in your holdings.",
+    "activityTitle": "Activité",
+    "activityNote": "chaque entrée → Stellar Expert",
     "referralProgram": "Referral program",
     "referralLink": "Your referral link",
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
@@ -427,7 +434,9 @@
     "columnWithdrawals": "Retraits",
     "columnDistributions": "Distributions",
     "columnRealizedGain": "Gain réalisé",
-    "currencyFormat": "{amount} $"
+    "currencyFormat": "{amount} $",
+    "skippedBadge": "Avis",
+    "skippedAlert": "{count, plural, one {# événement avec une date invalide a été exclu de ce rapport.} other {# événements avec des dates invalides ont été exclus de ce rapport.}}"
   },
   "PasswordResetEmail": {
     "subject": "Réinitialisez votre mot de passe Heliobond",
@@ -446,7 +455,9 @@
     "body": "Vous êtes inactif depuis un moment. Pour protéger vos modifications non enregistrées et la sécurité de votre compte, votre session va expirer automatiquement.",
     "expiresIn": "Expiration de la session dans",
     "extendCta": "Rester connecté",
-    "logoutCta": "Se déconnecter"
+    "logoutCta": "Se déconnecter",
+    "expiredTitle": "Session expirée",
+    "expiredBody": "Vous avez été déconnecté pour cause d'inactivité."
   },
   "AccountConflict": {
     "modalTitle": "Se connecter par e-mail",
@@ -598,5 +609,36 @@
       "title": "Projet introuvable",
       "description": "Le projet d’énergie verte demandé est introuvable."
     }
+  },
+  "Errors": {
+    "offlineEyebrow": "Vous êtes hors ligne",
+    "errorEyebrow": "Une erreur est survenue",
+    "offlineTitle": "Connexion à Stellar perdue",
+    "errorTitle": "Une erreur inattendue est survenue",
+    "offlineBody": "L'application n'a pas pu joindre le nœud Stellar. Vérifiez votre connexion ou réessayez. Vous pouvez toujours accéder aux vues en cache.",
+    "errorBody": "L'application a rencontré un problème inattendu. Vous pouvez tenter une récupération ou revenir à la page d'accueil.",
+    "errorRef": "Réf. de l'erreur : {digest}",
+    "tryAgain": "Réessayer",
+    "viewCached": "Voir les vues en cache",
+    "goHome": "Retour à l'accueil"
+  },
+  "NotFound": {
+    "code": "404",
+    "title": "Page non trouvée",
+    "body": "La page demandée n'existe pas - elle a peut-être été déplacée ou n'a jamais existé.",
+    "backHome": "Retour à Heliobond"
+  },
+  "Shell": {
+    "skipToContent": "Passer au contenu",
+    "offlineBanner": "Hors ligne - Affichage des données en cache. Tentative de reconnexion...",
+    "offlineBadge": "Hors ligne",
+    "offlineCached": "Hors ligne - affichage des données en cache",
+    "brandHome": "Heliobond - accueil",
+    "pendingCount": "{count, plural, one {# en attente} other {# en attente}}",
+    "activity": "Activité",
+    "activityHistory": "Historique de l'activité des transactions",
+    "signingBlocked": "La signature est bloquée jusqu'à ce qu'ils correspondent.",
+    "checkAgain": "Vérifier à nouveau",
+    "syncing": "Synchronisation avec Stellar"
   }
 }

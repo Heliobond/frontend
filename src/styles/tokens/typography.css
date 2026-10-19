@@ -13,11 +13,9 @@
 
 :root {
   /* --- Families -------------------------------------- */
-  /* next/font self-hosts each face and exposes the generated family stack as a
-     CSS custom property (`--font-cabinet-grotesk`, `--font-hanken-grotesk`,
-     `--font-spline-sans-mono`), set on <html> from `src/theme/fonts.ts`. The
-     literal names below act as per-variable fallbacks so the tokens still
-     resolve to the next system font if a loader variable is ever absent. */
+  /* Cabinet Grotesk is self-hosted through next/font/local. Hanken Grotesk and
+     Spline Sans Mono are self-hosted in fonts.css, which defines their family
+     variables here. Literal names remain fallbacks if a font fails to load. */
   --font-display:
     var(--font-cabinet-grotesk, 'Cabinet Grotesk'), var(--font-hanken-grotesk, 'Hanken Grotesk'),
     system-ui, sans-serif;

@@ -23,6 +23,7 @@ export function useVaultLimits() {
     'public') as 'public' | 'testnet'
 
   const [limits, setLimits] = useState<VaultLimits>(defaultLimits)
+  const [error, setError] = useState<string | null>(null)
   const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
 
   const { tick } = useVaultRefresh(enabled)
@@ -44,9 +45,16 @@ export function useVaultLimits() {
 
     fetchVaultLimits(address, network)
       .then((data) => {
-        if (!cancelled) setLimits(data)
+        if (!cancelled) {
+          setLimits(data)
+          setError(null)
+        }
       })
-      .catch(() => {})
+      .catch((reason: unknown) => {
+        if (!cancelled) {
+          setError(reason instanceof Error ? reason.message : 'Could not load vault limits')
+        }
+      })
       .finally(() => {
         if (!cancelled) setSettledKey(key)
       })
@@ -56,5 +64,5 @@ export function useVaultLimits() {
     }
   }, [address, enabled, network, tick])
 
-  return { ...limits, loading }
+  return { ...limits, loading, error }
 }

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import en from '../../messages/en.json'
 import fr from '../../messages/fr.json'
 import es from '../../messages/es.json'
-import ar from '../../messages/ar.json'
 import pt from '../../messages/pt.json'
+import ar from '../../messages/ar.json'
 
 function getLeafKeys(obj: Record<string, unknown>, prefix = ''): string[] {
   const keys: string[] = []
@@ -42,14 +42,15 @@ const IDENTICAL_ALLOWLIST = new Set<string>([
   'TaxReports.currencyFormat',
   'Creator.typeSolar',
   'ProjectDetail.backAriaHidden',
+  'NotFound.code',
 ])
 
 describe('Message catalog parity', () => {
   it.each([
     ['fr.json', fr],
     ['es.json', es],
-    ['ar.json', ar],
     ['pt.json', pt],
+    ['ar.json', ar],
   ] as const)('en.json and %s have identical key sets', (_name, catalog) => {
     const enKeys = getLeafKeys(en).sort()
     const catalogKeys = getLeafKeys(catalog).sort()

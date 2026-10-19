@@ -1,23 +1,21 @@
-import { Hanken_Grotesk, Spline_Sans_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 
 /**
- * Heliobond · Self-hosted webfonts (via next/font)
+ * Heliobond · Self-hosted webfonts
  * --------------------------------------------------------------------------
  * Previously the three typefaces were loaded from their CDNs through remote
  * `@import url(...)` rules in `tokens/fonts.css` (Fontshare + Google Fonts),
  * which render-blocked the page and added extra round-trips with no
- * preconnect. All three are now fetched/optimized by `next/font` at build
- * time and served from the app's own origin:
+ * preconnect. Cabinet Grotesk is optimized by `next/font/local`; the Google
+ * font subsets are vendored and declared in `tokens/fonts.css`:
  *
  *   Display — Cabinet Grotesk  (Fontshare, vendored WOFF2 via next/font/local)
- *   Body    — Hanken Grotesk   (Google, self-hosted via next/font/google)
- *   Data    — Spline Sans Mono (Google, self-hosted via next/font/google)
+ *   Body    — Hanken Grotesk   (Google Fonts, vendored WOFF2 subsets)
+ *   Data    — Spline Sans Mono (Google Fonts, vendored WOFF2 subsets)
  *
- * The `variable` options emit CSS custom properties that `tokens/typography.css`
- * consumes (`--font-display`, `--font-body`, `--font-data`), so every
- * `font-family: var(--font-*)` in the design system resolves to the loaded,
- * hashed, preloaded face instead of a CDN name.
+ * The generated Cabinet Grotesk variable and local Hanken/Spline variables
+ * feed the font tokens in `tokens/typography.css`, without build-time network
+ * requests to Google Fonts.
  */
 
 /** Display — Cabinet Grotesk (Fontshare → vendored WOFF2). Weights 500/700/800. */
@@ -32,29 +30,7 @@ const cabinetGrotesk = localFont({
   fallback: ['Hanken Grotesk', 'system-ui', 'sans-serif'],
 })
 
-/** Body — Hanken Grotesk (Google). Weights 400/500/600/700. */
-const hankenGrotesk = Hanken_Grotesk({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-  variable: '--font-hanken-grotesk',
-  fallback: ['system-ui', '-apple-system', 'sans-serif'],
-})
+/** Cabinet Grotesk's Next.js class; body and data faces are declared in fonts.css. */
+export const fontVariables = cabinetGrotesk.variable
 
-/** Data — Spline Sans Mono (Google). Weights 400/500/600. */
-const splineSansMono = Spline_Sans_Mono({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600'],
-  display: 'swap',
-  variable: '--font-spline-sans-mono',
-  fallback: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
-})
-
-/** Concatenated className applied to <html> so all three variables are set. */
-export const fontVariables = [
-  cabinetGrotesk.variable,
-  hankenGrotesk.variable,
-  splineSansMono.variable,
-].join(' ')
-
-export { cabinetGrotesk, hankenGrotesk, splineSansMono }
+export { cabinetGrotesk }

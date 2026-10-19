@@ -7,6 +7,7 @@ import { Helio } from '../brand/Helio'
 import { submitDeposit } from '../wallet/vault'
 import { useVault } from '../wallet/useVault'
 import { useVaultLimits } from '../wallet/useVaultLimits'
+import { useUsdcBalance } from '../wallet/useUsdcBalance'
 import { TransactionPendingError } from '../wallet/transactions'
 import { useTransactionFee } from '../wallet/useTransactionFee'
 import { scrollToFirstError } from '../lib/scrollToError'
@@ -29,7 +30,6 @@ import { projectedReturn } from '../lib/bondUtils'
 import { useDepositGuard } from '../hooks/useDepositGuard'
 import { RecurringInvestmentOptions } from '../components/RecurringInvestmentOptions'
 
-const USER_BALANCE_USDC = 240
 const DEFAULT_DEPOSIT_USDC = '100'
 const RATE_STALE_AFTER_SECONDS = 30
 const DEFAULT_SLIPPAGE_TOLERANCE = 0.005 // 0.5%
@@ -63,12 +63,14 @@ export function Deposit({ onDone }: DepositProps) {
     refresh: refreshVault,
   } = useVault()
   const { minDeposit, paused, maxTx } = useVaultLimits()
-  const balance = USER_BALANCE_USDC
+  const { balance } = useUsdcBalance()
   const quickDepositAmounts = Array.from(
     new Set(
-      [minDeposit, Math.min(250, balance), Math.min(500, balance)].filter(
-        (preset) => preset >= minDeposit,
-      ),
+      [
+        minDeposit,
+        balance !== null ? Math.min(250, balance) : 250,
+        balance !== null ? Math.min(500, balance) : 500,
+      ].filter((preset) => preset >= minDeposit),
     ),
   )
   const [step, setStep] = useState<DepositStep>('amount')
@@ -228,14 +230,14 @@ export function Deposit({ onDone }: DepositProps) {
               value={amount}
               onChange={setAmount}
               label={t('amountLabel')}
-              currency="USDC"
-              balanceLabel={t('balanceLabel')}
-              balance={USER_BALANCE_USDC.toFixed(2)}
+              currency={balance !== null ? 'USDC' : ''}
+              balanceLabel={balance !== null ? t('balanceLabel') : ''}
+              balance={balance !== null ? balance.toFixed(2) : 'Balance unavailable'}
               chips={quickDepositAmounts}
               min={minDeposit}
-              max={Math.min(balance, maxTx)}
-              cap={balance}
-              capMessage={t('capMessage', { cap: balance })}
+              max={balance !== null ? Math.min(balance, maxTx) : maxTx}
+              cap={balance !== null ? balance : undefined}
+              capMessage={balance !== null ? t('capMessage', { cap: balance }) : undefined}
               maxChipLabel={t('maxChip')}
               capActionLabel={t('depositMaxAvailable')}
               preview={
@@ -342,11 +344,17 @@ export function Deposit({ onDone }: DepositProps) {
               variant="primary"
               size="lg"
               style={{ width: '100%', marginTop: 20 }}
-              disabled={n < minDeposit || n > balance || n > maxTx || paused || !isMemoValid}
+              disabled={
+                n < minDeposit ||
+                (balance !== null && (n > balance || balance < minDeposit)) ||
+                n > maxTx ||
+                paused ||
+                !isMemoValid
+              }
               reason={
                 paused
                   ? 'Vault paused'
-                  : n > balance
+                  : balance !== null && (n > balance || balance < minDeposit)
                     ? t('reasonExceeds')
                     : n > maxTx
                       ? 'Amount exceeds pool limit'
@@ -357,11 +365,17 @@ export function Deposit({ onDone }: DepositProps) {
                           : undefined
               }
               onClick={() => {
-                if (n < minDeposit || n > balance || n > maxTx || paused || !isMemoValid) {
+                if (
+                  n < minDeposit ||
+                  (balance !== null && (n > balance || balance < minDeposit)) ||
+                  n > maxTx ||
+                  paused ||
+                  !isMemoValid
+                ) {
                   setTxError(
                     paused
                       ? 'vault_paused'
-                      : n > balance
+                      : balance !== null && (n > balance || balance < minDeposit)
                         ? 'amount_exceeds_balance'
                         : n > maxTx
                           ? 'amount_exceeds_max_tx'
@@ -375,7 +389,10 @@ export function Deposit({ onDone }: DepositProps) {
                 changeStep('review')
               }}
             >
-              {n >= minDeposit && n <= balance && n <= maxTx && !paused
+              {n >= minDeposit &&
+              (balance === null || (n <= balance && balance >= minDeposit)) &&
+              n <= maxTx &&
+              !paused
                 ? t('investCta', { amount: n })
                 : t('investCtaEmpty')}
             </Button>

@@ -28,12 +28,20 @@ const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
  */
 const PAGE_SIZE = 12
 
-export function Explore({ onOpen, initialProjects }: ExploreProps) {
+export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps) {
   const t = useTranslations('Explore')
   const router = useRouter()
   const searchParams = useSearchParams()
   const [projects, setProjects] = useState<Project[]>(initialProjects ?? [])
+  const [total, setTotal] = useState<number>(initialTotal ?? initialProjects?.length ?? 0)
+  const [hasMore, setHasMore] = useState<boolean>(
+    initialTotal !== undefined && initialProjects !== undefined
+      ? initialProjects.length < initialTotal
+      : false,
+  )
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(!initialProjects || initialProjects.length === 0)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [apiError, setApiError] = useState(false)
   const urlType = searchParams.get('type') as ProjectType | null
   const [filter, setFilter] = useState<ProjectType | 'All'>(
@@ -42,15 +50,19 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    if (initialProjects && initialProjects.length > 0) {
-      return
-    }
+    if (initialProjects && initialProjects.length > 0) return
     getProjectsPaginated(1, 50)
       .then((res) => {
         setProjects(res.projects)
+        setTotal(res.total)
+        setHasMore(res.hasMore)
+        setPage(res.page ?? 1)
       })
       .catch(() => {
-        setProjects(selectProjects().slice(0, 50))
+        const fallback = selectProjects()
+        setProjects(fallback.slice(0, 50))
+        setTotal(fallback.length)
+        setHasMore(50 < fallback.length)
         setApiError(true)
       })
       .finally(() => setLoading(false))
@@ -66,16 +78,54 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
     }
   }
 
+  const query = searchTerm.trim().toLowerCase()
+  const isDefaultView = filter === 'All' && !query
   const filteredByType = filter === 'All' ? projects : projects.filter((p) => p.type === filter)
   const shown = searchBondsByName(filteredByType, searchTerm)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const paged = shown.slice(0, visibleCount)
-  const remaining = shown.length - visibleCount
-  const nextChunk = Math.min(PAGE_SIZE, remaining)
+  const totalCount = isDefaultView ? Math.max(total, projects.length) : shown.length
+  const remaining = isDefaultView
+    ? Math.max(0, totalCount - visibleCount)
+    : hasMore
+      ? shown.length > visibleCount
+        ? shown.length - visibleCount
+        : Math.min(PAGE_SIZE, Math.max(0, total - projects.length))
+      : Math.max(0, shown.length - visibleCount)
+  const nextChunk = Math.min(PAGE_SIZE, remaining > 0 ? remaining : PAGE_SIZE)
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [filter, projects.length, searchTerm])
+  }, [filter, searchTerm])
+
+  const handleLoadMore = async () => {
+    const shouldFetch =
+      (visibleCount + PAGE_SIZE > projects.length ||
+        (!isDefaultView && visibleCount >= shown.length)) &&
+      hasMore
+    if (shouldFetch && !loadingMore) {
+      setLoadingMore(true)
+      try {
+        const nextPage = page + 1
+        const res = await getProjectsPaginated(nextPage, 50)
+        setProjects((prev) => {
+          const seen = new Set(prev.map((p) => p.id))
+          const fresh = res.projects.filter((p) => !seen.has(p.id))
+          return [...prev, ...fresh]
+        })
+        setPage(nextPage)
+        setHasMore(res.hasMore)
+        setTotal(res.total)
+        setVisibleCount((v) => v + PAGE_SIZE)
+      } catch {
+        // preserve current state on error
+      } finally {
+        setLoadingMore(false)
+      }
+    } else {
+      setVisibleCount((v) => v + PAGE_SIZE)
+    }
+  }
 
   return (
     <main id="main-content" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -171,15 +221,28 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
           ))}
         </div>
         {!loading && (
-          <span
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              color: 'var(--ink-60)',
-            }}
-          >
-            {t('countSorted', { count: shown.length })}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                color: 'var(--ink-60)',
+              }}
+            >
+              {t('countSorted', { count: totalCount })}
+            </span>
+            {!isDefaultView && hasMore && (
+              <span
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-caption)',
+                  color: 'var(--ink-40)',
+                }}
+              >
+                {t('filterLoadedNotice', { loaded: projects.length })}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -263,12 +326,16 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
                   color: 'var(--ink-60)',
                 }}
               >
-                {t('showingCount', { shown: paged.length, total: shown.length })}
+                {t('showingCount', {
+                  shown: Math.min(paged.length, totalCount),
+                  total: totalCount,
+                })}
               </div>
               {remaining > 0 && (
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((n) => n + PAGE_SIZE)}
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
                   style={{
                     height: 44,
                     padding: '0 24px',
@@ -279,8 +346,9 @@ export function Explore({ onOpen, initialProjects }: ExploreProps) {
                     fontFamily: 'var(--font-body)',
                     fontSize: 'var(--type-small)',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: loadingMore ? 'wait' : 'pointer',
                     transition: 'background var(--dur-press) var(--ease-out)',
+                    opacity: loadingMore ? 0.7 : 1,
                   }}
                 >
                   {t('loadMore', { count: nextChunk })}
