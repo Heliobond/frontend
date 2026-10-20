@@ -70,25 +70,25 @@ describe('ProjectDetailPage & generateMetadata', () => {
 
   it('calls notFound() for unknown id when project is missing in registry', async () => {
     mockGetProject.mockResolvedValue(null)
-    await expect(
-      ProjectDetailPage({ params: Promise.resolve({ id: '999' }) })
-    ).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(ProjectDetailPage({ params: Promise.resolve({ id: '999' }) })).rejects.toThrow(
+      'NEXT_NOT_FOUND',
+    )
     expect(mockNotFound).toHaveBeenCalled()
     expect(mockGetProject).toHaveBeenCalledWith(999)
   })
 
   it('calls notFound() for malformed id "abc" without querying registry', async () => {
-    await expect(
-      ProjectDetailPage({ params: Promise.resolve({ id: 'abc' }) })
-    ).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(ProjectDetailPage({ params: Promise.resolve({ id: 'abc' }) })).rejects.toThrow(
+      'NEXT_NOT_FOUND',
+    )
     expect(mockNotFound).toHaveBeenCalled()
     expect(mockGetProject).not.toHaveBeenCalled()
   })
 
   it('calls notFound() for decimal id "1.5" without querying registry', async () => {
-    await expect(
-      ProjectDetailPage({ params: Promise.resolve({ id: '1.5' }) })
-    ).rejects.toThrow('NEXT_NOT_FOUND')
+    await expect(ProjectDetailPage({ params: Promise.resolve({ id: '1.5' }) })).rejects.toThrow(
+      'NEXT_NOT_FOUND',
+    )
     expect(mockNotFound).toHaveBeenCalled()
     expect(mockGetProject).not.toHaveBeenCalled()
   })

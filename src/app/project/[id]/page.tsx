@@ -99,4 +99,3 @@ export default async function ProjectDetailPage({ params }: Props) {
 
   return <ProjectDetailClient id={id} initialData={data} />
 }
-
