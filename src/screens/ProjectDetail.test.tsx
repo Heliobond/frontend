@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@/test/render'
+import { render } from '@/test/render'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { YieldAlertProvider } from '../alerts/YieldAlertProvider'
 import { ProjectDetail } from './ProjectDetail'
 import { type Project } from '../data'
@@ -133,5 +134,98 @@ describe('ProjectDetail funding timeline explorer links (#703)', () => {
     expect(node).not.toHaveAttribute('href')
     expect(screen.getByText(truncated)).toBeVisible()
     expect(screen.queryByRole('link', { name: new RegExp(truncated) })).not.toBeInTheDocument()
+  })
+})
+
+describe('ProjectDetail invest button pending state and error handling (#808)', () => {
+  it('disables the button and marks it busy while pending', async () => {
+    let resolveInvest: (url: string) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveInvest = resolve
+        }),
+    )
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={mockDetail} onInvest={onInvest} />
+      </YieldAlertProvider>,
+    )
+
+    const button = screen.getByRole('button', { name: /invest in the pool/i })
+    expect(button).not.toBeDisabled()
+    expect(button).not.toHaveAttribute('aria-busy', 'true')
+
+    fireEvent.click(button)
+
+    expect(onInvest).toHaveBeenCalledTimes(1)
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-busy', 'true')
+
+    resolveInvest('/connect')
+    await waitFor(() => {
+      expect(button).not.toBeDisabled()
+      expect(button).not.toHaveAttribute('aria-busy', 'true')
+    })
+  })
+
+  it('ignores double-clicks and re-entry while an investment request is pending', async () => {
+    let resolveInvest: (url: string) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveInvest = resolve
+        }),
+    )
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={mockDetail} onInvest={onInvest} />
+      </YieldAlertProvider>,
+    )
+
+    const button = screen.getByRole('button', { name: /invest in the pool/i })
+
+    // Fire double-click rapidly
+    fireEvent.click(button)
+    fireEvent.click(button)
+
+    expect(onInvest).toHaveBeenCalledTimes(1)
+
+    resolveInvest('/connect')
+    await waitFor(() => {
+      expect(button).not.toBeDisabled()
+    })
+  })
+
+  it('displays an error on rejection and re-enables the button', async () => {
+    let rejectInvest: (err: unknown) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((_, reject) => {
+          rejectInvest = reject
+        }),
+    )
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={mockDetail} onInvest={onInvest} />
+      </YieldAlertProvider>,
+    )
+
+    const button = screen.getByRole('button', { name: /invest in the pool/i })
+    fireEvent.click(button)
+
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-busy', 'true')
+
+    rejectInvest(new Error('Network error'))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(button).not.toBeDisabled()
+      expect(button).not.toHaveAttribute('aria-busy', 'true')
+    })
   })
 })

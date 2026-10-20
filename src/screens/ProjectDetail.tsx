@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, type CSSProperties } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   Badge,
@@ -15,6 +15,7 @@ import {
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
 import { formatMoney } from '../lib/format'
+import { parseAndFriendlyError } from '../lib/errorMessages'
 import { getExplorerUrl } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
 
@@ -48,6 +49,50 @@ export const ProjectDetail = memo(function ProjectDetail({
   const t = useTranslations('ProjectDetail')
   const tc = useTranslations('Common')
   const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
+  const [isInvesting, setIsInvesting] = useState(false)
+  const [investError, setInvestError] = useState<string | null>(null)
+  const isInvestingRef = useRef(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  const handleInvest = async () => {
+    if (isInvestingRef.current) return
+    isInvestingRef.current = true
+    setIsInvesting(true)
+    setInvestError(null)
+
+    try {
+      const url = await onInvest()
+      if (mountedRef.current) {
+        setInvestmentUrl(url)
+      }
+    } catch (err) {
+      if (mountedRef.current) {
+        let message = 'Something went wrong - please try again.'
+        if (err instanceof Error && err.message) {
+          const friendly = parseAndFriendlyError(err)
+          message = friendly !== 'Something went wrong - please try again.' ? friendly : err.message
+        } else if (typeof err === 'string' && err.trim()) {
+          const friendly = parseAndFriendlyError(err)
+          message = friendly !== 'Something went wrong - please try again.' ? friendly : err
+        } else if (err) {
+          message = parseAndFriendlyError(err)
+        }
+        setInvestError(message)
+      }
+    } finally {
+      isInvestingRef.current = false
+      if (mountedRef.current) {
+        setIsInvesting(false)
+      }
+    }
+  }
+
   const sectionTitle: CSSProperties = {
     fontFamily: 'var(--font-display)',
     fontWeight: 700,
@@ -545,13 +590,29 @@ export const ProjectDetail = memo(function ProjectDetail({
 
       {/* Primary CTA — honest pooled framing */}
       <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {investError && (
+          <div
+            role="alert"
+            style={{
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-input)',
+              background: 'rgba(179,54,27,0.07)',
+              border: '1px solid rgba(179,54,27,0.18)',
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-small)',
+              color: 'var(--ember)',
+            }}
+          >
+            {investError}
+          </div>
+        )}
         <Button
           variant="primary"
           size="lg"
-          onClick={async () => {
-            const url = await onInvest()
-            setInvestmentUrl(url)
-          }}
+          loading={isInvesting}
+          disabled={isInvesting}
+          aria-busy={isInvesting}
+          onClick={handleInvest}
           style={{ width: '100%' }}
         >
           {t('investCta')}
