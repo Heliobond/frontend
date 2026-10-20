@@ -10,10 +10,16 @@
 
 import { track } from './analytics'
 import { parseContractError, type ContractErrorContext } from './contractErrors'
+import { isTelemetryAllowed } from './telemetryConsent'
 
-export const TELEMETRY_CONSENT_KEY = 'hb-telemetry-consent'
-
-export type TelemetryConsent = 'granted' | 'denied'
+export {
+  TELEMETRY_CONSENT_EVENT,
+  TELEMETRY_CONSENT_KEY,
+  isTelemetryAllowed,
+  readTelemetryConsent,
+  setTelemetryConsent,
+  type TelemetryConsent,
+} from './telemetryConsent'
 
 export type ErrorKind =
   | 'render'
@@ -67,50 +73,6 @@ export function scrub(text: string, max = MAX_MESSAGE): string {
   let out = text
   for (const [pattern, replacement] of SCRUBBERS) out = out.replace(pattern, replacement)
   return out.length > max ? `${out.slice(0, max)}…` : out
-}
-
-/** The visitor's recorded choice, or `null` when they haven't chosen yet. */
-export function readTelemetryConsent(): TelemetryConsent | null {
-  try {
-    const value = localStorage.getItem(TELEMETRY_CONSENT_KEY)
-    return value === 'granted' || value === 'denied' ? value : null
-  } catch {
-    return null
-  }
-}
-
-/**
- * Record the visitor's telemetry choice. Driven by the consent banner in
- * `src/components/TelemetryConsent.tsx`; `null` clears the choice so the banner
- * asks again on the next visit.
- */
-export function setTelemetryConsent(consent: TelemetryConsent | null): void {
-  try {
-    if (consent === null) localStorage.removeItem(TELEMETRY_CONSENT_KEY)
-    else localStorage.setItem(TELEMETRY_CONSENT_KEY, consent)
-  } catch {
-    /* storage unavailable — the choice just won't persist */
-  }
-  // Same-tab listeners (the consent banner) re-read the choice. Other open tabs
-  // get a real `storage` event from the browser, which they also listen for.
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event(TELEMETRY_CONSENT_EVENT))
-}
-
-/** Fired on `window` whenever the recorded choice changes, same tab or another. */
-export const TELEMETRY_CONSENT_EVENT = 'hb-telemetry-consent-change'
-
-/**
- * False unless the visitor explicitly granted consent, and always false on the
- * server or when the browser sends Do-Not-Track / Global Privacy Control. The
- * default is opt-in (#658): no recorded choice means no telemetry.
- */
-export function isTelemetryAllowed(): boolean {
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false
-  const nav = navigator as Navigator & { globalPrivacyControl?: boolean; msDoNotTrack?: string }
-  const dnt = nav.doNotTrack ?? nav.msDoNotTrack ?? (window as { doNotTrack?: string }).doNotTrack
-  if (dnt === '1' || dnt === 'yes') return false
-  if (nav.globalPrivacyControl === true) return false
-  return readTelemetryConsent() === 'granted'
 }
 
 /** Redact every string in the caller-supplied context, as `message`/`stack` are. */

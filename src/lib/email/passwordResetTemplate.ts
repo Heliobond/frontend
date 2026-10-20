@@ -129,7 +129,8 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
 
   const safeUrl = sanitizeUrl(resetUrl)
   const escapedSafeUrl = escapeHtml(safeUrl)
-  const escapedRecipient = recipientName ? escapeHtml(recipientName) : null
+  const safeRecipient = recipientName?.replace(/[\r\n]/g, '')
+  const escapedRecipient = safeRecipient ? escapeHtml(safeRecipient) : null
   const escapedSupportUrl = escapeHtml(sanitizeUrl(supportUrl))
 
   const baseTime =
@@ -142,7 +143,8 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
   const copy = {
     en: {
       subject: 'Reset your Heliobond password',
-      greeting: escapedRecipient ? `Hello ${escapedRecipient},` : 'Hello,',
+      greetingHtml: escapedRecipient ? `Hello ${escapedRecipient},` : 'Hello,',
+      greetingText: safeRecipient ? `Hello ${safeRecipient},` : 'Hello,',
       lead: 'We received a request to reset your password for your Heliobond account.',
       cta: 'Reset your password',
       expiryAlertTitle: 'Token Expiration & Security Notice',
@@ -159,7 +161,8 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
     },
     fr: {
       subject: 'Réinitialisez votre mot de passe Heliobond',
-      greeting: escapedRecipient ? `Bonjour ${escapedRecipient},` : 'Bonjour,',
+      greetingHtml: escapedRecipient ? `Bonjour ${escapedRecipient},` : 'Bonjour,',
+      greetingText: safeRecipient ? `Bonjour ${safeRecipient},` : 'Bonjour,',
       lead: 'Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte Heliobond.',
       cta: 'Réinitialiser le mot de passe',
       expiryAlertTitle: 'Expiration du lien et sécurité',
@@ -184,7 +187,7 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
 
   // Plaintext version
   const text = `
-${copy.greeting}
+${copy.greetingText}
 
 ${copy.lead}
 
@@ -334,7 +337,7 @@ ${copy.footerBrand}
             </div>
             <div class="content">
               <h1>${escapeHtml(copy.subject)}</h1>
-              <p>${copy.greeting}</p>
+              <p>${copy.greetingHtml}</p>
               <p>${copy.lead}</p>
               
               <div class="btn-container">

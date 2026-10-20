@@ -1,3 +1,5 @@
+import { isTelemetryAllowed } from './telemetryConsent'
+
 export interface AnalyticsClient {
   track: (event: string, properties?: Record<string, unknown>) => unknown
 }
@@ -9,7 +11,7 @@ declare global {
 }
 
 export function track(event: string, properties?: Record<string, unknown>): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve()
+  if (typeof window === 'undefined' || !isTelemetryAllowed()) return Promise.resolve()
 
   return Promise.resolve()
     .then(() => window.analytics?.track(event, properties))

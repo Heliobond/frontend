@@ -3,7 +3,7 @@
 // reaches the wallet. `proxy.ts` sets the CSP per request with a nonce; the static
 // headers below are applied to every route from next.config.ts.
 
-import { HORIZON_URL, SOROBAN_RPC_URL } from '../config/network'
+import { EXPLORER_BASE_URL, HORIZON_URL, SOROBAN_RPC_URL } from '../config/network'
 
 export type CspMode = 'report-only' | 'enforce'
 
@@ -84,7 +84,18 @@ export function buildCsp(options: CspOptions): string {
     // React inline `style=` attributes are used throughout, so styles keep
     // 'unsafe-inline'; scripts are what carries the XSS risk.
     ['style-src', ["'self'", "'unsafe-inline'"]],
-    ['img-src', ["'self'", 'data:', 'blob:', 'https:']],
+    [
+      'img-src',
+      [
+        "'self'",
+        'data:',
+        'blob:',
+        ...[apiUrl, EXPLORER_BASE_URL].flatMap((url) => {
+          const origin = originOf(url)
+          return origin ? [origin] : []
+        }),
+      ],
+    ],
     ['font-src', ["'self'", 'data:']],
     ['connect-src', [...connect]],
     ['frame-src', WALLETCONNECT_FRAMES],

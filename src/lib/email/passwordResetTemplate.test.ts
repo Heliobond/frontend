@@ -162,6 +162,19 @@ describe('passwordResetTemplate', () => {
       expect(email.html).toContain('&lt;img src=x onerror=alert(1)&gt;')
     })
 
+    it('keeps plaintext greetings unescaped and strips line breaks', () => {
+      const email = generatePasswordResetEmail({
+        resetUrl: sampleUrl,
+        expiresInMinutes: 30,
+        recipientName: "O'Brien\r\nInjected header",
+        requestTimestamp: fixedNow,
+      })
+
+      expect(email.text).toContain("Hello O'BrienInjected header,")
+      expect(email.text).not.toContain('&#39;')
+      expect(email.html).toContain('Hello O&#39;BrienInjected header,')
+    })
+
     it('sanitizes unsafe reset URLs in email CTA links', () => {
       const email = generatePasswordResetEmail({
         resetUrl: 'javascript:alert("pwned")',

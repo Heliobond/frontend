@@ -9,7 +9,7 @@ import {
   readTelemetryConsent,
   setTelemetryConsent,
   type TelemetryConsent,
-} from '../lib/errorReporting'
+} from '../lib/telemetryConsent'
 
 /**
  * Asks the visitor for a telemetry choice and records it (#658).

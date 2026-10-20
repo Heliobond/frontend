@@ -48,6 +48,20 @@ describe('buildCsp', () => {
     expect(connect).not.toContain('https:')
   })
 
+  it('allows images only from explicit configured origins', () => {
+    const images = directive(csp, 'img-src')
+    expect(images).toEqual(
+      expect.arrayContaining([
+        "'self'",
+        'data:',
+        'blob:',
+        'https://api.heliobond.test',
+        'https://stellar.expert',
+      ]),
+    )
+    expect(images).not.toContain('https:')
+  })
+
   it('blocks framing, plugins and base-tag injection', () => {
     expect(directive(csp, 'frame-ancestors')).toEqual(["'none'"])
     expect(directive(csp, 'object-src')).toEqual(["'none'"])

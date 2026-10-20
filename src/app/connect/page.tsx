@@ -11,11 +11,27 @@ import { useWallet } from '../../wallet/WalletProvider'
  * crafted link bounce a freshly-connected wallet holder off-site. A leading
  * `//` (or `/\`) is rejected because the browser reads it as protocol-relative.
  */
-function safeNext(raw: string | null): string | null {
+export function safeNext(raw: string | null): string | null {
   if (!raw) return null
   if (!raw.startsWith('/')) return null
-  if (raw.startsWith('//') || raw.startsWith('/\\')) return null
-  return raw
+  if (
+    raw.startsWith('//') ||
+    raw.includes('\\') ||
+    /[\u0000-\u001f\u007f]/.test(raw) ||
+    /%(?:[0-1][0-9a-f]|7f|5c)/i.test(raw)
+  ) {
+    return null
+  }
+
+  try {
+    const resolved = new URL(raw, window.location.origin)
+    if (resolved.origin !== window.location.origin || !resolved.pathname.startsWith('/')) {
+      return null
+    }
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`
+  } catch {
+    return null
+  }
 }
 
 function ConnectRoute() {
