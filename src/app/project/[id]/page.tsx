@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { getProject } from '../../../lib/api'
 import { ogLocale } from '../../../i18n/config'
@@ -10,6 +11,22 @@ type Props = {
 }
 
 /**
+ * Validates and parses the project ID route parameter.
+ * Must be a string composed solely of decimal digits (/^\d+$/)
+ * and evaluate to a JavaScript safe integer.
+ */
+export function parseProjectId(rawId: unknown): number | null {
+  if (typeof rawId !== 'string' || !/^\d+$/.test(rawId)) {
+    return null
+  }
+  const id = Number(rawId)
+  if (!Number.isSafeInteger(id)) {
+    return null
+  }
+  return id
+}
+
+/**
  * Per-project document metadata. The title is the project name only — the root
  * layout's `title.template` appends the brand, and `absolute` is used for the
  * error case so the "not found" title is not doubled up (#657).
@@ -18,18 +35,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const t = await getTranslations('Metadata')
   const locale = await getLocale()
   const resolvedParams = await params
-  const id = Number(resolvedParams?.id)
+  const id = parseProjectId(resolvedParams?.id)
 
-  const notFound = (): Metadata => ({
+  const notFoundMetadata = (): Metadata => ({
     title: { absolute: absoluteTitle(t('projectNotFound.title')) },
     description: t('projectNotFound.description'),
     robots: { index: false, follow: false },
   })
 
-  if (!Number.isFinite(id)) return notFound()
+  if (id === null) return notFoundMetadata()
 
   const data = await getProject(id).catch(() => null)
-  if (!data) return notFound()
+  if (!data) return notFoundMetadata()
 
   const { project } = data
   const title = t('project.title', { name: project.name })
@@ -70,8 +87,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectDetailPage({ params }: Props) {
   const resolvedParams = await params
-  const id = Number(resolvedParams?.id)
-  const data = Number.isFinite(id) ? await getProject(id).catch(() => null) : null
+  const id = parseProjectId(resolvedParams?.id)
+  if (id === null) {
+    notFound()
+  }
+
+  const data = await getProject(id).catch(() => null)
+  if (!data) {
+    notFound()
+  }
 
   return <ProjectDetailClient id={id} initialData={data} />
 }
+

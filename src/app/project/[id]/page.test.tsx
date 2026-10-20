@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@/test/render'
 
 const mockPush = vi.fn()
+const mockNotFound = vi.fn(() => {
+  throw new Error('NEXT_NOT_FOUND')
+})
 let mockId = '1'
 
 vi.mock('next/navigation', () => ({
@@ -11,6 +14,7 @@ vi.mock('next/navigation', () => ({
   useParams: () => ({
     id: mockId,
   }),
+  notFound: () => mockNotFound(),
 }))
 
 vi.mock('@/lib/api', () => ({
@@ -25,7 +29,7 @@ vi.mock('@/screens/ProjectDetail', () => ({
 
 import { getProject } from '@/lib/api'
 import en from '../../../../messages/en.json'
-import ProjectDetailPage, { generateMetadata } from './page'
+import ProjectDetailPage, { generateMetadata, parseProjectId } from './page'
 import { ProjectDetailClient } from './ProjectDetailClient'
 
 const mockGetProject = vi.mocked(getProject)
@@ -36,13 +40,57 @@ describe('ProjectDetailPage & generateMetadata', () => {
     mockId = '1'
   })
 
-  it('renders not-found for unknown id', async () => {
-    mockGetProject.mockResolvedValue(null)
-    const pageElement = await ProjectDetailPage({ params: Promise.resolve({ id: '999' }) })
-    render(pageElement)
-    await waitFor(() => {
-      expect(screen.getByText(/project not found/i)).toBeInTheDocument()
+  describe('parseProjectId', () => {
+    it('parses valid positive integer strings', () => {
+      expect(parseProjectId('1')).toBe(1)
+      expect(parseProjectId('42')).toBe(42)
+      expect(parseProjectId('0')).toBe(0)
     })
+
+    it('rejects malformed, non-numeric, decimal, negative, or exponential strings', () => {
+      expect(parseProjectId('abc')).toBeNull()
+      expect(parseProjectId('1.5')).toBeNull()
+      expect(parseProjectId('-3')).toBeNull()
+      expect(parseProjectId('1e2')).toBeNull()
+      expect(parseProjectId('0x10')).toBeNull()
+      expect(parseProjectId(' 1 ')).toBeNull()
+      expect(parseProjectId('')).toBeNull()
+    })
+
+    it('rejects non-string values', () => {
+      expect(parseProjectId(null)).toBeNull()
+      expect(parseProjectId(undefined)).toBeNull()
+      expect(parseProjectId(123)).toBeNull()
+    })
+
+    it('rejects integers that exceed Number.MAX_SAFE_INTEGER', () => {
+      expect(parseProjectId('9007199254740992')).toBeNull()
+    })
+  })
+
+  it('calls notFound() for unknown id when project is missing in registry', async () => {
+    mockGetProject.mockResolvedValue(null)
+    await expect(
+      ProjectDetailPage({ params: Promise.resolve({ id: '999' }) })
+    ).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockGetProject).toHaveBeenCalledWith(999)
+  })
+
+  it('calls notFound() for malformed id "abc" without querying registry', async () => {
+    await expect(
+      ProjectDetailPage({ params: Promise.resolve({ id: 'abc' }) })
+    ).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockGetProject).not.toHaveBeenCalled()
+  })
+
+  it('calls notFound() for decimal id "1.5" without querying registry', async () => {
+    await expect(
+      ProjectDetailPage({ params: Promise.resolve({ id: '1.5' }) })
+    ).rejects.toThrow('NEXT_NOT_FOUND')
+    expect(mockNotFound).toHaveBeenCalled()
+    expect(mockGetProject).not.toHaveBeenCalled()
   })
 
   it('renders detail for known id', async () => {
@@ -124,6 +172,12 @@ describe('ProjectDetailPage & generateMetadata', () => {
 
   it('noindexes a non-numeric project id', async () => {
     const meta = await generateMetadata({ params: Promise.resolve({ id: 'not-a-number' }) })
+    expect(mockGetProject).not.toHaveBeenCalled()
+    expect(meta.robots).toEqual({ index: false, follow: false })
+  })
+
+  it('noindexes a decimal project id', async () => {
+    const meta = await generateMetadata({ params: Promise.resolve({ id: '1.5' }) })
     expect(mockGetProject).not.toHaveBeenCalled()
     expect(meta.robots).toEqual({ index: false, follow: false })
   })
