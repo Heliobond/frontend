@@ -118,18 +118,33 @@ bun run test:coverage   # vitest run --coverage, then enforce the thresholds
 (`.github/workflows/ci.yml`), so an unmet threshold fails your PR even when the
 tests themselves pass.
 
-Only `src/lib/**` and `src/wallet/**` are instrumented (`vitest.config.mts`), and
-the thresholds there are:
+`vitest.config.mts` is the source of truth for coverage. Every file under `src/`
+is instrumented, and the thresholds below mirror its `thresholds` block. The
+doc test in `src/__tests__/contributingCoverage.test.ts` fails if a threshold key
+is added to the config but not listed here.
 
-- **80% lines / statements / functions** for the money- and signing-critical
-  modules: `src/lib/api.ts`, `src/wallet/vault.ts`, `src/lib/webauthn.ts`,
-  `src/lib/yieldAlerts.ts`, `src/lib/recurringInvestments.ts`,
-  `src/lib/scrollToError.ts`.
-- **55% lines** for `src/lib/**` and `src/wallet/**` as a whole — a floor that
-  only exists to stop regressions, so raise it as `admin.ts`, `registry.ts` or
-  `useVault.ts` gain tests.
+| Threshold key                     | Minimum                            |
+| --------------------------------- | ---------------------------------- |
+| `src/lib/api.ts`                  | 80% lines / statements / functions |
+| `src/wallet/vault.ts`             | 80% lines / statements / functions |
+| `src/lib/webauthn.ts`             | 80% lines / statements / functions |
+| `src/lib/yieldAlerts.ts`          | 80% lines / statements / functions |
+| `src/lib/recurringInvestments.ts` | 80% lines / statements / functions |
+| `src/lib/scrollToError.ts`        | 80% lines / statements / functions |
+| `src/lib/errorMessages.ts`        | 80% lines / statements / functions |
+| `src/wallet/registry.ts`          | 80% lines                          |
+| `src/lib/**`                      | 55% lines                          |
+| `src/wallet/**`                   | 55% lines                          |
+| `src/session/**`                  | 55% lines                          |
+| `src/hooks/**`                    | 55% lines                          |
+| `src/config/**`                   | 55% lines                          |
+| `src/alerts/**`                   | 50% lines                          |
 
-New code under those two directories counts against the thresholds, so run
+The global floor for all of `src/` is 50% lines / statements / functions and 40%
+branches. The directory floors exist to stop regressions, so raise them as
+`admin.ts`, `registry.ts` or `useVault.ts` gain tests.
+
+New code under `src/` counts against these thresholds, so run
 `bun run test:coverage` (not just `bun run test`) before pushing. The report
 lands in `coverage/` (text summary in the terminal, HTML in
 `coverage/index.html`). Add tests alongside the change rather than lowering a
