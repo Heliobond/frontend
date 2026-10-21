@@ -619,11 +619,7 @@ function WithdrawSubmitButton({
       reason={reasonBeforeLock ?? (isLocked ? lockText : reasonAfterLock)}
       onClick={onClick}
     >
-      {canWithdraw && !isLocked
-        ? withdrawLabel
-        : canQueue && !isLocked
-          ? queueLabel
-          : emptyLabel}
+      {canWithdraw && !isLocked ? withdrawLabel : canQueue && !isLocked ? queueLabel : emptyLabel}
     </Button>
   )
 }

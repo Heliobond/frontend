@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { fetchVaultLimits, type VaultLimits } from './vault'
 import { useVaultRefresh } from './useVaultRefresh'
 import { useWallet } from './WalletProvider'
@@ -16,6 +16,16 @@ const defaultLimits: VaultLimits = {
   utilizationBps: 0,
 }
 
+const subscribeNever = () => () => {}
+
+/** E2E-only override of the withdraw lock; null outside the e2e wallet build. */
+function readE2eLockExpiresAt(): number | null {
+  if (process.env.NEXT_PUBLIC_E2E_TEST_WALLET !== 'true') return null
+  const raw = window.localStorage.getItem('hb-e2e-withdraw-lock-expires-at')
+  const expiresAt = raw === null ? 0 : Number(raw)
+  return Number.isFinite(expiresAt) ? expiresAt : 0
+}
+
 export function useVaultLimits() {
   const { address, isDemo, network: walletNetwork } = useWallet()
   const network = (process.env.NEXT_PUBLIC_STELLAR_NETWORK?.toLowerCase() ||
@@ -24,17 +34,11 @@ export function useVaultLimits() {
 
   const [limits, setLimits] = useState<VaultLimits>(defaultLimits)
   const [error, setError] = useState<string | null>(null)
-  const [e2eLockExpiresAt, setE2eLockExpiresAt] = useState<number | null>(null)
   const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
 
   const { tick } = useVaultRefresh(enabled)
 
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_E2E_TEST_WALLET !== 'true') return
-    const raw = window.localStorage.getItem('hb-e2e-withdraw-lock-expires-at')
-    const expiresAt = raw === null ? 0 : Number(raw)
-    setE2eLockExpiresAt(Number.isFinite(expiresAt) ? expiresAt : 0)
-  }, [])
+  const e2eLockExpiresAt = useSyncExternalStore(subscribeNever, readE2eLockExpiresAt, () => null)
 
   /**
    * Identifies the fetch whose result `limits` holds. `loading` is derived from

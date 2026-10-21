@@ -505,11 +505,7 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k="Network fee" v={feeLabel} />
               {memo.trim() && <Row k={t('rowMemo')} v={memo.trim()} />}
             </div>
-            <RateAge
-              fetchedAt={priceFetchedAt}
-              locale={locale}
-              onRefresh={refreshVault}
-            />
+            <RateAge fetchedAt={priceFetchedAt} locale={locale} onRefresh={refreshVault} />
             <div style={{ marginBottom: 16 }}>
               <label
                 style={{
