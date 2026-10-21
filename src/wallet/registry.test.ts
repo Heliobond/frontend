@@ -10,6 +10,12 @@ import {
   normalizeHash,
   setSimulateRegistryCall,
   resetSimulateRegistryCall,
+  resolveMetadataUri,
+  validateOffChainMetadata,
+  MAX_METADATA_SIZE_BYTES,
+  withSimulationTimeout,
+  withFetchTimeout,
+  mapOnChainProject,
   type OnChainProjectRaw,
 } from './registry'
 
@@ -436,7 +442,7 @@ describe('registry client', () => {
 
       // Ensure verify_metadata_hash is NEVER called, especially with storedOnChainHash
       const verifyCalls = mockSimulate.mock.calls.filter(
-        (call) => call[0] === 'verify_metadata_hash',
+        (call: unknown[]) => call[0] === 'verify_metadata_hash',
       )
       expect(verifyCalls).toHaveLength(0)
       expect(mockSimulate).not.toHaveBeenCalledWith(
@@ -444,6 +450,245 @@ describe('registry client', () => {
         [1, storedOnChainHash],
         expect.anything(),
       )
+    })
+
+    describe('URI allowlist and unsafe scheme blocking (#832)', () => {
+      it('never fetches http:, data:, file:, or javascript: URIs', async () => {
+        const matchingHash = (await computeSha256(validBytes))!
+        const unsafeUris = [
+          'http://malicious.example.com/metadata.json',
+          'data:application/json;base64,eyJuYW1lIjoiZXZpbCJ9',
+          'file:///etc/passwd',
+          'javascript:alert(1)',
+          'ftp://files.example.com/meta.json',
+        ]
+
+        for (const uri of unsafeUris) {
+          clearRegistryCache()
+          const mockSimulate = vi.fn().mockImplementation(async (method: string) => {
+            if (method === 'get_project') {
+              return { ...baseRawProject, uri, metadata_hash: matchingHash }
+            }
+            return []
+          })
+          setSimulateRegistryCall(mockSimulate)
+
+          const mockFetch = vi.fn()
+          vi.stubGlobal('fetch', mockFetch)
+
+          const res = await fetchProjectWithDetails(1)
+          expect(res).not.toBeNull()
+          expect(res?.verifiedMetadata).toBe('unverified')
+          expect(mockFetch).not.toHaveBeenCalled()
+        }
+      })
+
+      it('resolves ipfs:// and ipfs: URIs via HTTPS gateway and fetches securely', async () => {
+        const matchingHash = (await computeSha256(validBytes))!
+        const mockSimulate = vi.fn().mockImplementation(async (method: string) => {
+          if (method === 'get_project') {
+            return {
+              ...baseRawProject,
+              uri: 'ipfs://bafybeic56projectmetadata/project.json',
+              metadata_hash: matchingHash,
+            }
+          }
+          return []
+        })
+        setSimulateRegistryCall(mockSimulate)
+
+        const mockFetch = vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          arrayBuffer: async () => validBytes.buffer,
+        })
+        vi.stubGlobal('fetch', mockFetch)
+
+        const res = await fetchProjectWithDetails(1)
+        expect(res).not.toBeNull()
+        expect(res?.verifiedMetadata).toBe('verified')
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://ipfs.io/ipfs/bafybeic56projectmetadata/project.json',
+        )
+      })
+
+      it('resolveMetadataUri helper rejects unsafe protocols and path traversal', () => {
+        expect(resolveMetadataUri('http://example.com')).toBeNull()
+        expect(resolveMetadataUri('data:application/json,{}')).toBeNull()
+        expect(resolveMetadataUri('file:///etc/hosts')).toBeNull()
+        expect(resolveMetadataUri('javascript:void(0)')).toBeNull()
+        expect(resolveMetadataUri('ipfs://../escape')).toBeNull()
+        expect(resolveMetadataUri('')).toBeNull()
+        expect(resolveMetadataUri(null)).toBeNull()
+        expect(resolveMetadataUri('https://example.com/meta.json')).toBe(
+          'https://example.com/meta.json',
+        )
+      })
+    })
+
+    describe('Metadata schema validation & dropping invalid fields (#832)', () => {
+      it('drops string fundingGoal and non-array priceHistory', async () => {
+        const malformedFields = {
+          name: 'Real Solar Farm',
+          location: 'Nevada, USA',
+          type: 'Solar' as const,
+          fundingGoal: '5000000', // string instead of number
+          priceHistory: 'not-an-array', // non-array
+        }
+        const malformedBytes = new TextEncoder().encode(JSON.stringify(malformedFields))
+        const matchingHash = (await computeSha256(malformedBytes))!
+
+        const mockSimulate = vi.fn().mockImplementation(async (method: string) => {
+          if (method === 'get_project') {
+            return { ...baseRawProject, metadata_hash: matchingHash }
+          }
+          return []
+        })
+        setSimulateRegistryCall(mockSimulate)
+
+        const mockFetch = vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          arrayBuffer: async () => malformedBytes.buffer,
+        })
+        vi.stubGlobal('fetch', mockFetch)
+
+        const res = await fetchProjectWithDetails(1)
+        expect(res).not.toBeNull()
+        expect(res?.verifiedMetadata).toBe('verified')
+        // Valid fields are retained
+        expect(res?.project.name).toBe('Real Solar Farm')
+        expect(res?.project.location).toBe('Nevada, USA')
+        // Invalid string fundingGoal was dropped, falling back to typed number default 1000000
+        expect(res?.project.fundingGoal).toBe(1000000)
+        expect(typeof res?.project.fundingGoal).toBe('number')
+        // Invalid non-array priceHistory was dropped to empty array
+        expect(res?.project.priceHistory).toEqual([])
+      })
+
+      it('validateOffChainMetadata helper drops invalid types and keeps valid ones', () => {
+        const validated = validateOffChainMetadata({
+          name: 'Wind Project',
+          fundingGoal: '100000', // string
+          priceHistory: { invalid: true }, // object
+          type: 'Wind',
+          description: 'A clean wind project',
+        })
+        expect(validated).not.toBeNull()
+        expect(validated?.name).toBe('Wind Project')
+        expect(validated?.type).toBe('Wind')
+        expect(validated?.description).toBe('A clean wind project')
+        expect(validated?.fundingGoal).toBeUndefined()
+        expect(validated?.priceHistory).toBeUndefined()
+
+        // Root non-object returns null
+        expect(validateOffChainMetadata('string')).toBeNull()
+        expect(validateOffChainMetadata(123)).toBeNull()
+        expect(validateOffChainMetadata(null)).toBeNull()
+        expect(validateOffChainMetadata([])).toBeNull()
+      })
+
+      it('ignores oversized body exceeding MAX_METADATA_SIZE_BYTES with unverified result', async () => {
+        const oversizedBytes = new Uint8Array(MAX_METADATA_SIZE_BYTES + 10)
+        const matchingHash = (await computeSha256(oversizedBytes))!
+
+        const mockSimulate = vi.fn().mockImplementation(async (method: string) => {
+          if (method === 'get_project') {
+            return { ...baseRawProject, metadata_hash: matchingHash }
+          }
+          return []
+        })
+        setSimulateRegistryCall(mockSimulate)
+
+        const mockFetch = vi.fn().mockResolvedValue({
+          ok: true,
+          status: 200,
+          headers: {
+            get: (h: string) =>
+              h.toLowerCase() === 'content-length' ? String(oversizedBytes.byteLength) : null,
+          },
+          arrayBuffer: async () => oversizedBytes.buffer,
+        })
+        vi.stubGlobal('fetch', mockFetch)
+
+        const res = await fetchProjectWithDetails(1)
+        expect(res).not.toBeNull()
+        expect(res?.verifiedMetadata).toBe('unverified')
+      })
+    })
+
+    describe('Registry simulation and fetch timeouts (#832)', () => {
+      it('times out when simulation hangs', async () => {
+        const hangingPromise = new Promise((resolve) => setTimeout(resolve, 500))
+        await expect(withSimulationTimeout(hangingPromise, 50)).rejects.toThrow(
+          'Registry simulation timed out',
+        )
+      })
+
+      it('times out when metadata fetch hangs', async () => {
+        const hangingFetch = new Promise((resolve) => setTimeout(resolve, 500))
+        await expect(withFetchTimeout(hangingFetch, 50)).rejects.toThrow('Metadata fetch timed out')
+      })
+    })
+
+    describe('No fixture merging into on-chain projects (#832)', () => {
+      it('does not inherit fixture 1 data (name, fundedAmount, location) for on-chain project 1', () => {
+        const rawOnChain: OnChainProjectRaw = {
+          owner: 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX',
+          uri: 'https://metadata.example.com/p1.json',
+          metadata_hash: '',
+          credit_quality: 85,
+          green_impact: 88,
+          maturity_date: 0,
+          certification_status: 0,
+          last_update_timestamp: 1_700_000_000,
+          status: 1,
+          created_at: 1_600_000_000,
+        }
+
+        const mapped = mapOnChainProject(rawOnChain, 1)
+        expect(mapped.id).toBe(1)
+        expect(mapped.name).toBe('Bond Project #1')
+        expect(mapped.location).toBe('Stellar Network')
+        expect(mapped.fundedAmount).toBe(0)
+        expect(mapped.funded).toBe('$0')
+        expect(mapped.fundingGoal).toBe(1000000)
+        expect(mapped.priceHistory).toEqual([])
+      })
+    })
+
+    describe('No fixture fallback on mainnet (#832)', () => {
+      beforeEach(() => {
+        vi.stubEnv('NEXT_PUBLIC_STELLAR_NETWORK', 'public')
+      })
+
+      it('throws on RPC error during fetchTotalProjects on mainnet', async () => {
+        const mockSimulate = vi.fn().mockRejectedValue(new Error('Mainnet RPC simulation error'))
+        setSimulateRegistryCall(mockSimulate)
+
+        await expect(fetchTotalProjects()).rejects.toThrow('Mainnet RPC simulation error')
+      })
+
+      it('throws on RPC error during fetchProjectsPage on mainnet', async () => {
+        const mockSimulate = vi.fn().mockRejectedValue(new Error('Mainnet RPC simulation error'))
+        setSimulateRegistryCall(mockSimulate)
+
+        await expect(fetchProjectsPage(0, 10)).rejects.toThrow('Mainnet RPC simulation error')
+      })
+
+      it('throws on RPC error during fetchProjectWithDetails on mainnet', async () => {
+        const mockSimulate = vi.fn().mockRejectedValue(new Error('Mainnet RPC simulation error'))
+        setSimulateRegistryCall(mockSimulate)
+
+        await expect(fetchProjectWithDetails(1)).rejects.toThrow('Mainnet RPC simulation error')
+      })
+
+      it('throws on RPC error during fetchScoreHistory on mainnet', async () => {
+        const mockSimulate = vi.fn().mockRejectedValue(new Error('Mainnet RPC simulation error'))
+        setSimulateRegistryCall(mockSimulate)
+
+        await expect(fetchScoreHistory(1)).rejects.toThrow('Mainnet RPC simulation error')
+      })
     })
   })
 })

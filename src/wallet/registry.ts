@@ -13,7 +13,12 @@ import {
   selectProjectDetail,
   selectScoreHistory,
 } from '../state/selectors'
-import { SOROBAN_RPC_URL as RPC_URL, NETWORK_PASSPHRASE, getSorobanServer } from '../config/network'
+import {
+  SOROBAN_RPC_URL as RPC_URL,
+  NETWORK_PASSPHRASE,
+  getSorobanServer,
+  isMainnet,
+} from '../config/network'
 import { reportError } from '../lib/errorReporting'
 
 function getRegistryContractId(): string | undefined {
@@ -21,6 +26,103 @@ function getRegistryContractId(): string | undefined {
 }
 
 const CACHE_TTL_MS = 30000
+
+/** Timeout in milliseconds for Soroban simulation calls on ProjectRegistry. */
+export const REGISTRY_SIMULATION_TIMEOUT_MS = 5000
+
+/** Timeout in milliseconds for fetching off-chain project metadata. */
+export const METADATA_FETCH_TIMEOUT_MS = 5000
+
+/** Maximum allowed body size in bytes for off-chain metadata JSON (100 KB). */
+export const MAX_METADATA_SIZE_BYTES = 100 * 1024
+
+/** Default HTTPS gateway used to resolve IPFS URIs. */
+export const DEFAULT_IPFS_GATEWAY = 'https://ipfs.io/ipfs/'
+
+/** True when the active network configuration represents Stellar Mainnet (public). */
+export function isMainnetActive(): boolean {
+  const envNet = process.env.NEXT_PUBLIC_STELLAR_NETWORK?.trim().toLowerCase()
+  const envPass = process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE
+  return (
+    envNet === 'public' || envPass === 'Public Global Stellar Network ; September 2015' || isMainnet
+  )
+}
+
+/** Reject if a registry simulation takes longer than timeoutMs. */
+export async function withSimulationTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs = REGISTRY_SIMULATION_TIMEOUT_MS,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new Error(`Registry simulation timed out after ${timeoutMs}ms`))
+      }, timeoutMs)
+    })
+    return await Promise.race([promise, timeout])
+  } finally {
+    if (timer !== undefined) clearTimeout(timer)
+  }
+}
+
+/** Reject if an off-chain metadata fetch takes longer than timeoutMs. */
+export async function withFetchTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs = METADATA_FETCH_TIMEOUT_MS,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        reject(new Error(`Metadata fetch timed out after ${timeoutMs}ms`))
+      }, timeoutMs)
+    })
+    return await Promise.race([promise, timeout])
+  } finally {
+    if (timer !== undefined) clearTimeout(timer)
+  }
+}
+
+/**
+ * Validates and safely resolves an on-chain metadata URI.
+ * Allows ONLY https: and ipfs: (resolved via HTTPS gateway).
+ * Returns null for any disallowed scheme (http:, data:, file:, javascript:, etc.).
+ */
+export function resolveMetadataUri(rawUri: string | null | undefined): string | null {
+  if (!rawUri || typeof rawUri !== 'string') return null
+  const trimmed = rawUri.trim()
+  if (!trimmed) return null
+
+  // IPFS scheme handling (ipfs://<cid>[/path] or ipfs:<cid>[/path])
+  if (trimmed.startsWith('ipfs://') || trimmed.startsWith('ipfs:')) {
+    const ipfsPath = trimmed
+      .replace(/^ipfs:\/\//, '')
+      .replace(/^ipfs:/, '')
+      .replace(/^\/+/, '')
+    if (!ipfsPath || ipfsPath.includes('..')) return null
+    const gateway = (process.env.NEXT_PUBLIC_IPFS_GATEWAY_URL || DEFAULT_IPFS_GATEWAY).trim()
+    const base = gateway.endsWith('/') ? gateway : `${gateway}/`
+    try {
+      const parsedGateway = new URL(base)
+      if (parsedGateway.protocol !== 'https:') return null
+      return `${base}${ipfsPath}`
+    } catch {
+      return null
+    }
+  }
+
+  // General URL validation: allow ONLY https:
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol === 'https:') {
+      return parsed.href
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
 /**
  * Well-formed Ed25519 public key used as the source account for read-only
@@ -94,14 +196,17 @@ export async function defaultSimulateRegistryCall(
     .setTimeout(0)
     .build()
 
-  const simResult = await server.simulateTransaction(tx)
+  const simResult = await withSimulationTimeout(
+    server.simulateTransaction(tx),
+    REGISTRY_SIMULATION_TIMEOUT_MS,
+  )
   if ('error' in simResult) {
     throw new Error(`Simulate failed for ${method}: ${simResult.error}`)
   }
   if (!simResult.result?.retval) {
     throw new Error(`Simulate failed for ${method}: empty simulation result`)
   }
-  return scValToNative(simResult.result.retval)
+  return scValToNative(simResult.result.retval as Parameters<typeof scValToNative>[0])
 }
 
 /**
@@ -235,6 +340,77 @@ export interface OffChainMetadata {
   priceHistory?: Array<{ date: string; price: number; yield: number }>
 }
 
+/**
+ * Validates off-chain metadata schema and drops invalid or malformed fields.
+ * Returns null if the root payload is not a non-null object.
+ */
+export function validateOffChainMetadata(data: unknown): OffChainMetadata | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return null
+  }
+
+  const record = data as Record<string, unknown>
+  const result: OffChainMetadata = {}
+
+  if (typeof record.name === 'string' && record.name.trim().length > 0) {
+    result.name = record.name.trim()
+  }
+
+  if (typeof record.description === 'string' && record.description.trim().length > 0) {
+    result.description = record.description.trim()
+  }
+
+  if (typeof record.location === 'string' && record.location.trim().length > 0) {
+    result.location = record.location.trim()
+  }
+
+  if (record.type === 'Solar' || record.type === 'Wind' || record.type === 'Hydro') {
+    result.type = record.type
+  }
+
+  if (typeof record.story === 'string') {
+    result.story = record.story
+  }
+
+  if (typeof record.heroGradient === 'string') {
+    result.heroGradient = record.heroGradient
+  }
+
+  // fundingGoal must be a finite positive number. Strings or non-positive numbers are dropped.
+  if (
+    typeof record.fundingGoal === 'number' &&
+    Number.isFinite(record.fundingGoal) &&
+    record.fundingGoal > 0
+  ) {
+    result.fundingGoal = record.fundingGoal
+  }
+
+  // priceHistory must be an Array. Non-array values are dropped.
+  if (Array.isArray(record.priceHistory)) {
+    const validHistory: Array<{ date: string; price: number; yield: number }> = []
+    for (const item of record.priceHistory) {
+      if (
+        item &&
+        typeof item === 'object' &&
+        typeof (item as Record<string, unknown>).date === 'string' &&
+        typeof (item as Record<string, unknown>).price === 'number' &&
+        Number.isFinite((item as Record<string, unknown>).price) &&
+        typeof (item as Record<string, unknown>).yield === 'number' &&
+        Number.isFinite((item as Record<string, unknown>).yield)
+      ) {
+        validHistory.push({
+          date: (item as { date: string }).date,
+          price: (item as { price: number }).price,
+          yield: (item as { yield: number }).yield,
+        })
+      }
+    }
+    result.priceHistory = validHistory
+  }
+
+  return result
+}
+
 /** Map the contract's numeric `ProjectStatus` enum to the UI status union. */
 export function mapProjectStatus(
   status: number | bigint | string | null | undefined,
@@ -271,7 +447,7 @@ export function mapProjectStatus(
   }
 }
 
-/** Map on-chain ProjectData plus its id and optional metadata to a UI Project. */
+/** Map on-chain ProjectData plus its id and optional metadata to a UI Project without merging fixtures. */
 export function mapOnChainProject(
   raw: OnChainProjectRaw,
   id: number,
@@ -280,23 +456,20 @@ export function mapOnChainProject(
   const credit = Number(raw.credit_quality ?? 80)
   const green = Number(raw.green_impact ?? 80)
 
-  const fallback = selectProjectById(id)
-
-  const fundedAmount = fallback?.fundedAmount ?? 0
-  const fundingGoal = metadata?.fundingGoal || fallback?.fundingGoal || 1000000
+  const fundingGoal = metadata?.fundingGoal ?? 1000000
 
   return {
     id,
-    name: metadata?.name || fallback?.name || `Bond Project #${id}`,
-    location: metadata?.location || fallback?.location || 'Stellar Network',
-    type: metadata?.type || fallback?.type || 'Solar',
+    name: metadata?.name || `Bond Project #${id}`,
+    location: metadata?.location || 'Stellar Network',
+    type: metadata?.type || 'Solar',
     credit: Number.isFinite(credit) ? credit : 80,
     green: Number.isFinite(green) ? green : 80,
-    funded: `$${fundedAmount.toLocaleString('en-US')}`,
-    fundedAmount,
+    funded: '$0',
+    fundedAmount: 0,
     fundingGoal,
-    status: mapProjectStatus(raw.status) ?? fallback?.status ?? 'open',
-    priceHistory: metadata?.priceHistory || fallback?.priceHistory || [],
+    status: mapProjectStatus(raw.status) ?? 'open',
+    priceHistory: metadata?.priceHistory || [],
   }
 }
 
@@ -316,6 +489,9 @@ export async function fetchTotalProjects(sourceAddress?: string): Promise<number
   if (cached !== null) return cached
 
   if (!getRegistryContractId()) {
+    if (isMainnetActive()) {
+      throw new Error('NEXT_PUBLIC_REGISTRY_CONTRACT_ID not set on mainnet')
+    }
     return selectProjects().length
   }
 
@@ -326,7 +502,7 @@ export async function fetchTotalProjects(sourceAddress?: string): Promise<number
     return total
   } catch (error) {
     reportRegistryReadError('total_projects', error)
-    if (isProgrammingError(error)) throw error
+    if (isProgrammingError(error) || isMainnetActive()) throw error
     return selectProjects().length
   }
 }
@@ -348,6 +524,9 @@ export async function fetchProjectsPage(
   if (cached !== null) return cached
 
   if (!getRegistryContractId()) {
+    if (isMainnetActive()) {
+      throw new Error('NEXT_PUBLIC_REGISTRY_CONTRACT_ID not set on mainnet')
+    }
     const all = selectProjects()
     const slice = all.slice(offset, offset + limit)
     const result: ProjectsPageResult = {
@@ -381,7 +560,7 @@ export async function fetchProjectsPage(
     return result
   } catch (error) {
     reportRegistryReadError('get_projects_page', error)
-    if (isProgrammingError(error)) throw error
+    if (isProgrammingError(error) || isMainnetActive()) throw error
     const all = selectProjects()
     const slice = all.slice(offset, offset + limit)
     return {
@@ -413,6 +592,9 @@ export async function fetchProjectWithDetails(
   const fallbackDetail = selectProjectDetail(id)
 
   if (!getRegistryContractId()) {
+    if (isMainnetActive()) {
+      throw new Error('NEXT_PUBLIC_REGISTRY_CONTRACT_ID not set on mainnet')
+    }
     if (!fallbackProject || !fallbackDetail) return null
     return {
       project: fallbackProject,
@@ -429,6 +611,7 @@ export async function fetchProjectWithDetails(
     )) as OnChainProjectRaw | null
 
     if (!raw) {
+      if (isMainnetActive()) return null
       if (!fallbackProject || !fallbackDetail) return null
       return {
         project: fallbackProject,
@@ -440,40 +623,51 @@ export async function fetchProjectWithDetails(
     let verifiedMetadata: MetadataVerificationStatus = 'unverified'
     let offChainMetadata: OffChainMetadata | undefined
 
-    if (raw.uri) {
-      try {
-        const res = await fetch(raw.uri)
-        if (res.ok) {
-          const rawBytes = await res.arrayBuffer()
-          const expected = normalizeHash(raw.metadata_hash)
+    const resolvedUri = raw.uri ? resolveMetadataUri(raw.uri) : null
+    const expected = normalizeHash(raw.metadata_hash)
 
-          if (expected) {
-            const computedHash = await computeSha256(rawBytes)
-            if (computedHash === null) {
-              // crypto.subtle is unavailable (non-secure context) -> unverified
-              verifiedMetadata = 'unverified'
-            } else if (computedHash.toLowerCase() !== expected.toLowerCase()) {
-              // Computed hash differs from on-chain hash -> mismatch
-              verifiedMetadata = 'mismatch'
-            } else {
-              // Hash matched on-chain hash! Parse JSON payload.
-              try {
-                const text = new TextDecoder().decode(rawBytes)
-                offChainMetadata = JSON.parse(text)
-                verifiedMetadata = 'verified'
-              } catch {
-                // Parse failure on correctly hashed content fails closed to unverified
-                verifiedMetadata = 'unverified'
-              }
-            }
-          } else {
-            // Missing or malformed on-chain metadata_hash -> unverified
+    if (resolvedUri && expected) {
+      try {
+        const res = await withFetchTimeout(fetch(resolvedUri), METADATA_FETCH_TIMEOUT_MS)
+
+        if (res.ok) {
+          const contentLengthHeader = res.headers?.get?.('content-length')
+          const contentLength = contentLengthHeader ? parseInt(contentLengthHeader, 10) : null
+          if (
+            contentLength !== null &&
+            !isNaN(contentLength) &&
+            contentLength > MAX_METADATA_SIZE_BYTES
+          ) {
             verifiedMetadata = 'unverified'
-            try {
-              const text = new TextDecoder().decode(rawBytes)
-              offChainMetadata = JSON.parse(text)
-            } catch {
-              // Ignore parse error when hash is missing
+          } else {
+            const rawBytes = await res.arrayBuffer()
+            if (rawBytes.byteLength > MAX_METADATA_SIZE_BYTES) {
+              verifiedMetadata = 'unverified'
+            } else {
+              const computedHash = await computeSha256(rawBytes)
+              if (computedHash === null) {
+                // crypto.subtle is unavailable (non-secure context) -> unverified
+                verifiedMetadata = 'unverified'
+              } else if (computedHash.toLowerCase() !== expected.toLowerCase()) {
+                // Computed hash differs from on-chain hash -> mismatch
+                verifiedMetadata = 'mismatch'
+              } else {
+                // Hash matched on-chain hash! Parse and validate JSON payload.
+                try {
+                  const text = new TextDecoder().decode(rawBytes)
+                  const parsed = JSON.parse(text)
+                  const validated = validateOffChainMetadata(parsed)
+                  if (validated) {
+                    offChainMetadata = validated
+                    verifiedMetadata = 'verified'
+                  } else {
+                    verifiedMetadata = 'unverified'
+                  }
+                } catch {
+                  // Parse failure on correctly hashed content fails closed to unverified
+                  verifiedMetadata = 'unverified'
+                }
+              }
             }
           }
         } else {
@@ -481,27 +675,27 @@ export async function fetchProjectWithDetails(
           verifiedMetadata = 'unverified'
         }
       } catch {
-        // Network or fetch failure -> unverified
+        // Network, timeout, or abort failure -> unverified
         verifiedMetadata = 'unverified'
       }
     } else {
-      // Missing metadata_uri -> unverified
+      // Missing or unresolvable URI, or missing expected on-chain hash -> unverified
       verifiedMetadata = 'unverified'
     }
 
     const project = mapOnChainProject(raw, id, offChainMetadata)
 
-    let scoreHistory = fallbackDetail?.scoreHistory
+    let scoreHistory: { credit: ScorePoint[]; green: ScorePoint[] } = { credit: [], green: [] }
     try {
       const onChainHistory = await fetchScoreHistory(id, sourceAddress)
       if (onChainHistory.credit.length > 0 || onChainHistory.green.length > 0) {
         scoreHistory = onChainHistory
       }
     } catch {
-      /* use fallback scoreHistory */
+      /* ignore score history errors on detail view */
     }
 
-    const detail: ProjectDetail = fallbackDetail ?? {
+    const detail: ProjectDetail = {
       name: project.name,
       location: project.location,
       story: offChainMetadata?.story || 'Project registered on Stellar ProjectRegistry.',
@@ -535,7 +729,7 @@ export async function fetchProjectWithDetails(
     return result
   } catch (error) {
     reportRegistryReadError('get_project', error)
-    if (isProgrammingError(error)) throw error
+    if (isProgrammingError(error) || isMainnetActive()) throw error
     if (!fallbackProject || !fallbackDetail) return null
     return {
       project: fallbackProject,
@@ -555,6 +749,9 @@ export async function fetchScoreHistory(
   if (cached !== null) return cached
 
   if (!getRegistryContractId()) {
+    if (isMainnetActive()) {
+      throw new Error('NEXT_PUBLIC_REGISTRY_CONTRACT_ID not set on mainnet')
+    }
     return selectScoreHistory(id)
   }
 
@@ -580,10 +777,13 @@ export async function fetchScoreHistory(
       setInCache(cacheKey, history)
       return history
     }
+    if (isMainnetActive()) {
+      return { credit: [], green: [] }
+    }
     return selectScoreHistory(id)
   } catch (error) {
     reportRegistryReadError('get_score_history', error)
-    if (isProgrammingError(error)) throw error
+    if (isProgrammingError(error) || isMainnetActive()) throw error
     return selectScoreHistory(id)
   }
 }
