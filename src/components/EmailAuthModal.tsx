@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   detectEmailAuthProvider,
@@ -28,7 +28,12 @@ export interface EmailAuthModalProps {
 /**
  * Modal dialog for email-based onboarding and sign-in with real-time social conflict detection.
  */
-export function EmailAuthModal({open, onClose, onSuccess, onSocialLogin}: EmailAuthModalProps) {
+export function EmailAuthModal(props: EmailAuthModalProps) {
+  // Mounting the form only while open resets its state on every reopen.
+  return props.open ? <EmailAuthForm {...props} /> : null
+}
+
+function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthModalProps) {
   const t = useTranslations('AccountConflict')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -39,22 +44,6 @@ export function EmailAuthModal({open, onClose, onSuccess, onSocialLogin}: EmailA
   const [bioError, setBioError] = useState<string | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   useFocusTrap(open, dialogRef, undefined, onClose)
-
-  // Reset all form state whenever the modal is closed, so reopening
-  // always shows a fresh form.
-  useEffect(() => {
-    if (!open) {
-      setEmail('')
-      setSubmitted(false)
-      setSubmitting(false)
-      setSubmitError(null)
-      setBypassWarning(false)
-      setBioLoading(false)
-      setBioError(null)
-    }
-  }, [open])
-
-  if (!open) return null
 
   const detection = detectEmailAuthProvider(email)
   const showConflict =
@@ -72,8 +61,8 @@ export function EmailAuthModal({open, onClose, onSuccess, onSocialLogin}: EmailA
       }
       await onSuccess(email)
       setSubmitted(true)
-    } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Failed to send link')
+    } catch {
+      setSubmitError(t('sendError'))
     } finally {
       setSubmitting(false)
     }
@@ -274,7 +263,7 @@ export function EmailAuthModal({open, onClose, onSuccess, onSocialLogin}: EmailA
               disabled={showConflict || submitting || !email}
               style={{ marginTop: 8 }}
             >
-              {submitting ? t('submittingCta') : t('submitCta')}
+              {submitting ? t('sending') : t('submitCta')}
             </Button>
           </form>
         )}

@@ -469,10 +469,8 @@
     "continueWithProvider": "Se connecter avec {provider}",
     "sendLinkAnyway": "Lier cet e-mail à mon compte",
     "linkSentMessage": "Un lien magique de connexion a été envoyé à {email}.",
-    "sendingMessage": "Envoi du lien de connexion…",
-    "sendErrorMessage": "Impossible d'envoyer le lien de connexion. Veuillez réessayer.",
-    "sendingMessage": "Envoi du lien de connexion…",
-    "sendErrorMessage": "Impossible d'envoyer le lien de connexion. Veuillez réessayer.",
+    "sending": "Envoi du lien de connexion…",
+    "sendError": "Impossible d'envoyer le lien de connexion. Veuillez réessayer.",
     "close": "Fermer"
   },
   "YieldAlert": {

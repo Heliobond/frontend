@@ -469,9 +469,8 @@
     "continueWithProvider": "Inicia sesión con {provider}",
     "sendLinkAnyway": "Vincular este correo a mi cuenta",
     "linkSentMessage": "Se ha enviado un enlace mágico de inicio de sesión a {email}.",
-    "sendError": "No se pudo enviar el enlace de inicio de sesión. Inténtalo de nuevo.",
-    "retry": "Reintentar",
     "sending": "Enviando enlace…",
+    "sendError": "No se pudo enviar el enlace de inicio de sesión. Inténtalo de nuevo.",
     "close": "Cerrar"
   },
   "YieldAlert": {
