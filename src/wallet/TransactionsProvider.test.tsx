@@ -1,10 +1,11 @@
+import { useState, type ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TransactionsProvider, useTransactions } from './TransactionsProvider'
 import { TRANSACTIONS_KEY, recordTransaction } from './transactions'
 import { subscribeTransactionConfirmed } from './vaultEvents'
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
+const wrapper = ({ children }: { children: ReactNode }) => (
   <TransactionsProvider>{children}</TransactionsProvider>
 )
 const saved = (hash = 'persisted') => ({
@@ -103,4 +104,23 @@ describe('TransactionsProvider', () => {
       expect(result.current.transactions).toEqual([])
     },
   )
+
+  it('preserves value reference across parent re-renders with unchanged transactions', () => {
+    let triggerParentRender!: () => void
+
+    function Parent({ children }: { children: React.ReactNode }) {
+      const [, setTick] = useState(0)
+      triggerParentRender = () => setTick((t) => t + 1)
+      return <TransactionsProvider>{children}</TransactionsProvider>
+    }
+
+    const { result } = renderHook(() => useTransactions(), { wrapper: Parent })
+    const initialValue = result.current
+
+    act(() => {
+      triggerParentRender()
+    })
+
+    expect(result.current).toBe(initialValue)
+  })
 })

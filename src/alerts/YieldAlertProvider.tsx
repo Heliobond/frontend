@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useSyncExternalStore,
   type ReactNode,
@@ -174,19 +175,18 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
     [alerts],
   )
 
-  return (
-    <YieldAlertContext.Provider
-      value={{
-        alerts,
-        count: alerts.length,
-        add,
-        remove,
-        update,
-        getAlertsForBond,
-        hasAlertForBond,
-      }}
-    >
-      {children}
-    </YieldAlertContext.Provider>
+  const value = useMemo<YieldAlertContextValue>(
+    () => ({
+      alerts,
+      count: alerts.length,
+      add,
+      remove,
+      update,
+      getAlertsForBond,
+      hasAlertForBond,
+    }),
+    [alerts, add, remove, update, getAlertsForBond, hasAlertForBond],
   )
+
+  return <YieldAlertContext.Provider value={value}>{children}</YieldAlertContext.Provider>
 }

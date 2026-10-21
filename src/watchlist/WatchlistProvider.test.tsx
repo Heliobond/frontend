@@ -1,3 +1,4 @@
+import { useState, useEffect, memo, createContext, type ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -86,5 +87,131 @@ describe('WatchlistProvider', () => {
       return null
     }
     expect(() => render(<Bare />)).toThrow(/within <WatchlistProvider>/)
+  })
+
+  it('preserves value reference and prevents extra consumer renders when parent re-renders with unchanged state', () => {
+    let consumerRenderCount = 0
+    let latestValue: ReturnType<typeof useWatchlist> | undefined
+
+    const Consumer = memo(function Consumer() {
+      const value = useWatchlist()
+      // Recorded after commit, not during render.
+      useEffect(() => {
+        consumerRenderCount++
+        latestValue = value
+      })
+      return <div>Consumer rendered</div>
+    })
+
+    let triggerParentRender!: () => void
+    function Parent() {
+      const [, setTick] = useState(0)
+      useEffect(() => {
+        triggerParentRender = () => setTick((t) => t + 1)
+      }, [])
+      return (
+        <WatchlistProvider>
+          <Consumer />
+        </WatchlistProvider>
+      )
+    }
+
+    render(<Parent />)
+    expect(consumerRenderCount).toBe(1)
+    const initialValue = latestValue
+
+    act(() => {
+      triggerParentRender()
+    })
+
+    expect(consumerRenderCount).toBe(1)
+    expect(latestValue).toBe(initialValue)
+  })
+
+  it('keeps callback identities stable across state updates via ref', async () => {
+    const user = userEvent.setup()
+    let prevCallbacks: {
+      has: (id: number) => boolean
+      add: (id: number) => void
+      remove: (id: number) => void
+      toggle: (id: number) => boolean
+      clear: () => void
+    } | null = null
+
+    function CallbackTracker() {
+      const { has, add, remove, toggle, clear } = useWatchlist()
+      useEffect(() => {
+        if (!prevCallbacks) {
+          prevCallbacks = { has, add, remove, toggle, clear }
+        } else {
+          expect(has).toBe(prevCallbacks.has)
+          expect(add).toBe(prevCallbacks.add)
+          expect(remove).toBe(prevCallbacks.remove)
+          expect(toggle).toBe(prevCallbacks.toggle)
+          expect(clear).toBe(prevCallbacks.clear)
+        }
+      })
+      return (
+        <button type="button" onClick={() => toggle(42)}>
+          Toggle 42
+        </button>
+      )
+    }
+
+    render(
+      <WatchlistProvider>
+        <CallbackTracker />
+      </WatchlistProvider>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Toggle 42' }))
+    expect(prevCallbacks).not.toBeNull()
+  })
+
+  it('shows no extra render when an unrelated provider updates', () => {
+    let consumerRenderCount = 0
+    let triggerUnrelatedUpdate!: () => void
+
+    const UnrelatedContext = createContext<{ count: number; bump: () => void }>({
+      count: 0,
+      bump: () => {},
+    })
+
+    function UnrelatedProvider({ children }: { children: ReactNode }) {
+      const [count, setCount] = useState(0)
+      useEffect(() => {
+        triggerUnrelatedUpdate = () => setCount((c) => c + 1)
+      }, [])
+      return (
+        <UnrelatedContext.Provider value={{ count, bump: () => setCount((c) => c + 1) }}>
+          {children}
+        </UnrelatedContext.Provider>
+      )
+    }
+
+    const Consumer = memo(function Consumer() {
+      useWatchlist()
+      useEffect(() => {
+        consumerRenderCount++
+      })
+      return <div>Consumer rendered</div>
+    })
+
+    render(
+      <UnrelatedProvider>
+        <WatchlistProvider>
+          <Consumer />
+        </WatchlistProvider>
+      </UnrelatedProvider>,
+    )
+
+    expect(consumerRenderCount).toBe(1)
+
+    act(() => {
+      triggerUnrelatedUpdate()
+    })
+
+    // Consumer does not re-render because WatchlistProvider context value is memoized
+    expect(consumerRenderCount).toBe(1)
   })
 })

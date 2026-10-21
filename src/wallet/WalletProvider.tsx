@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -329,33 +330,54 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
   }, [])
 
-  return (
-    <WalletContext.Provider
-      value={{
-        address,
-        connected: address !== null,
-        connecting,
-        syncing,
-        isDemo,
-        restoring,
-        connectionError,
-        retryCount,
-        connect,
-        connectDemo,
-        disconnect,
-        retry,
-        sign,
-        signMessage,
-        network,
-        setNetwork,
-        walletNetworkPassphrase,
-        networkMismatch:
-          !isDemo && address !== null && isNetworkMismatch(walletNetworkPassphrase, appPassphrase),
-        checkWalletNetwork,
-        lastDisconnectReason,
-      }}
-    >
-      {children}
-    </WalletContext.Provider>
+  const networkMismatch =
+    !isDemo && address !== null && isNetworkMismatch(walletNetworkPassphrase, appPassphrase)
+
+  const value = useMemo<WalletContextValue>(
+    () => ({
+      address,
+      connected: address !== null,
+      connecting,
+      syncing,
+      isDemo,
+      restoring,
+      connectionError,
+      retryCount,
+      connect,
+      connectDemo,
+      disconnect,
+      retry,
+      sign,
+      signMessage,
+      network,
+      setNetwork,
+      walletNetworkPassphrase,
+      networkMismatch,
+      checkWalletNetwork,
+      lastDisconnectReason,
+    }),
+    [
+      address,
+      connecting,
+      syncing,
+      isDemo,
+      restoring,
+      connectionError,
+      retryCount,
+      connect,
+      connectDemo,
+      disconnect,
+      retry,
+      sign,
+      signMessage,
+      network,
+      setNetwork,
+      walletNetworkPassphrase,
+      networkMismatch,
+      checkWalletNetwork,
+      lastDisconnectReason,
+    ],
   )
+
+  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
 }

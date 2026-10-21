@@ -1,6 +1,15 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { readWatchlist, writeWatchlist, WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
 import { useRemoteSync } from '../session/useRemoteSync'
 
@@ -33,20 +42,32 @@ export function useWatchlist(): WatchlistContextValue {
  */
 export function WatchlistProvider({ children }: { children: ReactNode }) {
   const [ids, setIds] = useState<number[]>([])
+  const idsRef = useRef<number[]>(ids)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIds(readWatchlist())
+    idsRef.current = ids
+  }, [ids])
+
+  useEffect(() => {
+    const initial = readWatchlist()
+    if (initial.length > 0) {
+      idsRef.current = initial
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIds(initial)
+    }
 
     const syncOtherTabs = (event: StorageEvent) => {
       if (event.key !== WATCHLIST_STORAGE_KEY) return
-      setIds(readWatchlist())
+      const next = readWatchlist()
+      idsRef.current = next
+      setIds(next)
     }
     window.addEventListener('storage', syncOtherTabs)
     return () => window.removeEventListener('storage', syncOtherTabs)
   }, [])
 
   const commit = useCallback((next: number[]) => {
+    idsRef.current = next
     setIds(next)
     writeWatchlist(next)
   }, [])
@@ -59,41 +80,53 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     merge: (local, remote) => [...new Set([...(Array.isArray(remote) ? remote : []), ...local])],
   })
 
-  const has = useCallback((id: number) => ids.includes(id), [ids])
+  const has = useCallback((id: number) => idsRef.current.includes(id), [])
 
   const add = useCallback(
     (id: number) => {
-      if (ids.includes(id)) return
-      commit([...ids, id])
+      const current = idsRef.current
+      if (current.includes(id)) return
+      commit([...current, id])
     },
-    [ids, commit],
+    [commit],
   )
 
   const remove = useCallback(
     (id: number) => {
-      if (!ids.includes(id)) return
-      commit(ids.filter((x) => x !== id))
+      const current = idsRef.current
+      if (!current.includes(id)) return
+      commit(current.filter((x: number) => x !== id))
     },
-    [ids, commit],
+    [commit],
   )
 
   const toggle = useCallback(
     (id: number) => {
-      if (ids.includes(id)) {
-        commit(ids.filter((x) => x !== id))
+      const current = idsRef.current
+      if (current.includes(id)) {
+        commit(current.filter((x: number) => x !== id))
         return false
       }
-      commit([...ids, id])
+      commit([...current, id])
       return true
     },
-    [ids, commit],
+    [commit],
   )
 
   const clear = useCallback(() => commit([]), [commit])
 
-  return (
-    <WatchlistContext.Provider value={{ ids, count: ids.length, has, add, remove, toggle, clear }}>
-      {children}
-    </WatchlistContext.Provider>
+  const value = useMemo<WatchlistContextValue>(
+    () => ({
+      ids,
+      count: ids.length,
+      has,
+      add,
+      remove,
+      toggle,
+      clear,
+    }),
+    [ids, has, add, remove, toggle, clear],
   )
+
+  return <WatchlistContext.Provider value={value}>{children}</WatchlistContext.Provider>
 }

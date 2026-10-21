@@ -1,6 +1,13 @@
 'use client'
 
-import { createContext, useContext, useEffect, useSyncExternalStore, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react'
 import { SOROBAN_RPC_URL, STELLAR_NETWORK } from '../config/network'
 import { notifyTransactionConfirmed } from './vaultEvents'
 import {
@@ -99,19 +106,23 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  return (
-    <TransactionsContext.Provider
-      value={{
-        transactions,
-        pendingCount: transactions.filter(isPending).length,
-        addTransaction: recordTransaction,
-        updateTransactionStatus: updateTransaction,
-        clearCompleted: clearCompletedTransactions,
-      }}
-    >
-      {children}
-    </TransactionsContext.Provider>
-  )
+  const value = useMemo<TransactionsContextValue>(() => {
+    let pendingCount = 0
+    for (let i = 0; i < transactions.length; i++) {
+      if (isPending(transactions[i])) {
+        pendingCount++
+      }
+    }
+    return {
+      transactions,
+      pendingCount,
+      addTransaction: recordTransaction,
+      updateTransactionStatus: updateTransaction,
+      clearCompleted: clearCompletedTransactions,
+    }
+  }, [transactions])
+
+  return <TransactionsContext.Provider value={value}>{children}</TransactionsContext.Provider>
 }
 const defaultContextValue: TransactionsContextValue = {
   transactions: [],
