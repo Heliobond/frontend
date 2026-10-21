@@ -1,20 +1,5 @@
 import { test, expect } from '@playwright/test'
-
-const DEMO_ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
-
-/**
- * Seed a demo wallet session via localStorage so the deposit flow works
- * end-to-end without requiring a real Stellar wallet extension.
- */
-async function seedDemoWallet(page: import('@playwright/test').Page) {
-  await page.addInitScript(
-    ({ address }) => {
-      localStorage.setItem('hb-address', address)
-      localStorage.setItem('hb-wallet', 'demo')
-    },
-    { address: DEMO_ADDRESS },
-  )
-}
+import { seedDemoWallet } from './wallet-fixtures'
 
 test.describe('Deposit flow — demo mode smoke test', () => {
   test('walks amount → review → pending → success', async ({ page }) => {

@@ -24,9 +24,17 @@ export function useVaultLimits() {
 
   const [limits, setLimits] = useState<VaultLimits>(defaultLimits)
   const [error, setError] = useState<string | null>(null)
+  const [e2eLockExpiresAt, setE2eLockExpiresAt] = useState<number | null>(null)
   const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
 
   const { tick } = useVaultRefresh(enabled)
+
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_E2E_TEST_WALLET !== 'true') return
+    const raw = window.localStorage.getItem('hb-e2e-withdraw-lock-expires-at')
+    const expiresAt = raw === null ? 0 : Number(raw)
+    setE2eLockExpiresAt(Number.isFinite(expiresAt) ? expiresAt : 0)
+  }, [])
 
   /**
    * Identifies the fetch whose result `limits` holds. `loading` is derived from
@@ -64,5 +72,10 @@ export function useVaultLimits() {
     }
   }, [address, enabled, network, tick])
 
-  return { ...limits, loading, error }
+  return {
+    ...limits,
+    lockExpiresAt: e2eLockExpiresAt ?? limits.lockExpiresAt,
+    loading,
+    error,
+  }
 }

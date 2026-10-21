@@ -60,6 +60,7 @@ export default defineConfig({
       : {
           command: `${runner} dev`,
           url: baseURL,
+          env: { NEXT_PUBLIC_E2E_TEST_WALLET: 'true' },
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
         },
