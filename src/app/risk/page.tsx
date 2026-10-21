@@ -1,9 +1,7 @@
-'use client'
+import { getTranslations } from 'next-intl/server'
 
-import { useTranslations } from 'next-intl'
-
-export default function RiskPage() {
-  const t = useTranslations('Risk')
+export default async function RiskPage() {
+  const t = await getTranslations('Risk')
   return (
     <main id="main-content" style={{ maxWidth: 760, margin: '0 auto', padding: '64px 32px' }}>
       <h1

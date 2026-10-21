@@ -1,11 +1,9 @@
-'use client'
-
 import Link from 'next/link'
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { devRoutesEnabled } from '../../lib/devRoutes'
 
-export default function LearnPage() {
-  const t = useTranslations('Learn')
+export default async function LearnPage() {
+  const t = await getTranslations('Learn')
   return (
     <main id="main-content" style={{ maxWidth: 760, margin: '0 auto', padding: '64px 32px' }}>
       <h1

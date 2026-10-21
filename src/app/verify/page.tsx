@@ -1,10 +1,8 @@
-'use client'
-
-import { useTranslations } from 'next-intl'
+import { getTranslations } from 'next-intl/server'
 import { Landing } from '../../screens/Landing'
 
-export default function VerifyPage() {
-  const t = useTranslations('Footer')
+export default async function VerifyPage() {
+  const t = await getTranslations('Footer')
   return (
     <main id="main-content">
       <Landing onConnect={() => {}} onExplore={() => {}} />
