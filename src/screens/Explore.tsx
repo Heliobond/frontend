@@ -21,6 +21,10 @@ export interface ExploreProps {
 
 const TYPES: (ProjectType | 'All')[] = ['All', 'Solar', 'Wind', 'Hydro']
 
+function parseProjectTypeFilter(value: string | null): ProjectType | 'All' {
+  return value && ['Solar', 'Wind', 'Hydro'].includes(value) ? (value as ProjectType) : 'All'
+}
+
 /**
  * Projects rendered per page. Twelve fills the widest grid with whole rows at
  * every breakpoint (the grid runs 1–4 columns), so a page boundary never leaves
@@ -43,10 +47,9 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
   const [loading, setLoading] = useState(!initialProjects || initialProjects.length === 0)
   const [loadingMore, setLoadingMore] = useState(false)
   const [apiError, setApiError] = useState(false)
-  const urlType = searchParams.get('type') as ProjectType | null
-  const [filter, setFilter] = useState<ProjectType | 'All'>(
-    urlType && ['Solar', 'Wind', 'Hydro'].includes(urlType) ? urlType : 'All',
-  )
+  // The URL is the source of truth so back/forward and shared links update
+  // the selected chip and visible project set together.
+  const filter = parseProjectTypeFilter(searchParams.get('type'))
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
@@ -69,7 +72,6 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
   }, [initialProjects])
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
-    setFilter(next)
     setVisibleCount(PAGE_SIZE)
     if (next === 'All') {
       router.replace('/explore', { scroll: false })
