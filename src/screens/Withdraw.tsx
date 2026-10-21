@@ -15,6 +15,7 @@ import { getExplorerTxUrl } from '../config/network'
 import { useVault } from '../wallet/useVault'
 import { useVaultLimits } from '../wallet/useVaultLimits'
 import { usePortfolio } from '../hooks/usePortfolio'
+import { useVisibleNow } from '../hooks/useVisibleNow'
 
 const DISPLAY_DECIMALS = 2
 const DEFAULT_SLIPPAGE_TOLERANCE = 0.005 // 0.5%
@@ -89,19 +90,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const [isQueued, setIsQueued] = useState(false)
   const [estimatedAmount, setEstimatedAmount] = useState<number | null>(null)
   const [slippageTolerance, setSlippageTolerance] = useState(DEFAULT_SLIPPAGE_TOLERANCE)
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000))
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000)
-    return () => clearInterval(id)
-  }, [])
 
   const minWithdrawUsdc = minWithdrawShares * sharePrice
-  const isLocked = lockExpiresAt > now
-  const lockRemaining = lockExpiresAt - now
-  const hours = Math.floor(lockRemaining / 3600)
-  const minutes = Math.floor((lockRemaining % 3600) / 60)
-  const lockText = `Withdrawals unlock in ${hours} h ${minutes} m`
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -281,10 +271,18 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 </label>
               </div>
             )}
-            <Button
-              variant="primary"
-              size="lg"
-              style={{ width: '100%', marginTop: 20, background: 'var(--primary)' }}
+            <WithdrawSubmitButton
+              lockExpiresAt={lockExpiresAt}
+              canWithdraw={
+                n >= minWithdrawUsdc &&
+                n <= vaultLiquid &&
+                n <= tierLimit &&
+                n <= userPosition &&
+                !paused
+              }
+              canQueue={
+                n > vaultLiquid && n <= tierLimit && n <= userPosition && n <= maxTx && !paused
+              }
               disabled={
                 !positionReady ||
                 limitsLoading ||
@@ -293,10 +291,9 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                 n > userPosition ||
                 n > tierLimit ||
                 n > maxTx ||
-                paused ||
-                isLocked
+                paused
               }
-              reason={
+              reasonBeforeLock={
                 !positionReady
                   ? portfolioError
                     ? 'Could not verify your wallet position'
@@ -307,20 +304,23 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                       ? 'Could not verify vault limits'
                       : paused
                         ? 'Vault paused'
-                        : isLocked
-                          ? lockText
-                          : n > userPosition
-                            ? 'Amount exceeds your position'
-                            : n > tierLimit
-                              ? 'Amount exceeds graduated tier limit'
-                              : n > maxTx
-                                ? 'Amount exceeds pool transaction limit'
-                                : n < minWithdrawUsdc
-                                  ? t('reasonMin', {
-                                      min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS),
-                                    })
-                                  : undefined
+                        : undefined
               }
+              reasonAfterLock={
+                n > userPosition
+                  ? 'Amount exceeds your position'
+                  : n > tierLimit
+                    ? 'Amount exceeds graduated tier limit'
+                    : n > maxTx
+                      ? 'Amount exceeds pool transaction limit'
+                      : n < minWithdrawUsdc
+                        ? t('reasonMin', { min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS) })
+                        : undefined
+              }
+              withdrawLabel={t('withdrawCta', { amount: n })}
+              queueLabel={`Enqueue withdrawal for $${formatDecimal(n, DISPLAY_DECIMALS)}`}
+              emptyLabel={t('withdrawCtaEmpty')}
+              style={{ width: '100%', marginTop: 20, background: 'var(--primary)' }}
               onClick={async () => {
                 changeStep('pending')
                 setTxError(null)
@@ -411,23 +411,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                   }
                 }
               }}
-            >
-              {n >= minWithdrawUsdc &&
-              n <= vaultLiquid &&
-              n <= tierLimit &&
-              n <= userPosition &&
-              !paused &&
-              !isLocked
-                ? t('withdrawCta', { amount: n })
-                : n > vaultLiquid &&
-                    n <= tierLimit &&
-                    n <= userPosition &&
-                    n <= maxTx &&
-                    !paused &&
-                    !isLocked
-                  ? `Enqueue withdrawal for $${formatDecimal(n, DISPLAY_DECIMALS)}`
-                  : t('withdrawCtaEmpty')}
-            </Button>
+            />
             <button
               onClick={onBack}
               className="hb-textlink"
@@ -591,6 +575,56 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
     <main id="main-content" style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
       {renderStep(step)}
     </main>
+  )
+}
+
+function WithdrawSubmitButton({
+  lockExpiresAt,
+  canWithdraw,
+  canQueue,
+  disabled,
+  reasonBeforeLock,
+  reasonAfterLock,
+  withdrawLabel,
+  queueLabel,
+  emptyLabel,
+  onClick,
+  style,
+}: {
+  lockExpiresAt: number
+  canWithdraw: boolean
+  canQueue: boolean
+  disabled: boolean
+  reasonBeforeLock?: string
+  reasonAfterLock?: string
+  withdrawLabel: string
+  queueLabel: string
+  emptyLabel: string
+  onClick: () => void | Promise<void>
+  style: CSSProperties
+}) {
+  const now = useVisibleNow('seconds')
+  const lockRemaining = Math.max(0, lockExpiresAt - now)
+  const isLocked = lockExpiresAt > now
+  const hours = Math.floor(lockRemaining / 3600)
+  const minutes = Math.floor((lockRemaining % 3600) / 60)
+  const lockText = `Withdrawals unlock in ${hours} h ${minutes} m`
+
+  return (
+    <Button
+      variant="primary"
+      size="lg"
+      style={style}
+      disabled={disabled || isLocked}
+      reason={reasonBeforeLock ?? (isLocked ? lockText : reasonAfterLock)}
+      onClick={onClick}
+    >
+      {canWithdraw && !isLocked
+        ? withdrawLabel
+        : canQueue && !isLocked
+          ? queueLabel
+          : emptyLabel}
+    </Button>
   )
 }
 

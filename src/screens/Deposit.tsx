@@ -28,6 +28,7 @@ import {
 } from '../lib/format'
 import { projectedReturn } from '../lib/bondUtils'
 import { useDepositGuard } from '../hooks/useDepositGuard'
+import { useVisibleNow } from '../hooks/useVisibleNow'
 import { RecurringInvestmentOptions } from '../components/RecurringInvestmentOptions'
 
 const DEFAULT_DEPOSIT_USDC = '100'
@@ -82,7 +83,6 @@ export function Deposit({ onDone }: DepositProps) {
   const [recurrenceDay, setRecurrenceDay] = useState(1)
   const [slippageTolerance, setSlippageTolerance] = useState(DEFAULT_SLIPPAGE_TOLERANCE)
   const priceFetchedAt = fetchedAt ?? new Date()
-  const [now, setNow] = useState(() => Date.now())
 
   const n = parseAmount(amount)
   const isMemoValid = validateMemoLength(memo).valid
@@ -94,14 +94,6 @@ export function Deposit({ onDone }: DepositProps) {
     estimatedFee === null
       ? 'Estimate unavailable'
       : `${estimatedFee.toFixed(7)} XLM (estimated maximum)`
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  const rateAgeSeconds = Math.floor((now - priceFetchedAt.getTime()) / 1000)
-  const isRateStale = rateAgeSeconds > RATE_STALE_AFTER_SECONDS
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -473,7 +465,7 @@ export function Deposit({ onDone }: DepositProps) {
                 <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600 }}>
                   {formatDecimal(pendingDeposit.amount, 2)} USDC
                 </span>{' '}
-                (started {Math.floor((now - pendingDeposit.startedAt) / 1000)}s ago) has not yet
+                (started <PendingDepositAge startedAt={pendingDeposit.startedAt} /> ago) has not yet
                 confirmed. Submitting again before it settles may result in a duplicate investment.
                 Check your portfolio before proceeding.{' '}
                 <button
@@ -513,65 +505,11 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k="Network fee" v={feeLabel} />
               {memo.trim() && <Row k={t('rowMemo')} v={memo.trim()} />}
             </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                margin: '-12px 0 16px',
-                flexWrap: 'wrap',
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--type-caption)',
-                  color: isRateStale ? 'var(--ember)' : 'var(--ink-40)',
-                  margin: 0,
-                  flex: 1,
-                }}
-              >
-                {isRateStale
-                  ? `Rate updated ${rateAgeSeconds}s ago — may be outdated. Refresh before confirming.`
-                  : `Live rate — updated ${rateAgeSeconds}s ago at ${formatTime(priceFetchedAt, locale)}`}
-              </p>
-              <button
-                type="button"
-                onClick={() => refreshVault()}
-                aria-label="Refresh exchange rate"
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--type-caption)',
-                  fontWeight: 600,
-                  color: 'var(--ink)',
-                  background: 'var(--ink-06)',
-                  border: '1px solid var(--ink-12)',
-                  borderRadius: 'var(--radius-pill)',
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                }}
-              >
-                Refresh rate
-              </button>
-            </div>
-            {isRateStale && (
-              <div
-                role="alert"
-                style={{
-                  marginBottom: 12,
-                  padding: '8px 12px',
-                  borderRadius: 'var(--radius-input)',
-                  background: 'rgba(179,54,27,0.07)',
-                  border: '1px solid rgba(179,54,27,0.18)',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--type-caption)',
-                  color: 'var(--ember)',
-                }}
-              >
-                Exchange rate is more than {RATE_STALE_AFTER_SECONDS} seconds old — please refresh
-                to get the latest price before confirming.
-              </div>
-            )}
+            <RateAge
+              fetchedAt={priceFetchedAt}
+              locale={locale}
+              onRefresh={refreshVault}
+            />
             <div style={{ marginBottom: 16 }}>
               <label
                 style={{
@@ -772,6 +710,89 @@ export function Deposit({ onDone }: DepositProps) {
       <Stepper step={step} />
       {renderStep(step)}
     </main>
+  )
+}
+
+function PendingDepositAge({ startedAt }: { startedAt: number }) {
+  const now = useVisibleNow()
+  return <>{Math.floor((now - startedAt) / 1000)}s</>
+}
+
+function RateAge({
+  fetchedAt,
+  locale,
+  onRefresh,
+}: {
+  fetchedAt: Date
+  locale: string
+  onRefresh: () => void
+}) {
+  const now = useVisibleNow()
+  const rateAgeSeconds = Math.floor((now - fetchedAt.getTime()) / 1000)
+  const isRateStale = rateAgeSeconds > RATE_STALE_AFTER_SECONDS
+
+  return (
+    <>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          margin: '-12px 0 16px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <p
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-caption)',
+            color: isRateStale ? 'var(--ember)' : 'var(--ink-40)',
+            margin: 0,
+            flex: 1,
+          }}
+        >
+          {isRateStale
+            ? `Rate updated ${rateAgeSeconds}s ago — may be outdated. Refresh before confirming.`
+            : `Live rate — updated ${rateAgeSeconds}s ago at ${formatTime(fetchedAt, locale)}`}
+        </p>
+        <button
+          type="button"
+          onClick={onRefresh}
+          aria-label="Refresh exchange rate"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-caption)',
+            fontWeight: 600,
+            color: 'var(--ink)',
+            background: 'var(--ink-06)',
+            border: '1px solid var(--ink-12)',
+            borderRadius: 'var(--radius-pill)',
+            padding: '4px 10px',
+            cursor: 'pointer',
+          }}
+        >
+          Refresh rate
+        </button>
+      </div>
+      {isRateStale && (
+        <div
+          role="alert"
+          style={{
+            marginBottom: 12,
+            padding: '8px 12px',
+            borderRadius: 'var(--radius-input)',
+            background: 'rgba(179,54,27,0.07)',
+            border: '1px solid rgba(179,54,27,0.18)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--type-caption)',
+            color: 'var(--ember)',
+          }}
+        >
+          Exchange rate is more than {RATE_STALE_AFTER_SECONDS} seconds old — please refresh to get
+          the latest price before confirming.
+        </div>
+      )}
+    </>
   )
 }
 
