@@ -1,10 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { FormField, FormInput, FormSelect } from './FormField'
 import { Button } from './Button'
 import { scrollToFirstError } from '../lib/scrollToError'
-import { validateAddress, type AddressValues, type AddressErrors } from '../lib/kycValidation'
+import {
+  validateAddress,
+  type AddressValues,
+  type AddressErrors,
+  type AddressErrorKey,
+} from '../lib/kycValidation'
 
 export type { AddressValues }
 
@@ -13,7 +19,29 @@ interface Props {
   initial?: Partial<AddressValues>
 }
 
+/** Countries offered in the picker; each has a postal / state rule in kycValidation. */
+const COUNTRY_CODES = ['US', 'CA', 'GB', 'DE', 'FR'] as const
+
+/** Element id of a field's error message, referenced by its `aria-describedby`. */
+const errorId = (field: keyof AddressValues) => `err-${field}`
+
+/** Localized country name; falls back to the raw code when Intl cannot name it. */
+function countryName(names: Intl.DisplayNames, code: string): string {
+  try {
+    return names.of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
+/**
+ * KYC address step. Not mounted by any route yet — there is no KYC flow to host
+ * it — so it is exercised only by its tests until that flow lands (#871).
+ */
 export function AddressVerificationForm({ onSubmit, initial }: Props) {
+  const t = useTranslations('Kyc')
+  const locale = useLocale()
+  const regionNames = useMemo(() => new Intl.DisplayNames([locale], { type: 'region' }), [locale])
   const [values, setValues] = useState<AddressValues>({
     street: initial?.street ?? '',
     city: initial?.city ?? '',
@@ -39,6 +67,23 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
     onSubmit?.(values)
   }
 
+  /** ARIA wiring shared by every validated control. */
+  const errorProps = (field: keyof AddressValues) => ({
+    'aria-invalid': !!errors[field],
+    'aria-describedby': errors[field] ? errorId(field) : undefined,
+  })
+
+  const fieldError = (field: keyof AddressValues) => {
+    const key: AddressErrorKey | undefined = errors[field]
+    return (
+      key && (
+        <p id={errorId(field)} role="alert" style={errorStyle}>
+          {t(`errors.${key}`)}
+        </p>
+      )
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <p
@@ -49,120 +94,101 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           margin: 0,
         }}
       >
-        <span style={{ color: 'var(--ember)' }}>*</span> Required fields &nbsp;·&nbsp; Optional
-        fields are marked
+        <span style={{ color: 'var(--ember)' }}>*</span> {t('requiredNote')}
       </p>
 
       <div data-field-wrapper>
-        <FormField label="Street address *" htmlFor="addr-street">
+        <FormField label={`${t('street')} *`} htmlFor="addr-street">
           <FormInput
             id="addr-street"
             value={values.street}
             onChange={(e) => setValues({ ...values, street: e.target.value })}
-            aria-invalid={!!errors.street}
-            aria-describedby={errors.street ? 'err-street' : undefined}
+            {...errorProps('street')}
             required
           />
         </FormField>
-        {errors.street && (
-          <p id="err-street" role="alert" style={errorStyle}>
-            {errors.street}
-          </p>
-        )}
+        {fieldError('street')}
       </div>
 
       <div data-field-wrapper>
-        <FormField label="Apartment, suite (optional)" htmlFor="addr-apt">
+        <FormField label={t('apartment')} htmlFor="addr-apt">
           <FormInput
             id="addr-apt"
             value={values.apartment}
             onChange={(e) => setValues({ ...values, apartment: e.target.value })}
-            placeholder="Apt 4B (optional)"
+            placeholder={t('apartmentPlaceholder')}
+            {...errorProps('apartment')}
           />
         </FormField>
+        {fieldError('apartment')}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div data-field-wrapper>
-          <FormField label="City *" htmlFor="addr-city">
+          <FormField label={`${t('city')} *`} htmlFor="addr-city">
             <FormInput
               id="addr-city"
               value={values.city}
               onChange={(e) => setValues({ ...values, city: e.target.value })}
-              aria-invalid={!!errors.city}
+              {...errorProps('city')}
               required
             />
           </FormField>
-          {errors.city && (
-            <p role="alert" style={errorStyle}>
-              {errors.city}
-            </p>
-          )}
+          {fieldError('city')}
         </div>
         <div data-field-wrapper>
-          <FormField label="State / Province *" htmlFor="addr-state">
+          <FormField label={`${t('state')} *`} htmlFor="addr-state">
             <FormInput
               id="addr-state"
               value={values.state}
               onChange={(e) => setValues({ ...values, state: e.target.value })}
-              aria-invalid={!!errors.state}
+              {...errorProps('state')}
               required
             />
           </FormField>
-          {errors.state && (
-            <p role="alert" style={errorStyle}>
-              {errors.state}
-            </p>
-          )}
+          {fieldError('state')}
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div data-field-wrapper>
-          <FormField label="ZIP / Postal code *" htmlFor="addr-zip">
+          <FormField label={`${t('zip')} *`} htmlFor="addr-zip">
             <FormInput
               id="addr-zip"
               value={values.zip}
               onChange={(e) => setValues({ ...values, zip: e.target.value })}
-              aria-invalid={!!errors.zip}
+              {...errorProps('zip')}
               required
             />
           </FormField>
-          {errors.zip && (
-            <p role="alert" style={errorStyle}>
-              {errors.zip}
-            </p>
-          )}
+          {fieldError('zip')}
         </div>
         <div data-field-wrapper>
-          <FormField label="Country *" htmlFor="addr-country">
+          <FormField label={`${t('country')} *`} htmlFor="addr-country">
             <FormSelect
               id="addr-country"
               value={values.country}
               onChange={(e) => setValues({ ...values, country: e.target.value })}
-              aria-invalid={!!errors.country}
+              {...errorProps('country')}
               required
             >
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="GB">United Kingdom</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-              {!['US', 'CA', 'GB', 'DE', 'FR', ''].includes(values.country) && (
-                <option value={values.country}>{values.country}</option>
-              )}
+              {COUNTRY_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {countryName(regionNames, code)}
+                </option>
+              ))}
+              {values.country !== '' &&
+                !(COUNTRY_CODES as readonly string[]).includes(values.country) && (
+                  <option value={values.country}>{countryName(regionNames, values.country)}</option>
+                )}
             </FormSelect>
           </FormField>
-          {errors.country && (
-            <p role="alert" style={errorStyle}>
-              {errors.country}
-            </p>
-          )}
+          {fieldError('country')}
         </div>
       </div>
 
       <Button variant="primary" onClick={handleSubmit}>
-        Verify address
+        {t('submit')}
       </Button>
     </div>
   )

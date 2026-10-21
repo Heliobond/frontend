@@ -6,8 +6,9 @@ import { useWallet } from '../wallet/WalletProvider'
 
 /**
  * Connect — the acceptance moment. Two equal doors, zero hierarchy shaming.
- * "Connect wallet" opens the real Stellar Wallets Kit; "start with email" uses
- * the demo path so the click-through always works. Education cards disclose the
+ * "Connect wallet" opens the real Stellar Wallets Kit; "Try the demo" connects
+ * the shared demo account, and its copy says so — it promises no wallet or
+ * funding the code does not provide (#866). Education cards disclose the
  * liquidity rule here, before any money moves.
  */
 export interface ConnectProps {
@@ -76,7 +77,7 @@ export function Connect({ onWallet, onNew, onCancel, onBiometric }: ConnectProps
             {connectionError}
           </span>
           <Button variant="secondary" size="sm" onClick={() => void retry()} loading={connecting}>
-            Try again
+            {t('retry')}
           </Button>
         </div>
       )}
@@ -118,7 +119,7 @@ export function Connect({ onWallet, onNew, onCancel, onBiometric }: ConnectProps
               fontWeight: 500,
             }}
           >
-            Syncing with Stellar — waiting for wallet…
+            {t('syncing')}
           </span>
         </div>
       )}
@@ -127,7 +128,7 @@ export function Connect({ onWallet, onNew, onCancel, onBiometric }: ConnectProps
         <Door
           title={t('walletTitle')}
           body={t('walletBody')}
-          cta={isSyncing ? 'Syncing…' : t('walletCta')}
+          cta={isSyncing ? t('syncingCta') : t('walletCta')}
           variant="secondary"
           onClick={onWallet}
           loading={isSyncing}
@@ -139,7 +140,6 @@ export function Connect({ onWallet, onNew, onCancel, onBiometric }: ConnectProps
           cta={t('newCta')}
           variant="primary"
           onClick={onNew}
-          chips={['Email', 'Passkey', t('addFunds')]}
         />
       </div>
 
@@ -150,7 +150,7 @@ export function Connect({ onWallet, onNew, onCancel, onBiometric }: ConnectProps
           style={{ width: '100%', marginBottom: 28 }}
           onClick={onBiometric}
         >
-          Face ID / Touch ID
+          {t('biometric')}
         </Button>
       )}
 
@@ -222,11 +222,11 @@ interface DoorProps {
   cta: string
   variant: ButtonVariant
   onClick: () => void
-  chips: string[]
+  chips?: string[]
   loading?: boolean
 }
 
-function Door({ title, body, cta, variant, onClick, chips, loading }: DoorProps) {
+function Door({ title, body, cta, variant, onClick, chips = [], loading }: DoorProps) {
   return (
     <div
       style={{
@@ -262,23 +262,25 @@ function Door({ title, body, cta, variant, onClick, chips, loading }: DoorProps)
       >
         {body}
       </p>
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
-        {chips.map((c) => (
-          <span
-            key={c}
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-caption)',
-              color: 'var(--ink-60)',
-              background: 'var(--ink-06)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '5px 11px',
-            }}
-          >
-            {c}
-          </span>
-        ))}
-      </div>
+      {chips.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+          {chips.map((c) => (
+            <span
+              key={c}
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-caption)',
+                color: 'var(--ink-60)',
+                background: 'var(--ink-06)',
+                borderRadius: 'var(--radius-pill)',
+                padding: '5px 11px',
+              }}
+            >
+              {c}
+            </span>
+          ))}
+        </div>
+      )}
       <Button
         variant={variant}
         size="lg"

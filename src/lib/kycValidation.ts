@@ -124,7 +124,57 @@ export interface AddressValues {
   country: string
   apartment?: string
 }
-export type AddressErrors = Partial<Record<keyof AddressValues, string>>
+type AddressField = keyof AddressValues
+type RequiredAddressField = Exclude<AddressField, 'apartment'>
+
+/** Message keys under the `Kyc.errors` namespace; the form translates them (#867). */
+export type AddressErrorKey =
+  `${RequiredAddressField}Required` | `${AddressField}Invalid` | 'stateFormat' | 'zipFormat'
+
+export type AddressErrors = Partial<Record<AddressField, AddressErrorKey>>
+
+const ADDRESS_FIELDS: readonly AddressField[] = [
+  'street',
+  'city',
+  'state',
+  'zip',
+  'country',
+  'apartment',
+]
+
+/**
+ * Postal code shape per ISO 3166-1 country (#871), matched against the trimmed,
+ * upper-cased input:
+ * - US: USPS ZIP (5 digits) or ZIP+4 (9 digits, hyphen optional).
+ * - CA: Canada Post `A9A 9A9`; D, F, I, O, Q, U never appear, W and Z never lead.
+ * - GB: Royal Mail outward codes A9, A99, AA9, AA99, A9A, AA9A with their
+ *   per-position letter limits, then the inward code `9AA` (no C, I, K, M, O, V).
+ * - DE: 5-digit Postleitzahl. FR: 5-digit code postal.
+ */
+const POSTAL_CODE_PATTERNS: ReadonlyMap<string, RegExp> = new Map([
+  ['US', /^\d{5}(?:-?\d{4})?$/],
+  ['CA', /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z] ?\d[ABCEGHJ-NPRSTV-Z]\d$/],
+  ['GB', /^[A-PR-UWYZ](?:\d[A-HJKPSTUW\d]?|[A-HK-Y]\d[ABEHMNPRV-Y\d]?) ?\d[ABD-HJLNP-UW-Z]{2}$/],
+  ['DE', /^\d{5}$/],
+  ['FR', /^\d{5}$/],
+])
+
+/**
+ * Two-letter subdivision codes for countries whose addresses require one (#871):
+ * USPS Publication 28 Appendix B (states, DC, possessions, freely associated
+ * states, military AA/AE/AP) and Canada Post province / territory symbols.
+ */
+const SUBDIVISION_CODES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  [
+    'US',
+    new Set(
+      'AL AK AS AZ AR CA CO CT DE DC FM FL GA GU HI ID IL IN IA KS KY LA ME MH MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND MP OH OK OR PW PA PR RI SC SD TN TX UT VT VI VA WA WV WI WY AA AE AP'.split(
+        ' ',
+      ),
+    ),
+  ],
+  ['CA', new Set('AB BC MB NB NL NS NT NU ON PE QC SK YT'.split(' '))],
+])
 
 const ADDRESS_MAX_LENGTH = 200
 const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'&-]+$/u
@@ -141,35 +191,32 @@ export function hasInvalidAddressCharacters(value: string): boolean {
 /**
  * Validates address fields according to KYC requirements (#414).
  * Single source of truth shared between component and schema.
- * Rejects input that contains XSS or SQL injection patterns.
+ * Rejects input that contains XSS or SQL injection patterns, then checks the
+ * ZIP and state shape for countries with a known format (#871). Returns
+ * `Kyc.errors` message keys rather than display text (#867).
+ *
+ * O(n) time in the total input length; lookups are O(1) map / set hits.
  */
 export function validateAddress(values: AddressValues): AddressErrors {
   const errors: AddressErrors = {}
-  const trim = (s: string) => s.trim()
-  const street = trim(values.street)
-  const city = trim(values.city)
-  const state = trim(values.state)
-  const zip = trim(values.zip)
-  const country = trim(values.country)
-  const apartment = values.apartment ? trim(values.apartment) : ''
 
-  if (!street) errors.street = 'Street address is required'
-  if (!city) errors.city = 'City is required'
-  if (!state) errors.state = 'State is required'
-  if (!zip) errors.zip = 'ZIP code is required'
-  if (!country) errors.country = 'Country is required'
+  for (const field of ADDRESS_FIELDS) {
+    const value = (values[field] ?? '').trim()
+    if (!value) {
+      if (field !== 'apartment') errors[field] = `${field}Required`
+    } else if (hasInvalidAddressCharacters(value)) {
+      errors[field] = `${field}Invalid`
+    }
+  }
 
-  if (street && hasInvalidAddressCharacters(street))
-    errors.street = 'Street address contains invalid characters'
-  if (city && hasInvalidAddressCharacters(city)) errors.city = 'City contains invalid characters'
-  if (state && hasInvalidAddressCharacters(state))
-    errors.state = 'State / Province contains invalid characters'
-  if (zip && hasInvalidAddressCharacters(zip))
-    errors.zip = 'ZIP / Postal code contains invalid characters'
-  if (country && hasInvalidAddressCharacters(country))
-    errors.country = 'Country contains invalid characters'
-  if (apartment && hasInvalidAddressCharacters(apartment))
-    errors.apartment = 'Apartment contains invalid characters'
+  const country = values.country.trim().toUpperCase()
+  const state = values.state.trim().toUpperCase()
+  const zip = values.zip.trim().toUpperCase()
+  const subdivisions = SUBDIVISION_CODES.get(country)
+  const postalCode = POSTAL_CODE_PATTERNS.get(country)
+
+  if (!errors.state && subdivisions && !subdivisions.has(state)) errors.state = 'stateFormat'
+  if (!errors.zip && postalCode && !postalCode.test(zip)) errors.zip = 'zipFormat'
 
   return errors
 }

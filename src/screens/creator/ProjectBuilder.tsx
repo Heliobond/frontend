@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useState, useEffect, type ReactNode } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { ProjectCard, Tag, Card, UploadIcon } from '@/components'
 import {
   cardTitle,
@@ -15,6 +15,16 @@ import {
 } from '@/theme'
 import { PROJECT_TYPES, DRAFT_PROJECT, type ProjectType } from '@/data/creator'
 import { formatMoney } from '@/lib/format'
+import { parseMoneyInput } from '@/lib/moneyInput'
+
+/**
+ * Largest funding goal a creator can enter (USD). At this bound the goal in
+ * Stellar's 7-decimal units (1e15) is still exact as a JS number (#869).
+ */
+const MAX_FUNDING_GOAL_USD = 100_000_000
+
+/** Keeps the live preview, and its aria-live announcement, close behind typing. */
+const PREVIEW_DEBOUNCE_MS = 250
 
 /**
  * ProjectBuilder — the off-chain metadata builder. The form on the left writes
@@ -24,33 +34,25 @@ import { formatMoney } from '@/lib/format'
  */
 export function ProjectBuilder() {
   const t = useTranslations('Creator')
+  const locale = useLocale()
   const [name, setName] = useState(DRAFT_PROJECT.name)
   const [location, setLocation] = useState(DRAFT_PROJECT.location)
   const [type, setType] = useState<ProjectType>(DRAFT_PROJECT.type)
   const [story, setStory] = useState(DRAFT_PROJECT.story)
   const [fundingGoal, setFundingGoal] = useState(String(DRAFT_PROJECT.fundingGoal))
   const goalErrorId = useId()
-  const [goalError, setGoalError] = useState<string | null>(null)
 
-  const handleGoalChange = (value: string) => {
-    setFundingGoal(value)
-    const normalized = value.replace(/[^0-9.]/g, '')
-    const num = Number(normalized) || 0
-    if (num <= 0) {
-      setGoalError(t('goalInvalid') ?? 'Enter a funding goal greater than 0')
-    } else {
-      setGoalError(null)
-    }
-  }
-
-  const goalNumber = Number(fundingGoal.replace(/[^0-9.]/g, '')) || 0
-
-  const getGoalLabel = (): string => {
-    if (goalNumber <= 0) return t('awaitingFunding')
-    return t('fundingLabel', { goal: formatMoney(goalNumber) })
-  }
-
-  const goalLabel = getGoalLabel()
+  const goal = parseMoneyInput(fundingGoal, locale)
+  const goalError =
+    goal === null || goal <= 0
+      ? t('goalInvalid')
+      : goal > MAX_FUNDING_GOAL_USD
+        ? t('goalTooLarge', { max: formatMoney(MAX_FUNDING_GOAL_USD) })
+        : null
+  const goalLabel =
+    goal === null || goalError
+      ? t('awaitingFunding')
+      : t('fundingLabel', { goal: formatMoney(goal) })
 
   const [debouncedName, setDebouncedName] = useState(name)
   const [debouncedLocation, setDebouncedLocation] = useState(location)
@@ -63,7 +65,7 @@ export function ProjectBuilder() {
       setDebouncedLocation(location)
       setDebouncedGoalLabel(goalLabel)
       setDebouncedType(type)
-    }, 1000)
+    }, PREVIEW_DEBOUNCE_MS)
     return () => clearTimeout(handler)
   }, [name, location, goalLabel, type])
 
@@ -152,7 +154,7 @@ export function ProjectBuilder() {
               type="text"
               inputMode="decimal"
               value={fundingGoal}
-              onChange={(e) => handleGoalChange(e.target.value)}
+              onChange={(e) => setFundingGoal(e.target.value)}
               aria-invalid={goalError != null}
               aria-describedby={goalError ? goalErrorId : undefined}
               style={{

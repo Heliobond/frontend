@@ -84,8 +84,8 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
       // On success, notify parent and close the modal
       if (onSuccess) await onSuccess(email)
       onClose()
-    } catch (err: unknown) {
-      setBioError(err instanceof Error ? err.message : 'Biometric login failed')
+    } catch {
+      setBioError(t('biometricLoginError'))
     } finally {
       setBioLoading(false)
     }
@@ -101,8 +101,8 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
       await loginBiometric(email)
       if (onSuccess) await onSuccess(email)
       onClose()
-    } catch (err: unknown) {
-      setBioError(err instanceof Error ? err.message : 'Biometric registration failed')
+    } catch {
+      setBioError(t('biometricRegisterError'))
     } finally {
       setBioLoading(false)
     }
@@ -172,7 +172,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
               fontSize: 18,
               color: 'var(--ink-40)',
             }}
-            aria-label="Close"
+            aria-label={t('close')}
           >
             ✕
           </button>
@@ -218,7 +218,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
                 setBypassWarning(false)
                 setSubmitError(null)
               }}
-              placeholder="you@example.com"
+              placeholder={t('emailPlaceholder')}
               required
               style={{
                 fontFamily: 'var(--font-body)',
@@ -279,7 +279,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
                   color: 'var(--ink-40)',
                 }}
               >
-                or
+                {t('or')}
               </span>
               <div style={{ flex: 1, height: 1, background: 'var(--ink-12)' }} />
             </div>
@@ -307,7 +307,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
                 disabled={!email || bioLoading}
                 style={{ flex: 1 }}
               >
-                Face ID / Touch ID Login
+                {t('biometricLogin')}
               </Button>
               <Button
                 type="button"
@@ -317,7 +317,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
                 disabled={!email || bioLoading}
                 style={{ flex: 1 }}
               >
-                Register Biometric
+                {t('biometricRegister')}
               </Button>
             </div>
           </div>

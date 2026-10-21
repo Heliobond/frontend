@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render as rtlRender } from '@testing-library/react'
+import { render, screen, fireEvent } from '@/test/render'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
+import fr from '../../messages/fr.json'
 import { AddressVerificationForm } from './AddressVerificationForm'
 
 describe('AddressVerificationForm', () => {
@@ -100,5 +103,49 @@ describe('AddressVerificationForm', () => {
         expect(screen.getByText(error)).toBeInTheDocument()
       })
     })
+  })
+
+  it('links every field error to its control through aria-describedby (#871)', () => {
+    render(<AddressVerificationForm initial={{ country: '', apartment: '<b>' }} />)
+    fireEvent.click(screen.getByText('Verify address'))
+    const labels = [
+      'Street address *',
+      'Apartment, suite (optional)',
+      'City *',
+      'State / Province *',
+      'ZIP / Postal code *',
+      'Country *',
+    ]
+    for (const label of labels) {
+      const control = screen.getByLabelText(label)
+      expect(control).toHaveAttribute('aria-invalid', 'true')
+      const describedBy = control.getAttribute('aria-describedby')
+      expect(describedBy).toBeTruthy()
+      expect(document.getElementById(describedBy!)).toHaveAttribute('role', 'alert')
+    }
+  })
+
+  it('rejects a US ZIP that is not 5 or 9 digits (#871)', () => {
+    const onSubmit = vi.fn()
+    render(<AddressVerificationForm onSubmit={onSubmit} />)
+    fillForm({ street: '1 Main St', city: 'Springfield', state: 'IL', zip: 'abc', country: 'US' })
+    fireEvent.click(screen.getByText('Verify address'))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(
+      screen.getByText('Enter a ZIP / postal code in the format used by the selected country'),
+    ).toBeInTheDocument()
+  })
+
+  it('renders labels, errors and country names in the active locale (#867)', () => {
+    rtlRender(
+      <LocaleProvider initialLocale="fr" initialMessages={fr}>
+        <AddressVerificationForm />
+      </LocaleProvider>,
+    )
+    expect(screen.getByRole('option', { name: 'Royaume-Uni' })).toBeInTheDocument()
+    fireEvent.click(screen.getByText(fr.Kyc.submit))
+    expect(screen.getByLabelText(`${fr.Kyc.street} *`)).toHaveAccessibleDescription(
+      fr.Kyc.errors.streetRequired,
+    )
   })
 })

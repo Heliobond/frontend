@@ -45,24 +45,28 @@ describe('security validation edge cases', () => {
       zip: '62701',
       country: 'US',
     }
-    expect(validateAddress({ ...valid, street: '<script>x</script>' }).street).toBe(
-      'Street address contains invalid characters',
-    )
-    expect(validateAddress({ ...valid, city: "'; DROP TABLE users;--" }).city).toBe(
-      'City contains invalid characters',
-    )
-    expect(validateAddress({ ...valid, state: '<svg/onload=alert(1)>' }).state).toBe(
-      'State / Province contains invalid characters',
-    )
-    expect(validateAddress({ ...valid, zip: '<script>x</script>' }).zip).toBe(
-      'ZIP / Postal code contains invalid characters',
-    )
+    expect(validateAddress({ ...valid, street: '<script>x</script>' }).street).toBe('streetInvalid')
+    expect(validateAddress({ ...valid, city: "'; DROP TABLE users;--" }).city).toBe('cityInvalid')
+    expect(validateAddress({ ...valid, state: '<svg/onload=alert(1)>' }).state).toBe('stateInvalid')
+    expect(validateAddress({ ...valid, zip: '<script>x</script>' }).zip).toBe('zipInvalid')
     expect(validateAddress({ ...valid, country: '"><img src=x onerror=alert(1)>' }).country).toBe(
-      'Country contains invalid characters',
+      'countryInvalid',
     )
     expect(validateAddress({ ...valid, apartment: '<script>x</script>' }).apartment).toBe(
-      'Apartment contains invalid characters',
+      'apartmentInvalid',
     )
+  })
+
+  it('returns required keys for empty fields but not for the optional apartment', () => {
+    expect(
+      validateAddress({ street: ' ', city: '', state: '', zip: '', country: '', apartment: '' }),
+    ).toEqual({
+      street: 'streetRequired',
+      city: 'cityRequired',
+      state: 'stateRequired',
+      zip: 'zipRequired',
+      country: 'countryRequired',
+    })
   })
 
   it('accepts ordinary address words that resemble SQL keywords', () => {
@@ -76,6 +80,72 @@ describe('security validation edge cases', () => {
     }
     expect(validateAddress(valid)).toEqual({})
     expect(validateAddress({ ...valid, street: '1 Main St and 2nd Ave' })).toEqual({})
+  })
+
+  describe('postal code and state shape (#871)', () => {
+    const address = (country: string, zip: string, state = 'X'): AddressValues => ({
+      street: '1 Main St',
+      city: 'Springfield',
+      state,
+      zip,
+      country,
+    })
+
+    it.each([
+      ['US', '62701', 'IL'],
+      ['US', '62701-1234', 'IL'],
+      ['US', '627011234', 'IL'],
+      ['CA', 'K1A 0B1', 'ON'],
+      ['CA', 'k1a0b1', 'qc'],
+      ['GB', 'SW1A 1AA', 'London'],
+      ['GB', 'EC1A 1BB', 'London'],
+      ['GB', 'W1A 0AX', 'London'],
+      ['GB', 'M1 1AE', 'Manchester'],
+      ['GB', 'B33 8TH', 'West Midlands'],
+      ['GB', 'CR2 6XH', 'Surrey'],
+      ['GB', 'DN55 1PT', 'Yorkshire'],
+      ['DE', '01067', 'Sachsen'],
+      ['FR', '75008', 'Île-de-France'],
+    ])('accepts %s ZIP %j with state %j', (country, zip, state) => {
+      expect(validateAddress(address(country, zip, state))).toEqual({})
+    })
+
+    it.each([
+      ['US', 'abc'],
+      ['US', '1234'],
+      ['US', '123456'],
+      ['US', '12345-678'],
+      ['CA', 'D1A 0B1'],
+      ['CA', 'W1A 0B1'],
+      ['CA', '12345'],
+      ['GB', 'Q1 1AA'],
+      ['GB', 'SW1A 1AC'],
+      ['GB', '12345'],
+      ['DE', '1234'],
+      ['DE', 'ABCDE'],
+      ['FR', '750081'],
+    ])('rejects %s ZIP %j', (country, zip) => {
+      const state = country === 'US' ? 'IL' : country === 'CA' ? 'ON' : 'Region'
+      expect(validateAddress(address(country, zip, state)).zip).toBe('zipFormat')
+    })
+
+    it.each([
+      ['US', 'Q'],
+      ['US', 'ZZ'],
+      ['US', 'Illinois'],
+      ['CA', 'PQ'],
+    ])('rejects %s state %j', (country, state) => {
+      const zip = country === 'US' ? '62701' : 'K1A 0B1'
+      expect(validateAddress(address(country, zip, state)).state).toBe('stateFormat')
+    })
+
+    it('keeps the character check ahead of the shape check', () => {
+      expect(validateAddress(address('US', '<b>', 'IL')).zip).toBe('zipInvalid')
+    })
+
+    it('only checks character safety for countries without a known format', () => {
+      expect(validateAddress(address('JP', '100-0001', 'Tokyo'))).toEqual({})
+    })
   })
 
   it('escapes apostrophes in display output', () => {
