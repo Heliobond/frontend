@@ -145,7 +145,11 @@
     "notYetAvailable": "Te avisaremos aquí cuando se abra.",
     "noLongerAvailable": "El proyecto #{id} ya no está disponible",
     "removeUnavailable": "Eliminar el proyecto #{id} de la lista de seguimiento",
-    "remove": "Eliminar"
+    "remove": "Eliminar",
+    "loading": "Cargando proyectos guardados...",
+    "fetchFailed": "No se pudo cargar el proyecto #{id}",
+    "retryFetch": "Reintentar la carga del proyecto #{id}",
+    "retry": "Reintentar"
   },
   "Deposit": {
     "stepAmount": "Importe",

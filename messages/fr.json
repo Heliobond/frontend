@@ -145,7 +145,11 @@
     "notYetAvailable": "Nous le signalerons ici dès son ouverture.",
     "noLongerAvailable": "Le projet #{id} n'est plus disponible",
     "removeUnavailable": "Retirer le projet #{id} de la liste de suivi",
-    "remove": "Supprimer"
+    "remove": "Supprimer",
+    "loading": "Chargement des projets suivis...",
+    "fetchFailed": "Impossible de charger le projet #{id}",
+    "retryFetch": "Réessayer de charger le projet #{id}",
+    "retry": "Réessayer"
   },
   "Deposit": {
     "stepAmount": "Montant",

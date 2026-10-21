@@ -152,7 +152,11 @@
     "notYetAvailable": "We'll flag it here when it opens.",
     "noLongerAvailable": "المشروع #{id} لم يعد متاحًا",
     "removeUnavailable": "إزالة المشروع #{id} من قائمة المراقبة",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "loading": "Loading saved projects...",
+    "fetchFailed": "Could not load project #{id}",
+    "retryFetch": "Retry loading project #{id}",
+    "retry": "Retry"
   },
   "Deposit": {
     "stepAmount": "المبلغ",

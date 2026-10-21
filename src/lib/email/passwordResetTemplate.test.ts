@@ -28,18 +28,22 @@ describe('passwordResetTemplate', () => {
       expect(sanitizeUrl(url)).toBe(url)
     })
 
-    it('allows valid HTTP URLs (e.g. localhost testing)', () => {
+    it('rejects HTTP URLs', () => {
       const url = 'http://localhost:3000/reset?token=test'
-      expect(sanitizeUrl(url)).toBe(url)
+      expect(() => sanitizeUrl(url)).toThrow('Unsupported URL protocol: http:')
     })
 
-    it('rejects javascript: schemes and returns safe fallback #', () => {
-      expect(sanitizeUrl('javascript:alert(1)')).toBe('#')
+    it('rejects javascript: schemes', () => {
+      expect(() => sanitizeUrl('javascript:alert(1)')).toThrow(
+        'Unsupported URL protocol: javascript:',
+      )
     })
 
     it('rejects data: schemes and invalid URLs', () => {
-      expect(sanitizeUrl('data:text/html,<script>alert(1)</script>')).toBe('#')
-      expect(sanitizeUrl('not-a-valid-url')).toBe('#')
+      expect(() => sanitizeUrl('data:text/html,<script>alert(1)</script>')).toThrow(
+        'Unsupported URL protocol: data:',
+      )
+      expect(() => sanitizeUrl('not-a-valid-url')).toThrow()
     })
   })
 
@@ -175,15 +179,14 @@ describe('passwordResetTemplate', () => {
       expect(email.html).toContain('Hello O&#39;BrienInjected header,')
     })
 
-    it('sanitizes unsafe reset URLs in email CTA links', () => {
-      const email = generatePasswordResetEmail({
-        resetUrl: 'javascript:alert("pwned")',
-        expiresInMinutes: 15,
-        requestTimestamp: fixedNow,
-      })
-
-      expect(email.html).not.toContain('href="javascript:')
-      expect(email.html).toContain('href="#"')
+    it('rejects unsafe reset URLs instead of generating a dead CTA link', () => {
+      expect(() =>
+        generatePasswordResetEmail({
+          resetUrl: 'http://heliobond.vercel.app/reset?token=secret',
+          expiresInMinutes: 15,
+          requestTimestamp: fixedNow,
+        }),
+      ).toThrow('Unsupported URL protocol: http:')
     })
   })
 })

@@ -20,6 +20,7 @@ export interface WatchlistProps {
 interface WatchlistItem {
   id: number
   project: Project | null
+  status: 'loaded' | 'missing' | 'error'
 }
 
 export function Watchlist({ onOpen }: WatchlistProps) {
@@ -27,6 +28,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
   const { ids, remove } = useWatchlist()
   const [items, setItems] = useState<WatchlistItem[]>([])
   const [loading, setLoading] = useState(ids.length > 0)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let active = true
@@ -46,9 +48,13 @@ export function Watchlist({ onOpen }: WatchlistProps) {
           ids.map(async (id) => {
             try {
               const res = await getProject(id)
-              return { id, project: res?.project ?? null }
+              return {
+                id,
+                project: res?.project ?? null,
+                status: res ? ('loaded' as const) : ('missing' as const),
+              }
             } catch {
-              return { id, project: null }
+              return { id, project: null, status: 'error' as const }
             }
           }),
         )
@@ -63,17 +69,18 @@ export function Watchlist({ onOpen }: WatchlistProps) {
     return () => {
       active = false
     }
-  }, [ids])
+  }, [ids, retryCount])
 
   const saved = useMemo(
     () =>
       items
-        .filter((item): item is { id: number; project: Project } => item.project !== null)
+        .filter((item): item is WatchlistItem & { project: Project } => item.project !== null)
         .map((item) => item.project),
     [items],
   )
 
-  const unresolved = useMemo(() => items.filter((item) => item.project === null), [items])
+  const unavailable = useMemo(() => items.filter((item) => item.status === 'missing'), [items])
+  const failed = useMemo(() => items.filter((item) => item.status === 'error'), [items])
 
   const availableCount = saved.filter(isBondAvailable).length
 
@@ -123,7 +130,11 @@ export function Watchlist({ onOpen }: WatchlistProps) {
         </div>
       )}
 
-      {!loading && items.length === 0 ? (
+      {loading ? (
+        <div role="status" style={{ padding: '32px 0', color: 'var(--ink-60)' }}>
+          {t('loading')}
+        </div>
+      ) : items.length === 0 ? (
         <div
           style={{
             display: 'flex',
@@ -163,97 +174,137 @@ export function Watchlist({ onOpen }: WatchlistProps) {
           </p>
         </div>
       ) : (
-        !loading && (
-          <div className="hb-projects-grid">
-            {saved.map((p) => {
-              const open = getBondStatus(p) === 'open'
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    minWidth: 0,
-                    overflowWrap: 'break-word',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontFamily: 'var(--font-body)',
-                      fontSize: 'var(--type-small)',
-                      color: 'var(--ink-60)',
-                    }}
-                  >
-                    <Badge tone={open ? 'growth' : 'neutral'}>
-                      {open ? t('statusOpen') : t('statusUpcoming')}
-                    </Badge>
-                    {!open && <span>{t('notYetAvailable')}</span>}
-                  </div>
-                  <div style={{ minWidth: 0, width: '100%' }}>
-                    <ProjectCard
-                      name={p.name}
-                      location={p.location}
-                      credit={p.credit}
-                      green={p.green}
-                      funded={p.funded}
-                      fundedLabel={t('cardFundedFromPool')}
-                      onOpen={() => onOpen(p)}
-                      fundingGoal={p.fundingGoal}
-                      fundedAmount={p.fundedAmount}
-                      action={<WatchlistButton bondId={p.id} bondName={p.name} />}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-            {unresolved.map(({ id }) => (
+        <div className="hb-projects-grid">
+          {saved.map((p) => {
+            const open = getBondStatus(p) === 'open'
+            return (
               <div
-                key={`unresolved-${id}`}
-                data-testid={`watchlist-unresolved-${id}`}
+                key={p.id}
                 style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  borderRadius: 'var(--radius-card)',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--ink-12)',
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--type-small)',
-                  color: 'var(--ink-60)',
-                  gap: 12,
+                  flexDirection: 'column',
+                  gap: 8,
                   minWidth: 0,
-                  gridColumn: '1 / -1',
+                  overflowWrap: 'break-word',
                 }}
               >
-                <span>{t('noLongerAvailable', { id })}</span>
-                <button
-                  type="button"
-                  onClick={() => remove(id)}
-                  aria-label={t('removeUnavailable', { id })}
+                <div
                   style={{
-                    background: 'none',
-                    border: '1px solid var(--ink-12)',
-                    borderRadius: 'var(--radius-pill)',
-                    padding: '6px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                     fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-caption)',
-                    fontWeight: 600,
-                    color: 'var(--ember)',
-                    cursor: 'pointer',
-                    transition: 'background var(--dur-press) var(--ease-out)',
+                    fontSize: 'var(--type-small)',
+                    color: 'var(--ink-60)',
                   }}
                 >
-                  {t('remove')}
-                </button>
+                  <Badge tone={open ? 'growth' : 'neutral'}>
+                    {open ? t('statusOpen') : t('statusUpcoming')}
+                  </Badge>
+                  {!open && <span>{t('notYetAvailable')}</span>}
+                </div>
+                <div style={{ minWidth: 0, width: '100%' }}>
+                  <ProjectCard
+                    name={p.name}
+                    location={p.location}
+                    credit={p.credit}
+                    green={p.green}
+                    funded={p.funded}
+                    fundedLabel={t('cardFundedFromPool')}
+                    onOpen={() => onOpen(p)}
+                    fundingGoal={p.fundingGoal}
+                    fundedAmount={p.fundedAmount}
+                    action={<WatchlistButton bondId={p.id} bondName={p.name} />}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
-        )
+            )
+          })}
+          {unavailable.map(({ id }) => (
+            <div
+              key={`unresolved-${id}`}
+              data-testid={`watchlist-unresolved-${id}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-card)',
+                background: 'var(--surface)',
+                border: '1px solid var(--ink-12)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                color: 'var(--ink-60)',
+                gap: 12,
+                minWidth: 0,
+                gridColumn: '1 / -1',
+              }}
+            >
+              <span>{t('noLongerAvailable', { id })}</span>
+              <button
+                type="button"
+                onClick={() => remove(id)}
+                aria-label={t('removeUnavailable', { id })}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--ink-12)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 14px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-caption)',
+                  fontWeight: 600,
+                  color: 'var(--ember)',
+                  cursor: 'pointer',
+                  transition: 'background var(--dur-press) var(--ease-out)',
+                }}
+              >
+                {t('remove')}
+              </button>
+            </div>
+          ))}
+          {failed.map(({ id }) => (
+            <div
+              key={`failed-${id}`}
+              data-testid={`watchlist-failed-${id}`}
+              role="status"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 20px',
+                borderRadius: 'var(--radius-card)',
+                background: 'var(--surface)',
+                border: '1px solid var(--ink-12)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                color: 'var(--ink-60)',
+                gap: 12,
+                minWidth: 0,
+                gridColumn: '1 / -1',
+              }}
+            >
+              <span>{t('fetchFailed', { id })}</span>
+              <button
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+                aria-label={t('retryFetch', { id })}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--ink-12)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 14px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-caption)',
+                  fontWeight: 600,
+                  color: 'var(--ink)',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('retry')}
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </main>
   )

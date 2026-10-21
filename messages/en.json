@@ -145,7 +145,11 @@
     "notYetAvailable": "We'll flag it here when it opens.",
     "noLongerAvailable": "Project #{id} is no longer available",
     "removeUnavailable": "Remove project #{id} from watchlist",
-    "remove": "Remove"
+    "remove": "Remove",
+    "loading": "Loading saved projects...",
+    "fetchFailed": "Could not load project #{id}",
+    "retryFetch": "Retry loading project #{id}",
+    "retry": "Retry"
   },
   "Deposit": {
     "stepAmount": "Amount",

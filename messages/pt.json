@@ -145,7 +145,11 @@
     "notYetAvailable": "We'll flag it here when it opens.",
     "noLongerAvailable": "O projeto #{id} não está mais disponível",
     "removeUnavailable": "Remover o projeto #{id} da lista de observação",
-    "remove": "Remover"
+    "remove": "Remover",
+    "loading": "Loading saved projects...",
+    "fetchFailed": "Could not load project #{id}",
+    "retryFetch": "Retry loading project #{id}",
+    "retry": "Retry"
   },
   "Deposit": {
     "amountLabel": "Valor do Investimento",

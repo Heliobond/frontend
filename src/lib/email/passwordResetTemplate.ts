@@ -60,20 +60,15 @@ export function escapeHtml(str: string): string {
 }
 
 /**
- * Validates and sanitizes a URL, allowing only safe HTTP/HTTPS protocols.
- * Prevents javascript: or data: URI injection attacks in email hrefs.
+ * Validates an email URL. Email actions must use HTTPS; invalid links are
+ * rejected rather than rendered as a dead fragment link.
  */
 export function sanitizeUrl(rawUrl: string): string {
-  try {
-    const parsed = new URL(rawUrl)
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      throw new Error(`Unsupported protocol: ${parsed.protocol}`)
-    }
-    return parsed.toString()
-  } catch {
-    // If URL parsing fails or protocol is unsafe, return a safe fragment fallback
-    return '#'
+  const parsed = new URL(rawUrl)
+  if (parsed.protocol !== 'https:') {
+    throw new TypeError(`Unsupported URL protocol: ${parsed.protocol}`)
   }
+  return parsed.toString()
 }
 
 /**
