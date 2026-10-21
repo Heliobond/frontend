@@ -469,7 +469,13 @@
     "continueWithProvider": "Sign in with {provider}",
     "sendLinkAnyway": "Link this email to my account",
     "linkSentMessage": "A magic sign-in link has been sent to {email}.",
-    "close": "Close"
+    "close": "Close",
+    "sending": "Sending…",
+    "sendError": "We couldn't send the sign-in link. Please try again.",
+    "retry": "Try again"
+  },
+    "sendError": "We couldn't send the sign-in link. Please try again.",
+    "retry": "Try again"
   },
   "YieldAlert": {
     "modalTitle": "Set yield alert",
