@@ -128,6 +128,10 @@ describe('Explore — pagination', () => {
 
   it('restarts at the first page when the filter changes', async () => {
     const user = userEvent.setup()
+    // The filter lives in the URL, so a navigation has to update the mocked params.
+    mockReplace.mockImplementation((url: string) => {
+      mockSearch = url.includes('?') ? url.slice(url.indexOf('?')) : ''
+    })
     mockPaginated([...makeProjects(20, 'Solar'), ...makeProjects(20, 'Wind', 20)])
     render(<Explore onOpen={vi.fn()} />)
     await waitFor(() => expect(cards().length).toBe(12))
