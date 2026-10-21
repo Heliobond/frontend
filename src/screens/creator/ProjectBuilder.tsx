@@ -70,14 +70,7 @@ export function ProjectBuilder() {
   }, [name, location, goalLabel, type])
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: 24,
-        gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)',
-        alignItems: 'start',
-      }}
-    >
+    <div className="hb-builder-grid">
       {/* Left — the form */}
       <Card>
         <h3 style={cardTitle}>{t('builderTitle')}</h3>
@@ -174,7 +167,7 @@ export function ProjectBuilder() {
         </Field>
 
         <Label>{t('fieldMediaDocs')}</Label>
-        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+        <div className="hb-builder-drops">
           <DropZone label={t('dropCover')} hint={t('dropCoverHint')} />
           <DropZone label={t('dropDocs')} hint={t('dropDocsHint')} />
         </div>
@@ -182,9 +175,10 @@ export function ProjectBuilder() {
 
       {/* Right — the live preview */}
       <div
+        className="hb-builder-preview"
         aria-live="polite"
         aria-atomic="true"
-        style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }}
+        style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span

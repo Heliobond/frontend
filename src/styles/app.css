@@ -56,6 +56,21 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
+.hb-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  align-items: start;
+  gap: 24px;
+}
+.hb-builder-drops {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hb-builder-preview {
+  position: sticky;
+  top: 24px;
+}
 
 .hb-stat-block-row {
   min-width: 0;
@@ -113,6 +128,16 @@
   .hb-stat-block-delta--stack {
     white-space: normal !important;
     overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 767px) {
+  .hb-builder-grid,
+  .hb-builder-drops {
+    grid-template-columns: 1fr;
+  }
+  .hb-builder-preview {
+    position: static;
   }
 }
 
