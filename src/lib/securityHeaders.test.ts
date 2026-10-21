@@ -82,9 +82,11 @@ describe('buildCsp', () => {
 })
 
 describe('mode and helpers', () => {
-  it('defaults to report-only and enforces on request', () => {
-    expect(resolveCspMode(undefined)).toBe('report-only')
-    expect(resolveCspMode('enforce')).toBe('enforce')
+  it('enforces by default in production and honors explicit mode overrides', () => {
+    expect(resolveCspMode(undefined, 'production')).toBe('enforce')
+    expect(resolveCspMode('report-only', 'production')).toBe('report-only')
+    expect(resolveCspMode('enforce', 'development')).toBe('enforce')
+    expect(resolveCspMode(undefined, 'development')).toBe('report-only')
     expect(cspHeaderName('report-only')).toBe('Content-Security-Policy-Report-Only')
     expect(cspHeaderName('enforce')).toBe('Content-Security-Policy')
   })

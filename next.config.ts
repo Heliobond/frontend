@@ -1,6 +1,16 @@
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
-import { STATIC_SECURITY_HEADERS } from './src/lib/securityHeaders'
+import { resolveCspMode, STATIC_SECURITY_HEADERS } from './src/lib/securityHeaders'
+
+if (
+  process.env.NODE_ENV === 'production' &&
+  resolveCspMode() === 'report-only' &&
+  !process.env.NEXT_PUBLIC_CSP_REPORT_URI
+) {
+  console.warn(
+    'CSP_MODE=report-only is enabled without NEXT_PUBLIC_CSP_REPORT_URI; CSP violations will not be collected.',
+  )
+}
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,

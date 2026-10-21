@@ -7,9 +7,14 @@ import { EXPLORER_BASE_URL, HORIZON_URL, SOROBAN_RPC_URL } from '../config/netwo
 
 export type CspMode = 'report-only' | 'enforce'
 
-/** Report-only until `CSP_MODE=enforce` is set, so a rollout can't break signing. */
-export function resolveCspMode(value = process.env.CSP_MODE): CspMode {
-  return value === 'enforce' ? 'enforce' : 'report-only'
+/** Production enforces CSP by default; report-only is an explicit rollout opt-out. */
+export function resolveCspMode(
+  value = process.env.CSP_MODE,
+  nodeEnv = process.env.NODE_ENV,
+): CspMode {
+  if (value === 'report-only') return 'report-only'
+  if (value === 'enforce') return 'enforce'
+  return nodeEnv === 'production' ? 'enforce' : 'report-only'
 }
 
 export function cspHeaderName(mode: CspMode): string {

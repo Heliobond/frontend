@@ -32,7 +32,7 @@ test.describe('Security headers (#601)', () => {
       expect(h['strict-transport-security']).toContain('max-age=')
       expect(h['permissions-policy']).toContain('camera=()')
 
-      // Report-only until CSP_MODE=enforce.
+      // Development defaults to report-only; production enforces unless explicitly opted out.
       const csp = h['content-security-policy'] ?? h['content-security-policy-report-only']
       expect(csp).toBeTruthy()
       expect(csp).toContain("frame-ancestors 'none'")

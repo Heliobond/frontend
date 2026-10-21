@@ -26,10 +26,13 @@ The app signs transactions in the browser, so it ships a strict policy (#601):
 - `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` and
   `X-Frame-Options: DENY` are set for every route in `next.config.ts`.
-- **Rollout:** the policy is sent as `Content-Security-Policy-Report-Only` until
-  `CSP_MODE=enforce` is set. Set `NEXT_PUBLIC_CSP_REPORT_URI` to collect
-  violations, watch them through a full connect → deposit → withdraw session with
-  each supported wallet (Freighter, xBull, Lobstr, WalletConnect), then enforce.
+- **Enforcement and rollout:** production sends `Content-Security-Policy` by
+  default. `CSP_MODE=report-only` is an explicit temporary opt-out for monitoring
+  a policy change; set `NEXT_PUBLIC_CSP_REPORT_URI` to collect violations and
+  watch them through a full connect → deposit → withdraw session with each
+  supported wallet (Freighter, xBull, Lobstr, WalletConnect) before returning to
+  enforcement. A production build warns if report-only is enabled without a
+  reporting URI. Development defaults to report-only.
 - If you add a third-party origin (RPC, API, analytics), it must be configured
   through the env vars in `.env.example` or added to `src/lib/securityHeaders.ts`.
 
