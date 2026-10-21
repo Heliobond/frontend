@@ -28,6 +28,12 @@ export default defineConfig({
       // them as admin.ts / registry.ts / useVault.ts gain tests.
       // The following modules have ≥80% coverage from #662:
       thresholds: {
+        // Keep the repository from silently losing coverage as new modules are
+        // added. Existing directory floors remain the migration path upward.
+        lines: 50,
+        statements: 50,
+        functions: 50,
+        branches: 40,
         'src/lib/api.ts': { lines: 80, statements: 80, functions: 80 },
         'src/wallet/vault.ts': { lines: 80, statements: 80, functions: 80 },
         'src/lib/webauthn.ts': { lines: 80, statements: 80, functions: 80 },
