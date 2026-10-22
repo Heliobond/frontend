@@ -100,11 +100,18 @@ export function evaluateAudit({
   return { ok: failures.length === 0, failures, warnings }
 }
 
+// `bun audit` is missing from bun 1.2.4, the version CI installs from
+// packageManager, so the gate pins its own bun for the audit call.
+export const AUDIT_BUN = 'bun@1.3.14'
+
 function main(root = process.cwd()) {
   const allowlist = JSON.parse(
     readFileSync(new URL('./audit-allowlist.json', import.meta.url), 'utf8'),
   )
-  const result = spawnSync('bun', ['audit', '--json'], { cwd: root, encoding: 'utf8' })
+  const result = spawnSync('bunx', [AUDIT_BUN, 'audit', '--json'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
 
   const outcome = evaluateAudit({
     status: result.status,
