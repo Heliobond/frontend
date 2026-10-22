@@ -288,7 +288,7 @@ helpers in [`src/wallet/vault.ts`](src/wallet/vault.ts) to submit the deposit.
 
 ---
 
-### `mapBackendProjects`
+### `mapBackendProject`
 
 ```ts
 function mapBackendProject(raw: BackendProject, fallback?: Project): Project
@@ -555,38 +555,35 @@ if (hasMore) {
 
 ```ts
 // src/app/project/[id]/page.tsx
+import { notFound } from 'next/navigation'
 import { getProject } from '@/lib/api'
+import { ProjectDetailClient } from '@/app/project/[id]/ProjectDetailClient'
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const id = Number(params.id)
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id: rawId } = await params
+  const id = Number(rawId)
   const data = await getProject(id)
   if (!data) notFound()
-  return <ProjectDetail project={data.project} detail={data.detail} />
+  return <ProjectDetailClient id={id} initialData={data} />
 }
 ```
 
 ### Creating an investment
 
-Investments happen on-chain. Build and sign the deposit transaction with the
-vault helpers; the backend has no investment endpoint to call.
+Investments happen on-chain through `submitDeposit`; the backend has no
+investment endpoint to call. The helper builds, signs, submits, and confirms
+the transaction, and resolves to its transaction hash.
 
 ```ts
-import { buildDepositTransaction, submitTransaction } from '@/wallet/vault'
+import { submitDeposit } from '@/wallet/vault'
 
-async function handleDeposit(amount: number) {
-  try {
-    const xdr = await buildDepositTransaction({ address, amount })
-    const signed = await sign(xdr)
-    const { hash } = await submitTransaction(signed)
-    router.push(`/portfolio?tx=${hash}`)
-  } catch (err) {
-    if (err instanceof ApiError) {
-      setFormError('Network error. Please check your connection and try again.')
-      console.error('Deposit failed:', err.status, err.message)
-    } else {
-      throw err
-    }
-  }
+async function createInvestment(
+  amount: number,
+  address: string,
+  sign: (xdr: string) => Promise<string>,
+  signal?: AbortSignal,
+): Promise<string> {
+  return submitDeposit(amount, address, sign, signal)
 }
 ```
 
