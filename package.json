@@ -30,6 +30,7 @@
     "test:e2e:chain": "playwright test --config playwright.chain.config.ts",
     "bundle:check": "node scripts/check-bundle-size.js",
     "typecheck:coverage": "node scripts/check-type-coverage.mjs",
+    "preinstall": "node scripts/require-bun.mjs",
     "prepare": "husky"
   },
   "dependencies": {

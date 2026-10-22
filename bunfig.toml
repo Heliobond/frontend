@@ -1,0 +1,11 @@
+# Install policy (#919). See CONTRIBUTING.md > Install policy.
+
+[install]
+# Only install package versions published at least 3 days ago (seconds).
+# Most npm supply-chain compromises are unpublished within hours or days, so
+# this window blocks a freshly published malicious version.
+minimumReleaseAge = 259200
+
+# Packages that must install the same day they are published. None today.
+# Add a name here only with a maintainer's sign-off.
+minimumReleaseAgeExcludes = []

@@ -65,6 +65,25 @@ bun run start               # serve the production build
 Only `build`, `test:coverage` and `start` are used by CI; the rest are the
 checks you run locally before you open a PR.
 
+## Install policy
+
+- **Install with bun only.** A `preinstall` guard (`scripts/require-bun.mjs`)
+  makes `npm`, `yarn` and `pnpm` installs fail. `bun.lock` is the only
+  lockfile; CI fails if `package-lock.json`, `yarn.lock` or `pnpm-lock.yaml`
+  is committed.
+- **Release-age cooldown.** `bunfig.toml` sets `minimumReleaseAge` to 3 days,
+  so bun will not install a version published less than 3 days ago. For a
+  hotfix that must ship sooner, add the package to
+  `minimumReleaseAgeExcludes` in `bunfig.toml`, with a maintainer's sign-off.
+- **Lifecycle scripts are off by default.** bun runs a dependency's install
+  scripts only if it is in `trustedDependencies`. Keep that list empty unless
+  a maintainer has reviewed the script.
+- **Supply-chain checks in CI.** `scripts/lockfile-lint.mjs` asserts every
+  `bun.lock` entry comes from the npm registry with an integrity hash. The
+  audit gate (`scripts/audit-gate.mjs`) fails on high and critical advisories.
+  Exceptions live in `scripts/audit-allowlist.json`, each with a reason and an
+  expiry date.
+
 ## Testing
 
 ### Unit and component tests (Vitest)
