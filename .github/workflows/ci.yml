@@ -74,6 +74,35 @@ jobs:
       - name: Scan tracked files for hidden content
         run: node scripts/check-hidden-content.mjs
 
+  supply-chain:
+    name: lockfile lint + audit gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # Asserts every dependency resolves from the npm registry with an
+      # integrity hash, and that no npm/yarn/pnpm lockfile is committed.
+      - name: Lockfile lint
+        run: node scripts/lockfile-lint.mjs
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Fails closed: a tool error or unparseable output fails the job, and so
+      # does any high/critical advisory without an unexpired entry in
+      # scripts/audit-allowlist.json.
+      - name: Audit gate
+        run: node scripts/audit-gate.mjs
+
   test:
     name: unit tests + coverage
     runs-on: ubuntu-latest
