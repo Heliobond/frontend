@@ -73,22 +73,25 @@ dependency, lifecycle script, git hook or tool config runs, so those are
 reviewed as code:
 
 - **Package manager:** bun only, with `bun install --frozen-lockfile` in CI.
-  Do not add `package-lock.json`, `pnpm-lock.yaml` or `yarn.lock`.
+  `bun.lock` is the only lockfile that counts; do not add `pnpm-lock.yaml` or
+  `yarn.lock` (the stale `package-lock.json` is being removed in #918).
 - **Scripts and hooks:** changes to `package.json` scripts, `.husky/*`,
   `.github/workflows/*`, `scripts/*` and tool configs (ESLint, Next, Vitest,
   Playwright, PostCSS, Tailwind, `bunfig.toml`, `.npmrc`) need a maintainer's
-  review. The `Supply-chain changes` workflow blocks such a PR until a
+  review. The `supply-chain review gate` check blocks such a PR until a
   maintainer applies the `supply-chain-reviewed` label, and prints the exact
-  changes in the job summary.
-- **Hidden content:** the `hidden-content` CI job fails on tab-padded lines,
+  changes in the job summary. A new push ignores the label, so remove and
+  re-add it after reviewing the new commits.
+- **Hidden content:** the `hidden-content check` CI job fails on tab-padded lines,
   zero-width or bidi characters, obfuscated code and new root-level scripts
   (`scripts/check-hidden-content.mjs`).
 - **Dependencies:** a new dependency needs a justification in the PR, its
   publish date and its install-script status. Do not add a package to
   `trustedDependencies` without review.
-- **Actions:** workflows that run on untrusted fork code use the
-  `pull_request` event, not `pull_request_target`, and never check out or
-  execute fork code with secrets.
+- **Actions:** workflows that run fork code use the `pull_request` event,
+  which gets no secrets and a read-only token. The one `pull_request_target`
+  workflow (`auto-review.yml`) checks out the base branch and only reads the
+  PR diff through the API; it must never check out or run fork code.
 
 ## Incident response
 

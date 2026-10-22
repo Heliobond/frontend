@@ -30,7 +30,8 @@ const WATCHED_PATTERNS = [
   /^bunfig\.toml$/,
   /^\.npmrc$/,
   /^\.husky\//,
-  /^\.github\/workflows\//,
+  /^\.github\/(workflows|actions)\//,
+  /^\.github\/(CODEOWNERS|dependabot\.ya?ml)$/,
   /^eslint\.config\.(c|m)?[jt]s$/,
   /^next\.config\.[jt]s$/,
   /^vitest\.(config|setup)\.[cm]?[jt]s$/,
@@ -52,9 +53,14 @@ export const isWatched = (file) => WATCHED_PATTERNS.some((re) => re.test(file))
 
 export const watchedFiles = (changedFiles) => changedFiles.filter(isWatched)
 
-/** True when the PR must wait for a maintainer to apply the review label. */
-export const requiresReview = (changedFiles, labels) =>
-  watchedFiles(changedFiles).length > 0 && !labels.includes(REVIEW_LABEL)
+/**
+ * True when the PR must wait for a maintainer to apply the review label.
+ * A push (`synchronize`) ignores an existing label, so new commits are never
+ * covered by an earlier review: the maintainer removes and re-applies it.
+ */
+export const requiresReview = (changedFiles, labels, action) =>
+  watchedFiles(changedFiles).length > 0 &&
+  (action === 'synchronize' || !labels.includes(REVIEW_LABEL))
 
 /**
  * Compare two package.json texts section by section.
@@ -97,7 +103,7 @@ export function formatChange({ section, key, before, after }) {
   return `- ${section}.${key}: ${fmt(before)} -> ${fmt(after)}`
 }
 
-/** GitHub comments cap at 65,536 characters, so long diffs (lockfiles) are cut. */
+/** Keeps the job summary readable when a lockfile changes. */
 export const MAX_DIFF_CHARS = 20000
 
 export function truncateDiff(diff) {
@@ -107,7 +113,7 @@ export function truncateDiff(diff) {
 }
 
 /**
- * Build the markdown report posted to the PR and written to the job summary.
+ * Build the markdown report written to the job summary.
  * @param {{file: string, diff: string}[]} fileDiffs raw `git diff` text per watched file
  * @param {ReturnType<typeof packageJsonChanges>} pkgChanges
  * @param {boolean} blocked
@@ -120,7 +126,7 @@ export function buildReport(fileDiffs, pkgChanges, blocked) {
   }
   lines.push(
     blocked
-      ? `**Blocked:** a maintainer must add the \`${REVIEW_LABEL}\` label after reviewing the changes below.`
+      ? `**Blocked:** a maintainer must review the changes below, then add the \`${REVIEW_LABEL}\` label (or remove and re-add it after a new push).`
       : `Label \`${REVIEW_LABEL}\` is present, so this check passes.`,
     '',
   )
@@ -175,7 +181,7 @@ function main(argv, env) {
     .filter(Boolean)
   const watched = watchedFiles(changed)
   const labels = parseLabels(env.PR_LABELS)
-  const blocked = requiresReview(changed, labels)
+  const blocked = requiresReview(changed, labels, env.PR_ACTION)
 
   const fileDiffs = watched.map((file) => ({
     file,

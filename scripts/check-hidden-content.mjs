@@ -34,7 +34,7 @@ export const ROOT_SCRIPT_ALLOWLIST = new Set([
 ])
 
 const LOCKFILES = new Set(['bun.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'])
-const SOURCE_DIRS = ['src/', 'scripts/', '.husky/']
+const SOURCE_DIRS = ['src/', 'scripts/', '.husky/', 'e2e/', '.github/']
 const ROOT_SCRIPT_RE = /\.(js|mjs|cjs|ts)$/
 const TEST_RE = /\.(test|spec)\.[cm]?[jt]sx?$/
 
@@ -50,6 +50,9 @@ const DYNAMIC_CODE_RES = [
   // Four or more escapes in a row is the obfuscated-identifier shape from #912.
   // Single escapes are normal in regex character classes.
   /(?:\\u[0-9a-fA-F]{4}){4,}/,
+  /(?:\\x[0-9a-fA-F]{2}){4,}/,
+  // javascript-obfuscator's generated identifiers, e.g. _0x followed by hex.
+  /\b_0x[0-9a-f]{4,}\b/,
 ]
 
 /**

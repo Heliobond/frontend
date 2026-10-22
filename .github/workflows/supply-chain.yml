@@ -2,7 +2,9 @@ name: Supply-chain changes
 
 # Blocks a PR that changes package.json scripts or dependencies, lockfiles,
 # hooks, workflows or tool configs until a maintainer applies the
-# `supply-chain-reviewed` label (#915). The report is written to the job summary.
+# `supply-chain-reviewed` label (#915). A new push ignores the label, so the
+# maintainer removes and re-adds it after reviewing the new commits. The
+# report is written to the job summary.
 #
 # This uses the `pull_request` event, not `pull_request_target`, so fork code
 # never gets secrets or a write token. The checker itself is read from the
@@ -28,6 +30,7 @@ jobs:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+      PR_ACTION: ${{ github.event.action }}
     steps:
       - uses: actions/checkout@v4
         with:

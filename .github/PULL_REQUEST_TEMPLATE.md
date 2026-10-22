@@ -43,5 +43,5 @@ Closes #<!-- issue number -->
 
 - [ ] Opened the raw diff (not the GitHub diff view) for `package.json` and config changes
 - [ ] Checked that the fork owner matches the PR author
-- [ ] Read the `Supply-chain changes` job summary before applying `supply-chain-reviewed`
+- [ ] Read the `supply-chain review gate` job summary before applying `supply-chain-reviewed` (re-apply after every new push)
 - [ ] Reviewed [CONTRIBUTING.md](../CONTRIBUTING.md#reviewing-a-fork-pr-safely) for untrusted branches

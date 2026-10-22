@@ -84,6 +84,18 @@ describe('scanText: dynamic code and escape obfuscation', () => {
     expect(rules(scanText('src/a.ts', payload))).toEqual(['dynamic-code'])
   })
 
+  it('flags \\x escape runs and obfuscator identifiers', () => {
+    expect(scanText('src/a.ts', "const s = '" + '\\x63\\x68\\x61\\x72' + "'")[0].rule).toBe(
+      'dynamic-code',
+    )
+    expect(scanText('src/a.ts', 'var _0x' + '4c42d = 1')[0].rule).toBe('dynamic-code')
+  })
+
+  it('scans e2e helpers and workflows as source', () => {
+    expect(scanText('e2e/wallet-fixtures.ts', 'x'.repeat(401))[0].rule).toBe('long-line')
+    expect(scanText('.github/workflows/ci.yml', 'run: e' + 'val("x")')[0].rule).toBe('dynamic-code')
+  })
+
   it('accepts single escapes inside regex character classes', () => {
     expect(scanText('src/a.ts', '/[\\u0000-\\u001f]/.test(s)')).toEqual([])
   })

@@ -34,6 +34,9 @@ describe('isWatched and watchedFiles', () => {
       'scripts/check-type-coverage.mjs',
       'bunfig.toml',
       '.npmrc',
+      '.github/CODEOWNERS',
+      '.github/dependabot.yml',
+      '.github/actions/setup/action.yml',
     ]) {
       expect(isWatched(f), f).toBe(true)
     }
@@ -60,6 +63,12 @@ describe('requiresReview', () => {
 
   it('passes once a maintainer applies the review label', () => {
     expect(requiresReview(['package.json'], [REVIEW_LABEL])).toBe(false)
+  })
+
+  it('ignores an existing label on a new push so new commits need a fresh review', () => {
+    expect(requiresReview(['package.json'], [REVIEW_LABEL], 'synchronize')).toBe(true)
+    expect(requiresReview(['package.json'], [REVIEW_LABEL], 'labeled')).toBe(false)
+    expect(requiresReview(['src/app.ts'], [], 'synchronize')).toBe(false)
   })
 
   it('never blocks a PR that changes no watched files', () => {
