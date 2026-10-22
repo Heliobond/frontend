@@ -30,4 +30,18 @@ Closes #<!-- issue number -->
 - [ ] User-facing strings added to **all five** catalogs — `messages/ar.json`, `en.json`, `es.json`, `fr.json`, `pt.json` — kept in parity (if any copy changed)
 - [ ] Accessible — keyboard operable, visible focus, reduced-motion respected
 - [ ] No secrets committed
+- [ ] No new root-level files — or listed in `ROOT_SCRIPT_ALLOWLIST` with a reason
+- [ ] No changes to `package.json` scripts, lockfile, hooks, workflows or tool configs — or explained below
+- [ ] No new dependencies — or justified below with a link and publish date
 - [ ] Docs updated where relevant
+
+## Supply-chain changes (if any)
+
+<!-- Required if you changed package.json scripts/dependencies, bun.lock, .husky/*, .github/workflows/*, scripts/* or a tool config. Explain why each change is needed. -->
+
+## Reviewer checklist
+
+- [ ] Opened the raw diff (not the GitHub diff view) for `package.json` and config changes
+- [ ] Checked that the fork owner matches the PR author
+- [ ] Read the `supply-chain review gate` job summary before applying `supply-chain-reviewed` (re-apply after every new push)
+- [ ] Reviewed [CONTRIBUTING.md](../CONTRIBUTING.md#reviewing-a-fork-pr-safely) for untrusted branches

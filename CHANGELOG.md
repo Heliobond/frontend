@@ -79,3 +79,7 @@ once it cuts its first tagged release (it currently ships continuously from
 ### Removed
 
 - Unrelated Flask tasks app (`app.py`, `webauthn.py`, `templates/`, `static/`, `requirements.txt`) and stray PR documentation (#599).
+
+### Security
+
+- Patched high-severity advisories in `axios`, `next` and several transitive packages, and added install-time checks: a dependency review on pull requests, a fail-closed `bun audit` gate and a lockfile lint in CI, and a bun-only install policy with a 3-day release-age cooldown (#917, #918, #919).

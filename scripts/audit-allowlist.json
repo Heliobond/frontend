@@ -1,0 +1,8 @@
+[
+  {
+    "id": "GHSA-vfj7-8cjw-p6xm",
+    "package": "braces",
+    "reason": "No patched release exists (braces <=3.0.3). Dev-only: reached via eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch. Remove once a fixed braces is published or the chain is gone.",
+    "expires": "2026-12-31"
+  }
+]

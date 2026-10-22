@@ -44,6 +44,10 @@ PR. If an item doesn't apply, write down why.
 - [ ] "Demo wallet" / `connectDemo` is hidden or clearly labelled on the production
       build.
 - [ ] `NEXT_PUBLIC_API_URL` points at the production backend.
+- [ ] Before adding `HELIOBOND_API_KEY` or any server secret to Vercel, production
+      builds run through `.github/workflows/deploy.yml` (switched from
+      `workflow_dispatch` to `workflow_run`) and Vercel's git deploys for `main`
+      are off, so no merged build script runs next to a secret (#920).
 - [ ] Dev-only routes (`/contrast-test`, `/learn/password-reset-email`) return 404, and
       `NEXT_PUBLIC_ENABLE_DEV_ROUTES` is unset.
 
@@ -57,3 +61,12 @@ PR. If an item doesn't apply, write down why.
       thresholds, build, and the e2e investor journey.
 - [ ] Rollback plan: the previous build can be redeployed, and there is a documented
       way to pause the vault (`emergency_pause`) if something goes wrong on-chain.
+- [ ] Production builds do not hold server-only secrets (#920). In the Vercel
+      project, `NEXT_PUBLIC_*` values are the only variables exposed to the build
+      step; server secrets such as `HELIOBOND_API_KEY` are available at runtime
+      only. Verify in the dashboard, since this is not configured in the repo.
+- [ ] Production deploys wait for CI. Auto-promotion of `main` is gated on the
+      `build`, `unit tests + coverage`, `hidden-content check` and
+      `supply-chain review gate` checks, so a merge never builds with production secrets before CI is green.
+- [ ] After any reverted merge to `main`, deploy secrets are rotated (see the
+      incident response steps in [SECURITY.md](../SECURITY.md#incident-response)).

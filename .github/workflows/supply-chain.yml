@@ -1,0 +1,49 @@
+name: Supply-chain changes
+
+# Blocks a PR that changes package.json scripts or dependencies, lockfiles,
+# hooks, workflows or tool configs until a maintainer applies the
+# `supply-chain-reviewed` label (#915). A new push ignores the label, so the
+# maintainer removes and re-adds it after reviewing the new commits. The
+# report is written to the job summary.
+#
+# This uses the `pull_request` event, not `pull_request_target`, so fork code
+# never gets secrets or a write token. The checker itself is read from the
+# base branch, so a PR cannot weaken the check that is run on it.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supply-chain-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review-gate:
+    name: supply-chain review gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+      PR_ACTION: ${{ github.event.action }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Load the checker from the base branch
+        run: git show "$BASE_SHA:scripts/check-supply-chain-changes.mjs" > "$RUNNER_TEMP/check-supply-chain-changes.mjs"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Report and gate supply-chain changes
+        run: node "$RUNNER_TEMP/check-supply-chain-changes.mjs" "$BASE_SHA" "$HEAD_SHA"
