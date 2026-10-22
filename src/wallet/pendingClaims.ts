@@ -11,7 +11,8 @@ export interface PendingClaim {
   address?: string
 }
 
-const STORAGE_KEY = 'hb-pending-claims'
+export const PENDING_CLAIMS_STORAGE_KEY = 'hb-pending-claims'
+const STORAGE_KEY = PENDING_CLAIMS_STORAGE_KEY
 
 function isStorageAvailable(): boolean {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
@@ -25,7 +26,7 @@ export function getPendingClaims(address?: string): PendingClaim[] {
     const parsed = JSON.parse(raw) as PendingClaim[]
     if (!Array.isArray(parsed)) return []
     if (address) {
-      return parsed.filter((c) => !c.address || c.address === address)
+      return parsed.filter((c) => c.address === address)
     }
     return parsed
   } catch {

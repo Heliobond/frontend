@@ -16,6 +16,7 @@ import { NetworkMismatchError, isNetworkMismatch } from './networkGuard'
 import {
   DEMO_WALLET_ID,
   clearSession,
+  clearUserData,
   getServerSession,
   getSession,
   saveNetwork,
@@ -118,8 +119,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const network: AppNetwork = stored.network ?? getInitialNetwork()
 
   const persist = useCallback((addr: string, walletId: string) => {
+    if (stored.address && stored.address !== addr) clearUserData()
     saveSession(addr, walletId)
-  }, [])
+  }, [stored.address])
 
   const setNetwork = useCallback((n: AppNetwork) => {
     saveNetwork(n)
