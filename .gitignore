@@ -7,6 +7,11 @@ node_modules
 next-env.d.ts
 npm_cache_temp
 
+# Only bun.lock is the lockfile for this repo (see #918)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # typescript incremental build caches
 *.tsbuildinfo
 
