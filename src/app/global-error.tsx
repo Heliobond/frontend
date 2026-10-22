@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import { Helio } from '../brand/Helio'
 import { INK, SOLAR } from '../brand/palette'
 import { reportError } from '../lib/errorReporting'
@@ -50,6 +50,9 @@ const ERROR_MESSAGES = {
 
 type ErrorLocale = keyof typeof ERROR_MESSAGES
 
+const subscribeToLocaleChanges = () => () => {}
+const getServerLocale = (): ErrorLocale => 'en'
+
 function getCookieLocale(): ErrorLocale {
   const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]*)/)
   const locale = match?.[1]
@@ -75,10 +78,13 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const [locale, setLocale] = useState<ErrorLocale>('en')
+  const locale = useSyncExternalStore(
+    subscribeToLocaleChanges,
+    getCookieLocale,
+    getServerLocale,
+  )
 
   useEffect(() => {
-    setLocale(getCookieLocale())
     console.error('[Heliobond] root error:', error)
     reportError(error, {
       kind: 'root',
