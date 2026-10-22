@@ -47,23 +47,18 @@ For the full token table and rules, see [src/styles/tokens/README.md](src/styles
 ## Preview gallery
 
 <p align="center">
-  <img src="/screenshots/landing-light.svg" alt="Landing page in light mode" width="420" height="280" />
-  <img src="/screenshots/landing-dark.svg" alt="Landing page in dark mode" width="420" height="280" />
+  <img src="public/screenshots/landing-light.svg" alt="Landing page in light mode" width="420" height="280" />
+  <img src="public/screenshots/landing-dark.svg" alt="Landing page in dark mode" width="420" height="280" />
 </p>
 
 <p align="center">
-  <img src="/screenshots/deposit-light.svg" alt="Deposit flow in light mode" width="420" height="280" />
-  <img src="/screenshots/deposit-dark.svg" alt="Deposit flow in dark mode" width="420" height="280" />
+  <img src="public/screenshots/deposit-light.svg" alt="Deposit flow in light mode" width="420" height="280" />
+  <img src="public/screenshots/deposit-dark.svg" alt="Deposit flow in dark mode" width="420" height="280" />
 </p>
 
 <p align="center">
-  <img src="/screenshots/portfolio-light.svg" alt="Portfolio dashboard in light mode" width="420" height="280" />
-  <img src="/screenshots/portfolio-dark.svg" alt="Portfolio dashboard in dark mode" width="420" height="280" />
-</p>
-
-<p align="center">
-  <img src="/screenshots/admin-light.svg" alt="Admin console in light mode" width="420" height="280" />
-  <img src="/screenshots/admin-dark.svg" alt="Admin console in dark mode" width="420" height="280" />
+  <img src="public/screenshots/admin-light.svg" alt="Admin console in light mode" width="420" height="280" />
+  <img src="public/screenshots/admin-dark.svg" alt="Admin console in dark mode" width="420" height="280" />
 </p>
 
 ## Run

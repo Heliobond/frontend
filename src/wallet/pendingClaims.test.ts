@@ -62,6 +62,17 @@ describe('pendingClaims storage', () => {
     expect(getPendingClaims('GUSER2')[0].id).toBe('claim-2')
   })
 
+  it('does not expose claims without an address to a wallet', () => {
+    addPendingClaim({
+      id: 'claim-legacy',
+      hash: '0xabc123',
+      amount: 150,
+      timestamp: 1700000000000,
+    })
+
+    expect(getPendingClaims('GUSER1')).toEqual([])
+  })
+
   it('removes claims by hash or id', () => {
     addPendingClaim({
       id: 'claim-1',

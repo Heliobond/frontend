@@ -8,10 +8,20 @@
  * changes the value, which keeps `getSnapshot` referentially stable — React
  * re-renders forever if it is not.
  */
+import { RECURRING_STORAGE_KEY } from '../lib/recurringInvestments'
+import { WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
+import { YIELD_ALERTS_STORAGE_KEY } from '../lib/yieldAlerts'
+import { PENDING_CLAIMS_STORAGE_KEY } from './pendingClaims'
 
 export const ADDRESS_KEY = 'hb-address'
 export const WALLET_KEY = 'hb-wallet'
 export const NETWORK_KEY = 'hb-network'
+const USER_DATA_KEYS = [
+  PENDING_CLAIMS_STORAGE_KEY,
+  RECURRING_STORAGE_KEY,
+  YIELD_ALERTS_STORAGE_KEY,
+  WATCHLIST_STORAGE_KEY,
+] as const
 
 export type AppNetwork = 'PUBLIC' | 'TESTNET'
 
@@ -80,13 +90,24 @@ export function subscribeSession(listener: () => void): () => void {
   listeners.add(listener)
   if (typeof window !== 'undefined') {
     // Another tab connecting or disconnecting must reach this one too.
-    window.addEventListener('storage', listener)
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.key !== null &&
+        event.key !== ADDRESS_KEY &&
+        event.key !== WALLET_KEY &&
+        event.key !== NETWORK_KEY
+      )
+        return
+      listener()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => {
+      listeners.delete(listener)
+      window.removeEventListener('storage', onStorage)
+    }
   }
   return () => {
     listeners.delete(listener)
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('storage', listener)
-    }
   }
 }
 
@@ -116,6 +137,7 @@ export function saveSession(address: string, walletId: string): void {
 }
 
 export function clearSession(): void {
+  clearUserData()
   const store = storage()
   if (!store) return
   try {
@@ -125,6 +147,20 @@ export function clearSession(): void {
     /* ignore */
   }
   publish()
+}
+
+/** Removes data scoped to the disconnected wallet without changing preferences. */
+export function clearUserData(): void {
+  const store = storage()
+  if (!store) return
+  for (const key of USER_DATA_KEYS) {
+    try {
+      store.removeItem(key)
+      window.dispatchEvent(new StorageEvent('storage', { key }))
+    } catch {
+      /* Storage may be unavailable or disabled. */
+    }
+  }
 }
 
 export function saveNetwork(network: AppNetwork): void {

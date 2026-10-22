@@ -19,6 +19,10 @@ import {
   saveSession,
   subscribeSession,
 } from './session'
+import { RECURRING_STORAGE_KEY } from '../lib/recurringInvestments'
+import { WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
+import { YIELD_ALERTS_STORAGE_KEY } from '../lib/yieldAlerts'
+import { PENDING_CLAIMS_STORAGE_KEY } from './pendingClaims'
 
 const ADDRESS = 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ'
 
@@ -55,6 +59,24 @@ describe('wallet session store', () => {
     saveNetwork('TESTNET')
     clearSession()
     expect(readSession().network).toBe('TESTNET')
+  })
+
+  it('clears wallet data while preserving user preferences', () => {
+    const walletDataKeys = [
+      PENDING_CLAIMS_STORAGE_KEY,
+      RECURRING_STORAGE_KEY,
+      YIELD_ALERTS_STORAGE_KEY,
+      WATCHLIST_STORAGE_KEY,
+    ]
+    for (const key of walletDataKeys) localStorage.setItem(key, 'wallet data')
+    localStorage.setItem('hb-theme', 'dark')
+    localStorage.setItem('hb-telemetry-consent', 'granted')
+
+    clearSession()
+
+    for (const key of walletDataKeys) expect(localStorage.getItem(key)).toBeNull()
+    expect(localStorage.getItem('hb-theme')).toBe('dark')
+    expect(localStorage.getItem('hb-telemetry-consent')).toBe('granted')
   })
 
   it.each(['PUBLIC', 'TESTNET'] as const)('accepts the %s network', (network) => {
