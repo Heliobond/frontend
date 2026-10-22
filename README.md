@@ -57,11 +57,6 @@ For the full token table and rules, see [src/styles/tokens/README.md](src/styles
 </p>
 
 <p align="center">
-  <img src="public/screenshots/portfolio-light.svg" alt="Portfolio dashboard in light mode" width="420" height="280" />
-  <img src="public/screenshots/portfolio-dark.svg" alt="Portfolio dashboard in dark mode" width="420" height="280" />
-</p>
-
-<p align="center">
   <img src="public/screenshots/admin-light.svg" alt="Admin console in light mode" width="420" height="280" />
   <img src="public/screenshots/admin-dark.svg" alt="Admin console in dark mode" width="420" height="280" />
 </p>
