@@ -90,13 +90,24 @@ export function subscribeSession(listener: () => void): () => void {
   listeners.add(listener)
   if (typeof window !== 'undefined') {
     // Another tab connecting or disconnecting must reach this one too.
-    window.addEventListener('storage', listener)
+    const onStorage = (event: StorageEvent) => {
+      if (
+        event.key !== null &&
+        event.key !== ADDRESS_KEY &&
+        event.key !== WALLET_KEY &&
+        event.key !== NETWORK_KEY
+      )
+        return
+      listener()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => {
+      listeners.delete(listener)
+      window.removeEventListener('storage', onStorage)
+    }
   }
   return () => {
     listeners.delete(listener)
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('storage', listener)
-    }
   }
 }
 

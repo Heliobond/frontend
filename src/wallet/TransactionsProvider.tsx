@@ -50,13 +50,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     const isHidden = () => typeof document !== 'undefined' && document.hidden
 
     const schedulePoll = (delay: number) => {
-      if (
-        stopped ||
-        isHidden() ||
-        timer !== undefined ||
-        !getTransactions().some(isPending)
-      )
-        return
+      if (stopped || isHidden() || timer !== undefined || !getTransactions().some(isPending)) return
       timer = setTimeout(() => {
         timer = undefined
         void poll()
