@@ -295,6 +295,17 @@ CONTRACTS_WASM_DIR=path/to/wasm ./scripts/contracts/update-specs.sh  # use anoth
 
 `CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
 
+### Reviewing a fork PR safely
+
+Reviewing a fork branch runs its code on your machine, so treat it as untrusted
+(see the supply-chain policy in [SECURITY.md](./SECURITY.md#supply-chain)):
+
+1. Read the diff in **raw** form before running anything: `git diff main...<branch> -- package.json bun.lock .husky .github scripts '*.config.*'`. The GitHub diff view hides long whitespace runs, so the `hidden-content` and `Supply-chain changes` checks are the reliable signal.
+2. Check the fork owner and the author match, and that new root-level files are expected.
+3. Do not run an untrusted branch on a machine that holds wallet secret keys or long-lived deploy tokens. Use a container or a Codespace, and make sure `.env*.local` contains only testnet values.
+4. Install with `bun install --frozen-lockfile` only after step 1. Lifecycle scripts run during install, so check any new dependency's `scripts` field first.
+5. Apply the `supply-chain-reviewed` label only after the changes in the job summary are understood.
+
 ## Internationalization
 
 Heliobond uses [`next-intl`](https://next-intl.dev) with cookie-based locale
