@@ -55,6 +55,23 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
+  # Scans every tracked text file for hidden payloads: tab-padded lines,
+  # Trojan Source characters, obfuscated code and new root-level scripts (#914).
+  # No dependencies are installed, so a PR cannot run its own install hooks here.
+  hidden-content:
+    name: hidden-content check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Scan tracked files for hidden content
+        run: node scripts/check-hidden-content.mjs
+
   test:
     name: unit tests + coverage
     runs-on: ubuntu-latest
