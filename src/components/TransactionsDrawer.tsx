@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { AddressChip } from './AddressChip'
 import { useTransactions, type TransactionItem } from '../wallet/TransactionsProvider'
 import { getExplorerTxUrl } from '../config/network'
@@ -12,6 +13,7 @@ export interface TransactionsDrawerProps {
 }
 
 export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
+  const t = useTranslations('Components.TransactionsDrawer')
   const { transactions, pendingCount, clearCompleted } = useTransactions()
 
   const panel = useRef<HTMLDivElement>(null)
@@ -50,7 +52,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
         ref={panel}
         role="dialog"
         aria-modal="true"
-        aria-label="Transaction Activity"
+        aria-label={t('title')}
         tabIndex={-1}
         style={{
           position: 'relative',
@@ -84,7 +86,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
                 color: 'var(--ink)',
               }}
             >
-              Transaction Activity
+              {t('title')}
             </h2>
             <span
               style={{
@@ -94,14 +96,14 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
               }}
             >
               {pendingCount > 0
-                ? `${pendingCount} pending transaction${pendingCount > 1 ? 's' : ''}`
-                : 'Session transaction history'}
+                ? t('pendingCount', { count: pendingCount })
+                : t('sessionHistory')}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close activity panel"
+            aria-label={t('closeActivityPanel')}
             style={{
               background: 'transparent',
               border: 'none',
@@ -135,7 +137,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
                 fontSize: 'var(--type-small)',
               }}
             >
-              No transactions recorded in this session.
+              {t('empty')}
             </div>
           ) : (
             transactions.map((tx) => <TransactionRow key={tx.hash} item={tx} />)
@@ -165,7 +167,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
                 cursor: 'pointer',
               }}
             >
-              Clear Completed
+              {t('clearCompleted')}
             </button>
           </div>
         )}
@@ -175,7 +177,9 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
 }
 
 function TransactionRow({ item }: { item: TransactionItem }) {
-  const timeAgo = formatTimeAgo(item.submittedAt)
+  const t = useTranslations('Components.TransactionsDrawer')
+  const locale = useLocale()
+  const timeAgo = formatTimeAgo(item.submittedAt, locale)
 
   return (
     <div
@@ -199,7 +203,15 @@ function TransactionRow({ item }: { item: TransactionItem }) {
             color: 'var(--ink)',
           }}
         >
-          {item.kind.replace('_', ' ')}
+          {item.kind === 'deposit'
+            ? t('kindDeposit')
+            : item.kind === 'withdraw'
+              ? t('kindWithdraw')
+              : item.kind === 'claim'
+                ? t('kindClaim')
+                : item.kind === 'claim_yield'
+                  ? t('kindClaimYield')
+                  : item.kind.replace('_', ' ')}
           {item.amount ? ` • ${item.amount} USDC` : ''}
         </span>
         <StatusBadge status={item.status} />
@@ -215,15 +227,17 @@ function TransactionRow({ item }: { item: TransactionItem }) {
           fontFamily: 'var(--font-body)',
         }}
       >
-        <span>Submitted {timeAgo}</span>
-        {item.fee !== undefined && <span>Estimated maximum fee: {item.fee.toFixed(7)} XLM</span>}
+        <span>{t('submitted', { timeAgo })}</span>
+        {item.fee !== undefined && (
+          <span>{t('estimatedMaximumFee', { fee: item.fee.toFixed(7) })}</span>
+        )}
       </div>
 
       {item.inclusionFee !== undefined && (
-        <span>Inclusion fee: {item.inclusionFee.toFixed(7)} XLM</span>
+        <span>{t('inclusionFee', { fee: item.inclusionFee.toFixed(7) })}</span>
       )}
       {item.resourceFee !== undefined && (
-        <span>Resource fee: {item.resourceFee.toFixed(7)} XLM</span>
+        <span>{t('resourceFee', { fee: item.resourceFee.toFixed(7) })}</span>
       )}
       <div style={{ marginTop: 4 }}>
         <AddressChip
@@ -235,7 +249,7 @@ function TransactionRow({ item }: { item: TransactionItem }) {
                 ? `https://stellar.expert/explorer/${item.network}/tx/${item.hash}`
                 : getExplorerTxUrl(item.hash)
           }
-          label="transaction hash"
+          label={t('transactionHash')}
         />
       </div>
 
@@ -255,20 +269,21 @@ function TransactionRow({ item }: { item: TransactionItem }) {
 }
 
 function StatusBadge({ status }: { status: TransactionItem['status'] }) {
-  let label = 'Confirmed'
+  const t = useTranslations('Components.TransactionsDrawer')
+  let label = t('statusConfirmed')
   let bg = 'rgba(34, 197, 94, 0.15)'
   let color = 'var(--growth)'
 
   if (status === 'pending') {
-    label = 'Pending'
+    label = t('statusPending')
     bg = 'rgba(59, 130, 246, 0.15)'
     color = '#3b82f6'
   } else if (status === 'timeout_pending') {
-    label = 'Still Pending'
+    label = t('statusStillPending')
     bg = 'rgba(234, 179, 8, 0.15)'
     color = '#eab308'
   } else if (status === 'failed') {
-    label = 'Failed'
+    label = t('statusFailed')
     bg = 'rgba(239, 68, 68, 0.15)'
     color = 'var(--ember)'
   }
@@ -290,11 +305,12 @@ function StatusBadge({ status }: { status: TransactionItem['status'] }) {
   )
 }
 
-function formatTimeAgo(timestamp: number): string {
+function formatTimeAgo(timestamp: number, locale: string): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000)
-  if (seconds < 60) return `${Math.max(1, seconds)}s ago`
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'always', style: 'short' })
+  if (seconds < 60) return formatter.format(-Math.max(1, seconds), 'second')
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return formatter.format(-minutes, 'minute')
   const hours = Math.floor(minutes / 60)
-  return `${hours}h ago`
+  return formatter.format(-hours, 'hour')
 }

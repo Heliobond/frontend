@@ -1,9 +1,62 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Helio } from '../brand/Helio'
 import { INK, SOLAR } from '../brand/palette'
 import { reportError } from '../lib/errorReporting'
+
+const ERROR_MESSAGES = {
+  en: {
+    eyebrow: 'Something went wrong',
+    title: 'Heliobond hit an unexpected error',
+    body: 'The app failed before it could finish loading. Try again, or reload the page to start fresh.',
+    errorRef: 'Error ref: {digest}',
+    tryAgain: 'Try again',
+    reload: 'Reload page',
+  },
+  fr: {
+    eyebrow: 'Une erreur est survenue',
+    title: 'Heliobond a rencontré une erreur inattendue',
+    body: "L'application a échoué avant la fin du chargement. Réessayez ou rechargez la page pour repartir de zéro.",
+    errorRef: 'Référence de l’erreur : {digest}',
+    tryAgain: 'Réessayer',
+    reload: 'Recharger la page',
+  },
+  es: {
+    eyebrow: 'Algo salió mal',
+    title: 'Heliobond encontró un error inesperado',
+    body: 'La aplicación falló antes de terminar de cargarse. Inténtalo de nuevo o recarga la página para empezar de nuevo.',
+    errorRef: 'Referencia del error: {digest}',
+    tryAgain: 'Intentar de nuevo',
+    reload: 'Recargar página',
+  },
+  ar: {
+    eyebrow: 'حدث خطأ ما',
+    title: 'واجه Heliobond خطأً غير متوقع',
+    body: 'تعطّل التطبيق قبل اكتمال التحميل. حاول مرة أخرى أو أعد تحميل الصفحة للبدء من جديد.',
+    errorRef: 'مرجع الخطأ: {digest}',
+    tryAgain: 'حاول مرة أخرى',
+    reload: 'إعادة تحميل الصفحة',
+  },
+  pt: {
+    eyebrow: 'Ocorreu um erro',
+    title: 'O Heliobond encontrou um erro inesperado',
+    body: 'O aplicativo falhou antes de terminar de carregar. Tente novamente ou recarregue a página para começar de novo.',
+    errorRef: 'Referência do erro: {digest}',
+    tryAgain: 'Tentar novamente',
+    reload: 'Recarregar página',
+  },
+} as const
+
+type ErrorLocale = keyof typeof ERROR_MESSAGES
+
+function getCookieLocale(): ErrorLocale {
+  const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]*)/)
+  const locale = match?.[1]
+  return locale && Object.prototype.hasOwnProperty.call(ERROR_MESSAGES, locale)
+    ? (locale as ErrorLocale)
+    : 'en'
+}
 
 /**
  * Root error boundary (#710). Next.js swaps this in for the whole root layout
@@ -12,8 +65,8 @@ import { reportError } from '../lib/errorReporting'
  * `<html>`/`<body>` because the root layout is gone.
  *
  * Deliberately provider-free: it must not depend on anything that might be the
- * crashing thing. Styles are literal (no CSS custom properties or i18n), since
- * the layout that loads the global stylesheet has been replaced.
+ * crashing thing. Styles are literal (no CSS custom properties), since the
+ * layout that loads the global stylesheet has been replaced.
  */
 export default function GlobalError({
   error,
@@ -22,7 +75,10 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const [locale, setLocale] = useState<ErrorLocale>('en')
+
   useEffect(() => {
+    setLocale(getCookieLocale())
     console.error('[Heliobond] root error:', error)
     reportError(error, {
       kind: 'root',
@@ -30,8 +86,10 @@ export default function GlobalError({
     })
   }, [error])
 
+  const messages = ERROR_MESSAGES[locale]
+
   return (
-    <html lang="en">
+    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <body
         style={{
           margin: 0,
@@ -66,7 +124,7 @@ export default function GlobalError({
               textTransform: 'uppercase',
             }}
           >
-            Something went wrong
+            {messages.eyebrow}
           </p>
 
           <h1
@@ -79,7 +137,7 @@ export default function GlobalError({
               margin: '0 0 14px',
             }}
           >
-            Heliobond hit an unexpected error
+            {messages.title}
           </h1>
 
           <p
@@ -91,8 +149,7 @@ export default function GlobalError({
               margin: '0 0 8px',
             }}
           >
-            The app failed before it could finish loading. Try again, or reload the page to start
-            fresh.
+            {messages.body}
           </p>
 
           {error.digest && (
@@ -104,7 +161,7 @@ export default function GlobalError({
                 margin: '0 0 32px',
               }}
             >
-              Error ref: {error.digest}
+              {messages.errorRef.replace('{digest}', error.digest)}
             </p>
           )}
           {!error.digest && <div style={{ marginBottom: 32 }} />}
@@ -129,7 +186,7 @@ export default function GlobalError({
                 cursor: 'pointer',
               }}
             >
-              Try again
+              {messages.tryAgain}
             </button>
 
             <button
@@ -151,7 +208,7 @@ export default function GlobalError({
                 cursor: 'pointer',
               }}
             >
-              Reload page
+              {messages.reload}
             </button>
           </div>
         </main>

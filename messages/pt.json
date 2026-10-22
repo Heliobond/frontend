@@ -42,6 +42,50 @@
     "syncing": "Sincronizando com a Stellar",
     "skipToContent": "Pular para o conteúdo"
   },
+  "Components": {
+    "RecurringInvestmentOptions": {
+      "legend": "Investimento automático mensal",
+      "description": "Invista {amount} USDC neste título todos os meses",
+      "investmentDay": "Dia do investimento mensal",
+      "scheduleHint": "Você pode pausar ou alterar este cronograma em seus investimentos."
+    },
+    "LiquidityMeter": {
+      "availableToWithdraw": "Disponível para saque agora",
+      "liquidShareLabel": "Parte líquida do fundo agora",
+      "poolExplanation": "O fundo mantém {liquid} disponíveis; o restante ({locked}) está aplicado em projetos. Você pode sacar até {liquid} hoje, ou qualquer parte desse valor."
+    },
+    "PortfolioPerformanceChart": {
+      "title": "Desempenho da carteira",
+      "loading": "Carregando o histórico de desempenho…",
+      "empty": "O histórico de desempenho aparecerá quando houver registros indexados da carteira.",
+      "portfolioValue": "Valor da carteira",
+      "returns": "Retornos",
+      "yield": "Rendimento",
+      "historyChartLabel": "Histórico de {label}",
+      "snapshotsNote": "Registros indexados, {start} – {end}. Retornos e rendimentos históricos não garantem o desempenho futuro."
+    },
+    "TransactionsDrawer": {
+      "title": "Atividade de transações",
+      "pendingCount": "{count, plural, one {# transação pendente} other {# transações pendentes}}",
+      "sessionHistory": "Histórico de transações da sessão",
+      "closeActivityPanel": "Fechar painel de atividades",
+      "empty": "Nenhuma transação registrada nesta sessão.",
+      "clearCompleted": "Limpar concluídas",
+      "submitted": "Enviada {timeAgo}",
+      "estimatedMaximumFee": "Taxa máxima estimada: {fee} XLM",
+      "inclusionFee": "Taxa de inclusão: {fee} XLM",
+      "resourceFee": "Taxa de recursos: {fee} XLM",
+      "transactionHash": "hash da transação",
+      "statusConfirmed": "Confirmada",
+      "statusPending": "Pendente",
+      "statusStillPending": "Ainda pendente",
+      "statusFailed": "Falhou",
+      "kindDeposit": "Depósito",
+      "kindWithdraw": "Saque",
+      "kindClaim": "Resgate",
+      "kindClaimYield": "Resgate de rendimento"
+    }
+  },
   "Footer": {
     "risk": "Aviso de Risco",
     "trustLinks": "Trust links",

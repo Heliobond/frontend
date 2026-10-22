@@ -49,6 +49,50 @@
     "syncing": "جاري المزامنة مع ستيلار",
     "skipToContent": "انتقل إلى المحتوى"
   },
+  "Components": {
+    "RecurringInvestmentOptions": {
+      "legend": "استثمار شهري تلقائي",
+      "description": "استثمر {amount} USDC في هذا السند كل شهر",
+      "investmentDay": "يوم الاستثمار الشهري",
+      "scheduleHint": "يمكنك إيقاف هذا الجدول مؤقتًا أو تغييره من استثماراتك."
+    },
+    "LiquidityMeter": {
+      "availableToWithdraw": "المتاح للسحب الآن",
+      "liquidShareLabel": "حصة السيولة المتاحة الآن",
+      "poolExplanation": "يحتفظ المجمع بمبلغ {liquid} سائلًا؛ أما الباقي ({locked}) فيُستثمر في المشاريع. يمكنك سحب ما يصل إلى {liquid} اليوم أو أي جزء منه."
+    },
+    "PortfolioPerformanceChart": {
+      "title": "أداء المحفظة",
+      "loading": "جارٍ تحميل سجل الأداء…",
+      "empty": "سيظهر سجل الأداء عند توفر لقطات محفظة مفهرسة.",
+      "portfolioValue": "قيمة المحفظة",
+      "returns": "العوائد",
+      "yield": "الإيراد",
+      "historyChartLabel": "السجل: {label}",
+      "snapshotsNote": "اللقطات المفهرسة، {start} – {end}. العوائد التاريخية لا تضمن الأداء المستقبلي."
+    },
+    "TransactionsDrawer": {
+      "title": "نشاط المعاملات",
+      "pendingCount": "{count, plural, zero {# معاملة معلقة} one {# معاملة معلقة} two {معاملتان معلقتان} few {# معاملات معلقة} many {# معاملة معلقة} other {# معاملة معلقة}}",
+      "sessionHistory": "سجل معاملات الجلسة",
+      "closeActivityPanel": "إغلاق لوحة النشاط",
+      "empty": "لا توجد معاملات مسجلة في هذه الجلسة.",
+      "clearCompleted": "مسح المكتملة",
+      "submitted": "أُرسلت {timeAgo}",
+      "estimatedMaximumFee": "الرسوم القصوى المقدرة: {fee} XLM",
+      "inclusionFee": "رسوم الإدراج: {fee} XLM",
+      "resourceFee": "رسوم الموارد: {fee} XLM",
+      "transactionHash": "معرّف المعاملة",
+      "statusConfirmed": "مؤكدة",
+      "statusPending": "معلقة",
+      "statusStillPending": "لا تزال معلقة",
+      "statusFailed": "فشلت",
+      "kindDeposit": "إيداع",
+      "kindWithdraw": "سحب",
+      "kindClaim": "مطالبة",
+      "kindClaimYield": "مطالبة بالعائد"
+    }
+  },
   "Footer": {
     "trustLinks": "روابط الثقة",
     "verify": "تحقق من كل شيء",

@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
+
 interface RecurringInvestmentOptionsProps {
   enabled: boolean
   amount: number
@@ -15,20 +17,22 @@ export function RecurringInvestmentOptions({
   onEnabledChange,
   onDayChange,
 }: RecurringInvestmentOptionsProps) {
+  const t = useTranslations('Components.RecurringInvestmentOptions')
+
   return (
     <fieldset style={fieldsetStyle}>
-      <legend style={legendStyle}>Monthly auto-invest</legend>
+      <legend style={legendStyle}>{t('legend')}</legend>
       <label style={labelStyle}>
         <input
           type="checkbox"
           checked={enabled}
           onChange={(event) => onEnabledChange(event.target.checked)}
         />{' '}
-        Invest {amount.toFixed(2)} USDC in this bond every month
+        {t('description', { amount: amount.toFixed(2) })}
       </label>
       {enabled && (
         <label style={selectLabelStyle}>
-          Monthly investment day
+          {t('investmentDay')}
           <select
             value={dayOfMonth}
             onChange={(event) => onDayChange(Number(event.target.value))}
@@ -41,7 +45,7 @@ export function RecurringInvestmentOptions({
             ))}
           </select>
           <span style={hintStyle}>
-            You can pause or change this schedule from your investments.
+            {t('scheduleHint')}
           </span>
         </label>
       )}

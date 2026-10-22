@@ -42,6 +42,50 @@
     "syncing": "Syncing with Stellar",
     "skipToContent": "Skip to content"
   },
+  "Components": {
+    "RecurringInvestmentOptions": {
+      "legend": "Monthly auto-invest",
+      "description": "Invest {amount} USDC in this bond every month",
+      "investmentDay": "Monthly investment day",
+      "scheduleHint": "You can pause or change this schedule from your investments."
+    },
+    "LiquidityMeter": {
+      "availableToWithdraw": "Available to withdraw now",
+      "liquidShareLabel": "Share of pool liquid now",
+      "poolExplanation": "The pool holds {liquid} liquid; the rest ({locked}) is working in projects. You can withdraw up to {liquid} today, or any part of it."
+    },
+    "PortfolioPerformanceChart": {
+      "title": "Portfolio performance",
+      "loading": "Loading historical performance…",
+      "empty": "Historical performance will appear when indexed portfolio snapshots are available.",
+      "portfolioValue": "Portfolio value",
+      "returns": "Returns",
+      "yield": "Yield",
+      "historyChartLabel": "{label} history chart",
+      "snapshotsNote": "Indexed snapshots, {start} – {end}. Historical returns and yields are not guarantees of future performance."
+    },
+    "TransactionsDrawer": {
+      "title": "Transaction Activity",
+      "pendingCount": "{count, plural, one {# pending transaction} other {# pending transactions}}",
+      "sessionHistory": "Session transaction history",
+      "closeActivityPanel": "Close activity panel",
+      "empty": "No transactions recorded in this session.",
+      "clearCompleted": "Clear Completed",
+      "submitted": "Submitted {timeAgo}",
+      "estimatedMaximumFee": "Estimated maximum fee: {fee} XLM",
+      "inclusionFee": "Inclusion fee: {fee} XLM",
+      "resourceFee": "Resource fee: {fee} XLM",
+      "transactionHash": "transaction hash",
+      "statusConfirmed": "Confirmed",
+      "statusPending": "Pending",
+      "statusStillPending": "Still Pending",
+      "statusFailed": "Failed",
+      "kindDeposit": "Deposit",
+      "kindWithdraw": "Withdraw",
+      "kindClaim": "Claim",
+      "kindClaimYield": "Claim yield"
+    }
+  },
   "Footer": {
     "trustLinks": "Trust links",
     "verify": "Verify everything",

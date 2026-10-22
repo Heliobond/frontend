@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 import PropTypes from 'prop-types'
 import { formatMoney } from '@/lib/format'
 
@@ -27,6 +28,7 @@ export function LiquidityMeter({
   showExplanation = true,
   style,
 }: LiquidityMeterProps) {
+  const t = useTranslations('Components.LiquidityMeter')
   const pct = total > 0 ? Math.max(0, Math.min(1, liquid / total)) : 0
   const fmt = (n: number) => formatMoney(n, { includeSymbol: true, symbol: currency })
 
@@ -47,7 +49,7 @@ export function LiquidityMeter({
             color: 'var(--ink-60)',
           }}
         >
-          Available to withdraw now
+          {t('availableToWithdraw')}
         </span>
         <span
           style={{
@@ -65,7 +67,7 @@ export function LiquidityMeter({
         aria-valuenow={Math.round(pct * 100)}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Share of pool liquid now"
+        aria-label={t('liquidShareLabel')}
         style={{
           position: 'relative',
           height: 10,
@@ -94,8 +96,10 @@ export function LiquidityMeter({
             margin: '8px 0 0',
           }}
         >
-          The pool holds {fmt(liquid)} liquid; the rest ({fmt(Math.max(0, total - liquid))}) is
-          working in projects. You can withdraw up to {fmt(liquid)} today, or any part of it.
+          {t('poolExplanation', {
+            liquid: fmt(liquid),
+            locked: fmt(Math.max(0, total - liquid)),
+          })}
         </p>
       )}
     </div>
