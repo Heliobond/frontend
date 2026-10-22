@@ -57,3 +57,12 @@ PR. If an item doesn't apply, write down why.
       thresholds, build, and the e2e investor journey.
 - [ ] Rollback plan: the previous build can be redeployed, and there is a documented
       way to pause the vault (`emergency_pause`) if something goes wrong on-chain.
+- [ ] Production builds do not hold server-only secrets (#920). In the Vercel
+      project, `NEXT_PUBLIC_*` values are the only variables exposed to the build
+      step; server secrets such as `HELIOBOND_API_KEY` are available at runtime
+      only. Verify in the dashboard, since this is not configured in the repo.
+- [ ] Production deploys wait for CI. Auto-promotion of `main` is gated on the
+      `build`, `unit tests + coverage`, `hidden-content` and `Supply-chain changes`
+      checks, so a merge never builds with production secrets before CI is green.
+- [ ] After any reverted merge to `main`, deploy secrets are rotated (see the
+      incident response steps in [SECURITY.md](../SECURITY.md#incident-response)).
