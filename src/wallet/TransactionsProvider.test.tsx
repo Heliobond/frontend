@@ -25,6 +25,7 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
   sessionStorage.clear()
+  Object.defineProperty(document, 'hidden', { configurable: true, value: false })
 })
 
 describe('TransactionsProvider', () => {
@@ -85,6 +86,53 @@ describe('TransactionsProvider', () => {
       await vi.advanceTimersByTimeAsync(30000)
     })
     expect(fetch).toHaveBeenCalledTimes(calls)
+  })
+
+  it('pauses polling while hidden and polls immediately when visible', async () => {
+    vi.useFakeTimers()
+    sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([saved()]))
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    const { unmount } = renderHook(useTransactions, { wrapper })
+    expect(fetch).not.toHaveBeenCalled()
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    unmount()
+  })
+
+  it('backs off after errors and resets the delay after a successful response', async () => {
+    vi.useFakeTimers()
+    sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([saved()]))
+    vi.mocked(fetch)
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(rpc('NOT_FOUND'))
+      .mockRejectedValueOnce(new Error('offline'))
+    const { unmount } = renderHook(useTransactions, { wrapper })
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9999)
+    })
+    expect(fetch).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(fetch).toHaveBeenCalledTimes(2)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9999)
+    })
+    expect(fetch).toHaveBeenCalledTimes(2)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(fetch).toHaveBeenCalledTimes(3)
+    unmount()
   })
 
   it('does not downgrade a confirmed item when a foreground timeout arrives late', () => {
