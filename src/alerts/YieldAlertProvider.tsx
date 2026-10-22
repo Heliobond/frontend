@@ -54,8 +54,8 @@ const EVAL_INTERVAL_MS = 60_000
 /**
  * Holds the yield alert state and mirrors it to localStorage. The list is read
  * through an external store, so the first client render already matches the
- * server HTML and no hydration pass is needed. Evaluates alerts on mount and
- * every 60s, firing toasts for triggered ones.
+ * server HTML and no hydration pass is needed. Evaluates saved alerts while
+ * the page is visible, firing toasts for triggered ones.
  */
 export function YieldAlertProvider({ children }: { children: ReactNode }) {
   const alerts = useSyncExternalStore(subscribeAlerts, getAlerts, getServerAlerts)
@@ -90,9 +90,14 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
     },
   })
 
-  // Evaluate alerts on mount and at interval.
+  // Evaluate alerts while there is work to do and the page is visible.
   useEffect(() => {
+    if (alerts.length === 0) return
+
+    let initialTimeout: ReturnType<typeof setTimeout> | undefined
+    let interval: ReturnType<typeof setInterval> | undefined
     const evaluate = () => {
+      if (document.hidden) return
       const current = alertsRef.current
       if (current.length === 0) return
 
@@ -121,15 +126,34 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Evaluate once on mount (delayed to let projects load).
-    const initialTimeout = setTimeout(evaluate, 2000)
-    const interval = setInterval(evaluate, EVAL_INTERVAL_MS)
+    const start = (evaluateImmediately: boolean) => {
+      if (document.hidden) return
+      if (initialTimeout !== undefined) clearTimeout(initialTimeout)
+      if (interval !== undefined) clearInterval(interval)
+      if (evaluateImmediately) evaluate()
+      else initialTimeout = setTimeout(evaluate, 2000)
+      interval = setInterval(evaluate, EVAL_INTERVAL_MS)
+    }
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        if (initialTimeout !== undefined) clearTimeout(initialTimeout)
+        if (interval !== undefined) clearInterval(interval)
+        initialTimeout = undefined
+        interval = undefined
+      } else {
+        start(true)
+      }
+    }
+
+    start(false)
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     return () => {
-      clearTimeout(initialTimeout)
-      clearInterval(interval)
+      if (initialTimeout !== undefined) clearTimeout(initialTimeout)
+      if (interval !== undefined) clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [commit, toast])
+  }, [alerts.length, commit, toast])
 
   const add = useCallback(
     (bondId: number, bondName: string, threshold: number, operator: AlertOperator): YieldAlert => {
