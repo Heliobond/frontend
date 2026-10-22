@@ -36,6 +36,15 @@ The app signs transactions in the browser, so it ships a strict policy (#601):
 - If you add a third-party origin (RPC, API, analytics), it must be configured
   through the env vars in `.env.example` or added to `src/lib/securityHeaders.ts`.
 
+## Deployment secrets
+
+Vercel builds `main` through its git integration, so every merged build script
+runs with whatever the Vercel project exposes at build time (#920). The project
+holds no server secrets today, and it must stay that way until production
+builds move to `.github/workflows/deploy.yml`, which builds without secrets and
+deploys the prebuilt output. Until then, do not add `HELIOBOND_API_KEY` or any
+other server-only secret to the Vercel project.
+
 ## Telemetry and privacy
 
 Client error reporting and web-vitals (#609) go to `NEXT_PUBLIC_ERROR_REPORT_URL`

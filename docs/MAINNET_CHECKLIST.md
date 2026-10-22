@@ -44,6 +44,10 @@ PR. If an item doesn't apply, write down why.
 - [ ] "Demo wallet" / `connectDemo` is hidden or clearly labelled on the production
       build.
 - [ ] `NEXT_PUBLIC_API_URL` points at the production backend.
+- [ ] Before adding `HELIOBOND_API_KEY` or any server secret to Vercel, production
+      builds run through `.github/workflows/deploy.yml` (switched from
+      `workflow_dispatch` to `workflow_run`) and Vercel's git deploys for `main`
+      are off, so no merged build script runs next to a secret (#920).
 - [ ] Dev-only routes (`/contrast-test`, `/learn/password-reset-email`) return 404, and
       `NEXT_PUBLIC_ENABLE_DEV_ROUTES` is unset.
 

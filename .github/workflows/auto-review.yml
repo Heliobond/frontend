@@ -54,7 +54,8 @@ jobs:
           REAL_CHANGE_LINES=$(grep -E '^[+-]' /tmp/pr-diff.txt | grep -vE '^(\+\+\+|---)' | wc -l | tr -d ' ' || echo 0)
           echo "diff_bytes=$DIFF_BYTES" >> $GITHUB_OUTPUT
           echo "real_change_lines=$REAL_CHANGE_LINES" >> $GITHUB_OUTPUT
-          head -3000 /tmp/pr-diff.txt > /tmp/pr-diff-truncated.txt
+          # Lockfile churn is noise for the reviewer and can be megabytes; cap lines and bytes.
+          head -3000 /tmp/pr-diff.txt | head -c 200000 > /tmp/pr-diff-truncated.txt
 
           if [ "$DIFF_BYTES" -lt 50 ] || [ "${ADDS:-0}" -eq 0 ] || [ "${REAL_CHANGE_LINES:-0}" -lt 1 ]; then
             echo "is_empty=true" >> $GITHUB_OUTPUT
@@ -206,7 +207,7 @@ jobs:
           SYSTEM_EOF
           )
 
-          PAYLOAD=$(jq -n \
+          jq -n \
             --arg system "$SYSTEM_PROMPT" \
             --arg title "$PR_TITLE" \
             --arg author "$PR_AUTHOR" \
@@ -237,12 +238,12 @@ jobs:
               max_completion_tokens: 4096,
               temperature: 0.2,
               response_format: { type: "json_object" }
-            }')
+            }' > /tmp/payload.json
 
           RESPONSE=$(curl -s --max-time 180 "$API_URL" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $API_KEY" \
-            -d "$PAYLOAD")
+            --data-binary @/tmp/payload.json)
 
           API_ERROR=$(echo "$RESPONSE" | jq -r '.error.message // ""' 2>/dev/null || echo "")
           REVIEW_JSON=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // ""' 2>/dev/null || echo "")

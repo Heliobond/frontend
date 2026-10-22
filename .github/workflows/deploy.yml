@@ -1,0 +1,137 @@
+name: Deploy production
+
+# Production deploys run here instead of through Vercel's git integration
+# (#920), so a merged build script never runs next to production secrets:
+#
+#   1. settings  pulls the Vercel project settings with the token, deletes the
+#                pulled env file and passes only the settings on. No repo code.
+#   2. build     builds main with no secrets and no token. Only public build
+#                values (NEXT_PUBLIC_*, SOURCE_MAPS, CSP_MODE) come from
+#                repository variables. Server secrets stay in Vercel and are
+#                read by functions at runtime.
+#   3. deploy    uploads the prebuilt output with the token. No repo code.
+#
+# Parked: the Vercel project holds no server secrets yet, so Vercel's git
+# integration still deploys main. Before adding one (see SECURITY.md,
+# "Deployment secrets"):
+#   1. Add the `production` environment with the VERCEL_TOKEN secret and the
+#      VERCEL_ORG_ID / VERCEL_PROJECT_ID variables, and copy the NEXT_PUBLIC_*
+#      values into repository variables.
+#   2. Turn off Vercel's git deploys for main (`git.deploymentEnabled` in
+#      vercel.json or the dashboard).
+#   3. Replace `workflow_dispatch` below with:
+#        workflow_run: { workflows: [CI], types: [completed], branches: [main] }
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_CLI: vercel@64.5.0
+  VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+
+jobs:
+  settings:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Pull project settings without env values
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global --ignore-scripts "$VERCEL_CLI"
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          rm -f .vercel/.env.*
+          test -f .vercel/project.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vercel-settings
+          path: .vercel/project.json
+          include-hidden-files: true
+          retention-days: 1
+
+  build:
+    needs: settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: vercel-settings
+          path: .vercel
+
+      - name: Write public build values
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+        run: |
+          echo "$VARS_JSON" | jq -r 'to_entries[]
+            | select(.key | startswith("NEXT_PUBLIC_") or . == "SOURCE_MAPS" or . == "CSP_MODE")
+            | "\(.key)=\(.value)"' > .env.production.local
+          cut -d= -f1 .env.production.local
+
+      - name: Build without secrets
+        run: |
+          bun install --frozen-lockfile
+          bunx "$VERCEL_CLI" build --prod
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vercel-output
+          path: .vercel/output
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: vercel-settings
+          path: .vercel
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: vercel-output
+          path: .vercel/output
+
+      - name: Deploy the prebuilt output
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm install --global --ignore-scripts "$VERCEL_CLI"
+          vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN"
