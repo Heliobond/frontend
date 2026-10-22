@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, within } from '@/test/render'
+import { render, screen, fireEvent, waitFor, within } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
 import type { RegistryEntry } from '@/data/admin'
 
@@ -63,7 +63,7 @@ function rowNames(): string[] {
 
 describe('RegistryTable fundedNum parsing', () => {
   it('sorts descending by funded amount on first Funded click', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by funded/i }))
 
     const names = rowNames()
@@ -73,7 +73,7 @@ describe('RegistryTable fundedNum parsing', () => {
   })
 
   it('sorts ascending by funded amount on second Funded click', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by funded/i }))
     fireEvent.click(screen.getByRole('button', { name: /sort by funded/i }))
 
@@ -90,7 +90,7 @@ describe('RegistryTable fundedNum parsing', () => {
 
 describe('RegistryTable sort by name', () => {
   it('sorts alphabetically asc on first Project click', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by project/i }))
 
     const names = rowNames()
@@ -100,7 +100,7 @@ describe('RegistryTable sort by name', () => {
   })
 
   it('reverses to desc on second Project click', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by project/i }))
     fireEvent.click(screen.getByRole('button', { name: /sort by project/i }))
 
@@ -117,7 +117,7 @@ describe('RegistryTable sort by name', () => {
 
 describe('RegistryTable sort by credit', () => {
   it('defaults to credit desc (91, 82, 74)', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
 
     const names = rowNames()
     expect(names[0]).toBe('Mekong Hydro') // credit 91
@@ -126,7 +126,7 @@ describe('RegistryTable sort by credit', () => {
   })
 
   it('toggles to credit asc on clicking active Credit header', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by credit/i }))
 
     const names = rowNames()
@@ -142,12 +142,12 @@ describe('RegistryTable sort by credit', () => {
 
 describe('RegistryTable sort direction indicator', () => {
   it('shows ↓ for desc on the active column by default', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     expect(screen.getAllByText('↓').length).toBeGreaterThan(0)
   })
 
   it('shows ↑ after toggling the active column to asc', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
     fireEvent.click(screen.getByRole('button', { name: /sort by credit/i }))
     expect(screen.getAllByText('↑').length).toBeGreaterThan(0)
   })
@@ -155,7 +155,7 @@ describe('RegistryTable sort direction indicator', () => {
 
 describe('RegistryTable aria-sort', () => {
   it('announces the active sort column and direction', () => {
-    render(<RegistryTable rows={rows} onSave={() => {}} />)
+    render(<RegistryTable rows={rows} onSave={async () => true} />)
 
     expect(screen.getByRole('columnheader', { name: /credit/i })).toHaveAttribute(
       'aria-sort',
@@ -181,7 +181,7 @@ describe('RegistryTable aria-sort', () => {
 
 describe('RegistryTable inline score editor validation (Issue #693)', () => {
   it('disables Save when nothing changed initially', () => {
-    const onSave = vi.fn()
+    const onSave = vi.fn().mockResolvedValue(true)
     render(<RegistryTable rows={rows} onSave={onSave} />)
     const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
     fireEvent.click(updateBtns[0])
@@ -193,7 +193,7 @@ describe('RegistryTable inline score editor validation (Issue #693)', () => {
   })
 
   it('disables Save and shows error when clearing a field', () => {
-    const onSave = vi.fn()
+    const onSave = vi.fn().mockResolvedValue(true)
     render(<RegistryTable rows={rows} onSave={onSave} />)
     const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
     fireEvent.click(updateBtns[0])
@@ -211,7 +211,7 @@ describe('RegistryTable inline score editor validation (Issue #693)', () => {
   })
 
   it('rejects 150, -1 and 72.5 with a visible message and disables Save without clamping', () => {
-    const onSave = vi.fn()
+    const onSave = vi.fn().mockResolvedValue(true)
     render(<RegistryTable rows={rows} onSave={onSave} />)
     const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
     fireEvent.click(updateBtns[0])
@@ -242,7 +242,7 @@ describe('RegistryTable inline score editor validation (Issue #693)', () => {
   })
 
   it('enables Save and calls onSave with valid updated integer scores', () => {
-    const onSave = vi.fn()
+    const onSave = vi.fn().mockResolvedValue(true)
     render(<RegistryTable rows={rows} onSave={onSave} />)
     const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
     fireEvent.click(updateBtns[0]) // row id 3 (Mekong Hydro, credit 91, green 85)
@@ -255,5 +255,47 @@ describe('RegistryTable inline score editor validation (Issue #693)', () => {
 
     fireEvent.click(saveBtn)
     expect(onSave).toHaveBeenCalledWith(rows[2].id, 95, 85)
+  })
+})
+
+describe('RegistryTable pending and rollback (#692)', () => {
+  it('keeps the editor and the draft open when the save is rejected', async () => {
+    const onSave = vi.fn().mockResolvedValue(false)
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    fireEvent.click(screen.getAllByRole('button', { name: /update scores/i })[0])
+    fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled())
+    expect(screen.getByLabelText(/credit quality/i)).toHaveValue('95')
+  })
+
+  it('closes the editor once the save is confirmed', async () => {
+    const onSave = vi.fn().mockResolvedValue(true)
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    fireEvent.click(screen.getAllByRole('button', { name: /update scores/i })[0])
+    fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+    await waitFor(() => expect(screen.queryByLabelText(/credit quality/i)).not.toBeInTheDocument())
+  })
+
+  it('disables Save while the transaction is pending, so a double click sends one', () => {
+    const onSave = vi.fn(() => new Promise<boolean>(() => {}))
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    fireEvent.click(screen.getAllByRole('button', { name: /update scores/i })[0])
+    fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    fireEvent.click(screen.getByRole('button', { name: /waiting for confirmation/i }))
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('disables Update scores with the reason when updates are blocked', () => {
+    render(<RegistryTable rows={rows} onSave={vi.fn()} updateDisabledReason="Registry is paused" />)
+    expect(screen.getAllByRole('button', { name: /update scores/i })[0]).toBeDisabled()
   })
 })

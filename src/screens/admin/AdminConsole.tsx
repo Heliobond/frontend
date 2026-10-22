@@ -22,6 +22,8 @@ import {
   whitelistMeta,
   whitelistData,
   whitelistActions,
+  warningBoxStyle,
+  warningTextStyle,
 } from '@/theme'
 import { VAULT_STATS, REGISTRY, WHITELIST, type RegistryEntry, type Creator } from '@/data/admin'
 import { RegistryTable } from './RegistryTable'
@@ -31,18 +33,58 @@ import { parseFundedNum } from './utils'
 import { formatMoney as sharedFormatMoney } from '@/lib/format'
 import { formatSharePrice, fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
 import { useWallet } from '@/wallet/WalletProvider'
-import { fetchProjectsPage } from '@/wallet/registry'
+import { fetchProjectsPage, clearRegistryCache, isRegistryConfigured } from '@/wallet/registry'
 import {
   submitFundProject,
   submitUpdateScores,
   submitSetWhitelist,
+  submitSetPaused,
   isMultisigDeployment,
   getAdminRoles,
+  getPauseState,
   type AdminRoles,
+  type PauseState,
+  type PausableContract,
 } from '@/wallet/admin'
 
 export interface AdminConsoleProps {
   roles?: AdminRoles
+}
+
+type PauseStates = Record<PausableContract, PauseState>
+
+const NO_PAUSE: PauseState = { paused: null, emergencyAdmin: null }
+const NO_PAUSES: PauseStates = { vault: NO_PAUSE, registry: NO_PAUSE }
+
+/** Live registry rows, or null when the registry has no projects to show. */
+async function loadRegistryRows(address: string | null): Promise<RegistryEntry[] | null> {
+  const res = await fetchProjectsPage(0, 50, address ?? undefined)
+  if (res.projects.length === 0) return null
+  return res.projects.map((p, i) => ({
+    ...p,
+    lastVerified: REGISTRY[i]?.lastVerified ?? 'on-chain',
+  }))
+}
+
+/** Live vault liquid and deployed amounts, or null when they cannot be read. */
+async function loadVaultFigures(
+  address: string,
+): Promise<{ liquid: number; deployed: number } | null> {
+  const [liveAssets, utilBps] = await Promise.all([
+    fetchTotalAssets(address).catch(() => null),
+    fetchUtilizationBps(address).catch(() => null),
+  ])
+  if (liveAssets === null || liveAssets <= 0) return null
+  const deployed = (liveAssets * (utilBps ?? 0)) / 10000
+  return { liquid: liveAssets - deployed, deployed }
+}
+
+async function loadPauseStates(address: string | null): Promise<PauseStates> {
+  const [vault, registry] = await Promise.all([
+    getPauseState('vault', address),
+    getPauseState('registry', address),
+  ])
+  return { vault, registry }
 }
 
 export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
@@ -56,6 +98,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
   const [isMultisig, setIsMultisig] = useState(false)
   const [fetchedRoles, setFetchedRoles] = useState<AdminRoles | undefined>()
+  const [pauseStates, setPauseStates] = useState<PauseStates>(NO_PAUSES)
 
   useEffect(() => {
     if (propRoles) return
@@ -74,37 +117,41 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     ? roles.isWhitelister || roles.isRegistryOwner || roles.isConfiguredAdmin
     : true
 
+  const vaultPaused = pauseStates.vault.paused === true
+  const registryPaused = pauseStates.registry.paused === true
+
+  // A pause blocks the forms it gates. The reason is shown on each locked control.
+  const fundBlockedReason = vaultPaused
+    ? 'Vault is paused'
+    : registryPaused
+      ? 'Registry is paused'
+      : undefined
+  const scoresBlockedReason = registryPaused ? 'Registry is paused' : undefined
+  const whitelistBlockedReason = registryPaused ? 'Registry is paused' : undefined
+
   // Live contract reads on mount
   useEffect(() => {
     let active = true
 
-    fetchProjectsPage(0, 50, address ?? undefined)
-      .then((res) => {
-        if (!active || res.projects.length === 0) return
-        setRegistry(
-          res.projects.map((p, i) => ({
-            ...p,
-            lastVerified: REGISTRY[i]?.lastVerified ?? 'on-chain',
-          })),
-        )
+    loadRegistryRows(address)
+      .then((rows) => {
+        if (active && rows) setRegistry(rows)
       })
       .catch(() => {})
 
     if (address) {
       Promise.all([
-        fetchTotalAssets(address).catch(() => null),
-        fetchUtilizationBps(address).catch(() => null),
+        loadVaultFigures(address),
         isMultisigDeployment(address).catch(() => false),
-      ]).then(([liveAssets, utilBps, multisig]) => {
+        loadPauseStates(address).catch(() => NO_PAUSES),
+      ]).then(([figures, multisig, pauses]) => {
         if (!active) return
         setIsMultisig(Boolean(multisig))
-        if (liveAssets !== null && liveAssets > 0) {
-          const bps = utilBps ?? 0
-          const liveDeployed = (liveAssets * bps) / 10000
-          const liveLiquid = liveAssets - liveDeployed
-          setLiquid(liveLiquid)
-          setDeployed(liveDeployed)
+        if (figures) {
+          setLiquid(figures.liquid)
+          setDeployed(figures.deployed)
         }
+        setPauseStates(pauses)
       })
     }
 
@@ -113,25 +160,57 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     }
   }, [address])
 
+  // Re-read the registry from chain after a write. Returns false when there is no
+  // chain to read (demo mode) or the read failed, so the caller can apply the change locally.
+  const refreshRegistry = async (): Promise<boolean> => {
+    if (!isRegistryConfigured()) return false
+    clearRegistryCache()
+    const rows = await loadRegistryRows(address).catch(() => null)
+    if (rows) setRegistry(rows)
+    return rows !== null
+  }
+
+  const refreshVault = async (): Promise<boolean> => {
+    if (!address) return false
+    const figures = await loadVaultFigures(address)
+    if (!figures) return false
+    setLiquid(figures.liquid)
+    setDeployed(figures.deployed)
+    return true
+  }
+
+  const refreshPauseStates = async () => {
+    setPauseStates(await loadPauseStates(address))
+  }
+
   // The pool funds 14 projects: 6 demo projects in the registry plus 8 historical/off-screen projects.
   const fundedCount =
     registry.filter((r) => parseFundedNum(r.funded) > 0).length + OFF_SCREEN_PROJECTS_COUNT
 
-  const updateScores = async (id: number, credit: number, green: number) => {
-    setRegistry((rows) =>
-      rows.map((r) => (r.id === id ? { ...r, credit, green, lastVerified: 'just now' } : r)),
-    )
+  // Nothing changes on screen until the transaction is confirmed. On failure the
+  // row keeps its values, and the form keeps the admin's input for a retry.
+  const updateScores = async (id: number, credit: number, green: number): Promise<boolean> => {
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
       const res = await submitUpdateScores(id, credit, green, address ?? '', sign, isMultisig)
+      const refreshed = await refreshRegistry()
+      setRegistry((rows) =>
+        rows.map((r) =>
+          r.id === id
+            ? { ...r, ...(refreshed ? {} : { credit, green }), lastVerified: 'just now' }
+            : r,
+        ),
+      )
       toast({
         tone: 'success',
         title: t('toastScoresTitle'),
         message:
           t('toastScoresMsg', { name, credit, green }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
+          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
+      return true
     } catch (e) {
       toast({
         tone: 'error',
@@ -139,28 +218,39 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         message: e instanceof Error ? e.message : 'Failed to update scores',
         duration: 5000,
       })
+      return false
     }
   }
 
-  const fundProject = async (id: number, amount: number) => {
-    setRegistry((rows) =>
-      rows.map((r) =>
-        r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + amount) } : r,
-      ),
-    )
-    setLiquid((l) => l - amount)
-    setDeployed((d) => d + amount)
+  const fundProject = async (id: number, amount: number): Promise<boolean> => {
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
       const res = await submitFundProject(id, amount, address ?? '', sign, isMultisig)
+      const [vaultRefreshed, registryRefreshed] = await Promise.all([
+        refreshVault(),
+        refreshRegistry(),
+      ])
+      if (!vaultRefreshed) {
+        setLiquid((l) => l - amount)
+        setDeployed((d) => d + amount)
+      }
+      if (!registryRefreshed) {
+        setRegistry((rows) =>
+          rows.map((r) =>
+            r.id === id ? { ...r, funded: formatFunded(parseFundedNum(r.funded) + amount) } : r,
+          ),
+        )
+      }
       toast({
         tone: 'solar',
         title: t('toastFundTitle'),
         message:
           t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
+          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
+      return true
     } catch (e) {
       toast({
         tone: 'error',
@@ -168,6 +258,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         message: e instanceof Error ? e.message : 'Failed to fund project',
         duration: 5000,
       })
+      return false
     }
   }
 
@@ -250,6 +341,50 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     }
   }
 
+  // Owner pauses with pause()/unpause(). The emergency admin uses emergency_pause(caller).
+  const ownsContract = (contract: PausableContract): boolean => {
+    if (!roles) return true
+    return contract === 'vault'
+      ? roles.isVaultOwner || roles.isConfiguredAdmin
+      : roles.isRegistryOwner || roles.isConfiguredAdmin
+  }
+
+  const isEmergencyAdmin = (contract: PausableContract): boolean => {
+    const emergencyAdmin = pauseStates[contract].emergencyAdmin
+    return Boolean(
+      address && emergencyAdmin && emergencyAdmin.toUpperCase() === address.toUpperCase(),
+    )
+  }
+
+  const togglePause = async (contract: PausableContract, paused: boolean) => {
+    const label = contract === 'vault' ? 'vault' : 'registry'
+    const message = paused
+      ? contract === 'vault'
+        ? 'Deposits, withdrawals and funding stop until resumed.'
+        : 'Score updates, whitelisting, project creation and funding stop until resumed.'
+      : 'Blocked actions become available again.'
+    if (!window.confirm(`${paused ? 'Pause' : 'Resume'} the ${label}? ${message}`)) return
+
+    const emergency = !ownsContract(contract) && isEmergencyAdmin(contract)
+    try {
+      await submitSetPaused(contract, paused, address ?? '', sign, { emergency })
+      toast({
+        tone: paused ? 'error' : 'success',
+        title: `${label[0].toUpperCase()}${label.slice(1)} ${paused ? 'paused' : 'resumed'}`,
+        message: emergency ? 'Sent as emergency admin.' : 'Sent as owner.',
+        duration: 5000,
+      })
+      await refreshPauseStates()
+    } catch (e) {
+      toast({
+        tone: 'error',
+        title: 'Transaction failed',
+        message: e instanceof Error ? e.message : 'Failed to change pause state',
+        duration: 5000,
+      })
+    }
+  }
+
   const totalAssets = liquid + deployed
 
   return (
@@ -265,6 +400,16 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         </div>
         <Badge tone="testnet">{t('badgeInternal')}</Badge>
       </header>
+
+      {(vaultPaused || registryPaused) && (
+        <div role="status" style={{ ...warningBoxStyle, marginBottom: 20 }}>
+          <p style={warningTextStyle}>
+            {vaultPaused && 'The vault is paused. Deposits, withdrawals and funding are stopped. '}
+            {registryPaused &&
+              'The registry is paused. Score updates, whitelisting and project creation are stopped, and funding is blocked.'}
+          </p>
+        </div>
+      )}
 
       {/* Vault overview — dense horizontal row of stat cells */}
       <section style={{ ...sectionCard, padding: 0, marginBottom: 20 }}>
@@ -291,6 +436,26 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         </div>
       </section>
 
+      {/* Circuit breakers */}
+      <Section
+        title="Circuit breakers"
+        caption="Pause the vault or the registry in an emergency. Pausing stops the writes listed beside each contract."
+      >
+        <PauseRow
+          label="Investment vault"
+          state={pauseStates.vault}
+          canAct={ownsContract('vault') || isEmergencyAdmin('vault')}
+          onToggle={(paused) => togglePause('vault', paused)}
+        />
+        <PauseRow
+          label="Project registry"
+          state={pauseStates.registry}
+          canAct={ownsContract('registry') || isEmergencyAdmin('registry')}
+          onToggle={(paused) => togglePause('registry', paused)}
+          last
+        />
+      </Section>
+
       {/* Project registry table */}
       <Section title={t('sectionRegistry')} caption={t('sectionRegistryCaption')}>
         {!canUpdateScores && (
@@ -307,7 +472,11 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
             Registry owner permissions required to update scores.
           </div>
         )}
-        <RegistryTable rows={registry} onSave={updateScores} />
+        <RegistryTable
+          rows={registry}
+          onSave={updateScores}
+          updateDisabledReason={scoresBlockedReason}
+        />
       </Section>
 
       {/* Oracle actions */}
@@ -333,6 +502,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         <OracleForms
           projects={registry}
           liquid={liquid}
+          scoresDisabledReason={scoresBlockedReason}
+          fundDisabledReason={fundBlockedReason}
           onPushScores={updateScores}
           onFund={fundProject}
         />
@@ -352,6 +523,11 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
             }}
           >
             Whitelister permissions required to manage the creator whitelist.
+          </div>
+        )}
+        {whitelistBlockedReason && (
+          <div role="status" style={{ ...warningBoxStyle, marginBottom: 12 }}>
+            <p style={warningTextStyle}>{whitelistBlockedReason}. Whitelisting is disabled.</p>
           </div>
         )}
         <div>
@@ -376,7 +552,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={!canManageWhitelist}
+                    disabled={!canManageWhitelist || Boolean(whitelistBlockedReason)}
+                    reason={whitelistBlockedReason}
                     onClick={() => setCreatorStatus(c.address, 'pending')}
                   >
                     {t('actionRevoke')}
@@ -385,7 +562,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={!canManageWhitelist}
+                    disabled={!canManageWhitelist || Boolean(whitelistBlockedReason)}
+                    reason={whitelistBlockedReason}
                     onClick={() => setCreatorStatus(c.address, 'approved')}
                   >
                     {t('actionApprove')}
@@ -396,6 +574,59 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
           ))}
         </div>
       </Section>
+    </div>
+  )
+}
+
+function PauseRow({
+  label,
+  state,
+  canAct,
+  onToggle,
+  last,
+}: {
+  label: string
+  state: PauseState
+  canAct: boolean
+  onToggle: (paused: boolean) => void
+  last?: boolean
+}) {
+  const unknown = state.paused === null
+  const paused = state.paused === true
+  const reason = unknown
+    ? 'Status unavailable'
+    : !canAct
+      ? 'Owner or emergency admin only'
+      : undefined
+
+  return (
+    <div
+      style={{
+        ...whitelistRow,
+        borderTop: '1px solid var(--ink-12)',
+        borderBottom: last ? '1px solid var(--ink-12)' : 'none',
+      }}
+    >
+      <div style={whitelistName}>
+        <div style={whitelistNameText}>{label}</div>
+        <div style={whitelistMeta}>
+          {state.emergencyAdmin ? 'Emergency admin set' : 'No emergency admin'}
+        </div>
+      </div>
+      <Badge tone={paused ? 'neutral' : 'growth'}>
+        {unknown ? 'Unknown' : paused ? 'Paused' : 'Live'}
+      </Badge>
+      <div style={whitelistActions}>
+        <Button
+          size="sm"
+          variant={paused ? 'primary' : 'ghost'}
+          disabled={unknown || !canAct}
+          reason={reason}
+          onClick={() => onToggle(!paused)}
+        >
+          {paused ? 'Resume' : 'Pause'}
+        </Button>
+      </div>
     </div>
   )
 }

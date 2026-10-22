@@ -18,10 +18,16 @@ type SortDir = 'asc' | 'desc'
 
 export interface RegistryTableProps {
   rows: RegistryEntry[]
-  onSave: (id: number, credit: number, green: number) => void
+  /**
+   * Resolve true when the score update was confirmed on-chain. Resolve false (or
+   * reject) when it failed, so the editor stays open with the admin's draft.
+   */
+  onSave: (id: number, credit: number, green: number) => Promise<boolean>
+  /** Set when score updates are blocked (e.g. the registry is paused). */
+  updateDisabledReason?: string
 }
 
-export function RegistryTable({ rows, onSave }: RegistryTableProps) {
+export function RegistryTable({ rows, onSave, updateDisabledReason }: RegistryTableProps) {
   const t = useTranslations('Admin')
   const [sortKey, setSortKey] = useState<SortKey>('credit')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -127,10 +133,12 @@ export function RegistryTable({ rows, onSave }: RegistryTableProps) {
               editing={editing === r.id}
               onEdit={() => setEditing(r.id)}
               onCancel={() => setEditing(null)}
-              onSave={(credit, green) => {
-                onSave(r.id, credit, green)
-                setEditing(null)
+              onSave={async (credit, green) => {
+                const ok = await onSave(r.id, credit, green)
+                if (ok) setEditing(null)
+                return ok
               }}
+              updateDisabledReason={updateDisabledReason}
               updateLabel={t('updateScores')}
               reVerifyLabel={t('reVerify', { name: r.name })}
               creditFieldLabel={t('scoreFieldCredit')}
@@ -192,6 +200,7 @@ function Row({
   onEdit,
   onCancel,
   onSave,
+  updateDisabledReason,
   updateLabel,
   reVerifyLabel,
   creditFieldLabel,
@@ -203,7 +212,8 @@ function Row({
   editing: boolean
   onEdit: () => void
   onCancel: () => void
-  onSave: (credit: number, green: number) => void
+  onSave: (credit: number, green: number) => Promise<boolean>
+  updateDisabledReason?: string
   updateLabel: string
   reVerifyLabel: string
   creditFieldLabel: string
@@ -213,6 +223,7 @@ function Row({
 }) {
   const [credit, setCredit] = useState(String(row.credit))
   const [green, setGreen] = useState(String(row.green))
+  const [saving, setSaving] = useState(false)
 
   // Reset draft to current values each time the editor opens.
   const open = () => {
@@ -227,6 +238,16 @@ function Row({
   const greenError = getScoreError(green)
   const isChanged = Number(credit) !== row.credit || Number(green) !== row.green
   const canSave = creditValid && greenValid && isChanged
+
+  const save = async () => {
+    if (!canSave || saving) return
+    setSaving(true)
+    try {
+      await onSave(Number(credit), Number(green))
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <>
@@ -244,7 +265,13 @@ function Row({
         <td style={tdLastVerifiedStyle}>{row.lastVerified}</td>
         <td style={tdActionsStyle}>
           {!editing && (
-            <Button size="sm" variant="ghost" onClick={open}>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={Boolean(updateDisabledReason)}
+              reason={updateDisabledReason}
+              onClick={open}
+            >
               {updateLabel}
             </Button>
           )}
@@ -270,20 +297,11 @@ function Row({
                 onChange={setGreen}
               />
               <div style={btnGroupStyle}>
-                <Button size="sm" variant="ghost" onClick={onCancel}>
+                <Button size="sm" variant="ghost" disabled={saving} onClick={onCancel}>
                   {cancelLabel}
                 </Button>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  disabled={!canSave}
-                  onClick={() => {
-                    if (canSave) {
-                      onSave(Number(credit), Number(green))
-                    }
-                  }}
-                >
-                  {saveLabel}
+                <Button size="sm" variant="primary" disabled={!canSave || saving} onClick={save}>
+                  {saving ? 'Waiting for confirmation…' : saveLabel}
                 </Button>
               </div>
             </div>

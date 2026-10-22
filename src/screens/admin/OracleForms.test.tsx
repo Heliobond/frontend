@@ -41,7 +41,7 @@ vi.mock('@/components', async (importOriginal) => {
 })
 
 describe('OracleForms validation', () => {
-  const noop = () => {}
+  const noop = async () => true
 
   it('disables score submission when both fields are empty', () => {
     render(
@@ -85,7 +85,7 @@ describe('OracleForms validation', () => {
   })
 
   it('clamps scores to 0-100 on submission', () => {
-    const onPushScores = vi.fn()
+    const onPushScores = vi.fn().mockResolvedValue(true)
     render(
       <OracleForms
         projects={mockProjects}
@@ -130,7 +130,7 @@ describe('OracleForms validation', () => {
   })
 
   it('calls onFund with correct values on valid submission', () => {
-    const onFund = vi.fn()
+    const onFund = vi.fn().mockResolvedValue(true)
     render(
       <OracleForms projects={mockProjects} liquid={50_000} onPushScores={noop} onFund={onFund} />,
     )

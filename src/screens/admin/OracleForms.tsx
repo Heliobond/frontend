@@ -50,14 +50,24 @@ export interface OracleFormsProps {
   projects: RegistryEntry[]
   liquid: number
   guardrails?: FundingGuardrails
-  onPushScores: (id: number, credit: number, green: number) => void
-  onFund: (id: number, amount: number) => void
+  /** Set when score updates are blocked (e.g. the registry is paused). Disables the form. */
+  scoresDisabledReason?: string
+  /** Set when funding is blocked (e.g. the vault or registry is paused). Disables the form. */
+  fundDisabledReason?: string
+  /**
+   * Resolve true when the transaction succeeded. Resolve false (or reject) when it
+   * failed, so the form keeps the admin's input for a retry.
+   */
+  onPushScores: (id: number, credit: number, green: number) => Promise<boolean>
+  onFund: (id: number, amount: number) => Promise<boolean>
 }
 
 export function OracleForms({
   projects,
   liquid,
   guardrails,
+  scoresDisabledReason,
+  fundDisabledReason,
   onPushScores,
   onFund,
 }: OracleFormsProps) {
@@ -68,10 +78,12 @@ export function OracleForms({
   const [scoreId, setScoreId] = useState(first)
   const [credit, setCredit] = useState('')
   const [green, setGreen] = useState('')
+  const [scorePending, setScorePending] = useState(false)
 
   // Fund form state.
   const [fundId, setFundId] = useState(first)
   const [amount, setAmount] = useState('')
+  const [fundPending, setFundPending] = useState(false)
 
   const scoresValid = isSafeScore(credit) && isSafeScore(green) && validateScores(credit, green)
 
@@ -83,22 +95,33 @@ export function OracleForms({
   const deployable = isPaused ? 0 : Math.max(0, Math.min(afterReserve, capacity, maxTx))
 
   const amountN = parseAmount(amount)
-  const fundValid = !isPaused && isSafeAmount(amount, deployable)
+  const fundValid = !isPaused && !fundDisabledReason && isSafeAmount(amount, deployable)
   const overLiquid = amountN > deployable
 
   const target = projects.find((p) => p.id === scoreId)
 
-  const submitScores = () => {
-    if (!scoresValid) return
-    onPushScores(scoreId, clampScore(credit), clampScore(green))
-    setCredit('')
-    setGreen('')
+  // Inputs stay filled on failure, so the admin can retry. They clear only on success.
+  const submitScores = async () => {
+    if (!scoresValid || scoresDisabledReason || scorePending) return
+    setScorePending(true)
+    try {
+      if (await onPushScores(scoreId, clampScore(credit), clampScore(green))) {
+        setCredit('')
+        setGreen('')
+      }
+    } finally {
+      setScorePending(false)
+    }
   }
 
-  const submitFund = () => {
-    if (!fundValid) return
-    onFund(fundId, amountN)
-    setAmount('')
+  const submitFund = async () => {
+    if (!fundValid || fundPending) return
+    setFundPending(true)
+    try {
+      if (await onFund(fundId, amountN)) setAmount('')
+    } finally {
+      setFundPending(false)
+    }
   }
 
   return (
@@ -134,14 +157,15 @@ export function OracleForms({
             ? t('scoresHint', { credit: target.credit, green: target.green })
             : t('scoresHintShort')}
         </p>
+        {scoresDisabledReason && <BlockedNotice>{scoresDisabledReason}</BlockedNotice>}
         <Button
           size="sm"
           variant="primary"
-          disabled={!scoresValid}
-          reason={t('scoresReason')}
+          disabled={!scoresValid || Boolean(scoresDisabledReason) || scorePending}
+          reason={scoresDisabledReason ?? t('scoresReason')}
           onClick={submitScores}
         >
-          {t('submitScores')}
+          {scorePending ? 'Waiting for confirmation…' : t('submitScores')}
         </Button>
       </Panel>
 
@@ -183,6 +207,7 @@ export function OracleForms({
               </p>
             </div>
           )}
+          {fundDisabledReason && !isPaused && <BlockedNotice>{fundDisabledReason}</BlockedNotice>}
           {!isPaused && overLiquid && (
             <div role="status" style={warningBoxStyle}>
               <p style={warningTextStyle}>
@@ -202,19 +227,29 @@ export function OracleForms({
         <Button
           size="sm"
           variant="primary"
-          disabled={!fundValid}
+          disabled={!fundValid || fundPending}
           reason={
-            isPaused
+            fundDisabledReason ??
+            (isPaused
               ? 'Registry is paused'
               : overLiquid
                 ? 'Amount exceeds deployable limit'
-                : t('fundReasonEmpty')
+                : t('fundReasonEmpty'))
           }
           onClick={submitFund}
         >
-          {t('submitFund')}
+          {fundPending ? 'Waiting for confirmation…' : t('submitFund')}
         </Button>
       </Panel>
+    </div>
+  )
+}
+
+/** Explains why a form is locked. Shown above the submit button, next to the reason on hover. */
+function BlockedNotice({ children }: { children: ReactNode }) {
+  return (
+    <div role="status" style={warningBoxStyle}>
+      <p style={warningTextStyle}>{children}</p>
     </div>
   )
 }
