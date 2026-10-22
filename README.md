@@ -88,7 +88,7 @@ only the values needed for the mode you are testing.
 | Variable                           | Required? | Default / fallback                          | Purpose                                                                              |
 | ---------------------------------- | --------- | ------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `NEXT_PUBLIC_API_URL`              | No        | Demo fixture data                           | Backend API base URL, for example `http://localhost:3001`.                           |
-| `NEXT_PUBLIC_STELLAR_NETWORK`      | No        | `public`                                    | Stellar network for wallet and Soroban helpers. Use `testnet` for local/dev testing. |
+| `NEXT_PUBLIC_STELLAR_NETWORK`      | No        | `testnet`                                   | Stellar network for wallet and Soroban helpers. Accepted values: `testnet` or `public`; any other value is rejected. |
 | `NEXT_PUBLIC_VAULT_CONTRACT_ID`    | No        | Demo vault mode                             | Soroban vault contract ID for live vault reads and transactions.                     |
 | `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | No        | Fixtures for the project list               | Soroban `ProjectRegistry` ID, for live project and score-history reads.              |
 | `NEXT_PUBLIC_ADMIN_ADDRESS`        | No        | Deployer address of the configured contract | Address allowed to use the admin / oracle console.                                   |
