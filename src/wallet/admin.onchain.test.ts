@@ -152,13 +152,13 @@ describe('admin on-chain client local network support (#720)', () => {
     const horizonUrl = 'http://localhost:8000'
     horizonMock.loadAccount.mockResolvedValue(new Account(TEST_ADDRESS, '0'))
     rpcMock.simulateTransaction.mockResolvedValue({ error: 'stop after inspecting transaction' })
-    const { submitPause } = await loadAdmin({
+    const { submitSetPaused } = await loadAdmin({
       NEXT_PUBLIC_SOROBAN_RPC_URL: rpcUrl,
       NEXT_PUBLIC_HORIZON_URL: horizonUrl,
       NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: customPassphrase,
     })
 
-    await expect(submitPause(true, TEST_ADDRESS, vi.fn())).rejects.toThrow(
+    await expect(submitSetPaused('vault', true, TEST_ADDRESS, vi.fn())).rejects.toThrow(
       'Simulation failed: stop after inspecting transaction',
     )
 
@@ -181,5 +181,74 @@ describe('admin on-chain client local network support (#720)', () => {
     expect(rpcMock.serverOptions[0]).toEqual({
       allowHttp: allowHttpFor('https://soroban-testnet.stellar.org'),
     })
+  })
+})
+
+// Circuit breakers (#695): reads of is_paused / get_emergency_admin and the demo fallback.
+describe('pause state reads and writes (#695)', () => {
+  const methodOf = (tx: Transaction) =>
+    (tx.operations[0] as unknown as { func: xdr.HostFunction }).func
+      .invokeContract()
+      .functionName()
+      .toString()
+
+  it('reads is_paused and the emergency admin from the vault', async () => {
+    rpcMock.simulateTransaction.mockImplementation(async (tx: Transaction) => {
+      if (methodOf(tx) === 'is_paused') return okSimulation(nativeToScVal(true))
+      return okSimulation(nativeToScVal(TEST_ADDRESS, { type: 'address' }))
+    })
+    const { getPauseState } = await loadAdmin()
+
+    await expect(getPauseState('vault', TEST_ADDRESS)).resolves.toEqual({
+      paused: true,
+      emergencyAdmin: TEST_ADDRESS,
+    })
+  })
+
+  it('reports no emergency admin when get_emergency_admin returns None', async () => {
+    rpcMock.simulateTransaction.mockImplementation(async (tx: Transaction) => {
+      if (methodOf(tx) === 'is_paused') return okSimulation(nativeToScVal(false))
+      return okSimulation(nativeToScVal(null))
+    })
+    const { getPauseState } = await loadAdmin()
+
+    await expect(getPauseState('registry', TEST_ADDRESS)).resolves.toEqual({
+      paused: false,
+      emergencyAdmin: null,
+    })
+  })
+
+  it('returns unknown state when the simulation fails', async () => {
+    rpcMock.simulateTransaction.mockRejectedValue(new Error('RPC down'))
+    const { getPauseState } = await loadAdmin()
+
+    await expect(getPauseState('vault', TEST_ADDRESS)).resolves.toEqual({
+      paused: null,
+      emergencyAdmin: null,
+    })
+  })
+
+  it('returns unknown state without calling RPC when the contract is not configured', async () => {
+    const { getPauseState } = await loadAdmin({ NEXT_PUBLIC_REGISTRY_CONTRACT_ID: '' })
+
+    await expect(getPauseState('registry', TEST_ADDRESS)).resolves.toEqual({
+      paused: null,
+      emergencyAdmin: null,
+    })
+    expect(rpcMock.simulateTransaction).not.toHaveBeenCalled()
+  })
+
+  it('simulates a demo pause when no vault is configured', async () => {
+    vi.useFakeTimers()
+    try {
+      const { submitSetPaused } = await loadAdmin({ NEXT_PUBLIC_VAULT_CONTRACT_ID: '' })
+      const pending = submitSetPaused('vault', true, TEST_ADDRESS, vi.fn())
+      await vi.advanceTimersByTimeAsync(1500)
+
+      await expect(pending).resolves.toEqual({ hash: expect.stringMatching(/^demo/) })
+      expect(rpcMock.sendTransaction).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

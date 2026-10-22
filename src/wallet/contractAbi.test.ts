@@ -516,19 +516,29 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       },
     )
 
-    // 3. submitPause calls pause(bool) with 1 argument instead of 0 arguments (Issue #719)
-    it.fails(
-      'reports mismatch: admin.ts submitPause passes 1 arg to pause() which expects 0 (#719)',
-      async () => {
-        const { submitPause } = await import('./admin')
-        await submitPause(true, TEST_ACCOUNT, mockSign, false).catch(() => {})
+    // 3. pause() and unpause() take 0 arguments; the emergency variants take the caller (#719, #695)
+    it('calls pause() and unpause() with no arguments, matching the spec', async () => {
+      const { submitSetPaused } = await import('./admin')
+      await submitSetPaused('vault', true, TEST_ACCOUNT, mockSign)
+      await submitSetPaused('vault', false, TEST_ACCOUNT, mockSign)
 
-        const call = mockState.recordedCalls.find((c) => c.method === 'pause')
-        expect(call).toBeDefined()
-        // Must fail because pause() expects 0 arguments in Soroban, but admin.ts sends [nativeToScVal(paused)]
-        assertContractCallMatchesSpec(call!, 'investment_vault', VAULT_ID, REGISTRY_ID)
-      },
-    )
+      const pauseCall = mockState.recordedCalls.find((c) => c.method === 'pause')
+      const unpauseCall = mockState.recordedCalls.find((c) => c.method === 'unpause')
+      expect(pauseCall?.args).toHaveLength(0)
+      expect(unpauseCall?.args).toHaveLength(0)
+      assertContractCallMatchesSpec(pauseCall!, 'investment_vault', VAULT_ID, REGISTRY_ID)
+      assertContractCallMatchesSpec(unpauseCall!, 'investment_vault', VAULT_ID, REGISTRY_ID)
+    })
+
+    it('calls emergency_pause with the caller address, matching the spec', async () => {
+      const { submitSetPaused } = await import('./admin')
+      await submitSetPaused('registry', true, TEST_ACCOUNT, mockSign, { emergency: true })
+
+      const call = mockState.recordedCalls.find((c) => c.method === 'emergency_pause')
+      expect(call).toBeDefined()
+      expect(call!.args).toHaveLength(1)
+      assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+    })
 
     // 4. Verification that type mismatches (e.g. u64 vs u32) are detected
     it('detects type mismatches when u64 is supplied where contract expects u32', () => {

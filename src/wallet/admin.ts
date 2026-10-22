@@ -401,26 +401,88 @@ export async function submitSetWhitelist(
   return { hash, approvalCount: isMultisig ? 1 : undefined }
 }
 
-/** Execute pause on InvestmentVault */
-export async function submitPause(
+export type PausableContract = 'vault' | 'registry'
+
+export interface PauseState {
+  /** null when the contract is not configured or the read failed. */
+  paused: boolean | null
+  /** null when no emergency admin is set. */
+  emergencyAdmin: string | null
+}
+
+function pausableContractId(contract: PausableContract): string | undefined {
+  return contract === 'vault' ? VAULT_CONTRACT_ID : REGISTRY_CONTRACT_ID
+}
+
+/** Simulate a view function and return its native value, or null if the call fails. */
+async function queryMethodValue(
+  contractId: string,
+  method: string,
+  sourceAddress: string,
+): Promise<unknown> {
+  const { Contract, TransactionBuilder, Account, scValToNative } =
+    await import('@stellar/stellar-sdk')
+  try {
+    const server = await getSorobanServer(RPC_URL)
+    const contract = new Contract(contractId)
+    const source = new Account(sourceAddress, '0')
+    const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase: NETWORK_PASSPHRASE })
+      .addOperation(contract.call(method))
+      .setTimeout(0)
+      .build()
+    const sim = (await withTimeout(
+      server.simulateTransaction(tx),
+      `Simulate ${method} timed out`,
+      3000,
+    )) as { result?: { retval?: xdr.ScVal } }
+    if (sim && 'result' in sim && sim.result?.retval) return scValToNative(sim.result.retval)
+  } catch {
+    /* view call failed or timed out */
+  }
+  return null
+}
+
+/** Live pause state and emergency admin for one contract. */
+export async function getPauseState(
+  contract: PausableContract,
+  address: string | null,
+): Promise<PauseState> {
+  const contractId = pausableContractId(contract)
+  if (!contractId || !address) return { paused: null, emergencyAdmin: null }
+
+  const [paused, emergencyAdmin] = await Promise.all([
+    queryMethodValue(contractId, 'is_paused', address),
+    queryMethodValue(contractId, 'get_emergency_admin', address),
+  ])
+  return {
+    paused: typeof paused === 'boolean' ? paused : null,
+    emergencyAdmin: typeof emergencyAdmin === 'string' ? emergencyAdmin : null,
+  }
+}
+
+/**
+ * Pause or resume a vault or registry. The owner calls pause() / unpause() with
+ * no arguments. The emergency admin calls emergency_pause(caller) /
+ * emergency_unpause(caller) with its own address. The contract spec has no
+ * *_approved variant for pause, so multisig deployments use the owner path.
+ */
+export async function submitSetPaused(
+  contract: PausableContract,
   paused: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
+  { emergency = false }: { emergency?: boolean } = {},
 ): Promise<AdminTxResult> {
-  if (!VAULT_CONTRACT_ID) {
+  const contractId = pausableContractId(contract)
+  if (!contractId) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash }
   }
 
-  const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'pause_approved' : 'pause'
-  const hash = await sendContractTx(
-    VAULT_CONTRACT_ID,
-    method,
-    [nativeToScVal(paused)],
-    address,
-    sign,
-  )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  let method: string
+  if (emergency) method = paused ? 'emergency_pause' : 'emergency_unpause'
+  else method = paused ? 'pause' : 'unpause'
+  const args = emergency ? [address] : []
+  const hash = await sendContractTx(contractId, method, args, address, sign)
+  return { hash }
 }
