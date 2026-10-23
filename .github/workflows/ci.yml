@@ -248,6 +248,11 @@ jobs:
 
       - name: Fail if a server-only secret reaches the client bundle
         run: |
+          # Fail closed: a missing or empty bundle directory must not look clean.
+          test -n "$(ls -A .next/static 2>/dev/null)" || {
+            echo "::error::.next/static is missing or empty, so the check cannot run."
+            exit 1
+          }
           if grep -rl "canary-server-only-920" .next/static; then
             echo "::error::A server-only variable was inlined into the client bundle."
             exit 1
