@@ -85,15 +85,15 @@ cp .env.example .env.local
 The app runs without a `.env.local` file and falls back to bundled demo data. Set
 only the values needed for the mode you are testing.
 
-| Variable                           | Required? | Default / fallback                          | Purpose                                                                              |
-| ---------------------------------- | --------- | ------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_API_URL`              | No        | Demo fixture data                           | Backend API base URL, for example `http://localhost:3001`.                           |
+| Variable                           | Required? | Default / fallback                          | Purpose                                                                                                              |
+| ---------------------------------- | --------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`              | No        | Demo fixture data                           | Backend API base URL, for example `http://localhost:3001`.                                                           |
 | `NEXT_PUBLIC_STELLAR_NETWORK`      | No        | `testnet`                                   | Stellar network for wallet and Soroban helpers. Accepted values: `testnet` or `public`; any other value is rejected. |
-| `NEXT_PUBLIC_VAULT_CONTRACT_ID`    | No        | Demo vault mode                             | Soroban vault contract ID for live vault reads and transactions.                     |
-| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | No        | Fixtures for the project list               | Soroban `ProjectRegistry` ID, for live project and score-history reads.              |
-| `NEXT_PUBLIC_ADMIN_ADDRESS`        | No        | Deployer address of the configured contract | Address allowed to use the admin / oracle console.                                   |
-| `NEXT_PUBLIC_SOROBAN_RPC_URL`      | No        | Network-specific Stellar RPC URL            | Override the Soroban RPC endpoint.                                                   |
-| `NEXT_PUBLIC_HORIZON_URL`          | No        | Network-specific Horizon URL                | Override the Horizon endpoint used for transaction account loading.                  |
+| `NEXT_PUBLIC_VAULT_CONTRACT_ID`    | No        | Demo vault mode                             | Soroban vault contract ID for live vault reads and transactions.                                                     |
+| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | No        | Fixtures for the project list               | Soroban `ProjectRegistry` ID, for live project and score-history reads.                                              |
+| `NEXT_PUBLIC_ADMIN_ADDRESS`        | No        | Deployer address of the configured contract | Address allowed to use the admin / oracle console.                                                                   |
+| `NEXT_PUBLIC_SOROBAN_RPC_URL`      | No        | Network-specific Stellar RPC URL            | Override the Soroban RPC endpoint.                                                                                   |
+| `NEXT_PUBLIC_HORIZON_URL`          | No        | Network-specific Horizon URL                | Override the Horizon endpoint used for transaction account loading.                                                  |
 
 `NEXT_PUBLIC_DEMO_MODE=true` forces fixtures even when `NEXT_PUBLIC_API_URL` is
 set. The remaining variables (CSP mode, telemetry sink, auth URL, release tag,

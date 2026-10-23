@@ -78,11 +78,7 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const locale = useSyncExternalStore(
-    subscribeToLocaleChanges,
-    getCookieLocale,
-    getServerLocale,
-  )
+  const locale = useSyncExternalStore(subscribeToLocaleChanges, getCookieLocale, getServerLocale)
 
   useEffect(() => {
     console.error('[Heliobond] root error:', error)

@@ -95,9 +95,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
                 color: 'var(--ink-60)',
               }}
             >
-              {pendingCount > 0
-                ? t('pendingCount', { count: pendingCount })
-                : t('sessionHistory')}
+              {pendingCount > 0 ? t('pendingCount', { count: pendingCount }) : t('sessionHistory')}
             </span>
           </div>
           <button

@@ -44,9 +44,7 @@ export function RecurringInvestmentOptions({
               </option>
             ))}
           </select>
-          <span style={hintStyle}>
-            {t('scheduleHint')}
-          </span>
+          <span style={hintStyle}>{t('scheduleHint')}</span>
         </label>
       )}
     </fieldset>
