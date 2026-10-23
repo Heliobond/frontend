@@ -200,32 +200,48 @@ export async function checkIsAdmin(address: string | null): Promise<boolean> {
   return roles.isAdmin
 }
 
-/** Check if contract deployment uses multisig */
+/** Multisig configuration from get_multisig_admin: signers and threshold (0 = off). */
+export interface MultisigConfig {
+  signers: string[]
+  threshold: number
+}
+
+/** Read multisig config from get_multisig_admin. Threshold 0 means multisig is off. */
+export async function getMultisigConfig(
+  contractId: string,
+  address: string,
+): Promise<MultisigConfig> {
+  const { Contract, TransactionBuilder, Account, scValToNative } =
+    await import('@stellar/stellar-sdk')
+  const server = await getSorobanServer(RPC_URL)
+  const contract = new Contract(contractId)
+  const source = new Account(address, '0')
+  const networkPassphrase = NETWORK_PASSPHRASE
+
+  const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
+    .addOperation(contract.call('get_multisig_admin'))
+    .setTimeout(0)
+    .build()
+
+  const sim = await withTimeout(server.simulateTransaction(tx), 'Simulate timed out', 3000)
+  if ('result' in sim && sim.result?.retval) {
+    const res = scValToNative(sim.result.retval) as [string[], number]
+    return { signers: res[0] ?? [], threshold: res[1] ?? 0 }
+  }
+  return { signers: [], threshold: 0 }
+}
+
+/** Check if contract deployment uses multisig (threshold > 0). */
 export async function isMultisigDeployment(address?: string): Promise<boolean> {
   const contractId = VAULT_CONTRACT_ID || REGISTRY_CONTRACT_ID
   if (!contractId || !address) return false
 
   try {
-    const { Contract, TransactionBuilder, Account, scValToNative } =
-      await import('@stellar/stellar-sdk')
-    const server = await getSorobanServer(RPC_URL)
-    const contract = new Contract(contractId)
-    const source = new Account(address, '0')
-    const networkPassphrase = NETWORK_PASSPHRASE
-
-    const tx = new TransactionBuilder(source, { fee: '100', networkPassphrase })
-      .addOperation(contract.call('is_multisig'))
-      .setTimeout(0)
-      .build()
-
-    const sim = await withTimeout(server.simulateTransaction(tx), 'Simulate timed out', 3000)
-    if ('result' in sim && sim.result?.retval) {
-      return Boolean(scValToNative(sim.result.retval))
-    }
+    const config = await getMultisigConfig(contractId, address)
+    return config.threshold > 0
   } catch {
     return false
   }
-  return false
 }
 
 async function sendContractTx(
@@ -343,16 +359,21 @@ export async function submitFundProject(
   address: string,
   sign: (xdr: string) => Promise<string>,
   isMultisig = false,
+  approvals: string[] = [],
 ): Promise<AdminTxResult> {
   if (!VAULT_CONTRACT_ID) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash, approvalCount: isMultisig ? approvals.length || 1 : undefined }
   }
 
-  const method = isMultisig ? 'fund_project_approved' : 'fund_project'
+  const method = isMultisig ? 'fund_project_with_approvals' : 'fund_project'
   const args = buildFundProjectArgs(projectId, amount)
+  if (isMultisig) {
+    const { Address } = await import('@stellar/stellar-sdk')
+    args.push(approvals.map((a) => new Address(a).toScVal()) as never)
+  }
   const hash = await sendContractTx(VAULT_CONTRACT_ID, method, args, address, sign)
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  return { hash, approvalCount: isMultisig ? approvals.length || 1 : undefined }
 }
 
 /** Execute update_impact_score on ProjectRegistry / InvestmentVault */
@@ -363,43 +384,46 @@ export async function submitUpdateScores(
   address: string,
   sign: (xdr: string) => Promise<string>,
   isMultisig = false,
+  approvals: string[] = [],
 ): Promise<AdminTxResult> {
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash, approvalCount: isMultisig ? approvals.length || 1 : undefined }
   }
 
   const method = isMultisig ? 'update_impact_score_approved' : 'update_impact_score'
   const args = buildUpdateScoresArgs(projectId, credit, green)
+  if (isMultisig) {
+    const { Address } = await import('@stellar/stellar-sdk')
+    args.push(approvals.map((a) => new Address(a).toScVal()) as never)
+  }
   const hash = await sendContractTx(targetContract, method, args, address, sign)
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  return { hash, approvalCount: isMultisig ? approvals.length || 1 : undefined }
 }
 
-/** Execute set_whitelist on ProjectRegistry */
+/** Execute set_whitelist on ProjectRegistry. No multisig variant exists. */
 export async function submitSetWhitelist(
   creatorAddress: string,
   approved: boolean,
   address: string,
   sign: (xdr: string) => Promise<string>,
-  isMultisig = false,
 ): Promise<AdminTxResult> {
   const targetContract = REGISTRY_CONTRACT_ID || VAULT_CONTRACT_ID
   if (!targetContract) {
     const hash = await simulateDemoTx()
-    return { hash, approvalCount: isMultisig ? 1 : undefined }
+    return { hash }
   }
 
   const { nativeToScVal } = await import('@stellar/stellar-sdk')
-  const method = isMultisig ? 'set_whitelist_approved' : 'set_whitelist'
   const hash = await sendContractTx(
     targetContract,
-    method,
+    'set_whitelist',
     [creatorAddress, nativeToScVal(approved)],
     address,
     sign,
   )
-  return { hash, approvalCount: isMultisig ? 1 : undefined }
+  return { hash }
 }
 
 export type PausableContract = 'vault' | 'registry'

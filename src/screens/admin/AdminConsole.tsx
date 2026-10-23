@@ -123,12 +123,19 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const registryPaused = pauseStates.registry.paused === true
 
   // A pause blocks the forms it gates. The reason is shown on each locked control.
-  const fundBlockedReason = vaultPaused
-    ? t('vaultPausedReason')
+  // Multisig deployments block fund/score forms until the multi-signer flow ships.
+  const fundBlockedReason = isMultisig
+    ? t('multisigBlockedReason')
+    : vaultPaused
+      ? t('vaultPausedReason')
+      : registryPaused
+        ? t('registryPausedReason')
+        : undefined
+  const scoresBlockedReason = isMultisig
+    ? t('multisigBlockedReason')
     : registryPaused
       ? t('registryPausedReason')
       : undefined
-  const scoresBlockedReason = registryPaused ? t('registryPausedReason') : undefined
   const whitelistBlockedReason = registryPaused ? t('registryPausedReason') : undefined
 
   // Live contract reads on mount
@@ -208,7 +215,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastScoresTitle'),
         message:
           t('toastScoresMsg', { name, credit, green }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -248,7 +255,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastFundTitle'),
         message:
           t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -303,14 +310,13 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         status === 'approved',
         address ?? '',
         sign,
-        isMultisig,
       )
       toast({
         tone: toneMap[status],
         title: titleMap[status],
         message:
           messageMap[status] +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : ''),
         action:
           status !== 'approved' ? (
             <button

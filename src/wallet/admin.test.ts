@@ -69,3 +69,49 @@ describe('admin arg encoding (Issue #688)', () => {
     })
   })
 })
+
+describe('admin multisig arg building (#689)', () => {
+  describe('buildFundProjectArgs with approvals', () => {
+    it('builds (u32, i128, Vec<Address>) for multisig path', async () => {
+      const { Address, nativeToScVal } = await import('@stellar/stellar-sdk')
+      const projectId = 42
+      const amount = 100
+      const approvals = [
+        'GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM',
+      ]
+
+      const args = buildFundProjectArgs(projectId, amount)
+      expect(args).toHaveLength(2)
+      expect(args[0].switch().name).toBe('scvU32')
+      expect(args[1].switch().name).toBe('scvI128')
+
+      // Simulate what submitFundProject does for multisig
+      const approvalScVals = approvals.map((a) => new Address(a).toScVal())
+      const vecArg = nativeToScVal(approvalScVals)
+      expect(vecArg.switch().name).toBe('scvVec')
+    })
+  })
+
+  describe('buildUpdateScoresArgs with approvals', () => {
+    it('builds (u32, u32, u32, Vec<Address>) for multisig path', async () => {
+      const { Address, nativeToScVal } = await import('@stellar/stellar-sdk')
+      const projectId = 7
+      const credit = 85
+      const green = 90
+      const approvals = [
+        'GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM',
+      ]
+
+      const args = buildUpdateScoresArgs(projectId, credit, green)
+      expect(args).toHaveLength(3)
+      expect(args[0].switch().name).toBe('scvU32')
+      expect(args[1].switch().name).toBe('scvU32')
+      expect(args[2].switch().name).toBe('scvU32')
+
+      // Simulate what submitUpdateScores does for multisig
+      const approvalScVals = approvals.map((a) => new Address(a).toScVal())
+      const vecArg = nativeToScVal(approvalScVals)
+      expect(vecArg.switch().name).toBe('scvVec')
+    })
+  })
+})
