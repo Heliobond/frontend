@@ -191,15 +191,66 @@ describe('bun version parity (#790)', () => {
     expect(e2eChain).not.toMatch(/bun-version:\s*['"]?\d+\.\d+/i)
 
     // Every oven-sh/setup-bun step must specify bun-version-file: package.json
-    const ciSetupBunCount = (ci.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    // The ref is a commit SHA (#916), so match the action, not its version.
+    const ciSetupBunCount = (ci.match(/uses:\s*oven-sh\/setup-bun@/g) || []).length
     const ciVersionFileCount = (ci.match(/bun-version-file:\s*package\.json/g) || []).length
     // quality, supply-chain, test, build and e2e
     expect(ciSetupBunCount).toBe(5)
     expect(ciVersionFileCount).toBe(ciSetupBunCount)
 
-    const e2eSetupBunCount = (e2eChain.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    const e2eSetupBunCount = (e2eChain.match(/uses:\s*oven-sh\/setup-bun@/g) || []).length
     const e2eVersionFileCount = (e2eChain.match(/bun-version-file:\s*package\.json/g) || []).length
     expect(e2eSetupBunCount).toBe(1)
     expect(e2eVersionFileCount).toBe(e2eSetupBunCount)
+  })
+})
+
+/**
+ * GitHub Actions hardening (#916). A tag or branch ref can be retargeted by the
+ * publisher that owns it, so CI must only ever run code from an immutable commit:
+ * every `uses:` is pinned to a full SHA (with the release it corresponds to in a
+ * trailing comment for Dependabot), no workflow hands out token permissions up
+ * front, and no checkout leaves the workflow credential in `.git/config`.
+ */
+describe('GitHub Actions hardening (#916)', () => {
+  const dir = path.join(ROOT, '.github', 'workflows')
+  const workflows = readdirSync(dir)
+    .filter((file) => file.endsWith('.yml'))
+    .map(
+      (file) =>
+        [
+          file,
+          readFileSync(path.join(dir, file), 'utf8').replace(/\r\n/g, '\n').split('\n'),
+        ] as const,
+    )
+
+  it('pins every action to a full commit SHA and names its release', () => {
+    const unpinned = workflows.flatMap(([file, lines]) =>
+      lines
+        .filter((line) => line.includes('uses: '))
+        .filter((line) => !/uses: [\w./-]+@[0-9a-f]{40} # \S+/.test(line))
+        .map((line) => `${file}: ${line.trim()}`),
+    )
+    expect(unpinned).toEqual([])
+  })
+
+  it('gives every workflow an empty default token permission set', () => {
+    const inherited = workflows
+      .filter(([, lines]) => lines.filter((line) => /^permissions: \{\}$/.test(line)).length !== 1)
+      .map(([file]) => file)
+    expect(inherited).toEqual([])
+  })
+
+  it('stops every checkout from persisting the workflow credential', () => {
+    const missing = workflows.flatMap(([file, lines]) =>
+      lines
+        .map((line, i) => (/(^|\s)uses: actions\/checkout@/.test(line) ? i : -1))
+        .filter((i) => i >= 0)
+        .filter((i) =>
+          lines.slice(i, i + 8).every((next) => !/persist-credentials: false/.test(next)),
+        )
+        .map((i) => `${file}:${i + 1}`),
+    )
+    expect(missing).toEqual([])
   })
 })
