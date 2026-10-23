@@ -296,3 +296,57 @@ real provider rather than a mocked context.
 
 `subscribe()` also listens for the `storage` event so another tab's write
 re-renders this one, and removes the listener on unsubscribe.
+
+---
+
+## 6. Internationalization & Locale Strategy
+
+### 6.1 Cookie-only locale routing (decision)
+
+**Decision: keep locale selection cookie-only. Do not introduce a `[locale]` URL
+segment or `localePrefix` routing.**
+
+The app renders every route at a single canonical URL. The active locale lives in
+the `NEXT_LOCALE` cookie, which is written by the in-app language switcher and,
+on a first visit with no cookie, negotiated from `Accept-Language` in
+[`src/proxy.ts`](src/proxy.ts) (see [`src/i18n/negotiate.ts`](src/i18n/negotiate.ts)).
+[`src/i18n/request.ts`](src/i18n/request.ts) reads that cookie and falls back to
+`en`. `next-intl` is configured with `localePrefix: 'never'`, so there are no
+`/fr/...` style routes and no automatic `alternateLinks`.
+
+Why cookie-only:
+
+- **Wallet-first product.** Most of the surface area (portfolio, deposit,
+  withdraw, connect, admin) is behind a wallet connection and is deliberately
+  `noindex`. Search traffic only matters for the public marketing pages
+  (`/`, `/explore`, `/learn`, `/risk`, `/verify`), and those already ship a
+  single, well-linked English document.
+- **URL stability.** A locale prefix would either break every shared link and
+  bookmark or require a redirect layer in `proxy.ts` for the existing English
+  URLs. Neither is worth the SEO upside for four non-English catalogs.
+- **Canonical URLs stay honest.** `layout.tsx` emits `alternates.canonical: '/'`
+  and the sitemap lists one URL per route. Introducing hreflang without a real
+  per-locale URL would produce `x-default`/`fr` alternates that all resolve to
+  the same document — which search engines treat as a soft penalty, not a win.
+
+Consequences and tradeoffs:
+
+- Crawlers and shared links always see the English document. A recipient with a
+  French browser who opens a shared link gets English unless they pick French
+  once; that choice then sticks via the cookie.
+- `Accept-Language` negotiation (#895) covers the common "first visit in a
+  non-English browser" case without touching URLs, because the cookie is set
+  before the first render reads it.
+- If product later wants indexed non-English marketing pages, migrate those
+  routes to `localePrefix: 'as-needed'` behind `proxy.ts`, keep the existing
+  English URLs working via redirects, and emit per-locale `hreflang` +
+  sitemap entries. That migration is intentionally out of scope here.
+
+### 6.2 Catalog layout
+
+Message catalogs live in [`messages/{en,fr,es,ar,pt}.json`](messages) and are
+namespaced by surface (`Portfolio`, `Deposit`, `Nav`, `Components.*`, …).
+Catalog parity across the five locales is enforced by
+`src/__tests__/catalog-parity.test.ts`, and unused keys are gated by
+`scripts/check-unused-keys.mjs`. ICU plurals and arguments are required so a
+key's shape matches across locales.
