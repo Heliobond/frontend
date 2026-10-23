@@ -13,14 +13,16 @@ name: Package risk scan
 on:
   pull_request:
 
-permissions:
-  contents: read
+# No job inherits a token grant; each one declares the minimum it needs (#916).
+permissions: {}
 
 jobs:
   socket:
     name: socket package risk
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:

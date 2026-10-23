@@ -14,8 +14,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
-permissions:
-  contents: read
+# No job inherits a token grant; each one declares the minimum it needs.
+permissions: {}
 
 concurrency:
   group: supply-chain-${{ github.event.pull_request.number }}
@@ -26,6 +26,8 @@ jobs:
     name: supply-chain review gate
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     env:
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
