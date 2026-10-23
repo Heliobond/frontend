@@ -191,13 +191,14 @@ describe('bun version parity (#790)', () => {
     expect(e2eChain).not.toMatch(/bun-version:\s*['"]?\d+\.\d+/i)
 
     // Every oven-sh/setup-bun step must specify bun-version-file: package.json
-    const ciSetupBunCount = (ci.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    const ciSetupBunCount = (ci.match(/uses:\s*oven-sh\/setup-bun@[0-9a-f]{40}/g) || []).length
     const ciVersionFileCount = (ci.match(/bun-version-file:\s*package\.json/g) || []).length
     // quality, supply-chain, test, build and e2e
     expect(ciSetupBunCount).toBe(5)
     expect(ciVersionFileCount).toBe(ciSetupBunCount)
 
-    const e2eSetupBunCount = (e2eChain.match(/uses:\s*oven-sh\/setup-bun@v2/g) || []).length
+    const e2eSetupBunCount = (e2eChain.match(/uses:\s*oven-sh\/setup-bun@[0-9a-f]{40}/g) || [])
+      .length
     const e2eVersionFileCount = (e2eChain.match(/bun-version-file:\s*package\.json/g) || []).length
     expect(e2eSetupBunCount).toBe(1)
     expect(e2eVersionFileCount).toBe(e2eSetupBunCount)

@@ -1,7 +1,9 @@
 'use client'
 
+import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
+import { formatDate, formatNumber } from '../lib/format'
 
 export interface PortfolioPerformancePoint {
   timestamp: string
@@ -45,19 +47,21 @@ function Series({
   values,
   color,
   unit = '',
+  locale,
 }: {
   label: string
   value: number
   values: number[]
   color: string
   unit?: string
+  locale: string
 }) {
   return (
     <div style={{ minWidth: 0, flex: '1 1 190px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <span>{label}</span>
         <strong>
-          {value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          {formatNumber(value, { appLocale: locale, maximumFractionDigits: 2 })}
           {unit}
         </strong>
       </div>
@@ -82,6 +86,7 @@ function Series({
 
 /** Historical portfolio value, return and yield from the indexed performance API. */
 export function PortfolioPerformanceChart({ address }: { address: string }) {
+  const locale = useLocale()
   const [points, setPoints] = useState<PortfolioPerformancePoint[]>([])
   const [loadedAddress, setLoadedAddress] = useState<string | null>(null)
 
@@ -140,6 +145,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
         <>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             <Series
+              locale={locale}
               label="Portfolio value"
               value={latest.valueUsdc}
               values={points.map((p) => p.valueUsdc)}
@@ -147,6 +153,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
               unit=" USDC"
             />
             <Series
+              locale={locale}
               label="Returns"
               value={latest.returnPct}
               values={points.map((p) => p.returnPct)}
@@ -154,6 +161,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
               unit="%"
             />
             <Series
+              locale={locale}
               label="Yield"
               value={latest.yieldPct}
               values={points.map((p) => p.yieldPct)}
@@ -164,9 +172,9 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
           <p
             style={{ margin: '12px 0 0', color: 'var(--ink-60)', fontSize: 'var(--type-caption)' }}
           >
-            Indexed snapshots, {new Date(points[0].timestamp).toLocaleDateString()} –{' '}
-            {new Date(latest.timestamp).toLocaleDateString()}. Historical returns and yields are not
-            guarantees of future performance.
+            Indexed snapshots, {formatDate(points[0].timestamp, locale)} –{' '}
+            {formatDate(latest.timestamp, locale)}. Historical returns and yields are not guarantees
+            of future performance.
           </p>
         </>
       )}

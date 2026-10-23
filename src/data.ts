@@ -52,18 +52,18 @@ export interface Activity {
   hash: string
 }
 
-import { formatPoolCounters } from './lib/format'
+import {
+  formatPoolCounters,
+  formatMoney,
+  formatNumber as formatNumberLocalized,
+} from './lib/format'
 
-export function formatCurrency(n: number): string {
-  return '$' + Math.floor(n).toLocaleString('en-US')
+export function formatCurrency(n: number, appLocale?: string): string {
+  return formatMoney(Math.floor(n), { includeSymbol: true, appLocale })
 }
 
-export function formatNumber(n: number): string {
-  return n.toLocaleString('en-US')
-}
-
-export function formatFixed(n: number, digits: number = 1): string {
-  return n.toFixed(digits)
+export function formatNumber(n: number, appLocale?: string): string {
+  return formatNumberLocalized(n, { appLocale })
 }
 
 export interface HeliobondData {

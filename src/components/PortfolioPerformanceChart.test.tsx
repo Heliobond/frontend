@@ -1,6 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render as rtlRender, screen, waitFor } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import type { ReactElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PortfolioPerformanceChart } from './PortfolioPerformanceChart'
+
+// The component reads the active locale for number formatting.
+const render = (ui: ReactElement) =>
+  rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <NextIntlClientProvider locale="en" messages={{}}>
+        {children}
+      </NextIntlClientProvider>
+    ),
+  })
 
 describe('PortfolioPerformanceChart', () => {
   afterEach(() => vi.restoreAllMocks())

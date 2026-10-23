@@ -57,7 +57,7 @@ const seriesValueStyle: React.CSSProperties = {
 function delta(first: number, last: number): string {
   const diff = last - first
   const sign = diff >= 0 ? '+' : '−'
-  return `${sign}${Math.abs(diff).toFixed(2)}`
+  return `${sign}${formatDecimal(Math.abs(diff), 2)}`
 }
 
 export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
@@ -116,7 +116,7 @@ export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
           width={180}
           height={40}
         />
-        <span style={seriesValueStyle}>{last.yield.toFixed(2)}%</span>
+        <span style={seriesValueStyle}>{formatDecimal(last.yield, 2)}%</span>
         {history.length > 1 && (
           <span style={captionStyle}>
             {delta(first.yield, last.yield)}pp {t('since', { date: first.date })}

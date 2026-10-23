@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Button } from './Button'
 import { CloseIcon } from './icons'
 import { type AlertOperator } from '../lib/yieldAlerts'
+import { formatDecimal } from '../lib/format'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
 /**
@@ -188,7 +189,7 @@ export function YieldAlertModal({
                 fontFeatureSettings: '"tnum" 1',
               }}
             >
-              {currentYield.toFixed(1)}%
+              {formatDecimal(currentYield, 1)}%
             </span>
           </div>
 
@@ -324,7 +325,7 @@ export function YieldAlertModal({
                   operator === 'above'
                     ? t('operatorAbove').toLowerCase()
                     : t('operatorBelow').toLowerCase(),
-                threshold: parsedThreshold.toFixed(1),
+                threshold: formatDecimal(parsedThreshold, 1),
               })}
             </div>
           )}

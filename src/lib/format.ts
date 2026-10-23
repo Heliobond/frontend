@@ -69,9 +69,11 @@ export function formatMoney(
     symbol?: string
     locale?: string
     appLocale?: string // The app's current locale (en, fr, es, ar, pt)
+    fractionDigits?: number
   },
 ): string {
   const localeCode = getLocaleCode(options?.appLocale)
+  const digits = options?.fractionDigits ?? 0
 
   // If using Intl.NumberFormat with currency
   if (options?.includeSymbol && !options?.symbol) {
@@ -79,15 +81,15 @@ export function formatMoney(
       const formatted = new Intl.NumberFormat(localeCode, {
         style: 'currency',
         currency: getCurrencyCode(options?.appLocale),
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       }).format(amount)
       return formatted
     } catch {
       // Fallback if Intl.NumberFormat fails
       const formatted = amount.toLocaleString(localeCode, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       })
       return `$${formatted}`
     }
@@ -95,14 +97,33 @@ export function formatMoney(
 
   // For backward compatibility with existing code that passes explicit symbol
   const formatted = amount.toLocaleString(options?.locale ?? localeCode, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   })
   if (options?.includeSymbol) {
     const symbol = options?.symbol ?? '$'
     return `${symbol}${formatted}`
   }
   return formatted
+}
+
+/**
+ * Formats a plain number with locale-aware grouping and decimal separators
+ * via Intl.NumberFormat (#903). Pass the active app locale so the output
+ * matches the user's chosen language rather than the browser default.
+ */
+export function formatNumber(
+  value: number,
+  options?: {
+    appLocale?: string
+    minimumFractionDigits?: number
+    maximumFractionDigits?: number
+  },
+): string {
+  return new Intl.NumberFormat(getLocaleCode(options?.appLocale), {
+    minimumFractionDigits: options?.minimumFractionDigits,
+    maximumFractionDigits: options?.maximumFractionDigits,
+  }).format(value)
 }
 
 /** Locale used by the date helpers when no active locale is supplied. */

@@ -23,6 +23,7 @@ import {
 import { useToast } from '../components/Toast'
 import { selectProjects } from '../state/selectors'
 import { useRemoteSync } from '../session/useRemoteSync'
+import { formatDecimal } from '../lib/format'
 
 interface YieldAlertContextValue {
   /** All saved alerts, most-recently-added last. */
@@ -120,7 +121,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
         toast({
           tone: 'solar',
           title: '🔔 Yield alert triggered',
-          message: `${alert.bondName} yield is ${currentYield.toFixed(1)}% — ${alert.operator === 'above' ? 'above' : 'below'} your ${alert.threshold}% threshold.`,
+          message: `${alert.bondName} yield is ${formatDecimal(currentYield, 1)}% — ${alert.operator === 'above' ? 'above' : 'below'} your ${alert.threshold}% threshold.`,
           duration: 8000,
         })
       }

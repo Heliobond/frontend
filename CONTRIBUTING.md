@@ -302,17 +302,17 @@ CONTRACTS_WASM_DIR=path/to/wasm ./scripts/contracts/update-specs.sh  # use anoth
    (`.github/workflows/ci.yml`): **`build`** (`bun run build`) and
    **`unit tests + coverage`** (`bun run test:coverage`). There is no CI job for
    lint, `format:check` or the Playwright suites, so those are yours to run
-   locally. **`main` is protected** and requires green CI plus human maintainer
-   review before merge.
+   locally. **`main` must be protected** so that green CI and human maintainer
+   review are required before merge (branch protection is tracked in #912).
 
 ### Review & Security Policy
 
 - **Human Approval Required:** No pull request can be merged automatically. At least one human approval from a repository maintainer (or CODEOWNER) is required before code lands on `main`.
 - **Advisory Automated Review:** The DeepSeek AI review workflow (`auto-review.yml`) is strictly advisory. It provides helpful PR summary comments but has no permission to approve PRs or trigger merges.
 - **Least-Privilege Workflows:** Workflows running on `pull_request_target` operate with least-privilege `GITHUB_TOKEN` credentials (read-only repository contents access). Administrative Personal Access Tokens (`OWNER_PAT`) are strictly prohibited in public workflow runs.
-- **Enforced Status Checks:** Branch protection on `main` requires the two CI checks — `build` and `unit tests + coverage` — to pass prior to merging. Nothing else is a required check: the DeepSeek `auto-review.yml` run is advisory, and `e2e-chain.yml` is nightly/on-demand rather than per-PR.
+- **Enforced Status Checks:** Branch protection on `main` must require the two CI checks — `build` and `unit tests + coverage` — to pass prior to merging. Nothing else is a required check: the DeepSeek `auto-review.yml` run is advisory, and `e2e-chain.yml` is nightly/on-demand rather than per-PR.
 
-`CODEOWNERS` requires maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, and CI.
+`CODEOWNERS` assigns maintainer review for sensitive areas — the wallet integration, design tokens, i18n catalogs, CI, and the supply-chain files (`package.json`, lockfiles, `.husky/`, `scripts/`, lint/build/test configs). Ownership is enforced only once branch protection requires code-owner review (#912).
 
 ### Reviewing a fork PR safely
 

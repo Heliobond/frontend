@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Badge, Button, Card, DemoDataBadge } from '@/components'
 import { useWallet } from '@/wallet/WalletProvider'
 import { usePortfolio } from '@/hooks/usePortfolio'
+import { formatDecimal } from '@/lib/format'
 import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
@@ -241,7 +242,7 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
                           index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                       }}
                     >
-                      {t('currencyFormat', { amount: line.totalDeposits.toFixed(2) })}
+                      {t('currencyFormat', { amount: formatDecimal(line.totalDeposits, 2) })}
                     </td>
                     <td
                       style={{
@@ -253,7 +254,7 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
                           index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                       }}
                     >
-                      {t('currencyFormat', { amount: line.totalWithdrawals.toFixed(2) })}
+                      {t('currencyFormat', { amount: formatDecimal(line.totalWithdrawals, 2) })}
                     </td>
                     <td
                       style={{
@@ -265,7 +266,7 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
                           index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                       }}
                     >
-                      {t('currencyFormat', { amount: line.totalDistributions.toFixed(2) })}
+                      {t('currencyFormat', { amount: formatDecimal(line.totalDistributions, 2) })}
                     </td>
                     <td
                       style={{
@@ -277,7 +278,7 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
                           index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                       }}
                     >
-                      {t('currencyFormat', { amount: line.realizedGainUSD.toFixed(2) })}
+                      {t('currencyFormat', { amount: formatDecimal(line.realizedGainUSD, 2) })}
                     </td>
                   </tr>
                 ))

@@ -4,6 +4,14 @@ name: CI
 # every pull request (#596). Each job is independent so a failure names the
 # thing that broke, and all of them are expected to be set as required status
 # checks on main.
+#
+# On pull requests the `changes` job reads the changed-file list and skips the
+# jobs a change cannot affect (docs-only PRs skip tests, build and e2e; test-only
+# PRs skip build and e2e). Skipping is done per job with `if:`, never with
+# workflow-level `paths:`, because a skipped job still satisfies a required
+# status check and a skipped workflow leaves it pending forever. `typecheck +
+# lint` (which also checks formatting) and `hidden-content check` always run.
+# Pushes to main run everything, and so does any failure to list the files.
 
 on:
   push:
@@ -15,29 +23,80 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: 22
 
 jobs:
+  changes:
+    name: changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      test: ${{ steps.filter.outputs.test }}
+      app: ${{ steps.filter.outputs.app }}
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - name: Decide which jobs this change needs
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -u
+          all() { echo "test=true" >> "$GITHUB_OUTPUT"; echo "app=true" >> "$GITHUB_OUTPUT"; echo "deps=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          [ "$EVENT" = "pull_request" ] || all
+
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)') || all
+          [ -n "$files" ] || all
+          [ "$(echo "$files" | wc -l)" -lt 3000 ] || all
+          echo "$files"
+
+          # Files nothing in the app, tests or build reads, except README.md,
+          # CONTRIBUTING.md and the PR template, which repo-hygiene tests read
+          # (so they run the unit tests, but not build or e2e).
+          docs='^(docs/.*|LICENSE|\.github/(ISSUE_TEMPLATE/.*|CODEOWNERS|dependabot\.yml)|.*\.md)$'
+          read_by_tests='^(README\.md|CONTRIBUTING\.md|\.github/PULL_REQUEST_TEMPLATE\.md)$'
+          # Files that only unit tests or other workflows exercise, not the app or its build.
+          no_app='(\.test\.[cm]?[jt]sx?$|^scripts/(audit-|lockfile-|require-bun|check-hidden|check-supply)|^\.github/workflows/(deploy|dependency-review|socket|scorecard|supply-chain|auto-review|e2e-chain)\.yml$)'
+          deps='^(package\.json|bun\.lock|bunfig\.toml|\.github/workflows/ci\.yml|scripts/(audit-|lockfile-|require-bun).*)$'
+
+          t=false; a=false; d=false
+          while IFS= read -r f; do
+            if echo "$f" | grep -Eq "$read_by_tests"; then t=true; continue; fi
+            if echo "$f" | grep -Eq "$docs"; then continue; fi
+            t=true
+            echo "$f" | grep -Eq "$no_app" || a=true
+            echo "$f" | grep -Eq "$deps" && d=true
+          done <<< "$files"
+          echo "test=$t" >> "$GITHUB_OUTPUT"
+          echo "app=$a" >> "$GITHUB_OUTPUT"
+          echo "deps=$d" >> "$GITHUB_OUTPUT"
+          echo "test=$t app=$a deps=$d"
+
   quality:
     name: typecheck + lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
       - name: Cache downloaded packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
@@ -63,11 +122,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -76,16 +135,18 @@ jobs:
 
   supply-chain:
     name: lockfile lint + audit gate
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -105,21 +166,23 @@ jobs:
 
   test:
     name: unit tests + coverage
+    needs: changes
+    if: needs.changes.outputs.test == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
       - name: Cache downloaded packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
@@ -135,7 +198,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage
           path: coverage
@@ -143,28 +206,30 @@ jobs:
 
   build:
     name: build
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
       - name: Cache downloaded packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
           restore-keys: bun-${{ runner.os }}-
 
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .next/cache
           key: next-build-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
@@ -196,21 +261,23 @@ jobs:
 
   e2e:
     name: e2e (playwright)
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
       - name: Cache downloaded packages
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
@@ -238,7 +305,7 @@ jobs:
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-report
           path: playwright-report

@@ -14,7 +14,7 @@ import {
 } from '../components'
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
-import { formatMoney } from '../lib/format'
+import { formatDecimal, formatMoney } from '../lib/format'
 import { parseAndFriendlyError } from '../lib/errorMessages'
 import { getExplorerUrl } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
@@ -368,7 +368,7 @@ export const ProjectDetail = memo(function ProjectDetail({
                 }}
               >
                 {detail.priceHistory.length > 0
-                  ? `${detail.priceHistory[detail.priceHistory.length - 1].yield.toFixed(2)}%`
+                  ? `${formatDecimal(detail.priceHistory[detail.priceHistory.length - 1].yield, 2)}%`
                   : '—'}
               </span>
               {detail.priceHistory.length > 1 && (
@@ -383,10 +383,13 @@ export const ProjectDetail = memo(function ProjectDetail({
                   detail.priceHistory[0].yield
                     ? '+'
                     : '-'}
-                  {Math.abs(
-                    detail.priceHistory[detail.priceHistory.length - 1].yield -
-                      detail.priceHistory[0].yield,
-                  ).toFixed(2)}
+                  {formatDecimal(
+                    Math.abs(
+                      detail.priceHistory[detail.priceHistory.length - 1].yield -
+                        detail.priceHistory[0].yield,
+                    ),
+                    2,
+                  )}
                   %
                 </span>
               )}
