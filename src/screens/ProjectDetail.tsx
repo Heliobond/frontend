@@ -15,7 +15,8 @@ import {
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
 import { formatDecimal, formatMoney } from '../lib/format'
-import { parseAndFriendlyError } from '../lib/errorMessages'
+import { parseErrorCode } from '../lib/errorMessages'
+import { translateContractError } from '../lib/contractErrors'
 import { getExplorerUrl } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
 
@@ -48,6 +49,8 @@ export const ProjectDetail = memo(function ProjectDetail({
 }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
   const tc = useTranslations('Common')
+  const tErr = useTranslations('ContractErrors')
+  const tErrors = useTranslations('Errors')
   const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
   const [isInvesting, setIsInvesting] = useState(false)
   const [investError, setInvestError] = useState<string | null>(null)
@@ -73,17 +76,7 @@ export const ProjectDetail = memo(function ProjectDetail({
       }
     } catch (err) {
       if (mountedRef.current) {
-        let message = 'Something went wrong - please try again.'
-        if (err instanceof Error && err.message) {
-          const friendly = parseAndFriendlyError(err)
-          message = friendly !== 'Something went wrong - please try again.' ? friendly : err.message
-        } else if (typeof err === 'string' && err.trim()) {
-          const friendly = parseAndFriendlyError(err)
-          message = friendly !== 'Something went wrong - please try again.' ? friendly : err
-        } else if (err) {
-          message = parseAndFriendlyError(err)
-        }
-        setInvestError(message)
+        setInvestError(translateContractError(err, tErr) ?? tErrors(parseErrorCode(err) as never))
       }
     } finally {
       isInvestingRef.current = false

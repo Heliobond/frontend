@@ -31,6 +31,7 @@ import { OracleForms } from './OracleForms'
 import { OFF_SCREEN_PROJECTS_COUNT } from '@/data'
 import { parseFundedNum } from './utils'
 import { formatMoney as sharedFormatMoney } from '@/lib/format'
+import { parseErrorCode } from '@/lib/errorMessages'
 import { formatSharePrice, fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
 import { useWallet } from '@/wallet/WalletProvider'
 import { fetchProjectsPage, clearRegistryCache, isRegistryConfigured } from '@/wallet/registry'
@@ -90,6 +91,7 @@ async function loadPauseStates(address: string | null): Promise<PauseStates> {
 export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
   const tToast = useTranslations('Toasts')
+  const tErrors = useTranslations('Errors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
   const [registry, setRegistry] = useState<RegistryEntry[]>(REGISTRY)
@@ -216,7 +218,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       toast({
         tone: 'error',
         title: tToast('transactionFailedTitle'),
-        message: e instanceof Error ? e.message : tToast('failedToUpdateScores'),
+        message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
       return false
@@ -256,7 +258,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       toast({
         tone: 'error',
         title: tToast('transactionFailedTitle'),
-        message: e instanceof Error ? e.message : tToast('failedToFundProject'),
+        message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
       return false
@@ -336,7 +338,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       toast({
         tone: 'error',
         title: tToast('transactionFailedTitle'),
-        message: e instanceof Error ? e.message : tToast('failedToUpdateWhitelist'),
+        message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
     }
@@ -386,7 +388,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       toast({
         tone: 'error',
         title: tToast('transactionFailedTitle'),
-        message: e instanceof Error ? e.message : tToast('failedToChangePauseState'),
+        message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
     }
