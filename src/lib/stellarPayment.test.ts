@@ -48,7 +48,7 @@ describe('Stellar memo validation', () => {
     it('rejects memos > 28 bytes', () => {
       const result29 = validateMemoLength('a'.repeat(29))
       expect(result29.valid).toBe(false)
-      expect(result29.error).toContain('maximum is 28 bytes')
+      expect(result29.error).toBe('memoTooLong')
     })
 
     it('rejects a 100-character memo with descriptive error', () => {
@@ -57,7 +57,7 @@ describe('Stellar memo validation', () => {
       expect(result.valid).toBe(false)
       expect(result.byteLength).toBe(100)
       expect(result.maxBytes).toBe(STELLAR_MAX_MEMO_TEXT_BYTES)
-      expect(result.error).toBe('Memo is too long: 100 bytes (maximum is 28 bytes)')
+      expect(result.error).toBe('memoTooLong')
     })
 
     it('rejects multibyte strings that exceed 28 bytes despite having fewer than 28 characters', () => {
@@ -67,7 +67,7 @@ describe('Stellar memo validation', () => {
       const result = validateMemoLength(emojis)
       expect(result.valid).toBe(false)
       expect(result.byteLength).toBe(32)
-      expect(result.error).toContain('32 bytes')
+      expect(result.error).toBe('memoTooLong')
     })
   })
 
@@ -83,8 +83,7 @@ describe('Stellar memo validation', () => {
       const longMemo = 'x'.repeat(100)
       const result = validateMemo(longMemo, 'text')
       expect(result.valid).toBe(false)
-      expect(result.error).toContain('Memo text is too long')
-      expect(result.error).toContain('100 bytes')
+      expect(result.error).toBe('memoTooLong')
     })
 
     it('trims whitespace before checking length', () => {
@@ -105,20 +104,20 @@ describe('Stellar memo validation', () => {
     it('rejects non-numeric memo IDs', () => {
       const result = validateMemo('abc', 'id')
       expect(result.valid).toBe(false)
-      expect(result.error).toBe('Memo ID must be a non-negative integer')
+      expect(result.error).toBe('memoIdInvalid')
     })
 
     it('rejects negative numbers', () => {
       const result = validateMemo('-123', 'id')
       expect(result.valid).toBe(false)
-      expect(result.error).toBe('Memo ID must be a non-negative integer')
+      expect(result.error).toBe('memoIdInvalid')
     })
 
     it('rejects values exceeding uint64 maximum', () => {
       const overflow = (STELLAR_MAX_MEMO_ID + 1n).toString()
       const result = validateMemo(overflow, 'id')
       expect(result.valid).toBe(false)
-      expect(result.error).toContain('exceeds 64-bit unsigned integer maximum')
+      expect(result.error).toBe('memoIdTooLarge')
     })
   })
 
@@ -133,7 +132,7 @@ describe('Stellar memo validation', () => {
     it('rejects invalid length hex strings', () => {
       const result = validateMemo('a'.repeat(63), 'hash')
       expect(result.valid).toBe(false)
-      expect(result.error).toContain('must be a 32-byte hex string (64 hex characters)')
+      expect(result.error).toBe('memoHashInvalid')
     })
 
     it('rejects non-hex characters', () => {
@@ -152,7 +151,7 @@ describe('Stellar memo validation', () => {
     it('rejects any non-empty memo when type is none', () => {
       const result = validateMemo('something', 'none')
       expect(result.valid).toBe(false)
-      expect(result.error).toBe('Memo is not expected when memo type is none')
+      expect(result.error).toBe('memoUnexpected')
     })
   })
 
@@ -187,7 +186,7 @@ describe('Stellar memo validation', () => {
         memo: 'x'.repeat(100),
       })
       expect(result.valid).toBe(false)
-      expect(result.errors.memo).toContain('100 bytes')
+      expect(result.errors.memo).toBe('memoTooLong')
     })
 
     it('rejects payment with invalid amount', () => {
@@ -196,7 +195,7 @@ describe('Stellar memo validation', () => {
         destination: validAddress,
       })
       expect(result.valid).toBe(false)
-      expect(result.errors.amount).toBeDefined()
+      expect(result.errors.amount).toBe('amountTooLow')
     })
 
     it('rejects payment exceeding balance', () => {
@@ -206,7 +205,7 @@ describe('Stellar memo validation', () => {
         destination: validAddress,
       })
       expect(result.valid).toBe(false)
-      expect(result.errors.amount).toBe('Amount exceeds your available balance')
+      expect(result.errors.amount).toBe('amountExceedsBalance')
     })
 
     it('rejects payment with invalid destination address format', () => {
@@ -215,7 +214,7 @@ describe('Stellar memo validation', () => {
         destination: 'invalid-stellar-address',
       })
       expect(result.valid).toBe(false)
-      expect(result.errors.destination).toContain('Invalid Stellar public address')
+      expect(result.errors.destination).toBe('addressInvalid')
     })
 
     it('rejects payment destination address with typos (56 chars starting with G)', () => {
@@ -229,7 +228,7 @@ describe('Stellar memo validation', () => {
         destination: typoAddress,
       })
       expect(result.valid).toBe(false)
-      expect(result.errors.destination).toContain('Invalid Stellar public address checksum')
+      expect(result.errors.destination).toBe('addressChecksumFailed')
     })
   })
 
@@ -261,7 +260,7 @@ describe('Stellar memo validation', () => {
 
       const resLast = validateStellarAddress(typoLastChar)
       expect(resLast.valid).toBe(false)
-      expect(resLast.error).toContain('Invalid Stellar public address checksum')
+      expect(resLast.error).toBe('addressChecksumFailed')
       expect(isValidStellarAddress(typoLastChar)).toBe(false)
 
       // Modifying a middle character
@@ -274,7 +273,7 @@ describe('Stellar memo validation', () => {
 
       const resMid = validateStellarAddress(typoMidChar)
       expect(resMid.valid).toBe(false)
-      expect(resMid.error).toContain('Invalid Stellar public address checksum')
+      expect(resMid.error).toBe('addressChecksumFailed')
       expect(isValidStellarAddress(typoMidChar)).toBe(false)
     })
 

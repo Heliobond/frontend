@@ -65,7 +65,7 @@ it.each([{ verified: false }, { status: 'ok' }, {}, null, { verified: 'true' }])
   'rejects an unverified HTTP 200 response: %j',
   async (body) => {
     vi.mocked(fetch).mockResolvedValueOnce(json(body))
-    await expect(loginBiometric('person@example.com')).rejects.toThrow('Server did not verify')
+    await expect(loginBiometric('person@example.com')).rejects.toThrow('credentialNotVerified')
     expect(get).toHaveBeenCalledOnce()
     expect(fetch).toHaveBeenCalledTimes(2)
   },
@@ -78,7 +78,7 @@ it('rejects a server verification failure after the browser returns a credential
 })
 it('does not submit an assertion after cancellation', async () => {
   get.mockResolvedValue(null)
-  await expect(loginBiometric('person@example.com')).rejects.toThrow('Authentication canceled')
+  await expect(loginBiometric('person@example.com')).rejects.toThrow('authenticationCanceled')
   expect(fetch).toHaveBeenCalledTimes(1)
 })
 it('does not prompt if challenge issuance fails', async () => {
@@ -89,7 +89,7 @@ it('does not prompt if challenge issuance fails', async () => {
   expect(get).not.toHaveBeenCalled()
 })
 it('requires a username instead of falling back to a shared user identity', async () => {
-  await expect(loginBiometric('')).rejects.toThrow('Username is required')
+  await expect(loginBiometric('')).rejects.toThrow('usernameRequired')
   expect(fetch).not.toHaveBeenCalled()
 })
 it('also requires verification for registration', async () => {
@@ -104,7 +104,7 @@ it('also requires verification for registration', async () => {
       }),
     )
     .mockResolvedValueOnce(json({ verified: false }))
-  await expect(registerBiometric('person@example.com')).rejects.toThrow('Server did not verify')
+  await expect(registerBiometric('person@example.com')).rejects.toThrow('credentialNotVerified')
   expect(create).toHaveBeenCalledOnce()
   expect(fetch).toHaveBeenCalledTimes(2)
 })

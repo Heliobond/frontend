@@ -10,11 +10,11 @@ describe('admin arg encoding (Issue #688)', () => {
     })
 
     it('rejects 0, negative numbers, floats, and overflow values', () => {
-      expect(() => validateProjectId(0)).toThrow('Invalid project ID')
-      expect(() => validateProjectId(-1)).toThrow('Invalid project ID')
-      expect(() => validateProjectId(1.5)).toThrow('Invalid project ID')
-      expect(() => validateProjectId(0x100000000)).toThrow('Invalid project ID')
-      expect(() => validateProjectId(NaN)).toThrow('Invalid project ID')
+      expect(() => validateProjectId(0)).toThrow('invalidProjectId')
+      expect(() => validateProjectId(-1)).toThrow('invalidProjectId')
+      expect(() => validateProjectId(1.5)).toThrow('invalidProjectId')
+      expect(() => validateProjectId(0x100000000)).toThrow('invalidProjectId')
+      expect(() => validateProjectId(NaN)).toThrow('invalidProjectId')
     })
   })
 
@@ -38,8 +38,8 @@ describe('admin arg encoding (Issue #688)', () => {
     })
 
     it('throws if project ID is invalid', () => {
-      expect(() => buildFundProjectArgs(0, 100)).toThrow('Invalid project ID')
-      expect(() => buildFundProjectArgs(-5, 100)).toThrow('Invalid project ID')
+      expect(() => buildFundProjectArgs(0, 100)).toThrow('invalidProjectId')
+      expect(() => buildFundProjectArgs(-5, 100)).toThrow('invalidProjectId')
     })
   })
 
@@ -61,11 +61,11 @@ describe('admin arg encoding (Issue #688)', () => {
     })
 
     it('rejects scores out of [0, 100] or non-integers', () => {
-      expect(() => buildUpdateScoresArgs(1, -1, 50)).toThrow('Invalid credit score')
-      expect(() => buildUpdateScoresArgs(1, 101, 50)).toThrow('Invalid credit score')
-      expect(() => buildUpdateScoresArgs(1, 50.5, 50)).toThrow('Invalid credit score')
-      expect(() => buildUpdateScoresArgs(1, 50, -1)).toThrow('Invalid green score')
-      expect(() => buildUpdateScoresArgs(1, 50, 105)).toThrow('Invalid green score')
+      expect(() => buildUpdateScoresArgs(1, -1, 50)).toThrow('invalidCreditScore')
+      expect(() => buildUpdateScoresArgs(1, 101, 50)).toThrow('invalidCreditScore')
+      expect(() => buildUpdateScoresArgs(1, 50.5, 50)).toThrow('invalidCreditScore')
+      expect(() => buildUpdateScoresArgs(1, 50, -1)).toThrow('invalidGreenScore')
+      expect(() => buildUpdateScoresArgs(1, 50, 105)).toThrow('invalidGreenScore')
     })
   })
 })
