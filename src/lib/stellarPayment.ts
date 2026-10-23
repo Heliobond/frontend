@@ -25,7 +25,7 @@ export function validateStellarAddress(
   if (!address || typeof address !== 'string' || address.trim() === '') {
     return {
       valid: false,
-      error: 'Invalid Stellar public address: address is required',
+      error: 'addressRequired',
     }
   }
 
@@ -34,14 +34,14 @@ export function validateStellarAddress(
   if (!STELLAR_ADDRESS_REGEX.test(trimmed)) {
     return {
       valid: false,
-      error: 'Invalid Stellar public address (must start with G and be 56 characters)',
+      error: 'addressInvalid',
     }
   }
 
   if (!StrKey.isValidEd25519PublicKey(trimmed)) {
     return {
       valid: false,
-      error: 'Invalid Stellar public address checksum (please check for typos)',
+      error: 'addressChecksumFailed',
     }
   }
 
@@ -117,7 +117,7 @@ export function validateMemoLength(
       valid: false,
       byteLength,
       maxBytes,
-      error: `Memo is too long: ${byteLength} bytes (maximum is ${maxBytes} bytes)`,
+      error: 'memoTooLong',
     }
   }
 
@@ -154,7 +154,7 @@ export function validateMemo(
           valid: false,
           byteLength,
           maxBytes: STELLAR_MAX_MEMO_TEXT_BYTES,
-          error: `Memo text is too long: ${byteLength} bytes (maximum is ${STELLAR_MAX_MEMO_TEXT_BYTES} bytes)`,
+          error: 'memoTooLong',
         }
       }
       return {
@@ -171,7 +171,7 @@ export function validateMemo(
           valid: false,
           byteLength,
           maxBytes: 20,
-          error: 'Memo ID must be a non-negative integer',
+          error: 'memoIdInvalid',
         }
       }
       try {
@@ -181,7 +181,7 @@ export function validateMemo(
             valid: false,
             byteLength,
             maxBytes: 20,
-            error: 'Memo ID exceeds 64-bit unsigned integer maximum (18446744073709551615)',
+            error: 'memoIdTooLarge',
           }
         }
         return {
@@ -194,7 +194,7 @@ export function validateMemo(
           valid: false,
           byteLength,
           maxBytes: 20,
-          error: 'Invalid Memo ID integer format',
+          error: 'memoIdInvalid',
         }
       }
     }
@@ -207,7 +207,7 @@ export function validateMemo(
           valid: false,
           byteLength,
           maxBytes: 64,
-          error: `Memo ${type} must be a 32-byte hex string (64 hex characters)`,
+          error: 'memoHashInvalid',
         }
       }
       return {
@@ -223,7 +223,7 @@ export function validateMemo(
           valid: false,
           byteLength,
           maxBytes: 0,
-          error: 'Memo is not expected when memo type is none',
+          error: 'memoUnexpected',
         }
       }
       return {
@@ -238,7 +238,7 @@ export function validateMemo(
         valid: false,
         byteLength,
         maxBytes: STELLAR_MAX_MEMO_TEXT_BYTES,
-        error: `Unsupported memo type: ${type}`,
+        error: 'memoTypeUnsupported',
       }
   }
 }
@@ -254,18 +254,18 @@ export function validateStellarPayment(
   // Amount validation
   const minAmount = params.minAmount ?? 0.0000001
   if (!Number.isFinite(params.amount) || isNaN(params.amount)) {
-    errors.amount = 'Please enter a valid amount'
+    errors.amount = 'invalidAmount'
   } else if (params.amount < minAmount) {
-    errors.amount = `Amount must be at least ${minAmount}`
+    errors.amount = 'amountTooLow'
   } else if (params.balance !== undefined && params.amount > params.balance) {
-    errors.amount = 'Amount exceeds your available balance'
+    errors.amount = 'amountExceedsBalance'
   }
 
   // Destination address validation (optional if depositing into a known vault)
   if (params.destination !== undefined) {
     const addressValidation = validateStellarAddress(params.destination)
     if (!addressValidation.valid) {
-      errors.destination = addressValidation.error ?? 'Invalid Stellar public address'
+      errors.destination = addressValidation.error ?? 'addressInvalid'
     }
   }
 

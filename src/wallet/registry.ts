@@ -5,6 +5,7 @@
  * Gracefully falls back to bundled fixtures in demo mode.
  */
 
+import { AppError } from '../lib/appError'
 import { type Project, type ProjectType } from '../data'
 import { getLocaleCode } from '../lib/format'
 import { type ProjectDetail, type ScorePoint } from '../data/projectDetails'
@@ -202,10 +203,10 @@ export async function defaultSimulateRegistryCall(
     REGISTRY_SIMULATION_TIMEOUT_MS,
   )
   if ('error' in simResult) {
-    throw new Error(`Simulate failed for ${method}: ${simResult.error}`)
+    throw new AppError('simulationFailed')
   }
   if (!simResult.result?.retval) {
-    throw new Error(`Simulate failed for ${method}: empty simulation result`)
+    throw new AppError('simulationFailed')
   }
   return scValToNative(simResult.result.retval as Parameters<typeof scValToNative>[0])
 }

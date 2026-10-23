@@ -5,7 +5,10 @@
  */
 export interface DobValidationResult {
   valid: boolean
+  /** `Kyc.errors` message key, not display text (#901). */
   error?: string
+  /** ICU args for the error key, e.g. `{ min: 18 }` for `ageTooLow`. */
+  params?: Record<string, string | number>
 }
 
 /** KYC policy constants shared by the DOB validators. */
@@ -65,21 +68,21 @@ export function escapeHtml(value: string): string {
 
 export function validateDobFormat(value: string): DobValidationResult {
   const trimmed = value.trim()
-  if (!trimmed) return { valid: false, error: 'Date of birth is required' }
+  if (!trimmed) return { valid: false, error: 'dobRequired' }
   const matches = DATE_REGEXES.some((r) => r.test(trimmed))
-  if (!matches) return { valid: false, error: 'Use MM/DD/YYYY, MM-DD-YYYY or YYYY-MM-DD' }
+  if (!matches) return { valid: false, error: 'dobFormat' }
   const parsed = parseDob(trimmed)
-  if (!parsed) return { valid: false, error: 'Invalid date' }
+  if (!parsed) return { valid: false, error: 'dobInvalid' }
   const { year, month, day } = parsed
   const date = new Date(year, month - 1, day)
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return { valid: false, error: `Invalid calendar date: ${trimmed}` }
+    return { valid: false, error: 'dobInvalid' }
   }
-  if (date > new Date()) return { valid: false, error: 'Date cannot be in the future' }
+  if (date > new Date()) return { valid: false, error: 'dobFuture' }
   const age = getAge(date)
   if (age < KYC_CONFIG.MIN_AGE)
-    return { valid: false, error: `You must be at least ${KYC_CONFIG.MIN_AGE} years old` }
-  if (age > KYC_CONFIG.MAX_AGE) return { valid: false, error: 'Please check the year' }
+    return { valid: false, error: 'ageTooLow', params: { min: KYC_CONFIG.MIN_AGE } }
+  if (age > KYC_CONFIG.MAX_AGE) return { valid: false, error: 'ageTooHigh' }
   return { valid: true }
 }
 function parseDob(value: string): { year: number; month: number; day: number } | null {

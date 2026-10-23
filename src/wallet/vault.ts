@@ -1,3 +1,4 @@
+import { AppError } from '../lib/appError'
 import { recordTransaction, updateTransaction, TransactionPendingError } from './transactions'
 // InvestmentVault client — synchronous simulation + async on-chain reads.
 //
@@ -247,9 +248,9 @@ async function sorobanSimulate(
     // A simulate error is a chain-level outcome (a contract panic, a malformed
     // request, ...), never a connectivity failure — surface it without letting
     // callers flip the offline flag (issue #624).
-    throw new Error(`Soroban simulate error: ${result.error}`)
+    throw new AppError('simulationFailed')
   }
-  if (!result.result) throw new Error('Soroban simulate returned no result')
+  if (!result.result) throw new AppError('simulationFailed')
   return result.result.retval as XdrTypes.ScVal
 }
 
@@ -671,7 +672,7 @@ async function invokeSigned(
     server.simulateTransaction(tx),
     'Stellar RPC timed out during simulation',
   )
-  if ('error' in simResult) throw new Error(`Simulation failed: ${simResult.error}`)
+  if ('error' in simResult) throw new AppError('simulationFailed')
 
   const assembled = rpc.assembleTransaction(tx, simResult).build()
   const signedXdr = await sign(assembled.toXDR())
@@ -837,7 +838,7 @@ export async function checkTransactionOnChain(
 function assertValidMemo(memo: string | undefined): void {
   if (memo === undefined || memo === '') return
   const result = validateMemo(memo, 'text')
-  if (!result.valid) throw new Error(result.error || 'Memo is too long (maximum 28 bytes)')
+  if (!result.valid) throw new AppError(result.error || 'memoTooLong')
 }
 
 /**
@@ -922,7 +923,7 @@ export async function submitPayment(
 
   if (!validation.valid) {
     const firstError = Object.values(validation.errors)[0]
-    throw new Error(firstError || 'Invalid payment parameters')
+    throw new AppError(firstError || 'invalidAmount')
   }
 
   if (!CONTRACT_ID) {
@@ -945,7 +946,7 @@ export async function submitPayment(
     })
   }
 
-  if (offline) throw new Error('Stellar node is offline')
+  if (offline) throw new AppError('stellarUnreachable')
 
   const { Horizon, TransactionBuilder, Operation, Asset, Transaction, Memo } =
     await import('@stellar/stellar-sdk')
@@ -1038,7 +1039,7 @@ export async function submitWithdraw(
 
   const livePrice = Number(priceStr)
   if (!livePrice || isNaN(livePrice)) {
-    throw new Error('No live share price available')
+    throw new AppError('simulationFailed')
   }
 
   let shares = Math.floor((amount / livePrice) * SCALE)

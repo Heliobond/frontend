@@ -4,6 +4,7 @@
  * live contract reads, and signed admin transactions with multisig support.
  */
 
+import { AppError } from '../lib/appError'
 import {
   SOROBAN_RPC_URL as RPC_URL,
   HORIZON_URL,
@@ -52,10 +53,10 @@ async function waitForTx(hash: string): Promise<void> {
     )
     if (result.status === rpc.Api.GetTransactionStatus.SUCCESS) return
     if (result.status === rpc.Api.GetTransactionStatus.FAILED) {
-      throw new Error('Admin transaction failed on-chain')
+      throw new AppError('txFailed')
     }
   }
-  throw new Error('Admin transaction confirmation timed out')
+  throw new AppError('timeout')
 }
 
 export interface AdminRoles {
@@ -267,7 +268,7 @@ async function sendContractTx(
     .build()
 
   const simResult = await withTimeout(server.simulateTransaction(tx), 'Simulation timed out')
-  if ('error' in simResult) throw new Error(`Simulation failed: ${simResult.error}`)
+  if ('error' in simResult) throw new AppError('simulationFailed')
 
   const assembled = rpc.assembleTransaction(tx, simResult).build()
   const signedXdr = await sign(assembled.toXDR())
@@ -278,7 +279,7 @@ async function sendContractTx(
     'Transaction submit timed out',
   )
   if (sendResult.status === 'ERROR') {
-    throw new Error(`Send failed: ${JSON.stringify(sendResult.errorResult)}`)
+    throw new AppError('txFailed')
   }
 
   await waitForTx(sendResult.hash)
@@ -300,7 +301,7 @@ function simulateDemoTx(): Promise<string> {
  */
 export function validateProjectId(id: number): number {
   if (!Number.isInteger(id) || id < 1 || id > 0xffffffff) {
-    throw new Error(`Invalid project ID: ${id}. Must be an integer between 1 and 4294967295.`)
+    throw new AppError('invalidProjectId')
   }
   return id
 }
@@ -323,10 +324,10 @@ export function buildUpdateScoresArgs(
 ): [xdr.ScVal, xdr.ScVal, xdr.ScVal] {
   validateProjectId(projectId)
   if (!Number.isInteger(credit) || credit < 0 || credit > 100) {
-    throw new Error(`Invalid credit score: ${credit}. Must be an integer between 0 and 100.`)
+    throw new AppError('invalidCreditScore')
   }
   if (!Number.isInteger(green) || green < 0 || green > 100) {
-    throw new Error(`Invalid green score: ${green}. Must be an integer between 0 and 100.`)
+    throw new AppError('invalidGreenScore')
   }
   return [
     nativeToScVal(projectId, { type: 'u32' }),
