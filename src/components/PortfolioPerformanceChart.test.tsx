@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@/test/render'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PortfolioPerformanceChart } from './PortfolioPerformanceChart'
 
@@ -27,5 +27,11 @@ describe('PortfolioPerformanceChart', () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
     render(<PortfolioPerformanceChart address="GTEST" />)
     expect(await screen.findByText(/snapshots are available/i)).toBeInTheDocument()
+  })
+
+  it('renders the title in the selected locale', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+    render(<PortfolioPerformanceChart address="GTEST" />, { locale: 'fr' })
+    expect(await screen.findByText('Performance du portefeuille')).toBeInTheDocument()
   })
 })

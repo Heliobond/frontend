@@ -10,3 +10,21 @@
 /src/styles/tokens/     @dadadave80
 /src/i18n/              @dadadave80
 /messages/              @dadadave80
+
+# Supply-chain surface: files that run code on every contributor machine
+# (`prepare`/husky hooks, lint-staged) and in every CI and Vercel build.
+# Changes here must be reviewed by a code owner before merge (#913).
+/package.json           @dadadave80
+/package-lock.json      @dadadave80
+/bun.lock               @dadadave80
+/bunfig.toml            @dadadave80
+/.npmrc                 @dadadave80
+/.husky/                @dadadave80
+/scripts/               @dadadave80
+/eslint.config.mjs      @dadadave80
+/next.config.ts         @dadadave80
+/vitest.config.mts      @dadadave80
+/playwright.config.ts   @dadadave80
+/playwright.chain.config.ts @dadadave80
+/tsconfig.json          @dadadave80
+/.env.example           @dadadave80

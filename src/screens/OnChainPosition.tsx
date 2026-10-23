@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
+import { parseErrorCode } from '../lib/errorMessages'
 import { useVaultRefresh } from '../wallet/useVaultRefresh'
 import { useWallet } from '../wallet/WalletProvider'
 import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wallet/vault'
@@ -17,9 +18,10 @@ import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wall
  * real wallet is connected; demo sessions keep the fixture dashboard.
  */
 export function OnChainPosition() {
+  const t = useTranslations('Portfolio')
+  const tErrors = useTranslations('Errors')
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
-  const tToast = useTranslations('Toasts')
   const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [claiming, setClaiming] = useState(false)
@@ -37,7 +39,7 @@ export function OnChainPosition() {
         setError(null)
       },
       () => {
-        if (!cancelled) setError('positionReadFailed')
+        if (!cancelled) setError('onchainReadError')
       },
     )
     return () => {
@@ -57,8 +59,8 @@ export function OnChainPosition() {
       const explorerUrl = getExplorerTxUrl(hash)
       toast({
         tone: 'success',
-        title: tToast('yieldClaimedTitle'),
-        message: tToast('yieldClaimedMsg'),
+        title: t('onchainClaimedTitle'),
+        message: t('onchainClaimedBody'),
         href: explorerUrl,
         action: (
           <a
@@ -72,7 +74,7 @@ export function OnChainPosition() {
               textDecoration: 'underline',
             }}
           >
-            {tToast('viewOnExplorer')}
+            {t('onchainViewExplorer')}
           </a>
         ),
       })
@@ -80,10 +82,12 @@ export function OnChainPosition() {
       refreshBalances()
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
-      const errorMessage = isPending ? tToast('stillPendingClaimMsg') : tToast('claimYieldFailed')
+      const errorMessage = isPending
+        ? t('onchainClaimPendingBody')
+        : tErrors(parseErrorCode(e) as never)
       toast({
         tone: isPending ? 'solar' : 'error',
-        title: isPending ? tToast('stillPendingTitle') : tToast('claimFailedTitle'),
+        title: isPending ? t('onchainClaimPendingTitle') : t('onchainClaimFailedTitle'),
         message: errorMessage,
         action: isPending ? undefined : (
           <button
@@ -102,7 +106,7 @@ export function OnChainPosition() {
               whiteSpace: 'nowrap',
             }}
           >
-            Retry
+            {t('onchainRetry')}
           </button>
         ),
       })
@@ -113,22 +117,22 @@ export function OnChainPosition() {
 
   return (
     <Card data-testid="onchain-position" style={{ padding: 22, marginBottom: 28 }}>
-      <h3 style={titleStyle}>On-chain position</h3>
+      <h3 style={titleStyle}>{t('onchainTitle')}</h3>
       {error ? (
         <p role="alert" style={noteStyle}>
-          {tToast(error as 'positionReadFailed')}
+          {t(error as 'onchainReadError')}
         </p>
       ) : !portfolio ? (
-        <p style={noteStyle}>Reading your position from the vault…</p>
+        <p style={noteStyle}>{t('onchainReading')}</p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 28, alignItems: 'flex-end' }}>
           <div data-testid="onchain-shares">
-            <StatBlock label="HBS shares" value={formatDecimal(portfolio.shares, 2)} size="md" />
+            <StatBlock label={t('onchainShares')} value={formatDecimal(portfolio.shares, 2)} size="md" />
           </div>
-          <StatBlock label="Value" value={`$${formatDecimal(portfolio.usdcValue, 2)}`} size="md" />
+          <StatBlock label={t('onchainValue')} value={`$${formatDecimal(portfolio.usdcValue, 2)}`} size="md" />
           <div data-testid="onchain-claimable-yield">
             <StatBlock
-              label="Claimable yield"
+              label={t('onchainClaimable')}
               value={`$${formatDecimal(portfolio.claimableYield, 2)}`}
               size="md"
             />
@@ -140,7 +144,7 @@ export function OnChainPosition() {
               disabled={claiming}
               onClick={() => void handleClaimYield()}
             >
-              Claim yield
+              {t('onchainClaimCta')}
             </Button>
           )}
         </div>

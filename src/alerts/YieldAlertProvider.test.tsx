@@ -1,8 +1,8 @@
 import { act, renderHook } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAlerts, writeAlerts, type YieldAlert } from '../lib/yieldAlerts'
 import { selectProjects } from '../state/selectors'
-import { LocaleProvider } from '../i18n/LocaleProvider'
 import en from '../../messages/en.json'
 import { YieldAlertProvider, useYieldAlerts } from './YieldAlertProvider'
 
@@ -13,9 +13,9 @@ vi.mock('../components/Toast', () => ({
 }))
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <LocaleProvider initialLocale="en" initialMessages={en}>
+  <NextIntlClientProvider locale="en" messages={en}>
     <YieldAlertProvider>{children}</YieldAlertProvider>
-  </LocaleProvider>
+  </NextIntlClientProvider>
 )
 
 const makeAlert = (): YieldAlert => ({

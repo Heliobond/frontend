@@ -12,8 +12,12 @@ on:
         required: false
         default: main
 
-permissions:
-  contents: read
+# Actions are pinned to full commit SHAs (#916), and the stellar-cli tarball is
+# verified against a pinned SHA-256 before it is extracted, so neither a moved
+# action ref nor a swapped release asset can inject code into this job.
+
+# No job inherits a token grant; each one declares the minimum it needs.
+permissions: {}
 
 concurrency:
   group: e2e-chain-${{ github.ref }}
@@ -21,6 +25,8 @@ concurrency:
 
 env:
   STELLAR_CLI_VERSION: '26.1.0'
+  # sha256 of stellar-cli-${STELLAR_CLI_VERSION}-x86_64-unknown-linux-gnu.tar.gz
+  STELLAR_CLI_SHA256: e18d5a7629102e1ccc07241acbcbebfc05b1c02476ce7d3204ba2d7418be5c0c
   CONTRACTS_REF: ${{ github.event.inputs.contracts_ref || 'main' }}
   CONTRACTS_DIR: .e2e/contracts
 
@@ -28,19 +34,23 @@ jobs:
   investor-journey:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Start stellar/quickstart (local network, Soroban RPC + Horizon)
         run: |
           docker run -d --rm -p 8000:8000 --name stellar stellar/quickstart:latest \
             --local --enable core,rpc,horizon --limits unlimited
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version-file: package.json
 
@@ -51,25 +61,30 @@ jobs:
         run: bunx playwright install --with-deps chromium
 
       - name: Install Rust (wasm32v1-none)
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           targets: wasm32v1-none
 
       - name: Check out Heliobond/contracts
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: Heliobond/contracts
           ref: ${{ env.CONTRACTS_REF }}
           path: ${{ env.CONTRACTS_DIR }}
+          persist-credentials: false
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: ${{ env.CONTRACTS_DIR }}
 
       - name: Install Stellar CLI
         run: |
+          cd "$RUNNER_TEMP"
           url="https://github.com/stellar/stellar-cli/releases/download/v${STELLAR_CLI_VERSION}/stellar-cli-${STELLAR_CLI_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          curl -sSL "$url" | tar -xz
+          archive="stellar-cli-${STELLAR_CLI_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          curl -sSfL --output "$archive" "$url"
+          echo "${STELLAR_CLI_SHA256}  $archive" | sha256sum --check --strict
+          tar -xzf "$archive"
           sudo mv stellar /usr/local/bin/stellar
           stellar --version
 
@@ -83,7 +98,7 @@ jobs:
 
       - name: Upload Playwright traces and report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: e2e-chain-playwright
           path: |

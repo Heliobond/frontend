@@ -5,7 +5,7 @@ This document defines the architecture of the Heliobond investor application and
 > **Implementation Note & Scope:**
 > Heliobond is architected to operate in two modes:
 >
-> 1. **Live On-Chain Mode (Soroban Testnet):** When `NEXT_PUBLIC_VAULT_CONTRACT_ID` / `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` and wallet connections are active, vault reads (`total_assets`, `convert_to_assets`, `get_portfolio`, `claimable_yield`, the vault limits), registry reads (`get_projects_page`, `get_project`, `get_score_history`, `total_projects`) and transactional flows (`deposit`, `withdraw`, `claim`, `claim_yield`) execute directly against the deployed Soroban smart contracts.
+> 1. **Live On-Chain Mode (configured Stellar network):** When `NEXT_PUBLIC_VAULT_CONTRACT_ID` / `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` and wallet connections are active, vault reads (`total_assets`, `convert_to_assets`, `get_portfolio`, `claimable_yield`, the vault limits), registry reads (`get_projects_page`, `get_project`, `get_score_history`, `total_projects`) and transactional flows (`deposit`, `withdraw`, `claim`, `claim_yield`) execute directly against the deployed Soroban smart contracts. The network and its Horizon, RPC, and explorer endpoints are selected by [`src/config/network.ts`](src/config/network.ts) from `NEXT_PUBLIC_STELLAR_NETWORK` (default: `testnet`).
 > 2. **Simulated / Fixture Mode:** When contract IDs are unset or in demo wallet mode, the application falls back gracefully to deterministic typed fixtures (`src/data.ts`, `src/data/*`) and synchronous client simulations ([`src/wallet/vault.ts`](src/wallet/vault.ts)).
 >
 > The contract methods named in sections 1–3 are taken from the actual `contract.call(...)` sites in [`src/wallet/vault.ts`](src/wallet/vault.ts), [`src/wallet/registry.ts`](src/wallet/registry.ts) and [`src/wallet/admin.ts`](src/wallet/admin.ts), together with the screens and hooks that consume them. Keep this map in sync with those call sites — they are the frontend's source of truth for the ABI. The Rust definitions live in the separate `Heliobond/contracts` repository.
@@ -198,10 +198,10 @@ When interacting with Soroban contracts (e.g. `submitDeposit` / `submitWithdraw`
 ```
 
 1. **Parameter Validation:** User inputs are parsed and validated against balance/liquidity limits using [`src/lib/format.ts`](src/lib/format.ts).
-2. **Simulation:** The transaction is constructed with dummy fees (`100` stroops) and simulated via `@stellar/stellar-sdk` RPC Server to calculate accurate resource fees and footprint.
+2. **Simulation:** The transaction is constructed using Horizon's current base fee, falling back to `100` stroops if the fee request fails, and simulated via `@stellar/stellar-sdk` RPC Server to calculate accurate resource fees and footprint.
 3. **Assembly & Signing:** `rpc.assembleTransaction` merges simulation results into the transaction; the user signs the XDR via their connected wallet (Freighter, xBull, etc.).
-4. **Submission & Polling:** The signed transaction is submitted to Stellar testnet and polled via `server.getTransaction(hash)` until reaching `SUCCESS` or `FAILED` state (timeout: 30s).
-5. **UI Update:** The client transitions to the success step, displays the transaction hash linking to StellarExpert (`https://stellar.expert/explorer/testnet/tx/...`), and invalidates cached vault stats.
+4. **Submission & Polling:** The signed transaction is submitted to the configured Stellar network and polled via `server.getTransaction(hash)` until reaching `SUCCESS` or `FAILED` state (timeout: 30s).
+5. **UI Update:** The client transitions to the success step, displays the transaction hash linking to Stellar Expert using the configured explorer base URL, and invalidates cached vault stats.
 
 ---
 
@@ -296,3 +296,57 @@ real provider rather than a mocked context.
 
 `subscribe()` also listens for the `storage` event so another tab's write
 re-renders this one, and removes the listener on unsubscribe.
+
+---
+
+## 6. Internationalization & Locale Strategy
+
+### 6.1 Cookie-only locale routing (decision)
+
+**Decision: keep locale selection cookie-only. Do not introduce a `[locale]` URL
+segment or `localePrefix` routing.**
+
+The app renders every route at a single canonical URL. The active locale lives in
+the `NEXT_LOCALE` cookie, which is written by the in-app language switcher and,
+on a first visit with no cookie, negotiated from `Accept-Language` in
+[`src/proxy.ts`](src/proxy.ts) (see [`src/i18n/negotiate.ts`](src/i18n/negotiate.ts)).
+[`src/i18n/request.ts`](src/i18n/request.ts) reads that cookie and falls back to
+`en`. `next-intl` is configured with `localePrefix: 'never'`, so there are no
+`/fr/...` style routes and no automatic `alternateLinks`.
+
+Why cookie-only:
+
+- **Wallet-first product.** Most of the surface area (portfolio, deposit,
+  withdraw, connect, admin) is behind a wallet connection and is deliberately
+  `noindex`. Search traffic only matters for the public marketing pages
+  (`/`, `/explore`, `/learn`, `/risk`, `/verify`), and those already ship a
+  single, well-linked English document.
+- **URL stability.** A locale prefix would either break every shared link and
+  bookmark or require a redirect layer in `proxy.ts` for the existing English
+  URLs. Neither is worth the SEO upside for four non-English catalogs.
+- **Canonical URLs stay honest.** `layout.tsx` emits `alternates.canonical: '/'`
+  and the sitemap lists one URL per route. Introducing hreflang without a real
+  per-locale URL would produce `x-default`/`fr` alternates that all resolve to
+  the same document — which search engines treat as a soft penalty, not a win.
+
+Consequences and tradeoffs:
+
+- Crawlers and shared links always see the English document. A recipient with a
+  French browser who opens a shared link gets English unless they pick French
+  once; that choice then sticks via the cookie.
+- `Accept-Language` negotiation (#895) covers the common "first visit in a
+  non-English browser" case without touching URLs, because the cookie is set
+  before the first render reads it.
+- If product later wants indexed non-English marketing pages, migrate those
+  routes to `localePrefix: 'as-needed'` behind `proxy.ts`, keep the existing
+  English URLs working via redirects, and emit per-locale `hreflang` +
+  sitemap entries. That migration is intentionally out of scope here.
+
+### 6.2 Catalog layout
+
+Message catalogs live in [`messages/{en,fr,es,ar,pt}.json`](messages) and are
+namespaced by surface (`Portfolio`, `Deposit`, `Nav`, `Components.*`, …).
+Catalog parity across the five locales is enforced by
+`src/__tests__/catalog-parity.test.ts`, and unused keys are gated by
+`scripts/check-unused-keys.mjs`. ICU plurals and arguments are required so a
+key's shape matches across locales.

@@ -626,7 +626,7 @@ export const ProjectDetail = memo(function ProjectDetail({
               textDecoration: 'none',
             }}
           >
-            View investment →
+            View investment <span className="hb-rtl-arrow">→</span>
           </a>
         )}
         <p

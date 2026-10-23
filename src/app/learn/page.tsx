@@ -72,7 +72,7 @@ export default async function LearnPage() {
               textDecoration: 'none',
             }}
           >
-            Preview the password reset email
+            {t('previewResetEmail')}
           </Link>
         )}
       </div>

@@ -11,6 +11,7 @@ import { useWallet } from '../wallet/WalletProvider'
 import { getPendingClaims, removePendingClaim, type PendingClaim } from '../wallet/pendingClaims'
 import { submitClaim } from '../wallet/vault'
 import { formatDate, formatDecimal, formatMoney, formatNumber } from '../lib/format'
+import { parseErrorCode } from '../lib/errorMessages'
 import { OnChainPosition } from './OnChainPosition'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { getVirtualRange } from '../lib/virtualRange'
@@ -49,8 +50,7 @@ export interface PortfolioProps {
 
 export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const t = useTranslations('Portfolio')
-  const tToast = useTranslations('Toasts')
-  const tErr = useTranslations('Errors')
+  const tErrors = useTranslations('Errors')
   const locale = useLocale()
   const { connected, connect, address, sign } = useWallet()
   const { toast } = useToast()
@@ -87,20 +87,19 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       refreshClaims()
       toast({
         tone: 'success',
-        title: tToast('withdrawalsClaimedTitle'),
-        message: tToast('withdrawalsClaimedMsg'),
+        title: t('claimedToastTitle'),
+        message: t('claimedToastBody'),
       })
     } catch (e) {
       toast({
         tone: e instanceof TransactionPendingError ? 'solar' : 'error',
         title:
           e instanceof TransactionPendingError
-            ? tToast('stillPendingTitle')
-            : tToast('claimFailedTitle'),
-        message:
-          e instanceof TransactionPendingError
-            ? tToast('stillPendingClaimMsg')
-            : tToast('claimFailedGeneric'),
+            ? t('claimPendingTitle')
+            : t('claimFailedTitle'),
+        message: e instanceof TransactionPendingError
+          ? t('claimPendingBody')
+          : tErrors(parseErrorCode(e) as never),
       })
     } finally {
       setClaiming(false)
@@ -123,7 +122,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           }}
         >
           <div className="hb-eyebrow">{t('eyebrow')}</div>
-          <h2 style={{ ...cardTitle, margin: 0 }}>Connect your wallet to view your portfolio</h2>
+          <h2 style={{ ...cardTitle, margin: 0 }}>{t('connectWalletTitle')}</h2>
           <p
             style={{
               fontFamily: 'var(--font-body)',
@@ -133,10 +132,10 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               margin: 0,
             }}
           >
-            Your holdings and activity will appear here after you connect.
+            {t('connectWalletBody')}
           </p>
           <Button variant="primary" onClick={() => void connect()}>
-            Connect wallet
+            {t('connectWalletCta')}
           </Button>
         </Card>
       </main>
@@ -177,7 +176,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                 margin: 0,
               }}
             >
-              {tErr(error as 'portfolioFailed')}
+              {tErrors(error as 'portfolioFailed')}
             </p>
             <Button variant="secondary" size="sm" onClick={refresh}>
               Retry
@@ -189,7 +188,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       {/* On-chain empty holdings state banner (0 shares) */}
       {portfolio && portfolio.shares === 0 && portfolio.totalDeposited === 0 && (
         <Card data-testid="portfolio-empty" style={{ padding: 22, marginBottom: 28 }}>
-          <h3 style={cardTitle}>No active vault position found</h3>
+          <h3 style={cardTitle}>{t('emptyPositionTitle')}</h3>
           <p
             style={{
               fontFamily: 'var(--font-body)',
@@ -198,10 +197,10 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               margin: '4px 0 16px',
             }}
           >
-            Your connected wallet has not deposited into this green-bond vault yet.
+            {t('emptyPositionBody')}
           </p>
           <Button variant="primary" onClick={onDeposit}>
-            Make your first deposit
+            {t('firstDepositCta')}
           </Button>
         </Card>
       )}
@@ -225,11 +224,14 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               label={t('currentValue')}
               value={formatMoney(integerVal, { includeSymbol: true, appLocale: locale })}
               decimals={`.${decimalPart}`}
-              delta={`+${formatMoney(you.deltaAbs, {
-                includeSymbol: true,
-                appLocale: locale,
-                fractionDigits: 2,
-              })} (${you.deltaPct}%) ${t('sinceDeposit')}`}
+              delta={t('deltaSinceDeposit', {
+                amount: formatMoney(you.deltaAbs, {
+                  includeSymbol: true,
+                  appLocale: locale,
+                  fractionDigits: 2,
+                }),
+                pct: you.deltaPct,
+              })}
               size="lg"
               stackOnMobile
             />
@@ -308,7 +310,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           }}
         >
           <div>
-            <h3 style={cardTitle}>Pending withdrawals</h3>
+            <h3 style={cardTitle}>{t('pendingWithdrawalsTitle')}</h3>
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -318,13 +320,13 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               }}
             >
               {pendingClaims.length > 0
-                ? `${pendingClaims.length} queued FIFO claim${pendingClaims.length > 1 ? 's' : ''} awaiting vault liquidity.`
-                : 'No queued withdrawals. Immediate liquidity is available for standard payouts.'}
+                ? t('pendingClaims', { count: pendingClaims.length })
+                : t('pendingClaimsEmpty')}
             </p>
           </div>
           {pendingClaims.length > 0 && (
             <Button variant="primary" size="sm" disabled={claiming} onClick={handleClaim}>
-              {claiming ? 'Claiming...' : 'Claim available liquidity'}
+              {claiming ? t('claimingCta') : t('claimAvailableCta')}
             </Button>
           )}
         </div>
@@ -509,7 +511,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                   textDecoration: 'none',
                 }}
               >
-                {t('taxReports')} →
+                {t('taxReports')} <span className="hb-rtl-arrow">→</span>
               </Link>
             </div>
             <span
@@ -524,7 +526,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           </div>
           <div
             role="region"
-            aria-label={`Portfolio activity, ${activity.length} items`}
+            aria-label={t('activityRegion', { count: activity.length })}
             tabIndex={0}
             onScroll={(event) => setActivityScrollTop(event.currentTarget.scrollTop)}
             style={{

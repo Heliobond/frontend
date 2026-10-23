@@ -90,7 +90,6 @@ async function loadPauseStates(address: string | null): Promise<PauseStates> {
 
 export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
-  const tToast = useTranslations('Toasts')
   const tErrors = useTranslations('Errors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -125,12 +124,12 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
 
   // A pause blocks the forms it gates. The reason is shown on each locked control.
   const fundBlockedReason = vaultPaused
-    ? 'Vault is paused'
+    ? t('vaultPausedReason')
     : registryPaused
-      ? 'Registry is paused'
+      ? t('registryPausedReason')
       : undefined
-  const scoresBlockedReason = registryPaused ? 'Registry is paused' : undefined
-  const whitelistBlockedReason = registryPaused ? 'Registry is paused' : undefined
+  const scoresBlockedReason = registryPaused ? t('registryPausedReason') : undefined
+  const whitelistBlockedReason = registryPaused ? t('registryPausedReason') : undefined
 
   // Live contract reads on mount
   useEffect(() => {
@@ -217,7 +216,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: tToast('transactionFailedTitle'),
+        title: t('txFailedTitle'),
         message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
@@ -257,7 +256,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: tToast('transactionFailedTitle'),
+        title: t('txFailedTitle'),
         message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
@@ -337,7 +336,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: tToast('transactionFailedTitle'),
+        title: t('txFailedTitle'),
         message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
@@ -360,34 +359,31 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   }
 
   const togglePause = async (contract: PausableContract, paused: boolean) => {
-    const label = contract === 'vault' ? 'vault' : 'registry'
+    const label = contract === 'vault' ? t('labelVault') : t('labelRegistry')
     const message = paused
       ? contract === 'vault'
-        ? 'Deposits, withdrawals and funding stop until resumed.'
-        : 'Score updates, whitelisting, project creation and funding stop until resumed.'
-      : 'Blocked actions become available again.'
-    if (!window.confirm(`${paused ? 'Pause' : 'Resume'} the ${label}? ${message}`)) return
+        ? t('pauseVaultConfirm')
+        : t('pauseRegistryConfirm')
+      : t('resumeConfirm')
+    const confirmTitle = paused
+      ? t('pauseConfirmTitle', { label })
+      : t('resumeConfirmTitle', { label })
+    if (!window.confirm(`${confirmTitle} ${message}`)) return
 
     const emergency = !ownsContract(contract) && isEmergencyAdmin(contract)
     try {
       await submitSetPaused(contract, paused, address ?? '', sign, { emergency })
       toast({
         tone: paused ? 'error' : 'success',
-        title: paused
-          ? label === 'vault'
-            ? tToast('vaultPausedTitle')
-            : tToast('registryPausedTitle')
-          : label === 'vault'
-            ? tToast('vaultResumedTitle')
-            : tToast('registryResumedTitle'),
-        message: emergency ? tToast('sentAsEmergencyAdmin') : tToast('sentAsOwner'),
+        title: paused ? t('pausedToast', { label }) : t('resumedToast', { label }),
+        message: emergency ? t('sentAsEmergency') : t('sentAsOwner'),
         duration: 5000,
       })
       await refreshPauseStates()
     } catch (e) {
       toast({
         tone: 'error',
-        title: tToast('transactionFailedTitle'),
+        title: t('txFailedTitle'),
         message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
@@ -413,9 +409,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       {(vaultPaused || registryPaused) && (
         <div role="status" style={{ ...warningBoxStyle, marginBottom: 20 }}>
           <p style={warningTextStyle}>
-            {vaultPaused && 'The vault is paused. Deposits, withdrawals and funding are stopped. '}
-            {registryPaused &&
-              'The registry is paused. Score updates, whitelisting and project creation are stopped, and funding is blocked.'}
+            {vaultPaused && t('vaultPausedBanner')}
+            {registryPaused && t('registryPausedBanner')}
           </p>
         </div>
       )}
@@ -447,17 +442,17 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
 
       {/* Circuit breakers */}
       <Section
-        title="Circuit breakers"
-        caption="Pause the vault or the registry in an emergency. Pausing stops the writes listed beside each contract."
+        title={t('circuitBreakersTitle')}
+        caption={t('circuitBreakersCaption')}
       >
         <PauseRow
-          label="Investment vault"
+          label={t('investmentVault')}
           state={pauseStates.vault}
           canAct={ownsContract('vault') || isEmergencyAdmin('vault')}
           onToggle={(paused) => togglePause('vault', paused)}
         />
         <PauseRow
-          label="Project registry"
+          label={t('sectionRegistry')}
           state={pauseStates.registry}
           canAct={ownsContract('registry') || isEmergencyAdmin('registry')}
           onToggle={(paused) => togglePause('registry', paused)}
@@ -502,10 +497,10 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
             }}
           >
             {!canFund && !canUpdateScores
-              ? 'Vault owner or registry owner permissions required for privileged actions.'
+              ? t('permRequiredAll')
               : !canFund
-                ? 'Vault owner permissions required to fund projects.'
-                : 'Registry owner permissions required to update scores.'}
+                ? t('permRequiredFund')
+                : t('permRequiredScores')}
           </div>
         )}
         <OracleForms
@@ -600,12 +595,13 @@ function PauseRow({
   onToggle: (paused: boolean) => void
   last?: boolean
 }) {
+  const t = useTranslations('Admin')
   const unknown = state.paused === null
   const paused = state.paused === true
   const reason = unknown
-    ? 'Status unavailable'
+    ? t('statusUnavailable')
     : !canAct
-      ? 'Owner or emergency admin only'
+      ? t('ownerOnly')
       : undefined
 
   return (
@@ -619,11 +615,11 @@ function PauseRow({
       <div style={whitelistName}>
         <div style={whitelistNameText}>{label}</div>
         <div style={whitelistMeta}>
-          {state.emergencyAdmin ? 'Emergency admin set' : 'No emergency admin'}
+          {state.emergencyAdmin ? t('emergencyAdminSet') : t('noEmergencyAdmin')}
         </div>
       </div>
       <Badge tone={paused ? 'neutral' : 'growth'}>
-        {unknown ? 'Unknown' : paused ? 'Paused' : 'Live'}
+        {unknown ? t('statusUnknown') : paused ? t('statusPaused') : t('statusLive')}
       </Badge>
       <div style={whitelistActions}>
         <Button
@@ -633,7 +629,7 @@ function PauseRow({
           reason={reason}
           onClick={() => onToggle(!paused)}
         >
-          {paused ? 'Resume' : 'Pause'}
+          {paused ? t('resumeCta') : t('pauseCta')}
         </Button>
       </div>
     </div>

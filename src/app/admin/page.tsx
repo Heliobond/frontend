@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { AdminConsole } from '@/screens/admin/AdminConsole'
 import { useWallet, shortAddress } from '@/wallet/WalletProvider'
 import { getAdminRoles, type AdminRoles } from '@/wallet/admin'
 import { Button, Card } from '@/components'
 
 export default function AdminPage() {
+  const t = useTranslations('Admin')
   const { connected, address, connect, disconnect } = useWallet()
 
   /**
@@ -56,7 +58,7 @@ export default function AdminPage() {
       <main id="main-content" style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px' }}>
         <Card style={{ padding: 32, textAlign: 'center' }}>
           <div className="hb-eyebrow" style={{ marginBottom: 12 }}>
-            Privileged Area
+            {t('privilegedArea')}
           </div>
           <h1
             style={{
@@ -66,7 +68,7 @@ export default function AdminPage() {
               margin: '0 0 12px',
             }}
           >
-            Admin Authentication Required
+            {t('authRequiredTitle')}
           </h1>
           <p
             style={{
@@ -77,11 +79,10 @@ export default function AdminPage() {
               margin: '0 0 24px',
             }}
           >
-            Access to this console is restricted to authorized contract owners and administrators.
-            Please connect an administrator wallet to proceed.
+            {t('accessDeniedBody')}
           </p>
           <Button variant="primary" size="lg" onClick={() => void connect()}>
-            Connect wallet
+            {t('connectWallet')}
           </Button>
         </Card>
       </main>
@@ -95,7 +96,7 @@ export default function AdminPage() {
         style={{ maxWidth: 560, margin: '64px auto', padding: '0 24px', textAlign: 'center' }}
       >
         <div style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-60)' }}>
-          Verifying administrative privileges...
+          {t('verifyingPrivileges')}
         </div>
       </main>
     )
@@ -128,7 +129,7 @@ export default function AdminPage() {
               margin: '0 0 12px',
             }}
           >
-            Access Denied
+            {t('accessDeniedTitle')}
           </h1>
           <p
             style={{
@@ -139,16 +140,17 @@ export default function AdminPage() {
               margin: '0 0 24px',
             }}
           >
-            Connected wallet{' '}
-            <strong style={{ color: 'var(--ink)' }}>{shortAddress(address ?? '')}</strong> is not an
-            authorized administrator on this contract.
+            {t.rich('notAuthorized', {
+              address: shortAddress(address ?? ''),
+              b: (chunks) => <strong style={{ color: 'var(--ink)' }}>{chunks}</strong>,
+            })}
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <Button variant="secondary" onClick={() => disconnect()}>
-              Disconnect
+              {t('disconnectWallet')}
             </Button>
             <Button variant="primary" onClick={() => void connect()}>
-              Switch wallet
+              {t('switchWallet')}
             </Button>
           </div>
         </Card>

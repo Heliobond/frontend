@@ -95,6 +95,37 @@ describe('Message catalog parity', () => {
     expect(es.Deposit.projection.toLowerCase()).not.toContain('rendimiento del bono')
   })
 
+  it('Arabic plural messages cover all Arabic plural categories', () => {
+    const arabicCategories = new Set(['zero', 'one', 'two', 'few', 'many', 'other'])
+    const pluralRe = /\{\s*\w+\s*,\s*plural\s*,([\s\S]*?)\}\s*$/
+    const categoryRe = /(?:^|\s)(zero|one|two|few|many|other)\s*\{/g
+    const mismatches: string[] = []
+
+    function checkArabicPlurals(obj: Record<string, unknown>, prefix = '') {
+      for (const key of Object.keys(obj)) {
+        const path = prefix ? `${prefix}.${key}` : key
+        const val = obj[key]
+        if (typeof val === 'object' && val !== null) {
+          checkArabicPlurals(val as Record<string, unknown>, path)
+        } else if (typeof val === 'string') {
+          const pluralMatch = val.match(pluralRe)
+          if (pluralMatch) {
+            const body = pluralMatch[1]
+            const found = new Set<string>()
+            for (const m of body.matchAll(categoryRe)) found.add(m[1])
+            const missing = [...arabicCategories].filter((c) => !found.has(c))
+            if (missing.length > 0) {
+              mismatches.push(`${path}: missing ${missing.join(', ')}`)
+            }
+          }
+        }
+      }
+    }
+
+    checkArabicPlurals(ar as Record<string, unknown>)
+    expect(mismatches).toEqual([])
+  })
+
   it('does not ship untranslated English values in es.json', () => {
     const enEntries = getLeafEntries(en as Record<string, unknown>)
     const esEntries = getLeafEntries(es as Record<string, unknown>)

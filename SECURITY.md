@@ -101,6 +101,23 @@ reviewed as code:
   which gets no secrets and a read-only token. The one `pull_request_target`
   workflow (`auto-review.yml`) checks out the base branch and only reads the
   PR diff through the API; it must never check out or run fork code.
+- **CI hardening (#916):** every `uses:` in `.github/workflows` is pinned to a
+  full commit SHA with the release in a trailing comment, so retagging an
+  upstream version cannot change what runs here; the weekly `github-actions`
+  Dependabot entry is the thing that moves those SHAs. Each workflow sets
+  `permissions: {}` and each job then grants only what it needs, and every
+  checkout passes `persist-credentials: false` so the workflow token never
+  lands in `.git/config` for a later step to use. `e2e-chain.yml` verifies the
+  `stellar-cli` tarball against a pinned SHA-256 before extracting it.
+  `dtolnay/rust-toolchain` publishes no tag for the ref it uses, so its pin is
+  bumped by hand.
+- **Actions settings (maintainer, dashboard):** these are admin toggles that a
+  PR cannot set, and #916 asks for them too. Under Settings > Actions >
+  General, select "Allow Heliobond, and select non-Heliobond, actions and
+  secrets" (GitHub-created and verified creators, plus `oven-sh/setup-bun`,
+  `Swatinem/rust-cache` and `dtolnay/rust-toolchain`), turn on "Require
+  actions to be pinned to full-length commit SHA", and keep fork workflow
+  approval on for first-time contributors.
 
 ## Incident response
 
