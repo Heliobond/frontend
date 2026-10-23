@@ -1,10 +1,13 @@
 import type { MetadataRoute } from 'next'
+import { getTranslations } from 'next-intl/server'
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  // Description follows the cookie locale (#902), same source as generateMetadata.
+  const t = await getTranslations('Metadata')
   return {
     name: 'Heliobond',
     short_name: 'Heliobond',
-    description: 'Own a piece of the energy transition. From one dollar.',
+    description: t('site.manifestDescription'),
     start_url: '/',
     display: 'standalone',
     background_color: '#f3f5f1', // --canvas

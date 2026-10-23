@@ -1,6 +1,7 @@
 export const AUTH_ROUTES = ['/deposit', '/withdraw', '/portfolio'] as const
 
 import type { Metadata } from 'next'
+import { ogLocale } from '../i18n/config'
 import { siteUrl } from './siteUrl'
 
 /**
@@ -74,6 +75,41 @@ export const PUBLIC_ROUTES: readonly string[] = ROUTES.filter((r) => !r.private)
 
 /** Translates a `Metadata` namespace key; `getTranslations('Metadata')` fits. */
 export type MetadataTranslator = (key: string) => string
+
+/**
+ * Root document metadata for a locale (#902): title, description, OpenGraph and
+ * Twitter tags all come from the `Metadata.site.*` catalog keys so they follow
+ * the cookie locale. Shared chrome (metadataBase, icons, canonical, image
+ * dimensions) is applied by the root layout.
+ */
+export function buildRootMetadata(t: MetadataTranslator, locale: string): Metadata {
+  const title = t('site.title')
+  const description = t('site.description')
+  return {
+    title: { default: title, template: TITLE_TEMPLATE },
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      locale: ogLocale(locale),
+      images: [
+        {
+          url: '/assets/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: t('site.previewAlt'),
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/assets/og-image.png'],
+    },
+  }
+}
 
 /**
  * Document metadata for a route, or `undefined` when the route is not in the

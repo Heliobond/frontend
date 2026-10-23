@@ -600,6 +600,12 @@
       "title": "Sunlight made financial",
       "description": "Own a piece of the energy transition through a transparent pool funding verified green projects on Stellar."
     },
+    "site": {
+      "title": "Heliobond — sunlight made financial",
+      "description": "Own a piece of the energy transition. From one dollar. A transparent pool funding verified green projects on Stellar.",
+      "previewAlt": "Heliobond preview card",
+      "manifestDescription": "Own a piece of the energy transition. From one dollar."
+    },
     "connect": {
       "title": "Connect your wallet",
       "description": "Connect a Stellar wallet to Heliobond, or open a demo session to try the investor flow without a browser extension."

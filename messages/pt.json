@@ -600,6 +600,12 @@
       "title": "Energia solar transformada em finanças",
       "description": "Participe da transição energética por meio de um fundo transparente que financia projetos verdes verificados na Stellar."
     },
+    "site": {
+      "title": "Heliobond — energia solar transformada em finanças",
+      "description": "Participe da transição energética. A partir de um dólar. Um fundo transparente que financia projetos verdes verificados na Stellar.",
+      "previewAlt": "Cartão de pré-visualização da Heliobond",
+      "manifestDescription": "Participe da transição energética. A partir de um dólar."
+    },
     "connect": {
       "title": "Conecte a sua carteira",
       "description": "Conecte uma carteira Stellar à Heliobond, ou abra uma sessão de demonstração para experimentar o fluxo do investidor sem extensão."

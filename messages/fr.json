@@ -600,6 +600,12 @@
       "title": "L’énergie solaire, rendue financière",
       "description": "Participez à la transition énergétique grâce à un pool transparent qui finance des projets verts vérifiés sur Stellar."
     },
+    "site": {
+      "title": "Heliobond — l’énergie solaire, rendue financière",
+      "description": "Participez à la transition énergétique. À partir d’un dollar. Un pool transparent qui finance des projets verts vérifiés sur Stellar.",
+      "previewAlt": "Carte de prévisualisation Heliobond",
+      "manifestDescription": "Participez à la transition énergétique. À partir d’un dollar."
+    },
     "connect": {
       "title": "Connecter votre portefeuille",
       "description": "Connectez un portefeuille Stellar à Heliobond, ou ouvrez une session démo pour tester le parcours investisseur sans extension."
