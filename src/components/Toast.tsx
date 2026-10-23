@@ -8,16 +8,17 @@ import {
   type CSSProperties,
   type ReactNode,
 } from 'react'
+import { useTranslations } from 'next-intl'
 import { CloseIcon } from './icons'
 
 export type ToastTone = 'neutral' | 'success' | 'error' | 'solar'
 
-// Maps toast tones to accessible status labels for colorblind users (#464)
-const TONE_LABELS: Record<ToastTone, string> = {
-  neutral: 'Info',
-  success: 'Success',
-  error: 'Error',
-  solar: 'Warning',
+// Catalog keys for accessible status labels shown to colorblind users (#464)
+const TONE_LABEL_KEYS: Record<ToastTone, string> = {
+  neutral: 'toneNeutral',
+  success: 'toneSuccess',
+  error: 'toneError',
+  solar: 'toneSolar',
 }
 
 export interface ToastProps {
@@ -41,6 +42,7 @@ export function Toast({
   href,
   style,
 }: ToastProps) {
+  const t = useTranslations('Components.Toast')
   const accents: Record<ToastTone, string> = {
     neutral: 'var(--ink)',
     success: 'var(--growth)',
@@ -55,7 +57,7 @@ export function Toast({
     : undefined
 
   // Status label for accessibility - shown to screen readers and colorblind users (#464)
-  const statusLabel = TONE_LABELS[tone]
+  const statusLabel = t(TONE_LABEL_KEYS[tone] as 'toneNeutral')
 
   const content = (
     <>
@@ -98,7 +100,7 @@ export function Toast({
                 textTransform: 'uppercase',
                 flex: '0 0 auto',
               }}
-              aria-label={`Status: ${statusLabel}`}
+              aria-label={t('statusLabel', { label: statusLabel })}
             >
               {statusLabel}
             </span>
@@ -131,7 +133,7 @@ export function Toast({
                 textTransform: 'uppercase',
                 flex: '0 0 auto',
               }}
-              aria-label={`Status: ${statusLabel}`}
+              aria-label={t('statusLabel', { label: statusLabel })}
             >
               {statusLabel}
             </span>
@@ -217,7 +219,7 @@ export function Toast({
       {onDismiss && (
         <button
           type="button"
-          aria-label="Dismiss"
+          aria-label={t('dismiss')}
           onClick={onDismiss}
           style={{
             flex: '0 0 auto',

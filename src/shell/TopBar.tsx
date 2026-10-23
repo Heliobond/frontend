@@ -164,7 +164,11 @@ export function TopBar() {
 
           <span
             role="status"
-            aria-label={networkOnline ? `Network: ${NETWORK_NAME} online` : 'Offline'}
+            aria-label={
+              networkOnline
+                ? t('networkOnline', { name: NETWORK_NAME })
+                : t('offline')
+            }
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -187,7 +191,7 @@ export function TopBar() {
                 boxShadow: networkOnline ? '0 0 0 3px var(--growth-12)' : 'none',
               }}
             />
-            {networkOnline ? null : 'Offline'}
+            {networkOnline ? null : t('offline')}
           </span>
 
           <PreferencesDropdown />
@@ -196,8 +200,8 @@ export function TopBar() {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              aria-label="Transaction activity history"
-              title="Transaction activity history"
+              aria-label={t('activityHistory')}
+              title={t('activityHistory')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -254,7 +258,7 @@ export function TopBar() {
           ref={mobileMenuButtonRef}
           type="button"
           className="hb-mobile-menu-button"
-          aria-label="Open site menu"
+          aria-label={t('openSiteMenu')}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-site-menu"
           onClick={() => setMobileMenuOpen((open) => !open)}
@@ -355,12 +359,13 @@ export function TopBar() {
  * build, so nobody mistakes test balances for real ones (#611).
  */
 export function NetworkPill({ passphrase }: { passphrase: string }) {
+  const t = useTranslations('Nav')
   const name = networkLabel(passphrase)
   if (name === 'Mainnet') return null
   return (
     <span
       data-testid="network-pill"
-      title={`This build runs on the Stellar ${name} — balances have no real value.`}
+      title={t('networkPillTitle', { name })}
       style={{
         fontFamily: 'var(--font-data)',
         fontSize: 11,
@@ -818,8 +823,8 @@ function WalletMenu({
         {syncing ? (
           <span
             role="status"
-            aria-label="Syncing with Stellar"
-            title="Syncing with Stellar…"
+            aria-label={t('syncing')}
+            title={t('syncing')}
             style={{
               width: 16,
               height: 16,

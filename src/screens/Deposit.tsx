@@ -92,8 +92,8 @@ export function Deposit({ onDone }: DepositProps) {
   const estimatedFee = useTransactionFee('deposit', n, address, slippageTolerance)
   const feeLabel =
     estimatedFee === null
-      ? 'Estimate unavailable'
-      : `${formatDecimal(estimatedFee, 7)} XLM (estimated maximum)`
+      ? t('feeEstimateUnavailable')
+      : t('feeLabelEstimated', { fee: formatDecimal(estimatedFee, 7) })
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -149,8 +149,8 @@ export function Deposit({ onDone }: DepositProps) {
         changeStep('success')
         toast({
           tone: 'success',
-          title: 'Deposit confirmed',
-          message: `Successfully invested ${n} USDC in the pool.`,
+          title: t('confirmedToastTitle'),
+          message: t('confirmedToastBody', { amount: n }),
         })
       }
     } catch (e) {
@@ -162,9 +162,8 @@ export function Deposit({ onDone }: DepositProps) {
         if (isTimeout) {
           toast({
             tone: 'solar',
-            title: "Still pending — we'll keep checking",
-            message:
-              'Transaction submitted but waiting for on-chain confirmation. Background tracking is active.',
+            title: t('pendingToastTitle'),
+            message: t('pendingToastBody'),
           })
           changeStep('amount')
           return
@@ -178,11 +177,11 @@ export function Deposit({ onDone }: DepositProps) {
           : (translateContractError(e, tErr) ??
             (e instanceof Error
               ? getFriendlyErrorMessage(e.message)
-              : 'Transaction failed — please try again.'))
+              : t('txFailedGeneric')))
         changeStep('amount')
         toast({
           tone: 'error',
-          title: 'Deposit failed',
+          title: t('failedToastTitle'),
           message: errorMessage,
           action: (
             <button
@@ -221,11 +220,11 @@ export function Deposit({ onDone }: DepositProps) {
     !isMemoValid
 
   const amountDisabledReason = paused
-    ? 'Vault paused'
+    ? t('vaultPaused')
     : balance !== null && (n > balance || balance < minDeposit)
       ? t('reasonExceeds')
       : n > maxTx
-        ? 'Amount exceeds pool limit'
+        ? t('amountExceedsPool')
         : n < minDeposit
           ? t('reasonMin', { min: formatDecimal(minDeposit, 2) })
           : !isMemoValid
@@ -329,7 +328,7 @@ export function Deposit({ onDone }: DepositProps) {
                             marginBottom: 2,
                           }}
                         >
-                          Using estimated rate
+                          {t('usingEstimatedRate')}
                         </span>
                       )}
                       {t.rich('preview', {
@@ -345,8 +344,11 @@ export function Deposit({ onDone }: DepositProps) {
                           color: 'var(--ink-60)',
                         }}
                       >
-                        Network fee: {feeLabel} · Deposit: {formatDecimal(n, 2)} USDC worth{' '}
-                        {formatDecimal(n / price, 4)} HBS (real-time)
+                        {t('feeBreakdown', {
+                          fee: feeLabel,
+                          amount: formatDecimal(n, 2),
+                          shares: formatDecimal(n / price, 4),
+                        })}
                       </span>
                       {n >= minDeposit && (
                         <div
@@ -459,15 +461,16 @@ export function Deposit({ onDone }: DepositProps) {
                 }}
               >
                 <strong style={{ display: 'block', marginBottom: 4 }}>
-                  ⚠ Previous deposit may still be processing
+                  ⚠ {t('pendingDepositTitle')}
                 </strong>
-                Your last deposit of{' '}
-                <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600 }}>
-                  {formatDecimal(pendingDeposit.amount, 2)} USDC
-                </span>{' '}
-                (started <PendingDepositAge startedAt={pendingDeposit.startedAt} /> ago) has not yet
-                confirmed. Submitting again before it settles may result in a duplicate investment.
-                Check your portfolio before proceeding.{' '}
+                {t.rich('pendingDepositBody', {
+                  amount: formatDecimal(pendingDeposit.amount, 2),
+                  age: <PendingDepositAge startedAt={pendingDeposit.startedAt} />,
+                  amt: (chunks) => (
+                    <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600 }}>{chunks}</span>
+                  ),
+                })}{' '}
+                {t('checkPortfolioFirst')}{' '}
                 <button
                   type="button"
                   onClick={clearPending}
@@ -483,7 +486,7 @@ export function Deposit({ onDone }: DepositProps) {
                     textDecoration: 'underline',
                   }}
                 >
-                  Dismiss warning
+                  {t('dismissWarning')}
                 </button>
               </div>
             )}
@@ -501,8 +504,8 @@ export function Deposit({ onDone }: DepositProps) {
               <Row k={t('rowPay')} v={`${formatDecimal(n, 2)} USDC`} />
               <Row k={t('rowReceive')} v={`≈ ${formatDecimal(n / price, 4)} HBS`} />
               <Row k={t('rowPrice')} v={formatSharePrice(price)} />
-              <Row k="Price fetched" v={formatDateTime(priceFetchedAt, locale)} />
-              <Row k="Network fee" v={feeLabel} />
+              <Row k={t('priceFetched')} v={formatDateTime(priceFetchedAt, locale)} />
+              <Row k={t('networkFee')} v={feeLabel} />
               {memo.trim() && <Row k={t('rowMemo')} v={memo.trim()} />}
             </div>
             <RateAge fetchedAt={priceFetchedAt} locale={locale} onRefresh={refreshVault} />
@@ -518,7 +521,7 @@ export function Deposit({ onDone }: DepositProps) {
                   cursor: 'pointer',
                 }}
               >
-                <span>Slippage tolerance</span>
+                <span>{t('slippageTolerance')}</span>
                 <select
                   value={slippageTolerance}
                   onChange={(e) => setSlippageTolerance(Number(e.target.value))}
@@ -533,13 +536,15 @@ export function Deposit({ onDone }: DepositProps) {
                     cursor: 'pointer',
                   }}
                 >
-                  <option value={0.001}>0.1%</option>
-                  <option value={0.005}>0.5% (default)</option>
-                  <option value={0.01}>1%</option>
-                  <option value={0.02}>2%</option>
+                  <option value={0.001}>{t('slippageOption', { value: '0.001' })}</option>
+                  <option value={0.005}>{t('slippageOption', { value: '0.005' })}</option>
+                  <option value={0.01}>{t('slippageOption', { value: '0.01' })}</option>
+                  <option value={0.02}>{t('slippageOption', { value: '0.02' })}</option>
                 </select>
                 <span style={{ color: 'var(--ink-40)', fontSize: 'var(--type-caption)' }}>
-                  Min shares: {formatDecimal((n / price) * (1 - slippageTolerance), 4)} HBS
+                  {t('minShares', {
+                    amount: formatDecimal((n / price) * (1 - slippageTolerance), 4),
+                  })}
                 </span>
               </label>
             </div>
@@ -723,6 +728,7 @@ function RateAge({
   locale: string
   onRefresh: () => void
 }) {
+  const t = useTranslations('Deposit')
   const now = useVisibleNow()
   const rateAgeSeconds = Math.floor((now - fetchedAt.getTime()) / 1000)
   const isRateStale = rateAgeSeconds > RATE_STALE_AFTER_SECONDS
@@ -748,13 +754,16 @@ function RateAge({
           }}
         >
           {isRateStale
-            ? `Rate updated ${rateAgeSeconds}s ago — may be outdated. Refresh before confirming.`
-            : `Live rate — updated ${rateAgeSeconds}s ago at ${formatTime(fetchedAt, locale)}`}
+            ? t('rateStale', { seconds: rateAgeSeconds })
+            : t('rateLive', {
+                seconds: rateAgeSeconds,
+                time: formatTime(fetchedAt, locale),
+              })}
         </p>
         <button
           type="button"
           onClick={onRefresh}
-          aria-label="Refresh exchange rate"
+          aria-label={t('refreshRateAria')}
           style={{
             fontFamily: 'var(--font-body)',
             fontSize: 'var(--type-caption)',
@@ -767,7 +776,7 @@ function RateAge({
             cursor: 'pointer',
           }}
         >
-          Refresh rate
+          {t('refreshRateCta')}
         </button>
       </div>
       {isRateStale && (
@@ -784,8 +793,7 @@ function RateAge({
             color: 'var(--ember)',
           }}
         >
-          Exchange rate is more than {RATE_STALE_AFTER_SECONDS} seconds old — please refresh to get
-          the latest price before confirming.
+          {t('rateStaleAlert', { seconds: RATE_STALE_AFTER_SECONDS })}
         </div>
       )}
     </>

@@ -28,8 +28,7 @@ export default async function VerifyPage() {
             margin: '0 0 16px',
           }}
         >
-          Trust is shown, not claimed. The contracts are public, the oracle cadence is documented,
-          and the return formula is written out in plain sight.
+          {t('verifyBody')}
         </p>
         <div
           style={{

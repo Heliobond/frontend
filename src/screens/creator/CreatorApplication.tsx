@@ -136,7 +136,7 @@ export function CreatorApplication({
         </FormField>
 
         <div style={{ marginBottom: 'var(--form-gap)' }}>
-          <Label htmlFor="">Project type</Label>
+          <Label htmlFor="">{t('fieldProjectType')}</Label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {PROJECT_TYPES.map((t) => (
               <Tag key={t} selected={projectType === t} onClick={() => setProjectType(t)}>

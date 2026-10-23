@@ -203,8 +203,8 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
             type="search"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by name or location"
-            aria-label="Search by name or location"
+            placeholder={t('searchPlaceholder')}
+            aria-label={t('searchLabel')}
             style={{
               fontFamily: 'var(--font-body)',
               fontSize: 'var(--type-small)',
