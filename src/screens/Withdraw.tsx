@@ -356,17 +356,21 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                       })
                       toast({
                         tone: 'solar',
-                        title: 'Withdrawal queued',
+                        title: t('pendingH1'),
                         message:
                           est === undefined
-                            ? 'Withdrawal queued; owed amount is unavailable from this confirmation.'
-                            : `Owed amount ${formatDecimal(est, DISPLAY_DECIMALS)} USDC queued for payout.`,
+                            ? t('queuedToastNoAmount')
+                            : t('queuedToastWithAmount', {
+                                amount: formatDecimal(est, DISPLAY_DECIMALS),
+                              }),
                       })
                     } else {
                       toast({
                         tone: 'success',
-                        title: 'Withdrawal settled',
-                        message: `${formatDecimal(est ?? n, DISPLAY_DECIMALS)} USDC is on its way to your wallet.`,
+                        title: t('successH1'),
+                        message: t('settledToast', {
+                          amount: formatDecimal(est ?? n, DISPLAY_DECIMALS),
+                        }),
                       })
                     }
                   }

@@ -93,7 +93,7 @@ export function Deposit({ onDone }: DepositProps) {
   const feeLabel =
     estimatedFee === null
       ? 'Estimate unavailable'
-      : `${estimatedFee.toFixed(7)} XLM (estimated maximum)`
+      : `${formatDecimal(estimatedFee, 7)} XLM (estimated maximum)`
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -290,7 +290,7 @@ export function Deposit({ onDone }: DepositProps) {
                 label={t('amountLabel')}
                 currency={balance !== null ? 'USDC' : ''}
                 balanceLabel={balance !== null ? t('balanceLabel') : ''}
-                balance={balance !== null ? balance.toFixed(2) : 'Balance unavailable'}
+                balance={balance !== null ? formatDecimal(balance, 2) : 'Balance unavailable'}
                 chips={quickDepositAmounts}
                 min={minDeposit}
                 max={balance !== null ? Math.min(balance, maxTx) : maxTx}
@@ -370,7 +370,7 @@ export function Deposit({ onDone }: DepositProps) {
                                 color: 'var(--ink-60)',
                               }}
                             >
-                              {years === 1 ? '1 year:' : `${years} years:`} ≈ $
+                              {t('projectionYears', { count: years })} ≈ $
                               {formatDecimal(
                                 roundToCents(projectedReturn(n, projectedRate, years)),
                                 2,

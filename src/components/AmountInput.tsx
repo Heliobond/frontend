@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactNode, useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { sanitizeAmount } from '../lib/format'
+import { useLocale } from 'next-intl'
+import { formatNumber, sanitizeAmount } from '../lib/format'
 
 export { sanitizeAmount }
 
@@ -69,6 +70,7 @@ export function AmountInput({
   id = 'hb-amount',
   style,
 }: AmountInputProps) {
+  const locale = useLocale()
   const num = parseFloat(value)
   const overCap = cap != null && !isNaN(num) && num > cap
   const showCapNotice = overCap && (Boolean(capMessage) || Boolean(capActionLabel))
@@ -85,7 +87,7 @@ export function AmountInput({
 
   const set = (v: number) => onChange?.(String(v))
   const formatBound = (bound: number) =>
-    new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(bound)
+    formatNumber(bound, { appLocale: locale, maximumFractionDigits: 2 })
 
   return (
     <div style={{ position: 'relative', ...style }}>

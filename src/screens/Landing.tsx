@@ -1,6 +1,6 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button, StatBlock } from '../components'
 import { formatCurrency, formatNumber } from '../data'
 import { selectPoolSummary } from '../state/selectors'
@@ -17,6 +17,7 @@ export interface LandingProps {
 
 export function Landing({ onConnect, onExplore }: LandingProps) {
   const t = useTranslations('Landing')
+  const locale = useLocale()
   const pool = selectPoolSummary()
   const steps = [1, 2, 3, 4] as const
   const intensity = Math.min(1, pool.totalAssets / 6_000_000)
@@ -85,19 +86,23 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
           }}
         >
           <div style={counterCell}>
-            <StatBlock label={t('poolValue')} value={formatCurrency(pool.totalAssets)} size="lg" />
+            <StatBlock
+              label={t('poolValue')}
+              value={formatCurrency(pool.totalAssets, locale)}
+              size="lg"
+            />
           </div>
           <div style={counterCell}>
             <StatBlock
               label={t('projectsFunded')}
-              value={formatNumber(pool.projectsFunded)}
+              value={formatNumber(pool.projectsFunded, locale)}
               size="lg"
             />
           </div>
           <div style={counterCell}>
             <StatBlock
               label={t('returnRate')}
-              value={formatNumber(pool.projectedRate)}
+              value={formatNumber(pool.projectedRate, locale)}
               unit="%"
               size="lg"
             />

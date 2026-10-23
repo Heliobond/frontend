@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { apiFetch } from '../lib/api'
+import { formatDate, formatNumber } from '../lib/format'
 
 export interface PortfolioPerformancePoint {
   timestamp: string
@@ -47,6 +48,7 @@ function Series({
   color,
   unit = '',
   historyLabel,
+  locale,
 }: {
   label: string
   value: number
@@ -54,13 +56,14 @@ function Series({
   color: string
   unit?: string
   historyLabel: string
+  locale: string
 }) {
   return (
     <div style={{ minWidth: 0, flex: '1 1 190px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
         <span>{label}</span>
         <strong>
-          {value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          {formatNumber(value, { appLocale: locale, maximumFractionDigits: 2 })}
           {unit}
         </strong>
       </div>
@@ -145,6 +148,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
         <>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             <Series
+              locale={locale}
               label={t('portfolioValue')}
               historyLabel={t('historyChartLabel', { label: t('portfolioValue') })}
               value={latest.valueUsdc}
@@ -153,6 +157,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
               unit=" USDC"
             />
             <Series
+              locale={locale}
               label={t('returns')}
               historyLabel={t('historyChartLabel', { label: t('returns') })}
               value={latest.returnPct}
@@ -161,6 +166,7 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
               unit="%"
             />
             <Series
+              locale={locale}
               label={t('yield')}
               historyLabel={t('historyChartLabel', { label: t('yield') })}
               value={latest.yieldPct}
@@ -173,8 +179,8 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
             style={{ margin: '12px 0 0', color: 'var(--ink-60)', fontSize: 'var(--type-caption)' }}
           >
             {t('snapshotsNote', {
-              start: new Date(points[0].timestamp).toLocaleDateString(locale),
-              end: new Date(latest.timestamp).toLocaleDateString(locale),
+              start: formatDate(points[0].timestamp, locale),
+              end: formatDate(latest.timestamp, locale),
             })}
           </p>
         </>

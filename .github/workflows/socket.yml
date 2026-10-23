@@ -1,0 +1,42 @@
+name: Package risk scan
+
+# Socket scores the packages a PR adds or changes for install scripts,
+# obfuscated code, network access and new maintainers (#922). The scan needs the
+# SOCKET_CLI_API_TOKEN repository secret. GitHub does not pass secrets to pull
+# requests from forks, so the scan is skipped there. The skip is reported as a
+# notice, not a pass. The scan's pass/fail thresholds are set in the Socket
+# dashboard security policy, not in this file.
+#
+# This runs the `pull_request` event, not `pull_request_target`, so PR code
+# never sees the secret.
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  socket:
+    name: socket package risk
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Scan dependencies with Socket
+        env:
+          SOCKET_CLI_API_TOKEN: ${{ secrets.SOCKET_CLI_API_TOKEN }}
+          SOCKET_ORG: ${{ vars.SOCKET_ORG }}
+        run: |
+          if [ -z "$SOCKET_CLI_API_TOKEN" ]; then
+            echo "::notice title=Socket scan skipped::SOCKET_CLI_API_TOKEN is not available to this run (fork PR or secret not set), so no package-risk scan ran."
+            exit 0
+          fi
+          ORG_ARGS=()
+          if [ -n "$SOCKET_ORG" ]; then
+            ORG_ARGS=(--org "$SOCKET_ORG")
+          fi
+          npx --yes @socketsecurity/cli@1.10.0 ci "${ORG_ARGS[@]}"

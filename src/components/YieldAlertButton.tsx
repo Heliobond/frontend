@@ -8,6 +8,7 @@ import { useToast } from './Toast'
 import { YieldAlertModal } from './YieldAlertModal'
 import { useYieldAlerts } from '../alerts/YieldAlertProvider'
 import { type AlertOperator } from '../lib/yieldAlerts'
+import { formatDecimal } from '../lib/format'
 
 /**
  * Bell toggle that opens the yield alert modal for a specific bond.
@@ -51,14 +52,20 @@ export function YieldAlertButton({
       toast({
         tone: 'success',
         title: t('updatedToastTitle'),
-        message: t('updatedToastMessage', { name: bondName, threshold: threshold.toFixed(1) }),
+        message: t('updatedToastMessage', {
+          name: bondName,
+          threshold: formatDecimal(threshold, 1),
+        }),
       })
     } else {
       add(bondId, bondName, threshold, operator)
       toast({
         tone: 'success',
         title: t('createdToastTitle'),
-        message: t('createdToastMessage', { name: bondName, threshold: threshold.toFixed(1) }),
+        message: t('createdToastMessage', {
+          name: bondName,
+          threshold: formatDecimal(threshold, 1),
+        }),
       })
     }
     setModalOpen(false)

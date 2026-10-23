@@ -1,7 +1,7 @@
 'use client'
 
 import { useId } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { StatBlock, ScoreGauge, Badge, Card, Sparkline } from '@/components'
 import {
   cardTitleLg as cardTitle,
@@ -16,7 +16,7 @@ import {
   type CreatorDashboard as CreatorDashboardModel,
   type OracleUpdate,
 } from '@/data/creator'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, formatNumber } from '@/lib/format'
 import { getExplorerUrl } from '@/config/network'
 
 /**
@@ -30,6 +30,7 @@ export interface CreatorDashboardProps {
 }
 
 export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardProps) {
+  const locale = useLocale()
   const t = useTranslations('Creator')
   const fundingCaptionId = useId()
   const fundedPct =
@@ -84,7 +85,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               aria-valuenow={Math.min(100, Math.max(0, fundedPct))}
               aria-valuetext={t('dashGoalDeployed', {
                 pct: fundedPct,
-                goal: data.fundingGoal.toLocaleString('en-US'),
+                goal: formatNumber(data.fundingGoal, { appLocale: locale }),
               })}
               aria-labelledby={fundingCaptionId}
               style={{

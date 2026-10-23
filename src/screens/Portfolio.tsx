@@ -10,7 +10,7 @@ import { Helio } from '../brand/Helio'
 import { useWallet } from '../wallet/WalletProvider'
 import { getPendingClaims, removePendingClaim, type PendingClaim } from '../wallet/pendingClaims'
 import { submitClaim } from '../wallet/vault'
-import { formatDate, formatDecimal } from '../lib/format'
+import { formatDate, formatDecimal, formatMoney, formatNumber } from '../lib/format'
 import { OnChainPosition } from './OnChainPosition'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { getVirtualRange } from '../lib/virtualRange'
@@ -218,9 +218,16 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           <div data-testid="portfolio-value">
             <StatBlock
               label={t('currentValue')}
-              value={`$${integerVal.toLocaleString('en-US')}`}
+              value={formatMoney(integerVal, { includeSymbol: true, appLocale: locale })}
               decimals={`.${decimalPart}`}
-              delta={`+$${you.deltaAbs.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${you.deltaPct}%) ${t('sinceDeposit')}`}
+              delta={t('deltaSinceDeposit', {
+                amount: formatMoney(you.deltaAbs, {
+                  includeSymbol: true,
+                  appLocale: locale,
+                  fractionDigits: 2,
+                }),
+                pct: you.deltaPct,
+              })}
               size="lg"
               stackOnMobile
             />
@@ -245,7 +252,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           <div data-testid="portfolio-shares">
             <StatBlock
               label={t('hbsHeld')}
-              value={Math.floor(you.hbs).toLocaleString('en-US')}
+              value={formatNumber(Math.floor(you.hbs), { appLocale: locale })}
               decimals={`.${(you.hbs % 1).toFixed(4).slice(2)}`}
               size="md"
             />
@@ -309,8 +316,8 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               }}
             >
               {pendingClaims.length > 0
-                ? `${pendingClaims.length} queued FIFO claim${pendingClaims.length > 1 ? 's' : ''} awaiting vault liquidity.`
-                : 'No queued withdrawals. Immediate liquidity is available for standard payouts.'}
+                ? t('pendingClaims', { count: pendingClaims.length })
+                : t('pendingClaimsEmpty')}
             </p>
           </div>
           {pendingClaims.length > 0 && (
@@ -500,7 +507,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                   textDecoration: 'none',
                 }}
               >
-                {t('taxReports')} →
+                {t('taxReports')} <span className="hb-rtl-arrow">→</span>
               </Link>
             </div>
             <span
