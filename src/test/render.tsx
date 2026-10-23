@@ -5,15 +5,22 @@
  */
 import { render, type RenderOptions } from '@testing-library/react'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
+import type { Locale } from '@/i18n/config'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import { ToastProvider } from '@/components'
 import { WatchlistProvider } from '@/watchlist/WatchlistProvider'
 import type { ReactNode } from 'react'
 import en from '../../messages/en.json'
+import fr from '../../messages/fr.json'
+import es from '../../messages/es.json'
+import ar from '../../messages/ar.json'
+import pt from '../../messages/pt.json'
 
-function AllProviders({ children }: { children: ReactNode }) {
+const catalogs = { en, fr, es, ar, pt }
+
+function AllProviders({ children, locale }: { children: ReactNode; locale: Locale }) {
   return (
-    <LocaleProvider initialLocale="en" initialMessages={en}>
+    <LocaleProvider initialLocale={locale} initialMessages={catalogs[locale]}>
       <ThemeProvider>
         <ToastProvider>
           <WatchlistProvider>{children}</WatchlistProvider>
@@ -23,8 +30,15 @@ function AllProviders({ children }: { children: ReactNode }) {
   )
 }
 
-function renderWithProviders(ui: ReactNode, options?: Omit<RenderOptions, 'wrapper'>) {
-  return render(ui, { wrapper: AllProviders, ...options })
+function renderWithProviders(
+  ui: ReactNode,
+  options?: Omit<RenderOptions, 'wrapper'> & { locale?: Locale },
+) {
+  const { locale = 'en', ...renderOptions } = options ?? {}
+  return render(ui, {
+    wrapper: ({ children }) => <AllProviders locale={locale}>{children}</AllProviders>,
+    ...renderOptions,
+  })
 }
 
 export * from '@testing-library/react'

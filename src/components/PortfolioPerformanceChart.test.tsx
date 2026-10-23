@@ -1,18 +1,6 @@
-import { render as rtlRender, screen, waitFor } from '@testing-library/react'
-import { NextIntlClientProvider } from 'next-intl'
-import type { ReactElement } from 'react'
+import { render, screen, waitFor } from '@/test/render'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PortfolioPerformanceChart } from './PortfolioPerformanceChart'
-
-// The component reads the active locale for number formatting.
-const render = (ui: ReactElement) =>
-  rtlRender(ui, {
-    wrapper: ({ children }) => (
-      <NextIntlClientProvider locale="en" messages={{}}>
-        {children}
-      </NextIntlClientProvider>
-    ),
-  })
 
 describe('PortfolioPerformanceChart', () => {
   afterEach(() => vi.restoreAllMocks())
@@ -39,5 +27,11 @@ describe('PortfolioPerformanceChart', () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
     render(<PortfolioPerformanceChart address="GTEST" />)
     expect(await screen.findByText(/snapshots are available/i)).toBeInTheDocument()
+  })
+
+  it('renders the title in the selected locale', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'))
+    render(<PortfolioPerformanceChart address="GTEST" />, { locale: 'fr' })
+    expect(await screen.findByText('Performance du portefeuille')).toBeInTheDocument()
   })
 })

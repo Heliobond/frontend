@@ -24,7 +24,6 @@
   "Nav.activity",
   "Nav.activityHistory",
   "Nav.networkStatus",
-  "Nav.pendingCount",
   "Nav.referral",
   "Nav.shareLink",
   "PasswordResetEmail.altLinkInstruction",
@@ -49,7 +48,7 @@
   "Shell.activity",
   "Shell.activityHistory",
   "Shell.offlineBadge",
-  "Shell.pendingCount",
+  "Shell.pendingTransactions",
   "Withdraw.capExceeded",
   "YieldAlert.triggeredToastTitle"
 ]

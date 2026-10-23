@@ -1,7 +1,7 @@
 'use client'
 
-import { useLocale } from 'next-intl'
 import { useEffect, useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { apiFetch } from '../lib/api'
 import { formatDate, formatNumber } from '../lib/format'
 
@@ -47,6 +47,7 @@ function Series({
   values,
   color,
   unit = '',
+  historyLabel,
   locale,
 }: {
   label: string
@@ -54,6 +55,7 @@ function Series({
   values: number[]
   color: string
   unit?: string
+  historyLabel: string
   locale: string
 }) {
   return (
@@ -68,7 +70,7 @@ function Series({
       <svg
         viewBox="0 0 100 40"
         role="img"
-        aria-label={`${label} history chart`}
+        aria-label={historyLabel}
         preserveAspectRatio="none"
         style={{ display: 'block', width: '100%', height: 72, overflow: 'visible' }}
       >
@@ -86,6 +88,7 @@ function Series({
 
 /** Historical portfolio value, return and yield from the indexed performance API. */
 export function PortfolioPerformanceChart({ address }: { address: string }) {
+  const t = useTranslations('Components.PortfolioPerformanceChart')
   const locale = useLocale()
   const [points, setPoints] = useState<PortfolioPerformancePoint[]>([])
   const [loadedAddress, setLoadedAddress] = useState<string | null>(null)
@@ -133,20 +136,21 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
           fontSize: 'var(--type-h4)',
         }}
       >
-        Portfolio performance
+        {t('title')}
       </h2>
       {loading ? (
-        <p aria-busy="true">Loading historical performance…</p>
+        <p aria-busy="true">{t('loading')}</p>
       ) : !latest ? (
         <p role="status" style={{ margin: 0, color: 'var(--ink-60)' }}>
-          Historical performance will appear when indexed portfolio snapshots are available.
+          {t('empty')}
         </p>
       ) : (
         <>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             <Series
               locale={locale}
-              label="Portfolio value"
+              label={t('portfolioValue')}
+              historyLabel={t('historyChartLabel', { label: t('portfolioValue') })}
               value={latest.valueUsdc}
               values={points.map((p) => p.valueUsdc)}
               color="var(--solar)"
@@ -154,7 +158,8 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
             />
             <Series
               locale={locale}
-              label="Returns"
+              label={t('returns')}
+              historyLabel={t('historyChartLabel', { label: t('returns') })}
               value={latest.returnPct}
               values={points.map((p) => p.returnPct)}
               color="var(--green, #24734b)"
@@ -162,7 +167,8 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
             />
             <Series
               locale={locale}
-              label="Yield"
+              label={t('yield')}
+              historyLabel={t('historyChartLabel', { label: t('yield') })}
               value={latest.yieldPct}
               values={points.map((p) => p.yieldPct)}
               color="var(--blue, #3978a8)"
@@ -172,9 +178,10 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
           <p
             style={{ margin: '12px 0 0', color: 'var(--ink-60)', fontSize: 'var(--type-caption)' }}
           >
-            Indexed snapshots, {formatDate(points[0].timestamp, locale)} –{' '}
-            {formatDate(latest.timestamp, locale)}. Historical returns and yields are not guarantees
-            of future performance.
+            {t('snapshotsNote', {
+              start: formatDate(points[0].timestamp, locale),
+              end: formatDate(latest.timestamp, locale),
+            })}
           </p>
         </>
       )}

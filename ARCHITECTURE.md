@@ -5,7 +5,7 @@ This document defines the architecture of the Heliobond investor application and
 > **Implementation Note & Scope:**
 > Heliobond is architected to operate in two modes:
 >
-> 1. **Live On-Chain Mode (Soroban Testnet):** When `NEXT_PUBLIC_VAULT_CONTRACT_ID` / `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` and wallet connections are active, vault reads (`total_assets`, `convert_to_assets`, `get_portfolio`, `claimable_yield`, the vault limits), registry reads (`get_projects_page`, `get_project`, `get_score_history`, `total_projects`) and transactional flows (`deposit`, `withdraw`, `claim`, `claim_yield`) execute directly against the deployed Soroban smart contracts.
+> 1. **Live On-Chain Mode (configured Stellar network):** When `NEXT_PUBLIC_VAULT_CONTRACT_ID` / `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` and wallet connections are active, vault reads (`total_assets`, `convert_to_assets`, `get_portfolio`, `claimable_yield`, the vault limits), registry reads (`get_projects_page`, `get_project`, `get_score_history`, `total_projects`) and transactional flows (`deposit`, `withdraw`, `claim`, `claim_yield`) execute directly against the deployed Soroban smart contracts. The network and its Horizon, RPC, and explorer endpoints are selected by [`src/config/network.ts`](src/config/network.ts) from `NEXT_PUBLIC_STELLAR_NETWORK` (default: `testnet`).
 > 2. **Simulated / Fixture Mode:** When contract IDs are unset or in demo wallet mode, the application falls back gracefully to deterministic typed fixtures (`src/data.ts`, `src/data/*`) and synchronous client simulations ([`src/wallet/vault.ts`](src/wallet/vault.ts)).
 >
 > The contract methods named in sections 1–3 are taken from the actual `contract.call(...)` sites in [`src/wallet/vault.ts`](src/wallet/vault.ts), [`src/wallet/registry.ts`](src/wallet/registry.ts) and [`src/wallet/admin.ts`](src/wallet/admin.ts), together with the screens and hooks that consume them. Keep this map in sync with those call sites — they are the frontend's source of truth for the ABI. The Rust definitions live in the separate `Heliobond/contracts` repository.
@@ -198,10 +198,10 @@ When interacting with Soroban contracts (e.g. `submitDeposit` / `submitWithdraw`
 ```
 
 1. **Parameter Validation:** User inputs are parsed and validated against balance/liquidity limits using [`src/lib/format.ts`](src/lib/format.ts).
-2. **Simulation:** The transaction is constructed with dummy fees (`100` stroops) and simulated via `@stellar/stellar-sdk` RPC Server to calculate accurate resource fees and footprint.
+2. **Simulation:** The transaction is constructed using Horizon's current base fee, falling back to `100` stroops if the fee request fails, and simulated via `@stellar/stellar-sdk` RPC Server to calculate accurate resource fees and footprint.
 3. **Assembly & Signing:** `rpc.assembleTransaction` merges simulation results into the transaction; the user signs the XDR via their connected wallet (Freighter, xBull, etc.).
-4. **Submission & Polling:** The signed transaction is submitted to Stellar testnet and polled via `server.getTransaction(hash)` until reaching `SUCCESS` or `FAILED` state (timeout: 30s).
-5. **UI Update:** The client transitions to the success step, displays the transaction hash linking to StellarExpert (`https://stellar.expert/explorer/testnet/tx/...`), and invalidates cached vault stats.
+4. **Submission & Polling:** The signed transaction is submitted to the configured Stellar network and polled via `server.getTransaction(hash)` until reaching `SUCCESS` or `FAILED` state (timeout: 30s).
+5. **UI Update:** The client transitions to the success step, displays the transaction hash linking to Stellar Expert using the configured explorer base URL, and invalidates cached vault stats.
 
 ---
 

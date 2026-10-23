@@ -42,6 +42,50 @@
     "syncing": "Synchronisation avec Stellar",
     "skipToContent": "Passer au contenu"
   },
+  "Components": {
+    "RecurringInvestmentOptions": {
+      "legend": "Investissement automatique mensuel",
+      "description": "Investissez {amount} USDC dans cette obligation chaque mois",
+      "investmentDay": "Jour mensuel de l’investissement",
+      "scheduleHint": "Vous pouvez suspendre ou modifier ce programme depuis vos investissements."
+    },
+    "LiquidityMeter": {
+      "availableToWithdraw": "Disponible au retrait maintenant",
+      "liquidShareLabel": "Part du pool actuellement liquide",
+      "poolExplanation": "Le pool détient {liquid} de liquidités ; le reste ({locked}) finance des projets. Vous pouvez retirer jusqu’à {liquid} aujourd’hui, ou une partie de cette somme."
+    },
+    "PortfolioPerformanceChart": {
+      "title": "Performance du portefeuille",
+      "loading": "Chargement de l’historique des performances…",
+      "empty": "L’historique des performances apparaîtra lorsque des instantanés du portefeuille seront indexés.",
+      "portfolioValue": "Valeur du portefeuille",
+      "returns": "Rendements",
+      "yield": "Rendement",
+      "historyChartLabel": "Historique : {label}",
+      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures."
+    },
+    "TransactionsDrawer": {
+      "title": "Activité des transactions",
+      "pendingCount": "{count, plural, one {# transaction en attente} other {# transactions en attente}}",
+      "sessionHistory": "Historique des transactions de la session",
+      "closeActivityPanel": "Fermer le panneau d’activité",
+      "empty": "Aucune transaction enregistrée dans cette session.",
+      "clearCompleted": "Effacer les transactions terminées",
+      "submitted": "Envoyée {timeAgo}",
+      "estimatedMaximumFee": "Frais maximum estimés : {fee} XLM",
+      "inclusionFee": "Frais d’inclusion : {fee} XLM",
+      "resourceFee": "Frais de ressources : {fee} XLM",
+      "transactionHash": "empreinte de la transaction",
+      "statusConfirmed": "Confirmée",
+      "statusPending": "En attente",
+      "statusStillPending": "Toujours en attente",
+      "statusFailed": "Échec",
+      "kindDeposit": "Dépôt",
+      "kindWithdraw": "Retrait",
+      "kindClaim": "Réclamation",
+      "kindClaimYield": "Réclamation du rendement"
+    }
+  },
   "Footer": {
     "trustLinks": "Liens de confiance",
     "verify": "Tout vérifier",

@@ -1,8 +1,6 @@
-import { act, fireEvent, render as rtlRender, screen } from '@testing-library/react'
-import { NextIntlClientProvider } from 'next-intl'
-import type { ReactElement } from 'react'
+import { act, fireEvent, screen } from '@testing-library/react'
+import { render } from '@/test/render'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import en from '../../messages/en.json'
 import { TransactionsDrawer } from './TransactionsDrawer'
 import { recordTransaction } from '../wallet/transactions'
 import { TransactionsProvider } from '../wallet/TransactionsProvider'
@@ -13,15 +11,6 @@ vi.mock('./AddressChip', () => ({
     <a href={explorerUrl}>{value}</a>
   ),
 }))
-
-const render = (ui: ReactElement) =>
-  rtlRender(ui, {
-    wrapper: ({ children }) => (
-      <NextIntlClientProvider locale="en" messages={en}>
-        {children}
-      </NextIntlClientProvider>
-    ),
-  })
 
 beforeEach(() => sessionStorage.clear())
 
@@ -46,6 +35,20 @@ describe('TransactionsDrawer', () => {
     expect(screen.getByText('Transaction Activity')).toBeInTheDocument()
     expect(screen.getByText('No transactions recorded in this session.')).toBeInTheDocument()
   })
+
+  it('renders translated labels in the selected locale', () => {
+    render(
+      <TransactionsProvider>
+        <TransactionsDrawer open onClose={() => {}} />
+      </TransactionsProvider>,
+      { locale: 'fr' },
+    )
+    expect(screen.getByText('Activité des transactions')).toBeInTheDocument()
+    expect(
+      screen.getByText('Aucune transaction enregistrée dans cette session.'),
+    ).toBeInTheDocument()
+  })
+
   it('renders statuses, XLM fee components, explorer links, and keyboard dismissal', () => {
     const onClose = vi.fn()
     render(
