@@ -1,5 +1,8 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render as rtlRender, screen } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import type { ReactElement } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import en from '../../messages/en.json'
 import { TransactionsDrawer } from './TransactionsDrawer'
 import { recordTransaction } from '../wallet/transactions'
 import { TransactionsProvider } from '../wallet/TransactionsProvider'
@@ -10,6 +13,15 @@ vi.mock('./AddressChip', () => ({
     <a href={explorerUrl}>{value}</a>
   ),
 }))
+
+const render = (ui: ReactElement) =>
+  rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <NextIntlClientProvider locale="en" messages={en}>
+        {children}
+      </NextIntlClientProvider>
+    ),
+  })
 
 beforeEach(() => sessionStorage.clear())
 

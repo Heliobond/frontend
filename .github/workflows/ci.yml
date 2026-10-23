@@ -114,6 +114,10 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
+      # Fails on catalog keys never referenced in source; warns on dynamic keys.
+      - name: Unused i18n key check
+        run: node scripts/check-unused-keys.mjs
+
   # Scans every tracked text file for hidden payloads: tab-padded lines,
   # Trojan Source characters, obfuscated code and new root-level scripts (#914).
   # No dependencies are installed, so a PR cannot run its own install hooks here.

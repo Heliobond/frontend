@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { AddressChip } from './AddressChip'
 import { useTransactions, type TransactionItem } from '../wallet/TransactionsProvider'
 import { getExplorerTxUrl } from '../config/network'
@@ -13,6 +14,7 @@ export interface TransactionsDrawerProps {
 
 export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
   const { transactions, pendingCount, clearCompleted } = useTransactions()
+  const t = useTranslations('Shell')
 
   const panel = useRef<HTMLDivElement>(null)
   useFocusTrap(open, panel, undefined, onClose)
@@ -94,8 +96,8 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
               }}
             >
               {pendingCount > 0
-                ? `${pendingCount} pending transaction${pendingCount > 1 ? 's' : ''}`
-                : 'Session transaction history'}
+                ? t('pendingTransactions', { count: pendingCount })
+                : t('sessionHistory')}
             </span>
           </div>
           <button

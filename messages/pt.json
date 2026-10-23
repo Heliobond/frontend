@@ -191,7 +191,8 @@
     "successBody": "You received <num>{shares} HBS</num> and now back <b>{count} verified projects</b>. <a href=\"/portfolio\">View your investment</a>",
     "viewInvestment": "View your investment",
     "viewExpert": "View on Stellar Expert",
-    "goPortfolio": "Go to portfolio"
+    "goPortfolio": "Go to portfolio",
+    "projectionYears": "{count, plural, one {# ano:} other {# anos:}}"
   },
   "Portfolio": {
     "eyebrow": "Your portfolio",
@@ -218,7 +219,10 @@
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
     "copyLink": "Copy link",
     "copied": "Copied",
-    "taxReports": "Relatórios fiscais"
+    "taxReports": "Relatórios fiscais",
+    "pendingClaims": "{count, plural, one {# reclamação FIFO na fila aguardando liquidez do cofre.} other {# reclamações FIFO na fila aguardando liquidez do cofre.}}",
+    "pendingClaimsEmpty": "Sem saques na fila. Há liquidez imediata disponível para pagamentos padrão.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) desde o depósito"
   },
   "Withdraw": {
     "h1": "Withdraw from the pool",
@@ -237,7 +241,11 @@
     "successH1": "Withdrawal settled",
     "successBody": "<num>${amount} USDC</num> is on its way to your wallet. Thanks for being part of the pool.",
     "transactionHashLabel": "transaction hash",
-    "backToPortfolio": "Back to portfolio"
+    "backToPortfolio": "Back to portfolio",
+    "capExceeded": "O valor excede o limite máximo de transação do pool ({max}).",
+    "queuedToastNoAmount": "Saque na fila; o valor devido não está disponível nesta confirmação.",
+    "queuedToastWithAmount": "Valor devido {amount} USDC na fila para pagamento.",
+    "settledToast": "{amount} USDC está a caminho da sua carteira."
   },
   "Admin": {
     "eyebrow": "Heliobond internal",
@@ -687,6 +695,8 @@
     "activityHistory": "Histórico de atividades de transações",
     "signingBlocked": "A assinatura está bloqueada até que correspondam.",
     "checkAgain": "Verificar novamente",
-    "syncing": "Sincronizando com a Stellar"
+    "syncing": "Sincronizando com a Stellar",
+    "pendingTransactions": "{count, plural, one {# transação pendente} other {# transações pendentes}}",
+    "sessionHistory": "Histórico de transações da sessão"
   }
 }

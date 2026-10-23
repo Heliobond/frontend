@@ -191,7 +191,8 @@
     "successBody": "You received <num>{shares} HBS</num> and now back <b>{count} verified projects</b>. <a href=\"/portfolio\">View your investment</a>",
     "viewInvestment": "View your investment",
     "viewExpert": "View on Stellar Expert",
-    "goPortfolio": "Go to portfolio"
+    "goPortfolio": "Go to portfolio",
+    "projectionYears": "{count, plural, one {# year:} other {# years:}}"
   },
   "Portfolio": {
     "eyebrow": "Your portfolio",
@@ -218,7 +219,10 @@
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
     "copyLink": "Copy link",
     "copied": "Copied",
-    "taxReports": "Tax reports"
+    "taxReports": "Tax reports",
+    "pendingClaims": "{count, plural, one {# queued FIFO claim awaiting vault liquidity.} other {# queued FIFO claims awaiting vault liquidity.}}",
+    "pendingClaimsEmpty": "No queued withdrawals. Immediate liquidity is available for standard payouts.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) since deposit"
   },
   "Referral": {
     "title": "Referral program",
@@ -244,7 +248,11 @@
     "successH1": "Withdrawal settled",
     "successBody": "<num>${amount} USDC</num> is on its way to your wallet. Thanks for being part of the pool.",
     "transactionHashLabel": "transaction hash",
-    "backToPortfolio": "Back to portfolio"
+    "backToPortfolio": "Back to portfolio",
+    "capExceeded": "Amount exceeds maximum pool transaction limit ({max}).",
+    "queuedToastNoAmount": "Withdrawal queued; owed amount is unavailable from this confirmation.",
+    "queuedToastWithAmount": "Owed amount {amount} USDC queued for payout.",
+    "settledToast": "{amount} USDC is on its way to your wallet."
   },
   "Admin": {
     "eyebrow": "Heliobond internal",
@@ -687,6 +695,8 @@
     "activityHistory": "Transaction activity history",
     "signingBlocked": "Signing is blocked until they match.",
     "checkAgain": "Check again",
-    "syncing": "Syncing with Stellar"
+    "syncing": "Syncing with Stellar",
+    "pendingTransactions": "{count, plural, one {# pending transaction} other {# pending transactions}}",
+    "sessionHistory": "Session transaction history"
   }
 }

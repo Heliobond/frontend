@@ -370,7 +370,7 @@ export function Deposit({ onDone }: DepositProps) {
                                 color: 'var(--ink-60)',
                               }}
                             >
-                              {years === 1 ? '1 year:' : `${years} years:`} ≈ $
+                              {t('projectionYears', { count: years })} ≈ $
                               {formatDecimal(
                                 roundToCents(projectedReturn(n, projectedRate, years)),
                                 2,

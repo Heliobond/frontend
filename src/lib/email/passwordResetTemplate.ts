@@ -74,30 +74,51 @@ export function sanitizeUrl(rawUrl: string): string {
 /**
  * Formats duration in minutes into localized natural language (e.g. "15 minutes", "1 hour", "24 hours").
  */
+const MINUTE_FORMS: Record<
+  SupportedLocale,
+  Partial<Record<Intl.LDMLPluralRule, string>> & { other: string }
+> = {
+  en: { one: 'minute', other: 'minutes' },
+  fr: { one: 'minute', other: 'minutes' },
+}
+
+const HOUR_FORMS: Record<
+  SupportedLocale,
+  Partial<Record<Intl.LDMLPluralRule, string>> & { other: string }
+> = {
+  en: { one: 'hour', other: 'hours' },
+  fr: { one: 'heure', other: 'heures' },
+}
+
+const MIXED_FORMS: Record<SupportedLocale, (h: number, m: number) => string> = {
+  en: (h, m) => `${h} hr ${m} min`,
+  fr: (h, m) => `${h} h ${m} min`,
+}
+
+function pluralize(
+  count: number,
+  forms: Partial<Record<Intl.LDMLPluralRule, string>> & { other: string },
+  locale: SupportedLocale,
+): string {
+  const rule = new Intl.PluralRules(locale).select(count)
+  return `${count} ${forms[rule] ?? forms.other}`
+}
+
 export function formatTtlDuration(minutes: number, locale: SupportedLocale = 'en'): string {
   const safeMinutes = Math.max(1, Math.round(minutes))
 
   if (safeMinutes < 60) {
-    if (locale === 'fr') {
-      return `${safeMinutes} minute${safeMinutes > 1 ? 's' : ''}`
-    }
-    return `${safeMinutes} minute${safeMinutes > 1 ? 's' : ''}`
+    return pluralize(safeMinutes, MINUTE_FORMS[locale], locale)
   }
 
   const hours = Math.floor(safeMinutes / 60)
   const remainingMinutes = safeMinutes % 60
 
   if (remainingMinutes === 0) {
-    if (locale === 'fr') {
-      return `${hours} heure${hours > 1 ? 's' : ''}`
-    }
-    return `${hours} hour${hours > 1 ? 's' : ''}`
+    return pluralize(hours, HOUR_FORMS[locale], locale)
   }
 
-  if (locale === 'fr') {
-    return `${hours} h ${remainingMinutes} min`
-  }
-  return `${hours} hr ${remainingMinutes} min`
+  return MIXED_FORMS[locale](hours, remainingMinutes)
 }
 
 /**

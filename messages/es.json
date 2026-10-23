@@ -191,7 +191,8 @@
     "reasonMemoTooLong": "El memo supera los 28 bytes",
     "memoLabel": "Memorando",
     "memoPlaceholder": "Hasta 28 bytes",
-    "rowMemo": "Memorando"
+    "rowMemo": "Memorando",
+    "projectionYears": "{count, plural, one {# año:} other {# años:}}"
   },
   "Portfolio": {
     "eyebrow": "Tu cartera",
@@ -218,7 +219,10 @@
     "referralCaption": "Comparte tu enlace para invitar a amigos. Ambos recibís recompensas cuando invierten.",
     "copyLink": "Copiar enlace",
     "copied": "Copiado",
-    "taxReports": "Informes fiscales"
+    "taxReports": "Informes fiscales",
+    "pendingClaims": "{count, plural, one {# reclamación FIFO en cola esperando liquidez de la bóveda.} other {# reclamaciones FIFO en cola esperando liquidez de la bóveda.}}",
+    "pendingClaimsEmpty": "Sin retiros en cola. Hay liquidez inmediata disponible para pagos estándar.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) desde el depósito"
   },
   "Withdraw": {
     "h1": "Retirar del fondo",
@@ -237,7 +241,11 @@
     "successH1": "Retirada liquidada",
     "successBody": "<num>${amount} USDC</num> van de camino a tu cartera. Gracias por formar parte del fondo.",
     "transactionHashLabel": "hash de transacción",
-    "backToPortfolio": "Volver a la cartera"
+    "backToPortfolio": "Volver a la cartera",
+    "capExceeded": "El monto excede el límite máximo de transacción del pool ({max}).",
+    "queuedToastNoAmount": "Retiro en cola; el monto adeudado no está disponible desde esta confirmación.",
+    "queuedToastWithAmount": "Monto adeudado {amount} USDC en cola para pago.",
+    "settledToast": "{amount} USDC está en camino a tu billetera."
   },
   "Admin": {
     "eyebrow": "Heliobond interno",
@@ -687,6 +695,8 @@
     "activityHistory": "Historial de actividad de transacciones",
     "signingBlocked": "La firma está bloqueada hasta que coincidan.",
     "checkAgain": "Comprobar de nuevo",
-    "syncing": "Sincronizando con Stellar"
+    "syncing": "Sincronizando con Stellar",
+    "pendingTransactions": "{count, plural, one {# transacción pendiente} other {# transacciones pendientes}}",
+    "sessionHistory": "Historial de transacciones de la sesión"
   }
 }

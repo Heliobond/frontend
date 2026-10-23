@@ -191,7 +191,8 @@
     "successBody": "Vous avez reçu <num>{shares} HBS</num> et soutenez désormais <b>{count} projets vérifiés</b>.",
     "viewInvestment": "View your investment",
     "viewExpert": "Voir sur Stellar Expert",
-    "goPortfolio": "Aller au portefeuille"
+    "goPortfolio": "Aller au portefeuille",
+    "projectionYears": "{count, plural, one {# année :} other {# années :}}"
   },
   "Portfolio": {
     "eyebrow": "Votre portefeuille",
@@ -218,7 +219,10 @@
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
     "copyLink": "Copy link",
     "copied": "Copied",
-    "taxReports": "Rapports fiscaux"
+    "taxReports": "Rapports fiscaux",
+    "pendingClaims": "{count, plural, one {# réclamation FIFO en file d'attente attendant la liquidité du coffre.} other {# réclamations FIFO en file d'attente attendant la liquidité du coffre.}}",
+    "pendingClaimsEmpty": "Aucun retrait en file d'attente. Une liquidité immédiate est disponible pour les paiements standard.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) depuis le dépôt"
   },
   "Withdraw": {
     "h1": "Retirer du pool",
@@ -237,7 +241,11 @@
     "successH1": "Retrait réglé",
     "successBody": "<num>${amount} USDC</num> sont en route vers votre portefeuille. Merci de faire partie du pool.",
     "transactionHashLabel": "le hash de transaction",
-    "backToPortfolio": "Retour au portefeuille"
+    "backToPortfolio": "Retour au portefeuille",
+    "capExceeded": "Le montant dépasse la limite de transaction maximale du pool ({max}).",
+    "queuedToastNoAmount": "Retrait mis en file d'attente ; le montant dû n'est pas disponible depuis cette confirmation.",
+    "queuedToastWithAmount": "Montant dû {amount} USDC mis en file d'attente pour le paiement.",
+    "settledToast": "{amount} USDC est en route vers votre portefeuille."
   },
   "Admin": {
     "eyebrow": "Heliobond interne",
@@ -687,6 +695,8 @@
     "activityHistory": "Historique de l'activité des transactions",
     "signingBlocked": "La signature est bloquée jusqu'à ce qu'ils correspondent.",
     "checkAgain": "Vérifier à nouveau",
-    "syncing": "Synchronisation avec Stellar"
+    "syncing": "Synchronisation avec Stellar",
+    "pendingTransactions": "{count, plural, one {# transaction en attente} other {# transactions en attente}}",
+    "sessionHistory": "Historique des transactions de la session"
   }
 }

@@ -149,7 +149,7 @@
     "removed": "Removed from watchlist",
     "saveLabel": "Add {name} to watchlist",
     "removeLabel": "Remove {name} from watchlist",
-    "availableBanner": "{count, plural, one {# saved bond is open for funding right now.} other {# saved bonds are open for funding right now.}}",
+    "availableBanner": "{count, plural, zero {# سندات محفوظة مفتوحة للتمويل الآن.} one {# سند محفوظ مفتوح للتمويل الآن.} two {# سندان محفوظان مفتوحان للتمويل الآن.} few {# سندات محفوظة مفتوحة للتمويل الآن.} many {# سند محفوظ مفتوح للتمويل الآن.} other {# سند محفوظ مفتوح للتمويل الآن.}}",
     "statusOpen": "Open for funding",
     "statusUpcoming": "Not yet available",
     "notYetAvailable": "We'll flag it here when it opens.",
@@ -198,7 +198,8 @@
     "successBody": "حصلت على <num>{shares} HBS</num> وتدعم الآن <b>{count} مشاريع مؤكدة</b>.",
     "viewInvestment": "View your investment",
     "viewExpert": "عرض على Stellar Expert",
-    "goPortfolio": "انتقل إلى المحفظة"
+    "goPortfolio": "انتقل إلى المحفظة",
+    "projectionYears": "{count, plural, zero {# سنة:} one {# سنة:} two {# سنتان:} few {# سنوات:} many {# سنة:} other {# سنة:}}"
   },
   "Portfolio": {
     "eyebrow": "محفظتك",
@@ -225,7 +226,10 @@
     "referralCaption": "Share your link to invite friends. You both get rewards when they invest.",
     "copyLink": "Copy link",
     "copied": "Copied",
-    "taxReports": "التقارير الضريبية"
+    "taxReports": "التقارير الضريبية",
+    "pendingClaims": "{count, plural, zero {# مطالبة FIFO في قائمة الانتظار بانتظار سيولة الخزنة.} one {# مطالبة FIFO في قائمة الانتظار بانتظار سيولة الخزنة.} two {# مطالبتي FIFO في قائمة الانتظار بانتظار سيولة الخزنة.} few {# مطالبات FIFO في قائمة الانتظار بانتظار سيولة الخزنة.} many {# مطالبة FIFO في قائمة الانتظار بانتظار سيولة الخزنة.} other {# مطالبة FIFO في قائمة الانتظار بانتظار سيولة الخزنة.}}",
+    "pendingClaimsEmpty": "لا توجد سحوبات في قائمة الانتظار. تتوفر سيولة فورية للمدفوعات القياسية.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) منذ الإيداع"
   },
   "Withdraw": {
     "h1": "سحب من المجمع",
@@ -244,7 +248,11 @@
     "successH1": "تم السحب",
     "successBody": "<num>${amount} USDC</num> في طريقها إلى محفظتك. شكراً لكونك جزءاً من المجمع.",
     "transactionHashLabel": "هاش المعاملة",
-    "backToPortfolio": "رجوع إلى المحفظة"
+    "backToPortfolio": "رجوع إلى المحفظة",
+    "capExceeded": "المبلغ يتجاوز الحد الأقصى لمعاملة المجموعة ({max}).",
+    "queuedToastNoAmount": "تم وضع السحب في قائمة الانتظار؛ المبلغ المستحق غير متاح من هذا التأكيد.",
+    "queuedToastWithAmount": "المبلغ المستحق {amount} USDC في قائمة الانتظار للدفع.",
+    "settledToast": "{amount} USDC في طريقه إلى محفظتك."
   },
   "Admin": {
     "eyebrow": "Heliobond داخلي",
@@ -263,7 +271,7 @@
     "sectionOracleCaption": "كتابات امتيازية في السجل والخزينة.",
     "sectionWhitelist": "قائمة المبدعين البيضاء",
     "sectionWhitelistCaption": "المبدعون المعتمدون فقط يمكنهم تسجيل المشاريع في ProjectRegistry.",
-    "liveProject": "{count, plural, other {مشاريع نشطة}}",
+    "liveProject": "{count, plural, zero {# مشاريع نشطة} one {# مشروع نشط} two {# مشروعان نشطان} few {# مشاريع نشطة} many {# مشروع نشط} other {# مشروع نشط}}",
     "statusApproved": "معتمد",
     "statusPending": "قيد الانتظار",
     "statusRejected": "مرفوض",
@@ -451,7 +459,7 @@
     "columnRealizedGain": "الربح المحقق",
     "currencyFormat": "{amount} $",
     "skippedBadge": "تنبيه",
-    "skippedAlert": "{count, plural, one {تم استبعاد حدث واحد ذي تاريخ غير صالح من هذا التقرير.} other {تم استبعاد # أحداث ذات تواريخ غير صالحة من هذا التقرير.}}",
+    "skippedAlert": "{count, plural, zero {تم استبعاد # أحداث ذات تواريخ غير صالحة من هذا التقرير.} one {تم استبعاد حدث واحد ذي تاريخ غير صالح من هذا التقرير.} two {تم استبعاد حدثين ذوي تاريخين غير صالحين من هذا التقرير.} few {تم استبعاد # أحداث ذات تواريخ غير صالحة من هذا التقرير.} many {تم استبعاد # حدثاً ذي تاريخ غير صالح من هذا التقرير.} other {تم استبعاد # أحداث ذات تواريخ غير صالحة من هذا التقرير.}}",
     "emptyState": "لا يوجد نشاط استثماري مسجل لهذه المحفظة."
   },
   "PasswordResetEmail": {
@@ -687,6 +695,8 @@
     "activityHistory": "سجل نشاط المعاملات",
     "signingBlocked": "التوقيع محظور حتى يتطابقا.",
     "checkAgain": "تحقق مرة أخرى",
-    "syncing": "جاري المزامنة مع ستيلار"
+    "syncing": "جاري المزامنة مع ستيلار",
+    "pendingTransactions": "{count, plural, zero {# معاملة معلقة} one {# معاملة معلقة} two {# معاملتان معلقتان} few {# معاملات معلقة} many {# معاملة معلقة} other {# معاملة معلقة}}",
+    "sessionHistory": "سجل معاملات الجلسة"
   }
 }
