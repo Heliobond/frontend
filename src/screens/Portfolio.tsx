@@ -220,11 +220,14 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               label={t('currentValue')}
               value={formatMoney(integerVal, { includeSymbol: true, appLocale: locale })}
               decimals={`.${decimalPart}`}
-              delta={`+${formatMoney(you.deltaAbs, {
-                includeSymbol: true,
-                appLocale: locale,
-                fractionDigits: 2,
-              })} (${you.deltaPct}%) ${t('sinceDeposit')}`}
+              delta={t('deltaSinceDeposit', {
+                amount: formatMoney(you.deltaAbs, {
+                  includeSymbol: true,
+                  appLocale: locale,
+                  fractionDigits: 2,
+                }),
+                pct: you.deltaPct,
+              })}
               size="lg"
               stackOnMobile
             />
@@ -313,8 +316,8 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               }}
             >
               {pendingClaims.length > 0
-                ? `${pendingClaims.length} queued FIFO claim${pendingClaims.length > 1 ? 's' : ''} awaiting vault liquidity.`
-                : 'No queued withdrawals. Immediate liquidity is available for standard payouts.'}
+                ? t('pendingClaims', { count: pendingClaims.length })
+                : t('pendingClaimsEmpty')}
             </p>
           </div>
           {pendingClaims.length > 0 && (
@@ -504,7 +507,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                   textDecoration: 'none',
                 }}
               >
-                {t('taxReports')} →
+                {t('taxReports')} <span className="hb-rtl-arrow">→</span>
               </Link>
             </div>
             <span

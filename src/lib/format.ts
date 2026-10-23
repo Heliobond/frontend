@@ -54,6 +54,7 @@ export function getLocaleCode(appLocale?: string): string {
 export function getCurrencyCode(_appLocale?: string): string {
   // The app displays USD prices regardless of locale,
   // but uses locale-appropriate number formatting and symbols
+  void _appLocale
   return 'USD'
 }
 

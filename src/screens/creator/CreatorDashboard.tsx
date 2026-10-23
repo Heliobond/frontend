@@ -85,7 +85,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               aria-valuenow={Math.min(100, Math.max(0, fundedPct))}
               aria-valuetext={t('dashGoalDeployed', {
                 pct: fundedPct,
-                goal: formatNumber(data.fundingGoal, locale),
+                goal: formatNumber(data.fundingGoal, { appLocale: locale }),
               })}
               aria-labelledby={fundingCaptionId}
               style={{

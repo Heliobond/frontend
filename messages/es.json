@@ -42,6 +42,50 @@
     "syncing": "Sincronizando con Stellar",
     "skipToContent": "Saltar al contenido"
   },
+  "Components": {
+    "RecurringInvestmentOptions": {
+      "legend": "Inversión automática mensual",
+      "description": "Invierte {amount} USDC en este bono cada mes",
+      "investmentDay": "Día de inversión mensual",
+      "scheduleHint": "Puedes pausar o cambiar este calendario desde tus inversiones."
+    },
+    "LiquidityMeter": {
+      "availableToWithdraw": "Disponible para retirar ahora",
+      "liquidShareLabel": "Parte líquida del fondo",
+      "poolExplanation": "El fondo tiene {liquid} disponibles; el resto ({locked}) está invertido en proyectos. Puedes retirar hasta {liquid} hoy, o cualquier parte de esa cantidad."
+    },
+    "PortfolioPerformanceChart": {
+      "title": "Rendimiento de la cartera",
+      "loading": "Cargando el historial de rendimiento…",
+      "empty": "El historial de rendimiento aparecerá cuando haya instantáneas indexadas de la cartera.",
+      "portfolioValue": "Valor de la cartera",
+      "returns": "Retornos",
+      "yield": "Rendimiento",
+      "historyChartLabel": "Historial de {label}",
+      "snapshotsNote": "Instantáneas indexadas, {start} – {end}. Los retornos y rendimientos históricos no garantizan el rendimiento futuro."
+    },
+    "TransactionsDrawer": {
+      "title": "Actividad de transacciones",
+      "pendingCount": "{count, plural, one {# transacción pendiente} other {# transacciones pendientes}}",
+      "sessionHistory": "Historial de transacciones de la sesión",
+      "closeActivityPanel": "Cerrar panel de actividad",
+      "empty": "No hay transacciones registradas en esta sesión.",
+      "clearCompleted": "Borrar completadas",
+      "submitted": "Enviada {timeAgo}",
+      "estimatedMaximumFee": "Comisión máxima estimada: {fee} XLM",
+      "inclusionFee": "Comisión de inclusión: {fee} XLM",
+      "resourceFee": "Comisión de recursos: {fee} XLM",
+      "transactionHash": "hash de la transacción",
+      "statusConfirmed": "Confirmada",
+      "statusPending": "Pendiente",
+      "statusStillPending": "Aún pendiente",
+      "statusFailed": "Fallida",
+      "kindDeposit": "Depósito",
+      "kindWithdraw": "Retiro",
+      "kindClaim": "Reclamar",
+      "kindClaimYield": "Reclamar rendimiento"
+    }
+  },
   "Footer": {
     "trustLinks": "Enlaces de confianza",
     "verify": "Verifícalo todo",
@@ -191,7 +235,8 @@
     "reasonMemoTooLong": "El memo supera los 28 bytes",
     "memoLabel": "Memorando",
     "memoPlaceholder": "Hasta 28 bytes",
-    "rowMemo": "Memorando"
+    "rowMemo": "Memorando",
+    "projectionYears": "{count, plural, one {# año:} other {# años:}}"
   },
   "Portfolio": {
     "eyebrow": "Tu cartera",
@@ -218,7 +263,10 @@
     "referralCaption": "Comparte tu enlace para invitar a amigos. Ambos recibís recompensas cuando invierten.",
     "copyLink": "Copiar enlace",
     "copied": "Copiado",
-    "taxReports": "Informes fiscales"
+    "taxReports": "Informes fiscales",
+    "pendingClaims": "{count, plural, one {# reclamación FIFO en cola esperando liquidez de la bóveda.} other {# reclamaciones FIFO en cola esperando liquidez de la bóveda.}}",
+    "pendingClaimsEmpty": "Sin retiros en cola. Hay liquidez inmediata disponible para pagos estándar.",
+    "deltaSinceDeposit": "+{amount} ({pct}%) desde el depósito"
   },
   "Withdraw": {
     "h1": "Retirar del fondo",
@@ -237,7 +285,11 @@
     "successH1": "Retirada liquidada",
     "successBody": "<num>${amount} USDC</num> van de camino a tu cartera. Gracias por formar parte del fondo.",
     "transactionHashLabel": "hash de transacción",
-    "backToPortfolio": "Volver a la cartera"
+    "backToPortfolio": "Volver a la cartera",
+    "capExceeded": "El monto excede el límite máximo de transacción del pool ({max}).",
+    "queuedToastNoAmount": "Retiro en cola; el monto adeudado no está disponible desde esta confirmación.",
+    "queuedToastWithAmount": "Monto adeudado {amount} USDC en cola para pago.",
+    "settledToast": "{amount} USDC está en camino a tu billetera."
   },
   "Admin": {
     "eyebrow": "Heliobond interno",
@@ -687,6 +739,8 @@
     "activityHistory": "Historial de actividad de transacciones",
     "signingBlocked": "La firma está bloqueada hasta que coincidan.",
     "checkAgain": "Comprobar de nuevo",
-    "syncing": "Sincronizando con Stellar"
+    "syncing": "Sincronizando con Stellar",
+    "pendingTransactions": "{count, plural, one {# transacción pendiente} other {# transacciones pendientes}}",
+    "sessionHistory": "Historial de transacciones de la sesión"
   }
 }

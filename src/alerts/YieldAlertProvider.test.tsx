@@ -1,7 +1,9 @@
 import { act, renderHook } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAlerts, writeAlerts, type YieldAlert } from '../lib/yieldAlerts'
 import { selectProjects } from '../state/selectors'
+import en from '../../messages/en.json'
 import { YieldAlertProvider, useYieldAlerts } from './YieldAlertProvider'
 
 const { toastMock } = vi.hoisted(() => ({ toastMock: vi.fn() }))
@@ -11,7 +13,9 @@ vi.mock('../components/Toast', () => ({
 }))
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <YieldAlertProvider>{children}</YieldAlertProvider>
+  <NextIntlClientProvider locale="en" messages={en}>
+    <YieldAlertProvider>{children}</YieldAlertProvider>
+  </NextIntlClientProvider>
 )
 
 const makeAlert = (): YieldAlert => ({

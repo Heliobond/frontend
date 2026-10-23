@@ -52,14 +52,20 @@ export function YieldAlertButton({
       toast({
         tone: 'success',
         title: t('updatedToastTitle'),
-        message: t('updatedToastMessage', { name: bondName, threshold: formatDecimal(threshold, 1) }),
+        message: t('updatedToastMessage', {
+          name: bondName,
+          threshold: formatDecimal(threshold, 1),
+        }),
       })
     } else {
       add(bondId, bondName, threshold, operator)
       toast({
         tone: 'success',
         title: t('createdToastTitle'),
-        message: t('createdToastMessage', { name: bondName, threshold: formatDecimal(threshold, 1) }),
+        message: t('createdToastMessage', {
+          name: bondName,
+          threshold: formatDecimal(threshold, 1),
+        }),
       })
     }
     setModalOpen(false)

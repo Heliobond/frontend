@@ -327,3 +327,11 @@ h5,
 h6 {
   font-weight: var(--font-weight-semibold, 600);
 }
+
+/* --- RTL-aware directional arrow ---------------------------------------- */
+.hb-rtl-arrow {
+  display: inline-block;
+}
+[dir='rtl'] .hb-rtl-arrow {
+  transform: scaleX(-1);
+}

@@ -86,7 +86,11 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
           }}
         >
           <div style={counterCell}>
-            <StatBlock label={t('poolValue')} value={formatCurrency(pool.totalAssets, locale)} size="lg" />
+            <StatBlock
+              label={t('poolValue')}
+              value={formatCurrency(pool.totalAssets, locale)}
+              size="lg"
+            />
           </div>
           <div style={counterCell}>
             <StatBlock

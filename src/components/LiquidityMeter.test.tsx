@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '@/test/render'
 import { describe, it, expect } from 'vitest'
 import { LiquidityMeter } from './LiquidityMeter'
 
@@ -46,5 +46,10 @@ describe('LiquidityMeter percentage and formatting', () => {
   it('shows the deployed amount in the explanation text', () => {
     render(<LiquidityMeter liquid={200_000} total={1_000_000} />)
     expect(screen.getByText(/\$800,000\).*is working in projects/)).toBeInTheDocument()
+  })
+
+  it('renders translated copy in the selected locale', () => {
+    render(<LiquidityMeter liquid={200_000} total={1_000_000} />, { locale: 'fr' })
+    expect(screen.getByText('Disponible au retrait maintenant')).toBeInTheDocument()
   })
 })

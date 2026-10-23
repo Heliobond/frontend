@@ -8,6 +8,14 @@ name: CI
 # Actions are pinned to full commit SHAs (#916); the trailing comment records
 # the release the SHA corresponds to and the github-actions Dependabot entry
 # keeps both in step.
+#
+# On pull requests the `changes` job reads the changed-file list and skips the
+# jobs a change cannot affect (docs-only PRs skip tests, build and e2e; test-only
+# PRs skip build and e2e). Skipping is done per job with `if:`, never with
+# workflow-level `paths:`, because a skipped job still satisfies a required
+# status check and a skipped workflow leaves it pending forever. `typecheck +
+# lint` (which also checks formatting) and `hidden-content check` always run.
+# Pushes to main run everything, and so does any failure to list the files.
 
 on:
   push:
@@ -19,12 +27,63 @@ permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: 22
 
 jobs:
+  changes:
+    name: changed files
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      test: ${{ steps.filter.outputs.test }}
+      app: ${{ steps.filter.outputs.app }}
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - name: Decide which jobs this change needs
+        id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -u
+          all() { echo "test=true" >> "$GITHUB_OUTPUT"; echo "app=true" >> "$GITHUB_OUTPUT"; echo "deps=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          [ "$EVENT" = "pull_request" ] || all
+
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)') || all
+          [ -n "$files" ] || all
+          [ "$(echo "$files" | wc -l)" -lt 3000 ] || all
+          echo "$files"
+
+          # Files nothing in the app, tests or build reads, except README.md,
+          # CONTRIBUTING.md and the PR template, which repo-hygiene tests read
+          # (so they run the unit tests, but not build or e2e).
+          docs='^(docs/.*|LICENSE|\.github/(ISSUE_TEMPLATE/.*|CODEOWNERS|dependabot\.yml)|.*\.md)$'
+          read_by_tests='^(README\.md|CONTRIBUTING\.md|\.github/PULL_REQUEST_TEMPLATE\.md)$'
+          # Files that only unit tests or other workflows exercise, not the app or its build.
+          no_app='(\.test\.[cm]?[jt]sx?$|^scripts/(audit-|lockfile-|require-bun|check-hidden|check-supply)|^\.github/workflows/(deploy|dependency-review|socket|scorecard|supply-chain|auto-review|e2e-chain)\.yml$)'
+          deps='^(package\.json|bun\.lock|bunfig\.toml|\.github/workflows/ci\.yml|scripts/(audit-|lockfile-|require-bun).*)$'
+
+          t=false; a=false; d=false
+          while IFS= read -r f; do
+            if echo "$f" | grep -Eq "$read_by_tests"; then t=true; continue; fi
+            if echo "$f" | grep -Eq "$docs"; then continue; fi
+            t=true
+            echo "$f" | grep -Eq "$no_app" || a=true
+            echo "$f" | grep -Eq "$deps" && d=true
+          done <<< "$files"
+          echo "test=$t" >> "$GITHUB_OUTPUT"
+          echo "app=$a" >> "$GITHUB_OUTPUT"
+          echo "deps=$d" >> "$GITHUB_OUTPUT"
+          echo "test=$t app=$a deps=$d"
+
   quality:
     name: typecheck + lint
     runs-on: ubuntu-latest
@@ -63,6 +122,10 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
+      # Fails on catalog keys never referenced in source; warns on dynamic keys.
+      - name: Unused i18n key check
+        run: node scripts/check-unused-keys.mjs
+
   # Scans every tracked text file for hidden payloads: tab-padded lines,
   # Trojan Source characters, obfuscated code and new root-level scripts (#914).
   # No dependencies are installed, so a PR cannot run its own install hooks here.
@@ -86,6 +149,8 @@ jobs:
 
   supply-chain:
     name: lockfile lint + audit gate
+    needs: changes
+    if: needs.changes.outputs.deps == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -119,6 +184,8 @@ jobs:
 
   test:
     name: unit tests + coverage
+    needs: changes
+    if: needs.changes.outputs.test == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -161,6 +228,8 @@ jobs:
 
   build:
     name: build
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -195,8 +264,26 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Build with a canary server-only secret. Server-only variables are read at
+      # runtime and must never be inlined into client code, so the canary must not
+      # appear in the browser bundle (#920).
       - name: Execute production build check
         run: bun run build
+        env:
+          HELIOBOND_API_KEY: canary-server-only-920
+
+      - name: Fail if a server-only secret reaches the client bundle
+        run: |
+          # Fail closed: a missing or empty bundle directory must not look clean.
+          test -n "$(ls -A .next/static 2>/dev/null)" || {
+            echo "::error::.next/static is missing or empty, so the check cannot run."
+            exit 1
+          }
+          if grep -rl "canary-server-only-920" .next/static; then
+            echo "::error::A server-only variable was inlined into the client bundle."
+            exit 1
+          fi
+          echo "No server-only canary found in the client bundle."
 
       # Per-route bundle budgets enforce first-load JS limits for Turbopack
       # and webpack builds. Budgets are set based on current optimized state.
@@ -205,6 +292,8 @@ jobs:
 
   e2e:
     name: e2e (playwright)
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:

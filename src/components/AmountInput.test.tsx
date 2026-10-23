@@ -1,6 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import { AmountInput } from './AmountInput'
-import { render, fireEvent } from '@testing-library/react'
+import { render as rtlRender, fireEvent } from '@testing-library/react'
+import { NextIntlClientProvider } from 'next-intl'
+import type { ReactElement } from 'react'
+
+// The component reads the active locale for number formatting.
+const render = (ui: ReactElement) =>
+  rtlRender(ui, {
+    wrapper: ({ children }) => (
+      <NextIntlClientProvider locale="en" messages={{}}>
+        {children}
+      </NextIntlClientProvider>
+    ),
+  })
 
 describe('AmountInput', () => {
   describe('screen-specific amount bounds', () => {

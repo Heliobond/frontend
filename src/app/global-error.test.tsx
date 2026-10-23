@@ -6,7 +6,7 @@
  */
 import { Component, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@/test/render'
+import { render, screen, waitFor } from '@/test/render'
 
 const health = vi.hoisted(() => ({ isOnline: true, throwError: false }))
 
@@ -81,6 +81,7 @@ describe('global error boundary (#710)', () => {
 
   afterEach(() => {
     consoleError.mockRestore()
+    document.cookie = 'NEXT_LOCALE=en;path=/'
   })
 
   it('renders the branded global-error page when TopBar throws', () => {
@@ -117,5 +118,13 @@ describe('global error boundary (#710)', () => {
     render(<GlobalError error={new Error('boom')} reset={reset} />)
     screen.getByRole('button', { name: 'Try again' }).click()
     expect(reset).toHaveBeenCalledOnce()
+  })
+
+  it('uses the locale cookie without relying on the intl provider', async () => {
+    document.cookie = 'NEXT_LOCALE=fr;path=/'
+    render(<GlobalError error={new Error('boom')} reset={vi.fn()} />)
+    await waitFor(() =>
+      expect(screen.getByText('Heliobond a rencontré une erreur inattendue')).toBeInTheDocument(),
+    )
   })
 })
