@@ -60,7 +60,7 @@ describe('useUsdcBalance hook (#698)', () => {
     await waitFor(() => {
       expect(result.current.balance).toBeNull()
       expect(result.current.loading).toBe(false)
-      expect(result.current.error).toBe('RPC node timeout')
+      expect(result.current.error).toBe('usdcBalanceFailed')
     })
   })
 

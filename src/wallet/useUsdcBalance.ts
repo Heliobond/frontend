@@ -58,12 +58,13 @@ export function useUsdcBalance(): UsdcBalanceState {
           setResult({ key, balance: bal, error: null })
         }
       })
-      .catch((e: unknown) => {
+      .catch(() => {
         if (!cancelled) {
           setResult({
             key,
             balance: null,
-            error: e instanceof Error ? e.message : 'Could not read USDC balance',
+            // Error code, not user-facing copy — the component translates (#900).
+            error: 'usdcBalanceFailed',
           })
         }
       })

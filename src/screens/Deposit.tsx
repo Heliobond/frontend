@@ -51,6 +51,7 @@ const strong = (chunks: ReactNode) => <b style={{ color: 'var(--ink)' }}>{chunks
 export function Deposit({ onDone }: DepositProps) {
   const t = useTranslations('Deposit')
   const tErr = useTranslations('ContractErrors')
+  const tToast = useTranslations('Toasts')
   const locale = useLocale()
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -149,8 +150,8 @@ export function Deposit({ onDone }: DepositProps) {
         changeStep('success')
         toast({
           tone: 'success',
-          title: 'Deposit confirmed',
-          message: `Successfully invested ${n} USDC in the pool.`,
+          title: tToast('depositConfirmedTitle'),
+          message: tToast('depositConfirmedMsg', { amount: formatDecimal(n, 2) }),
         })
       }
     } catch (e) {
@@ -162,9 +163,8 @@ export function Deposit({ onDone }: DepositProps) {
         if (isTimeout) {
           toast({
             tone: 'solar',
-            title: "Still pending — we'll keep checking",
-            message:
-              'Transaction submitted but waiting for on-chain confirmation. Background tracking is active.',
+            title: tToast('stillPendingTitle'),
+            message: tToast('stillPendingDepositMsg'),
           })
           changeStep('amount')
           return
@@ -176,13 +176,11 @@ export function Deposit({ onDone }: DepositProps) {
         const errorMessage = isNetworkMismatchError(e)
           ? e.message
           : (translateContractError(e, tErr) ??
-            (e instanceof Error
-              ? getFriendlyErrorMessage(e.message)
-              : 'Transaction failed — please try again.'))
+            (e instanceof Error ? getFriendlyErrorMessage(e.message) : tToast('txFailedGeneric')))
         changeStep('amount')
         toast({
           tone: 'error',
-          title: 'Deposit failed',
+          title: tToast('depositFailedTitle'),
           message: errorMessage,
           action: (
             <button

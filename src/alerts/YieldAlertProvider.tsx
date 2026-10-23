@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   getAlerts,
   getServerAlerts,
@@ -61,6 +62,7 @@ const EVAL_INTERVAL_MS = 60_000
 export function YieldAlertProvider({ children }: { children: ReactNode }) {
   const alerts = useSyncExternalStore(subscribeAlerts, getAlerts, getServerAlerts)
   const { toast } = useToast()
+  const tAlert = useTranslations('YieldAlert')
   // Read by callbacks and the interval below, which must not re-subscribe
   // whenever the list changes. Kept in sync after commit instead of during render.
   const alertsRef = useRef(alerts)
@@ -120,8 +122,14 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       for (const { alert, currentYield } of triggered) {
         toast({
           tone: 'solar',
-          title: '🔔 Yield alert triggered',
-          message: `${alert.bondName} yield is ${formatDecimal(currentYield, 1)}% — ${alert.operator === 'above' ? 'above' : 'below'} your ${alert.threshold}% threshold.`,
+          title: tAlert('triggeredToastTitle'),
+          message: tAlert('triggeredToastMessage', {
+            name: alert.bondName,
+            yield: formatDecimal(currentYield, 1),
+            direction:
+              alert.operator === 'above' ? tAlert('operatorAbove') : tAlert('operatorBelow'),
+            threshold: alert.threshold,
+          }),
           duration: 8000,
         })
       }

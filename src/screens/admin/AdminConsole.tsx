@@ -89,6 +89,7 @@ async function loadPauseStates(address: string | null): Promise<PauseStates> {
 
 export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
+  const tToast = useTranslations('Toasts')
   const { toast } = useToast()
   const { address, sign } = useWallet()
   const [registry, setRegistry] = useState<RegistryEntry[]>(REGISTRY)
@@ -214,8 +215,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: 'Transaction failed',
-        message: e instanceof Error ? e.message : 'Failed to update scores',
+        title: tToast('transactionFailedTitle'),
+        message: e instanceof Error ? e.message : tToast('failedToUpdateScores'),
         duration: 5000,
       })
       return false
@@ -254,8 +255,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: 'Transaction failed',
-        message: e instanceof Error ? e.message : 'Failed to fund project',
+        title: tToast('transactionFailedTitle'),
+        message: e instanceof Error ? e.message : tToast('failedToFundProject'),
         duration: 5000,
       })
       return false
@@ -334,8 +335,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     } catch (e) {
       toast({
         tone: 'error',
-        title: 'Transaction failed',
-        message: e instanceof Error ? e.message : 'Failed to update whitelist',
+        title: tToast('transactionFailedTitle'),
+        message: e instanceof Error ? e.message : tToast('failedToUpdateWhitelist'),
         duration: 5000,
       })
     }
@@ -370,16 +371,22 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       await submitSetPaused(contract, paused, address ?? '', sign, { emergency })
       toast({
         tone: paused ? 'error' : 'success',
-        title: `${label[0].toUpperCase()}${label.slice(1)} ${paused ? 'paused' : 'resumed'}`,
-        message: emergency ? 'Sent as emergency admin.' : 'Sent as owner.',
+        title: paused
+          ? label === 'vault'
+            ? tToast('vaultPausedTitle')
+            : tToast('registryPausedTitle')
+          : label === 'vault'
+            ? tToast('vaultResumedTitle')
+            : tToast('registryResumedTitle'),
+        message: emergency ? tToast('sentAsEmergencyAdmin') : tToast('sentAsOwner'),
         duration: 5000,
       })
       await refreshPauseStates()
     } catch (e) {
       toast({
         tone: 'error',
-        title: 'Transaction failed',
-        message: e instanceof Error ? e.message : 'Failed to change pause state',
+        title: tToast('transactionFailedTitle'),
+        message: e instanceof Error ? e.message : tToast('failedToChangePauseState'),
         duration: 5000,
       })
     }

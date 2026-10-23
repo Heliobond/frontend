@@ -3,6 +3,7 @@
 import { TransactionPendingError } from '../wallet/transactions'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
@@ -18,6 +19,7 @@ import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wall
 export function OnChainPosition() {
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
+  const tToast = useTranslations('Toasts')
   const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [claiming, setClaiming] = useState(false)
@@ -34,9 +36,8 @@ export function OnChainPosition() {
         setPortfolio(next)
         setError(null)
       },
-      (e: unknown) => {
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : 'Could not read your vault position')
+      () => {
+        if (!cancelled) setError('positionReadFailed')
       },
     )
     return () => {
@@ -56,8 +57,8 @@ export function OnChainPosition() {
       const explorerUrl = getExplorerTxUrl(hash)
       toast({
         tone: 'success',
-        title: 'Yield claimed',
-        message: 'Your yield was paid out in USDC.',
+        title: tToast('yieldClaimedTitle'),
+        message: tToast('yieldClaimedMsg'),
         href: explorerUrl,
         action: (
           <a
@@ -71,7 +72,7 @@ export function OnChainPosition() {
               textDecoration: 'underline',
             }}
           >
-            View on explorer
+            {tToast('viewOnExplorer')}
           </a>
         ),
       })
@@ -79,10 +80,10 @@ export function OnChainPosition() {
       refreshBalances()
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
-      const errorMessage = e instanceof Error ? e.message : 'Could not claim yield right now.'
+      const errorMessage = isPending ? tToast('stillPendingClaimMsg') : tToast('claimYieldFailed')
       toast({
         tone: isPending ? 'solar' : 'error',
-        title: isPending ? 'Still pending — we’ll keep checking' : 'Claim failed',
+        title: isPending ? tToast('stillPendingTitle') : tToast('claimFailedTitle'),
         message: errorMessage,
         action: isPending ? undefined : (
           <button
@@ -115,7 +116,7 @@ export function OnChainPosition() {
       <h3 style={titleStyle}>On-chain position</h3>
       {error ? (
         <p role="alert" style={noteStyle}>
-          {error}
+          {tToast(error as 'positionReadFailed')}
         </p>
       ) : !portfolio ? (
         <p style={noteStyle}>Reading your position from the vault…</p>

@@ -674,7 +674,11 @@
     "errorRef": "Ref. del error: {digest}",
     "tryAgain": "Reintentar",
     "viewCached": "Ver vistas en caché",
-    "goHome": "Ir al inicio"
+    "goHome": "Ir al inicio",
+    "vaultReadFailed": "No se pudo leer la bóveda",
+    "vaultLimitsFailed": "No se pudieron cargar los límites de la bóveda",
+    "usdcBalanceFailed": "No se pudo leer el saldo USDC",
+    "portfolioFailed": "No se pudieron obtener los datos del portafolio de la bóveda"
   },
   "NotFound": {
     "code": "404",
@@ -694,5 +698,40 @@
     "signingBlocked": "La firma está bloqueada hasta que coincidan.",
     "checkAgain": "Comprobar de nuevo",
     "syncing": "Sincronizando con Stellar"
+  },
+  "Toasts": {
+    "depositConfirmedTitle": "Depósito confirmado",
+    "depositConfirmedMsg": "Se invirtieron {amount} USDC en el fondo con éxito.",
+    "stillPendingTitle": "Sigue pendiente — seguiremos comprobando",
+    "stillPendingDepositMsg": "Transacción enviada pero a la espera de confirmación en cadena. El seguimiento en segundo plano está activo.",
+    "stillPendingWithdrawMsg": "Retiro enviado pero a la espera de confirmación en cadena. El seguimiento en segundo plano está activo.",
+    "stillPendingClaimMsg": "Reclamación enviada pero a la espera de confirmación en cadena. El seguimiento en segundo plano está activo.",
+    "depositFailedTitle": "El depósito falló",
+    "transactionFailedTitle": "La transacción falló",
+    "txFailedGeneric": "La transacción falló — inténtalo de nuevo.",
+    "withdrawalQueuedTitle": "Retiro en cola",
+    "withdrawalQueuedUnknownMsg": "Retiro en cola; el monto adeudado no está disponible en esta confirmación.",
+    "withdrawalQueuedMsg": "Monto adeudado {amount} USDC en cola para el pago.",
+    "withdrawalSettledTitle": "Retiro liquidado",
+    "withdrawalSettledMsg": "{amount} USDC va en camino a tu cartera.",
+    "yieldClaimedTitle": "Rentabilidad reclamada",
+    "yieldClaimedMsg": "Tu rentabilidad se pagó en USDC.",
+    "viewOnExplorer": "Ver en el explorador",
+    "claimFailedTitle": "La reclamación falló",
+    "withdrawalsClaimedTitle": "Retiros reclamados",
+    "withdrawalsClaimedMsg": "Retiros en cola reclamados con éxito y pagados en USDC.",
+    "failedToUpdateScores": "No se pudieron actualizar las puntuaciones",
+    "failedToFundProject": "No se pudo financiar el proyecto",
+    "failedToUpdateWhitelist": "No se pudo actualizar la lista blanca",
+    "failedToChangePauseState": "No se pudo cambiar el estado de pausa",
+    "vaultPausedTitle": "Bóveda en pausa",
+    "vaultResumedTitle": "Bóveda reanudada",
+    "registryPausedTitle": "Registro en pausa",
+    "registryResumedTitle": "Registro reanudado",
+    "sentAsEmergencyAdmin": "Enviado como administrador de emergencia.",
+    "sentAsOwner": "Enviado como propietario.",
+    "positionReadFailed": "No se pudo leer tu posición en la bóveda",
+    "claimYieldFailed": "No se pudo reclamar la rentabilidad ahora.",
+    "claimFailedGeneric": "No se pudo procesar la reclamación ahora."
   }
 }

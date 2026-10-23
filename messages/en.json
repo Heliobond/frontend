@@ -674,7 +674,11 @@
     "errorRef": "Error ref: {digest}",
     "tryAgain": "Try again",
     "viewCached": "View cached views",
-    "goHome": "Go home"
+    "goHome": "Go home",
+    "vaultReadFailed": "Could not read vault",
+    "vaultLimitsFailed": "Could not load vault limits",
+    "usdcBalanceFailed": "Could not read USDC balance",
+    "portfolioFailed": "Failed to fetch vault portfolio data"
   },
   "NotFound": {
     "code": "404",
@@ -694,5 +698,40 @@
     "signingBlocked": "Signing is blocked until they match.",
     "checkAgain": "Check again",
     "syncing": "Syncing with Stellar"
+  },
+  "Toasts": {
+    "depositConfirmedTitle": "Deposit confirmed",
+    "depositConfirmedMsg": "Successfully invested {amount} USDC in the pool.",
+    "stillPendingTitle": "Still pending — we'll keep checking",
+    "stillPendingDepositMsg": "Transaction submitted but waiting for on-chain confirmation. Background tracking is active.",
+    "stillPendingWithdrawMsg": "Withdrawal submitted but waiting for on-chain confirmation. Background tracking is active.",
+    "stillPendingClaimMsg": "Claim submitted but waiting for on-chain confirmation. Background tracking is active.",
+    "depositFailedTitle": "Deposit failed",
+    "transactionFailedTitle": "Transaction failed",
+    "txFailedGeneric": "Transaction failed — please try again.",
+    "withdrawalQueuedTitle": "Withdrawal queued",
+    "withdrawalQueuedUnknownMsg": "Withdrawal queued; owed amount is unavailable from this confirmation.",
+    "withdrawalQueuedMsg": "Owed amount {amount} USDC queued for payout.",
+    "withdrawalSettledTitle": "Withdrawal settled",
+    "withdrawalSettledMsg": "{amount} USDC is on its way to your wallet.",
+    "yieldClaimedTitle": "Yield claimed",
+    "yieldClaimedMsg": "Your yield was paid out in USDC.",
+    "viewOnExplorer": "View on explorer",
+    "claimFailedTitle": "Claim failed",
+    "withdrawalsClaimedTitle": "Withdrawals claimed",
+    "withdrawalsClaimedMsg": "Queued withdrawals claimed successfully and paid out in USDC.",
+    "failedToUpdateScores": "Failed to update scores",
+    "failedToFundProject": "Failed to fund project",
+    "failedToUpdateWhitelist": "Failed to update whitelist",
+    "failedToChangePauseState": "Failed to change pause state",
+    "vaultPausedTitle": "Vault paused",
+    "vaultResumedTitle": "Vault resumed",
+    "registryPausedTitle": "Registry paused",
+    "registryResumedTitle": "Registry resumed",
+    "sentAsEmergencyAdmin": "Sent as emergency admin.",
+    "sentAsOwner": "Sent as owner.",
+    "positionReadFailed": "Could not read your vault position",
+    "claimYieldFailed": "Could not claim yield right now.",
+    "claimFailedGeneric": "Could not process claim at this time."
   }
 }

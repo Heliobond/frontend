@@ -35,6 +35,7 @@ type WithdrawStep = 'amount' | 'pending' | 'success'
 export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const t = useTranslations('Withdraw')
   const tErr = useTranslations('ContractErrors')
+  const tToast = useTranslations('Toasts')
   const { toast } = useToast()
   const { address, sign, isDemo, connected } = useWallet()
   const { sharePrice, totalAssets } = useVault()
@@ -356,17 +357,21 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                       })
                       toast({
                         tone: 'solar',
-                        title: 'Withdrawal queued',
+                        title: tToast('withdrawalQueuedTitle'),
                         message:
                           est === undefined
-                            ? 'Withdrawal queued; owed amount is unavailable from this confirmation.'
-                            : `Owed amount ${formatDecimal(est, DISPLAY_DECIMALS)} USDC queued for payout.`,
+                            ? tToast('withdrawalQueuedUnknownMsg')
+                            : tToast('withdrawalQueuedMsg', {
+                                amount: formatDecimal(est, DISPLAY_DECIMALS),
+                              }),
                       })
                     } else {
                       toast({
                         tone: 'success',
-                        title: 'Withdrawal settled',
-                        message: `${formatDecimal(est ?? n, DISPLAY_DECIMALS)} USDC is on its way to your wallet.`,
+                        title: tToast('withdrawalSettledTitle'),
+                        message: tToast('withdrawalSettledMsg', {
+                          amount: formatDecimal(est ?? n, DISPLAY_DECIMALS),
+                        }),
                       })
                     }
                   }
@@ -379,9 +384,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     if (isTimeout) {
                       toast({
                         tone: 'solar',
-                        title: "Still pending — we'll keep checking",
-                        message:
-                          'Withdrawal submitted but waiting for on-chain confirmation. Background tracking is active.',
+                        title: tToast('stillPendingTitle'),
+                        message: tToast('stillPendingWithdrawMsg'),
                       })
                       changeStep('amount')
                       return

@@ -140,7 +140,7 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
     await waitFor(() => {
       const errorCard = screen.getByTestId('portfolio-error')
       expect(errorCard).toBeInTheDocument()
-      expect(errorCard).toHaveTextContent('Soroban RPC node timeout')
+      expect(errorCard).toHaveTextContent('Failed to fetch vault portfolio data')
     })
 
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
@@ -159,7 +159,9 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
     render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
 
     await waitFor(() => {
-      expect(screen.getByTestId('portfolio-error')).toHaveTextContent('Yield RPC failed')
+      expect(screen.getByTestId('portfolio-error')).toHaveTextContent(
+        'Failed to fetch vault portfolio data',
+      )
       expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$110')
     })
   })

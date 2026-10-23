@@ -49,6 +49,8 @@ export interface PortfolioProps {
 
 export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const t = useTranslations('Portfolio')
+  const tToast = useTranslations('Toasts')
+  const tErr = useTranslations('Errors')
   const locale = useLocale()
   const { connected, connect, address, sign } = useWallet()
   const { toast } = useToast()
@@ -85,17 +87,20 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       refreshClaims()
       toast({
         tone: 'success',
-        title: 'Withdrawals claimed',
-        message: 'Queued withdrawals claimed successfully and paid out in USDC.',
+        title: tToast('withdrawalsClaimedTitle'),
+        message: tToast('withdrawalsClaimedMsg'),
       })
     } catch (e) {
       toast({
         tone: e instanceof TransactionPendingError ? 'solar' : 'error',
         title:
           e instanceof TransactionPendingError
-            ? 'Still pending — we’ll keep checking'
-            : 'Claim failed',
-        message: e instanceof Error ? e.message : 'Could not process claim at this time.',
+            ? tToast('stillPendingTitle')
+            : tToast('claimFailedTitle'),
+        message:
+          e instanceof TransactionPendingError
+            ? tToast('stillPendingClaimMsg')
+            : tToast('claimFailedGeneric'),
       })
     } finally {
       setClaiming(false)
@@ -172,7 +177,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                 margin: 0,
               }}
             >
-              {error}
+              {tErr(error as 'portfolioFailed')}
             </p>
             <Button variant="secondary" size="sm" onClick={refresh}>
               Retry
