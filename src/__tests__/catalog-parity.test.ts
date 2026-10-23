@@ -110,8 +110,7 @@ function parseIcu(message: string, path: string): IcuArgs {
       if (type === 'plural' || type === 'select' || type === 'selectordinal') {
         if (type !== 'select' && message.startsWith('offset', i)) {
           i = skipWs(i + 6, end)
-          const [digits, afterDigits] = readToken(i, end, /^\d+/, 'plural offset')
-          void digits
+          const [, afterDigits] = readToken(i, end, /^\d+/, 'plural offset')
           i = skipWs(afterDigits, end)
         }
         const seen = new Set<string>()
