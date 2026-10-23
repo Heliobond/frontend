@@ -101,8 +101,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const estimatedFee = useTransactionFee('withdraw', n, address, slippageTolerance)
   const feeLabel =
     estimatedFee === null
-      ? 'Estimate unavailable'
-      : `${estimatedFee.toFixed(7)} XLM (estimated maximum)`
+      ? t('feeEstimateUnavailable')
+      : t('feeLabelEstimated', { fee: estimatedFee.toFixed(7) })
 
   useEffect(() => {
     mountedRef.current = true
@@ -134,7 +134,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
         return (
           <div style={panel}>
             <h1 style={hw}>{t('h1')}</h1>
-            <p>Network fee: {feeLabel}</p>
+            <p>{t('networkFee', { fee: feeLabel })}</p>
             {txError && (
               <div
                 role="alert"
@@ -191,10 +191,10 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     color: 'var(--ink)',
                   }}
                 >
-                  <strong>Warning:</strong> Requested amount exceeds immediately available liquid
-                  balance (${formatDecimal(vaultLiquid, DISPLAY_DECIMALS)}). Your withdrawal will be
-                  placed in the FIFO queue (WithdrawQueued) and will be claimable once vault
-                  liquidity is replenished.
+                  <strong>{t('warningLabel')}</strong>{' '}
+                  {t('liquidWarning', {
+                    amount: formatDecimal(vaultLiquid, DISPLAY_DECIMALS),
+                  })}
                 </div>
               )}
             {positionReady && !limitsLoading && n > tierLimit && (
@@ -211,8 +211,9 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                   color: 'var(--ember)',
                 }}
               >
-                Amount exceeds maximum graduated tier limit ($
-                {formatDecimal(tierLimit, DISPLAY_DECIMALS)}).
+                {t('tierLimitExceeded', {
+                  limit: formatDecimal(tierLimit, DISPLAY_DECIMALS),
+                })}
               </div>
             )}
             {positionReady && !limitsLoading && n > maxTx && n <= tierLimit && (
@@ -229,7 +230,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                   color: 'var(--ember)',
                 }}
               >
-                Amount exceeds maximum pool transaction limit (${maxTx.toFixed(2)}).
+                {t('capExceeded', { max: maxTx.toFixed(2) })}
               </div>
             )}
             {n > 0 && (
@@ -245,7 +246,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     cursor: 'pointer',
                   }}
                 >
-                  <span>Slippage tolerance</span>
+                  <span>{t('slippageTolerance')}</span>
                   <select
                     value={slippageTolerance}
                     onChange={(e) => setSlippageTolerance(Number(e.target.value))}
@@ -260,13 +261,15 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    <option value={0.001}>0.1%</option>
-                    <option value={0.005}>0.5% (default)</option>
-                    <option value={0.01}>1%</option>
-                    <option value={0.02}>2%</option>
+                    <option value={0.001}>{t('slippageOption', { value: '0.001' })}</option>
+                    <option value={0.005}>{t('slippageOption', { value: '0.005' })}</option>
+                    <option value={0.01}>{t('slippageOption', { value: '0.01' })}</option>
+                    <option value={0.02}>{t('slippageOption', { value: '0.02' })}</option>
                   </select>
                   <span style={{ color: 'var(--ink-40)', fontSize: 'var(--type-caption)' }}>
-                    Min return: {formatDecimal(n * (1 - slippageTolerance), DISPLAY_DECIMALS)} USDC
+                    {t('minReturn', {
+                      amount: formatDecimal(n * (1 - slippageTolerance), DISPLAY_DECIMALS),
+                    })}
                   </span>
                 </label>
               </div>
@@ -296,29 +299,29 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
               reasonBeforeLock={
                 !positionReady
                   ? portfolioError
-                    ? 'Could not verify your wallet position'
-                    : 'Loading your wallet position'
+                    ? t('reasonNoPosition')
+                    : t('reasonLoadingPosition')
                   : limitsLoading
-                    ? 'Loading vault limits'
+                    ? t('reasonLoadingLimits')
                     : limitsError
-                      ? 'Could not verify vault limits'
+                      ? t('reasonNoLimits')
                       : paused
-                        ? 'Vault paused'
+                        ? t('vaultPaused')
                         : undefined
               }
               reasonAfterLock={
                 n > userPosition
-                  ? 'Amount exceeds your position'
+                  ? t('reasonExceedsPosition')
                   : n > tierLimit
-                    ? 'Amount exceeds graduated tier limit'
+                    ? t('reasonExceedsTier')
                     : n > maxTx
-                      ? 'Amount exceeds pool transaction limit'
+                      ? t('reasonExceedsMaxTx')
                       : n < minWithdrawUsdc
                         ? t('reasonMin', { min: formatDecimal(minWithdrawUsdc, DISPLAY_DECIMALS) })
                         : undefined
               }
               withdrawLabel={t('withdrawCta', { amount: n })}
-              queueLabel={`Enqueue withdrawal for $${formatDecimal(n, DISPLAY_DECIMALS)}`}
+              queueLabel={t('queueLabel', { amount: formatDecimal(n, DISPLAY_DECIMALS) })}
               emptyLabel={t('withdrawCtaEmpty')}
               style={{ width: '100%', marginTop: 20, background: 'var(--primary)' }}
               onClick={async () => {
@@ -383,9 +386,8 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     if (isTimeout) {
                       toast({
                         tone: 'solar',
-                        title: "Still pending — we'll keep checking",
-                        message:
-                          'Withdrawal submitted but waiting for on-chain confirmation. Background tracking is active.',
+                        title: t('pendingToastTitle'),
+                        message: t('pendingToastBody'),
                       })
                       changeStep('amount')
                       return

@@ -165,7 +165,7 @@ export function OracleForms({
           reason={scoresDisabledReason ?? t('scoresReason')}
           onClick={submitScores}
         >
-          {scorePending ? 'Waiting for confirmation…' : t('submitScores')}
+          {scorePending ? t('waitingConfirmation') : t('submitScores')}
         </Button>
       </Panel>
 
@@ -231,14 +231,14 @@ export function OracleForms({
           reason={
             fundDisabledReason ??
             (isPaused
-              ? 'Registry is paused'
+              ? t('registryPausedReason')
               : overLiquid
-                ? 'Amount exceeds deployable limit'
+                ? t('deployLimitExceeded')
                 : t('fundReasonEmpty'))
           }
           onClick={submitFund}
         >
-          {fundPending ? 'Waiting for confirmation…' : t('submitFund')}
+          {fundPending ? t('waitingConfirmation') : t('submitFund')}
         </Button>
       </Panel>
     </div>

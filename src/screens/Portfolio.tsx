@@ -85,17 +85,17 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       refreshClaims()
       toast({
         tone: 'success',
-        title: 'Withdrawals claimed',
-        message: 'Queued withdrawals claimed successfully and paid out in USDC.',
+        title: t('claimedToastTitle'),
+        message: t('claimedToastBody'),
       })
     } catch (e) {
       toast({
         tone: e instanceof TransactionPendingError ? 'solar' : 'error',
         title:
           e instanceof TransactionPendingError
-            ? 'Still pending — we’ll keep checking'
-            : 'Claim failed',
-        message: e instanceof Error ? e.message : 'Could not process claim at this time.',
+            ? t('claimPendingTitle')
+            : t('claimFailedTitle'),
+        message: e instanceof Error ? e.message : t('claimError'),
       })
     } finally {
       setClaiming(false)
@@ -118,7 +118,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           }}
         >
           <div className="hb-eyebrow">{t('eyebrow')}</div>
-          <h2 style={{ ...cardTitle, margin: 0 }}>Connect your wallet to view your portfolio</h2>
+          <h2 style={{ ...cardTitle, margin: 0 }}>{t('connectWalletTitle')}</h2>
           <p
             style={{
               fontFamily: 'var(--font-body)',
@@ -128,10 +128,10 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               margin: 0,
             }}
           >
-            Your holdings and activity will appear here after you connect.
+            {t('connectWalletBody')}
           </p>
           <Button variant="primary" onClick={() => void connect()}>
-            Connect wallet
+            {t('connectWalletCta')}
           </Button>
         </Card>
       </main>
@@ -184,7 +184,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       {/* On-chain empty holdings state banner (0 shares) */}
       {portfolio && portfolio.shares === 0 && portfolio.totalDeposited === 0 && (
         <Card data-testid="portfolio-empty" style={{ padding: 22, marginBottom: 28 }}>
-          <h3 style={cardTitle}>No active vault position found</h3>
+          <h3 style={cardTitle}>{t('emptyPositionTitle')}</h3>
           <p
             style={{
               fontFamily: 'var(--font-body)',
@@ -193,10 +193,10 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
               margin: '4px 0 16px',
             }}
           >
-            Your connected wallet has not deposited into this green-bond vault yet.
+            {t('emptyPositionBody')}
           </p>
           <Button variant="primary" onClick={onDeposit}>
-            Make your first deposit
+            {t('firstDepositCta')}
           </Button>
         </Card>
       )}
@@ -306,7 +306,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           }}
         >
           <div>
-            <h3 style={cardTitle}>Pending withdrawals</h3>
+            <h3 style={cardTitle}>{t('pendingWithdrawalsTitle')}</h3>
             <p
               style={{
                 fontFamily: 'var(--font-body)',
@@ -322,7 +322,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           </div>
           {pendingClaims.length > 0 && (
             <Button variant="primary" size="sm" disabled={claiming} onClick={handleClaim}>
-              {claiming ? 'Claiming...' : 'Claim available liquidity'}
+              {claiming ? t('claimingCta') : t('claimAvailableCta')}
             </Button>
           )}
         </div>
@@ -522,7 +522,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           </div>
           <div
             role="region"
-            aria-label={`Portfolio activity, ${activity.length} items`}
+            aria-label={t('activityRegion', { count: activity.length })}
             tabIndex={0}
             onScroll={(event) => setActivityScrollTop(event.currentTarget.scrollTop)}
             style={{

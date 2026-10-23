@@ -7,6 +7,7 @@ import { Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
 import { useVaultRefresh } from '../wallet/useVaultRefresh'
+import { useTranslations } from 'next-intl'
 import { useWallet } from '../wallet/WalletProvider'
 import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wallet/vault'
 
@@ -16,6 +17,7 @@ import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wall
  * real wallet is connected; demo sessions keep the fixture dashboard.
  */
 export function OnChainPosition() {
+  const t = useTranslations('Portfolio')
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
   const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
@@ -56,8 +58,8 @@ export function OnChainPosition() {
       const explorerUrl = getExplorerTxUrl(hash)
       toast({
         tone: 'success',
-        title: 'Yield claimed',
-        message: 'Your yield was paid out in USDC.',
+        title: t('onchainClaimedTitle'),
+        message: t('onchainClaimedBody'),
         href: explorerUrl,
         action: (
           <a
@@ -71,7 +73,7 @@ export function OnChainPosition() {
               textDecoration: 'underline',
             }}
           >
-            View on explorer
+            {t('onchainViewExplorer')}
           </a>
         ),
       })
@@ -79,10 +81,10 @@ export function OnChainPosition() {
       refreshBalances()
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
-      const errorMessage = e instanceof Error ? e.message : 'Could not claim yield right now.'
+      const errorMessage = e instanceof Error ? e.message : t('onchainClaimError')
       toast({
         tone: isPending ? 'solar' : 'error',
-        title: isPending ? 'Still pending — we’ll keep checking' : 'Claim failed',
+        title: isPending ? t('onchainClaimPendingTitle') : t('onchainClaimFailedTitle'),
         message: errorMessage,
         action: isPending ? undefined : (
           <button
@@ -101,7 +103,7 @@ export function OnChainPosition() {
               whiteSpace: 'nowrap',
             }}
           >
-            Retry
+            {t('onchainRetry')}
           </button>
         ),
       })
@@ -112,22 +114,22 @@ export function OnChainPosition() {
 
   return (
     <Card data-testid="onchain-position" style={{ padding: 22, marginBottom: 28 }}>
-      <h3 style={titleStyle}>On-chain position</h3>
+      <h3 style={titleStyle}>{t('onchainTitle')}</h3>
       {error ? (
         <p role="alert" style={noteStyle}>
           {error}
         </p>
       ) : !portfolio ? (
-        <p style={noteStyle}>Reading your position from the vault…</p>
+        <p style={noteStyle}>{t('onchainReading')}</p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 28, alignItems: 'flex-end' }}>
           <div data-testid="onchain-shares">
-            <StatBlock label="HBS shares" value={formatDecimal(portfolio.shares, 2)} size="md" />
+            <StatBlock label={t('onchainShares')} value={formatDecimal(portfolio.shares, 2)} size="md" />
           </div>
-          <StatBlock label="Value" value={`$${formatDecimal(portfolio.usdcValue, 2)}`} size="md" />
+          <StatBlock label={t('onchainValue')} value={`$${formatDecimal(portfolio.usdcValue, 2)}`} size="md" />
           <div data-testid="onchain-claimable-yield">
             <StatBlock
-              label="Claimable yield"
+              label={t('onchainClaimable')}
               value={`$${formatDecimal(portfolio.claimableYield, 2)}`}
               size="md"
             />
@@ -139,7 +141,7 @@ export function OnChainPosition() {
               disabled={claiming}
               onClick={() => void handleClaimYield()}
             >
-              Claim yield
+              {t('onchainClaimCta')}
             </Button>
           )}
         </div>
