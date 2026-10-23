@@ -10,17 +10,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useRouter } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import en from '../../messages/en.json'
-import fr from '../../messages/fr.json'
-import es from '../../messages/es.json'
-import ar from '../../messages/ar.json'
-import pt from '../../messages/pt.json'
 import { type Locale, RTL_LOCALES } from './config'
 
 export type Messages = typeof en
-
-const CATALOGS: Record<Locale, Messages> = { en, fr, es, ar, pt }
 
 interface LocaleSwitcherValue {
   locale: Locale
@@ -43,6 +38,7 @@ export function LocaleProvider({
   initialMessages: Messages
   children: ReactNode
 }) {
+  const router = useRouter()
   const [locale, setLocale] = useState(initialLocale)
   const [messages, setMessages] = useState(initialMessages)
 
@@ -51,14 +47,20 @@ export function LocaleProvider({
     document.documentElement.dir = getDir(locale)
   }, [locale])
 
-  const switchLocale = useCallback((target: Locale) => {
-    document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000;samesite=lax`
+  const switchLocale = useCallback(
+    (target: Locale) => {
+      document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000;samesite=lax`
 
-    startTransition(() => {
-      setLocale(target)
-      setMessages(CATALOGS[target])
-    })
-  }, [])
+      import(`../../messages/${target}.json`).then((mod) => {
+        startTransition(() => {
+          setLocale(target)
+          setMessages(mod.default)
+          router.refresh()
+        })
+      })
+    },
+    [router],
+  )
 
   const value = useMemo(
     () => ({ locale, dir: getDir(locale), switchLocale }),
