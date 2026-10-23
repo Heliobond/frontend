@@ -478,7 +478,10 @@ export function mapOnChainProject(
 function formatScoreDate(timestamp: number | bigint | undefined, index: number): string {
   const seconds = Number(timestamp)
   if (Number.isFinite(seconds) && seconds > 0) {
-    return new Date(seconds * 1000).toLocaleDateString(getLocaleCode(), { month: 'short', year: 'numeric' })
+    return new Date(seconds * 1000).toLocaleDateString(getLocaleCode(), {
+      month: 'short',
+      year: 'numeric',
+    })
   }
   return `${index + 1}mo ago`
 }

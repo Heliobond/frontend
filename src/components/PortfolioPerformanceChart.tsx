@@ -173,8 +173,8 @@ export function PortfolioPerformanceChart({ address }: { address: string }) {
             style={{ margin: '12px 0 0', color: 'var(--ink-60)', fontSize: 'var(--type-caption)' }}
           >
             Indexed snapshots, {formatDate(points[0].timestamp, locale)} –{' '}
-            {formatDate(latest.timestamp, locale)}. Historical returns and yields are not
-            guarantees of future performance.
+            {formatDate(latest.timestamp, locale)}. Historical returns and yields are not guarantees
+            of future performance.
           </p>
         </>
       )}

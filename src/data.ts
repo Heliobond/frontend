@@ -52,7 +52,11 @@ export interface Activity {
   hash: string
 }
 
-import { formatPoolCounters, formatMoney, formatNumber as formatNumberLocalized } from './lib/format'
+import {
+  formatPoolCounters,
+  formatMoney,
+  formatNumber as formatNumberLocalized,
+} from './lib/format'
 
 export function formatCurrency(n: number, appLocale?: string): string {
   return formatMoney(Math.floor(n), { includeSymbol: true, appLocale })
