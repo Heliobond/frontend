@@ -1,75 +1,58 @@
 import { describe, it, expect } from 'vitest'
-import { getFriendlyErrorMessage, parseAndFriendlyError } from './errorMessages'
+import { getErrorCode, parseErrorCode } from './errorMessages'
+import { AppError } from './appError'
 
 describe('errorMessages mapping', () => {
-  it('maps memo_too_long code to user-friendly message', () => {
-    expect(getFriendlyErrorMessage('memo_too_long')).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-    )
-    expect(getFriendlyErrorMessage('err_memo_too_long')).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-    )
-    expect(getFriendlyErrorMessage('memo_length_exceeded')).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-    )
+  it('maps memo_too_long code to memoTooLong', () => {
+    expect(getErrorCode('memo_too_long')).toBe('memoTooLong')
+    expect(getErrorCode('err_memo_too_long')).toBe('memoTooLong')
+    expect(getErrorCode('memo_length_exceeded')).toBe('memoTooLong')
   })
 
-  it('maps invalid_memo code to friendly message', () => {
-    expect(getFriendlyErrorMessage('invalid_memo')).toBe(
-      'Invalid memo — text memos must be 28 bytes or fewer.',
-    )
+  it('maps invalid_memo code to invalidMemo', () => {
+    expect(getErrorCode('invalid_memo')).toBe('invalidMemo')
   })
 
-  it('maps tx_malformed code to friendly message', () => {
-    expect(getFriendlyErrorMessage('tx_malformed')).toBe(
-      'Transaction malformed — please check your transaction inputs and memo.',
-    )
+  it('maps tx_malformed code to txMalformed', () => {
+    expect(getErrorCode('tx_malformed')).toBe('txMalformed')
   })
 
-  it('detects cryptic backend error messages mentioning memo length and translates them', () => {
-    expect(
-      getFriendlyErrorMessage('Error: Memo text is too long (expected max 28 bytes, got 100)'),
-    ).toBe('Memo is too long — Stellar text memos must be 28 bytes or fewer.')
-    expect(getFriendlyErrorMessage('Backend rejected: transaction memo length exceeds limit')).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+  it('detects cryptic backend error messages mentioning memo length and maps them to a code', () => {
+    expect(getErrorCode('Error: Memo text is too long (expected max 28 bytes, got 100)')).toBe(
+      'memoTooLong',
     )
-    expect(getFriendlyErrorMessage('Horizon op_malformed: memo byte length > 28')).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
+    expect(getErrorCode('Backend rejected: transaction memo length exceeds limit')).toBe(
+      'memoTooLong',
     )
+    expect(getErrorCode('Horizon op_malformed: memo byte length > 28')).toBe('memoTooLong')
   })
 
   it('parses error object with memo code', () => {
     const error = { code: 'memo_too_long' }
-    expect(parseAndFriendlyError(error)).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-    )
+    expect(parseErrorCode(error)).toBe('memoTooLong')
   })
 
   it('parses Error instance with memo length message', () => {
     const error = new Error('Memo text is too long: 100 bytes (maximum is 28 bytes)')
-    expect(parseAndFriendlyError(error)).toBe(
-      'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-    )
+    expect(parseErrorCode(error)).toBe('memoTooLong')
   })
 
-  it('maps invalid_address and address_checksum_failed codes to user-friendly message', () => {
-    expect(getFriendlyErrorMessage('invalid_address')).toBe(
-      'Invalid Stellar address — please check the address for typos.',
-    )
-    expect(getFriendlyErrorMessage('address_checksum_failed')).toBe(
-      'Invalid Stellar address checksum — please check for typos.',
-    )
-    expect(getFriendlyErrorMessage('invalid_destination')).toBe(
-      'Invalid destination address — please check the address for typos.',
-    )
+  it('passes AppError codes through unchanged', () => {
+    expect(parseErrorCode(new AppError('memoTooLong'))).toBe('memoTooLong')
+    expect(parseErrorCode(new AppError('usernameRequired'))).toBe('usernameRequired')
+    expect(parseErrorCode(new AppError('simulationFailed'))).toBe('simulationFailed')
   })
 
-  it('detects cryptic backend error messages mentioning address checksum and translates them', () => {
-    expect(
-      getFriendlyErrorMessage('Invalid Stellar public address checksum (please check for typos)'),
-    ).toBe('Invalid Stellar address — please check the address for typos.')
-    expect(getFriendlyErrorMessage('Error: Stellar address checksum verification failed')).toBe(
-      'Invalid Stellar address — please check the address for typos.',
+  it('maps invalid_address and address_checksum_failed codes', () => {
+    expect(getErrorCode('invalid_address')).toBe('invalidAddress')
+    expect(getErrorCode('address_checksum_failed')).toBe('addressChecksumFailed')
+    expect(getErrorCode('invalid_destination')).toBe('invalidAddress')
+  })
+
+  it('detects cryptic backend error messages mentioning address checksum and maps them to a code', () => {
+    expect(getErrorCode('Invalid Stellar public address checksum (please check for typos)')).toBe(
+      'invalidAddress',
     )
+    expect(getErrorCode('Error: Stellar address checksum verification failed')).toBe('invalidAddress')
   })
 })

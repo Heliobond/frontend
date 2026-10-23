@@ -11,7 +11,6 @@ import {
   parseContractError,
   translateContractError,
 } from './contractErrors'
-import { getFriendlyErrorMessage, parseAndFriendlyError } from './errorMessages'
 
 const HOST_ERROR =
   'Simulation failed: HostError: Error(Contract, #33)\n\nEvent log (newest first):\n   0: [Diagnostic Event] contract:CDLZ..., topics:[error, Error(Contract, #33)]'
@@ -63,13 +62,6 @@ describe('translateContractError', () => {
   it('uses the supplied translator', () => {
     const t = (key: string) => `t:${key}`
     expect(translateContractError('Error(Contract, #36)', t)).toBe('t:vault_DepositLocked')
-  })
-
-  it('feeds the friendly-error helpers', () => {
-    expect(getFriendlyErrorMessage(HOST_ERROR)).toBe(en.ContractErrors.vault_SlippageLimitExceeded)
-    expect(parseAndFriendlyError(new Error('Error(Contract, #34)'))).toBe(
-      en.ContractErrors.vault_Paused,
-    )
   })
 })
 

@@ -37,7 +37,7 @@ function extractPayload(payload: unknown): ApiErrorShape {
   if (payload instanceof Error) {
     return {
       code: 'unknown_error',
-      message: payload.message || 'Something went wrong',
+      message: payload.message || 'unknown_error',
       details: { name: payload.name },
       cause: payload.cause,
     }
@@ -53,7 +53,7 @@ function extractPayload(payload: unknown): ApiErrorShape {
   if (!isPlainObject(payload)) {
     return {
       code: 'unknown_error',
-      message: 'Something went wrong',
+      message: 'unknown_error',
     }
   }
 
@@ -64,7 +64,7 @@ function extractPayload(payload: unknown): ApiErrorShape {
   const code = normalizeCode(payload.code ?? nestedError?.code, 'unknown_error')
   const message = normalizeMessage(
     payload.message ?? nestedError?.message ?? nestedMessage,
-    'Something went wrong',
+    'unknown_error',
   )
 
   return {
@@ -91,7 +91,7 @@ export class ApiError extends Error {
   readonly retryable: boolean
   readonly cause?: unknown
 
-  constructor(payload: ApiErrorPayload = {}, fallbackMessage = 'Something went wrong') {
+  constructor(payload: ApiErrorPayload = {}, fallbackMessage = 'unknown_error') {
     const normalized = extractPayload(payload)
     const message = normalizeMessage(normalized.message ?? fallbackMessage, fallbackMessage)
     super(message)
@@ -110,7 +110,7 @@ export class ApiError extends Error {
 
 export function normalizeApiError(
   payload: ApiErrorPayload = {},
-  fallbackMessage = 'Something went wrong',
+  fallbackMessage = 'unknown_error',
 ): ApiError {
   return new ApiError(payload, fallbackMessage)
 }

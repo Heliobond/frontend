@@ -1,48 +1,45 @@
-import { contractErrorMessageEn } from './contractErrors'
+import { isAppError } from './appError'
 
 /*
- * Maps technical error codes and enum values to user-friendly messages.
- * Never surface raw codes like 'insufficient_balance' to users.
+ * Maps technical error codes and enum values to catalog keys under the
+ * `Errors` namespace. Never surface raw codes like 'insufficient_balance'
+ * to users — translate the key in the UI with `t(\`Errors.${code}\`)`.
  */
 
 export const ERROR_CODE_MAP: Record<string, string> = {
-  insufficient_balance: 'Not enough funds - your balance is too low for this amount.',
-  insufficient_funds: 'Not enough funds - your balance is too low for this amount.',
-  amount_too_low: 'Enter an amount of at least 1 USDC.',
-  amount_exceeds_balance: 'Not enough funds - try a smaller amount or use Max.',
-  invalid_amount: 'Please enter a valid amount.',
-  wallet_not_connected: 'Please connect your wallet first.',
-  timeout: 'Connection timed out - please try again.',
-  network_error: 'Network issue - please check your connection and try again.',
-  stellar_unreachable: 'Cannot reach Stellar network - showing cached data.',
-  simulation_failed: 'Could not estimate the transaction - please try again.',
-  tx_failed: 'Transaction did not go through - please try again.',
-  memo_too_long: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-  err_memo_too_long: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-  memo_length_exceeded: 'Memo is too long — Stellar text memos must be 28 bytes or fewer.',
-  invalid_memo: 'Invalid memo — text memos must be 28 bytes or fewer.',
-  tx_malformed: 'Transaction malformed — please check your transaction inputs and memo.',
-  op_malformed: 'Transaction operation malformed — please check your inputs.',
-  invalid_address: 'Invalid Stellar address — please check the address for typos.',
-  invalid_destination: 'Invalid destination address — please check the address for typos.',
-  invalid_public_key: 'Invalid public key — please check the address for typos.',
-  invalid_stellar_address: 'Invalid Stellar address — please check the address for typos.',
-  address_checksum_failed: 'Invalid Stellar address checksum — please check for typos.',
-  internal_server_error: 'We are having trouble right now - please try again shortly.',
-  server_error: 'We are having trouble right now - please try again shortly.',
-  internal_error: 'Something went wrong on our side - please try again.',
-  unexpected_error: 'Something went wrong - please try again.',
-  slippage_limit_exceeded: 'Price moved unfavorably — please refresh the quote and try again.',
-  '500': 'We are having trouble right now - please try again shortly.',
-  '502': 'We are having trouble right now - please try again shortly.',
-  '503': 'We are having trouble right now - please try again shortly.',
+  insufficient_balance: 'insufficientBalance',
+  insufficient_funds: 'insufficientBalance',
+  amount_too_low: 'amountTooLow',
+  amount_exceeds_balance: 'amountExceedsBalance',
+  invalid_amount: 'invalidAmount',
+  wallet_not_connected: 'walletNotConnected',
+  timeout: 'timeout',
+  network_error: 'networkError',
+  stellar_unreachable: 'stellarUnreachable',
+  simulation_failed: 'simulationFailed',
+  tx_failed: 'txFailed',
+  memo_too_long: 'memoTooLong',
+  err_memo_too_long: 'memoTooLong',
+  memo_length_exceeded: 'memoTooLong',
+  invalid_memo: 'invalidMemo',
+  tx_malformed: 'txMalformed',
+  op_malformed: 'opMalformed',
+  invalid_address: 'invalidAddress',
+  invalid_destination: 'invalidAddress',
+  invalid_public_key: 'invalidAddress',
+  invalid_stellar_address: 'invalidAddress',
+  address_checksum_failed: 'addressChecksumFailed',
+  internal_server_error: 'serverError',
+  server_error: 'serverError',
+  internal_error: 'internalError',
+  unexpected_error: 'unexpectedError',
+  slippage_limit_exceeded: 'slippageLimitExceeded',
+  '500': 'serverError',
+  '502': 'serverError',
+  '503': 'serverError',
 }
 
-const FALLBACK_MESSAGE = 'Something went wrong - please try again.'
-
-const STELLAR_UNREACHABLE_MESSAGE = ERROR_CODE_MAP.stellar_unreachable
-const MEMO_TOO_LONG_MESSAGE = ERROR_CODE_MAP.memo_too_long
-const INVALID_ADDRESS_MESSAGE = ERROR_CODE_MAP.invalid_address
+export const FALLBACK_ERROR_CODE = 'unexpectedError'
 
 // Keywords that indicate a network connectivity issue with the Stellar node.
 const NETWORK_ERROR_PATTERNS = [
@@ -137,38 +134,39 @@ function looksLikeNetworkError(message: string): boolean {
   return NETWORK_ERROR_PATTERNS.some((pattern) => lower.includes(pattern.toLowerCase()))
 }
 
-export function getFriendlyErrorMessage(codeOrMessage: string): string {
-  if (!codeOrMessage) return FALLBACK_MESSAGE
-  // Soroban `Error(Contract, #N)` failures get a specific message (#610).
-  const contractMessage = contractErrorMessageEn(codeOrMessage)
-  if (contractMessage) return contractMessage
+/**
+ * Resolves a technical code or raw error text to a stable `Errors` catalog key.
+ * The UI translates the key — this module never returns user-facing copy.
+ */
+export function getErrorCode(codeOrMessage: string): string {
+  if (!codeOrMessage) return FALLBACK_ERROR_CODE
   const normalized = normalizeCode(codeOrMessage)
   if (ERROR_CODE_MAP[normalized]) return ERROR_CODE_MAP[normalized]
 
-  // If the error message describes a memo issue, return a clear memo error.
+  // If the error message describes a memo issue, return a clear memo key.
   if (looksLikeMemoError(codeOrMessage)) {
-    return MEMO_TOO_LONG_MESSAGE
+    return ERROR_CODE_MAP.memo_too_long
   }
 
-  // If the error message describes an address or public key issue, return a clear address error.
+  // If the error message describes an address or public key issue, return a clear address key.
   if (looksLikeAddressError(codeOrMessage)) {
-    return INVALID_ADDRESS_MESSAGE
+    return ERROR_CODE_MAP.invalid_address
   }
 
   // If the error looks like a network/connection issue, degrade gracefully.
   if (looksLikeNetworkError(codeOrMessage)) {
-    return STELLAR_UNREACHABLE_MESSAGE
+    return ERROR_CODE_MAP.stellar_unreachable
   }
 
-  return FALLBACK_MESSAGE
+  return FALLBACK_ERROR_CODE
 }
 
-export function parseAndFriendlyError(error: unknown): string {
-  const contractMessage = contractErrorMessageEn(error)
-  if (contractMessage) return contractMessage
+/** Resolves an unknown thrown value to a stable `Errors` catalog key (#901). */
+export function parseErrorCode(error: unknown): string {
+  if (isAppError(error)) return error.code
   const code = extractCodeFromError(error)
-  if (code) return getFriendlyErrorMessage(code)
-  if (error instanceof Error) return getFriendlyErrorMessage(error.message)
-  if (typeof error === 'string') return getFriendlyErrorMessage(error)
-  return FALLBACK_MESSAGE
+  if (code) return getErrorCode(code)
+  if (error instanceof Error) return getErrorCode(error.message)
+  if (typeof error === 'string') return getErrorCode(error)
+  return FALLBACK_ERROR_CODE
 }

@@ -1,3 +1,4 @@
+import { AppError } from './appError'
 // src/lib/webauthn.ts
 // WebAuthn / biometric authentication helpers.
 
@@ -38,7 +39,7 @@ async function postJSON<T>(url: string, body: unknown): Promise<T> {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(err.error || `HTTP ${res.status}`)
+    throw new AppError(typeof err.error === 'string' && err.error ? err.error : 'serverError')
   }
   return res.json()
 }
@@ -63,9 +64,9 @@ type LoginOptionsJSON = Omit<
   allowCredentials?: DescriptorJSON[]
 }
 function requireSupport(username: string) {
-  if (!username.trim()) throw new Error('Username is required')
+  if (!username.trim()) throw new AppError('usernameRequired')
   if (typeof window === 'undefined' || !window.PublicKeyCredential || !navigator.credentials) {
-    throw new Error('WebAuthn is not supported')
+    throw new AppError('webauthnUnsupported')
   }
 }
 async function complete(
@@ -80,7 +81,7 @@ async function complete(
     !('verified' in result) ||
     result.verified !== true
   ) {
-    throw new Error('Server did not verify the credential')
+    throw new AppError('credentialNotVerified')
   }
   return { verified: true }
 }
@@ -103,7 +104,7 @@ export async function registerBiometric(username: string): Promise<VerificationR
     publicKey: options,
   })) as PublicKeyCredential & { response: AuthenticatorAttestationResponse }
 
-  if (!credential) throw new Error('Registration canceled')
+  if (!credential) throw new AppError('registrationCanceled')
 
   const credentialJSON: PublicKeyCredentialJSON = {
     id: credential.id,
@@ -135,7 +136,7 @@ export async function loginBiometric(username: string): Promise<VerificationResu
     publicKey: options,
   })) as PublicKeyCredential & { response: AuthenticatorAssertionResponse }
 
-  if (!assertion) throw new Error('Authentication canceled')
+  if (!assertion) throw new AppError('authenticationCanceled')
 
   const credentialJSON: PublicKeyCredentialJSON = {
     id: assertion.id,

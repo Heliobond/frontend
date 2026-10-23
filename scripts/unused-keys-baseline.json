@@ -49,6 +49,5 @@
   "Shell.activityHistory",
   "Shell.offlineBadge",
   "Shell.pendingTransactions",
-  "Withdraw.capExceeded",
-  "YieldAlert.triggeredToastTitle"
+  "Withdraw.capExceeded"
 ]

@@ -6,6 +6,7 @@ import { Button, AmountInput, LiquidityMeter, AddressChip, useToast } from '../c
 import { calculateWithdrawTierLimit, fetchUtilizationBps, submitWithdraw } from '../wallet/vault'
 import { reportTransactionFailure } from '../lib/errorReporting'
 import { parseContractError, translateContractError } from '../lib/contractErrors'
+import { parseErrorCode } from '../lib/errorMessages'
 import { useWallet } from '../wallet/WalletProvider'
 import { TransactionPendingError } from '../wallet/transactions'
 import { useTransactionFee } from '../wallet/useTransactionFee'
@@ -35,6 +36,7 @@ type WithdrawStep = 'amount' | 'pending' | 'success'
 export function Withdraw({ onDone, onBack }: WithdrawProps) {
   const t = useTranslations('Withdraw')
   const tErr = useTranslations('ContractErrors')
+  const tErrors = useTranslations('Errors')
   const { toast } = useToast()
   const { address, sign, isDemo, connected } = useWallet()
   const { sharePrice, totalAssets } = useVault()
@@ -407,7 +409,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     if (!mountedRef.current) return
                     setTxError(
                       translateContractError(e, tErr, { utilization }) ??
-                        (e instanceof Error ? e.message : 'Transaction failed — please try again.'),
+                        tErrors(parseErrorCode(e) as never),
                     )
                     changeStep('amount')
                   }

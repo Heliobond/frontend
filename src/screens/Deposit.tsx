@@ -11,7 +11,7 @@ import { useUsdcBalance } from '../wallet/useUsdcBalance'
 import { TransactionPendingError } from '../wallet/transactions'
 import { useTransactionFee } from '../wallet/useTransactionFee'
 import { scrollToFirstError } from '../lib/scrollToError'
-import { getFriendlyErrorMessage } from '../lib/errorMessages'
+import { parseErrorCode } from '../lib/errorMessages'
 import { validateMemoLength } from '../lib/stellarPayment'
 import { translateContractError } from '../lib/contractErrors'
 import { reportTransactionFailure } from '../lib/errorReporting'
@@ -51,6 +51,7 @@ const strong = (chunks: ReactNode) => <b style={{ color: 'var(--ink)' }}>{chunks
 export function Deposit({ onDone }: DepositProps) {
   const t = useTranslations('Deposit')
   const tErr = useTranslations('ContractErrors')
+  const tErrors = useTranslations('Errors')
   const locale = useLocale()
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -174,10 +175,7 @@ export function Deposit({ onDone }: DepositProps) {
         // A wallet/app network mismatch message is already user-facing (#611).
         const errorMessage = isNetworkMismatchError(e)
           ? e.message
-          : (translateContractError(e, tErr) ??
-            (e instanceof Error
-              ? getFriendlyErrorMessage(e.message)
-              : t('txFailedGeneric')))
+          : (translateContractError(e, tErr) ?? tErrors(parseErrorCode(e) as never))
         changeStep('amount')
         toast({
           tone: 'error',

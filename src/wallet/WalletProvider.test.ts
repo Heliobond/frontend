@@ -131,7 +131,7 @@ describe('shortAddress', () => {
 
       const validation = validateStellarAddress(typoKey)
       expect(validation.valid).toBe(false)
-      expect(validation.error).toContain('checksum')
+      expect(validation.error).toBe('addressChecksumFailed')
     })
   })
 })

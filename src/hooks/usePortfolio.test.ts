@@ -79,7 +79,7 @@ describe('usePortfolio (#821)', () => {
 
     mockWallet.address = B
     rerender()
-    await waitFor(() => expect(result.current.error).toBe('boom'))
+    await waitFor(() => expect(result.current.error).toBe('portfolioFailed'))
     expect(result.current.portfolio).toBeNull()
   })
 

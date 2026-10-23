@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest'
 
-import en from '../../messages/en.json'
 import {
   ERROR_CODE_MAP,
-  getFriendlyErrorMessage,
+  FALLBACK_ERROR_CODE,
+  getErrorCode,
   normalizeCode,
-  parseAndFriendlyError,
+  parseErrorCode,
 } from './errorMessages'
 
-const FALLBACK = 'Something went wrong - please try again.'
-const NETWORK_MESSAGE = ERROR_CODE_MAP.stellar_unreachable
+const FALLBACK = FALLBACK_ERROR_CODE
+const NETWORK_CODE = ERROR_CODE_MAP.stellar_unreachable
 
 describe('normalizeCode', () => {
   it('preserves the letter "s" (#718 regression)', () => {
@@ -25,17 +25,17 @@ describe('normalizeCode', () => {
   })
 })
 
-describe('getFriendlyErrorMessage maps every ERROR_CODE_MAP entry', () => {
+describe('getErrorCode maps every ERROR_CODE_MAP entry', () => {
   const entries = Object.entries(ERROR_CODE_MAP)
 
   it('has a non-trivial map to cover', () => {
     expect(entries.length).toBeGreaterThan(10)
   })
 
-  it.each(entries)('%s resolves to its own message', (key, message) => {
-    expect(getFriendlyErrorMessage(key)).toBe(message)
-    if (message !== FALLBACK) {
-      expect(getFriendlyErrorMessage(key)).not.toBe(FALLBACK)
+  it.each(entries)('%s resolves to its own catalog key', (key, code) => {
+    expect(getErrorCode(key)).toBe(code)
+    if (code !== FALLBACK) {
+      expect(getErrorCode(key)).not.toBe(FALLBACK)
     }
   })
 
@@ -46,80 +46,72 @@ describe('getFriendlyErrorMessage maps every ERROR_CODE_MAP entry', () => {
     `  ${key}  `,
   ]
 
-  it.each(entries)('%s resolves across case/separator/whitespace variants', (key, message) => {
+  it.each(entries)('%s resolves across case/separator/whitespace variants', (key, code) => {
     for (const variant of variants(key)) {
-      expect(getFriendlyErrorMessage(variant), variant).toBe(message)
+      expect(getErrorCode(variant), variant).toBe(code)
     }
   })
 
   it('still returns the fallback for an unknown code', () => {
-    expect(getFriendlyErrorMessage('totally_unknown_code')).toBe(FALLBACK)
-    expect(getFriendlyErrorMessage('')).toBe(FALLBACK)
+    expect(getErrorCode('totally_unknown_code')).toBe(FALLBACK)
+    expect(getErrorCode('')).toBe(FALLBACK)
   })
 })
 
-describe('parseAndFriendlyError', () => {
+describe('parseErrorCode', () => {
   it('resolves an Axios-like 400 with a data.code', () => {
     expect(
-      parseAndFriendlyError({
+      parseErrorCode({
         response: { status: 400, data: { code: 'insufficient_balance' } },
       }),
     ).toBe(ERROR_CODE_MAP.insufficient_balance)
   })
 
   it('resolves an Axios-like 5xx by status', () => {
-    expect(parseAndFriendlyError({ response: { status: 503 } })).toBe(ERROR_CODE_MAP['503'])
+    expect(parseErrorCode({ response: { status: 503 } })).toBe(ERROR_CODE_MAP['503'])
   })
 
   it('resolves a data.message payload', () => {
     expect(
-      parseAndFriendlyError({ response: { status: 400, data: { message: 'amount-too-low' } } }),
+      parseErrorCode({ response: { status: 400, data: { message: 'amount-too-low' } } }),
     ).toBe(ERROR_CODE_MAP.amount_too_low)
   })
 
   it('resolves a string response.data payload', () => {
-    expect(parseAndFriendlyError({ response: { status: 400, data: 'invalid_amount' } })).toBe(
+    expect(parseErrorCode({ response: { status: 400, data: 'invalid_amount' } })).toBe(
       ERROR_CODE_MAP.invalid_amount,
     )
   })
 
   it('resolves an error object carrying a code', () => {
-    expect(parseAndFriendlyError({ code: 'wallet_not_connected' })).toBe(
+    expect(parseErrorCode({ code: 'wallet_not_connected' })).toBe(
       ERROR_CODE_MAP.wallet_not_connected,
     )
   })
 
   it('resolves an Error instance by its message', () => {
-    expect(parseAndFriendlyError(new Error('simulation_failed'))).toBe(
-      ERROR_CODE_MAP.simulation_failed,
-    )
+    expect(parseErrorCode(new Error('simulation_failed'))).toBe(ERROR_CODE_MAP.simulation_failed)
   })
 
   it('resolves a plain string', () => {
-    expect(parseAndFriendlyError('server_error')).toBe(ERROR_CODE_MAP.server_error)
-  })
-
-  it('delegates Error(Contract, #N) messages to the contract translator', () => {
-    expect(parseAndFriendlyError(new Error('Error(Contract, #33)'))).toBe(
-      en.ContractErrors.vault_SlippageLimitExceeded,
-    )
+    expect(parseErrorCode('server_error')).toBe(ERROR_CODE_MAP.server_error)
   })
 
   it.each(['fetch failed', 'ECONNREFUSED', 'request failed'] as const)(
-    'falls back to the network message for %s',
+    'falls back to the network code for %s',
     (message) => {
-      expect(parseAndFriendlyError(new Error(message))).toBe(NETWORK_MESSAGE)
-      expect(parseAndFriendlyError(new Error(message))).not.toBe(FALLBACK)
+      expect(parseErrorCode(new Error(message))).toBe(NETWORK_CODE)
+      expect(parseErrorCode(new Error(message))).not.toBe(FALLBACK)
     },
   )
 
   it('resolves "Network Error" through the map entry before the network branch', () => {
-    expect(parseAndFriendlyError(new Error('Network Error'))).toBe(ERROR_CODE_MAP.network_error)
+    expect(parseErrorCode(new Error('Network Error'))).toBe(ERROR_CODE_MAP.network_error)
   })
 
   it('returns the fallback for nullish or opaque input', () => {
-    expect(parseAndFriendlyError(null)).toBe(FALLBACK)
-    expect(parseAndFriendlyError(undefined)).toBe(FALLBACK)
-    expect(parseAndFriendlyError(42)).toBe(FALLBACK)
+    expect(parseErrorCode(null)).toBe(FALLBACK)
+    expect(parseErrorCode(undefined)).toBe(FALLBACK)
+    expect(parseErrorCode(42)).toBe(FALLBACK)
   })
 })

@@ -111,20 +111,14 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         let error: string | null = null
 
         if (portResult.status === 'rejected') {
-          error =
-            portResult.reason instanceof Error
-              ? portResult.reason.message
-              : 'Could not load your on-chain portfolio position'
+          error = 'portfolioFailed'
         }
 
         if (yieldResult.status === 'fulfilled') {
           claimable = yieldResult.value
         } else if (portfolioValue) {
           claimable = portfolioValue.claimableYield
-          error =
-            yieldResult.reason instanceof Error
-              ? yieldResult.reason.message
-              : 'Could not load claimable yield'
+          error = 'portfolioFailed'
         }
 
         let liquidity: VaultLiquidity | null = null
@@ -151,7 +145,8 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
             portfolio: prev?.address === address ? prev.portfolio : null,
             claimableYield: prev?.address === address ? prev.claimableYield : 0,
             vaultLiquidity: prev?.address === address ? prev.vaultLiquidity : null,
-            error: e instanceof Error ? e.message : 'Failed to fetch vault portfolio data',
+            // Error code, not user-facing copy — the component translates (#900).
+            error: 'portfolioFailed',
           }))
         }
       } finally {

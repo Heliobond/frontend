@@ -390,7 +390,7 @@ describe('signed transactions', () => {
     const vault = await loadVault()
     rpcMock.simulateTransaction.mockResolvedValue({ error: 'HostError: Error(Contract, #12)' })
     await expect(settle(vault.submitDeposit(100, USER, sign))).rejects.toThrow(
-      'Simulation failed: HostError: Error(Contract, #12)',
+      'simulationFailed',
     )
     expect(sign).not.toHaveBeenCalled()
     expect(rpcMock.sendTransaction).not.toHaveBeenCalled()
@@ -705,13 +705,13 @@ describe('view calls', () => {
 
     // A chain-level simulate error is not a connectivity failure.
     rpcMock.simulateTransaction.mockResolvedValue({ error: 'boom' })
-    await expect(vault.fetchSharePrice(USER)).rejects.toThrow('Soroban simulate error: boom')
+    await expect(vault.fetchSharePrice(USER)).rejects.toThrow('simulationFailed')
     expect(vault.isOffline()).toBe(false)
 
     // Reads keep hitting the network (no offline short-circuit); each rethrows.
     const calls = rpcMock.simulateTransaction.mock.calls.length
-    await expect(vault.fetchTotalAssets(USER)).rejects.toThrow('Soroban simulate error: boom')
-    await expect(vault.fetchUtilizationBps(USER)).rejects.toThrow('Soroban simulate error: boom')
+    await expect(vault.fetchTotalAssets(USER)).rejects.toThrow('simulationFailed')
+    await expect(vault.fetchUtilizationBps(USER)).rejects.toThrow('simulationFailed')
     expect(rpcMock.simulateTransaction.mock.calls.length).toBeGreaterThan(calls)
   })
 
@@ -736,9 +736,9 @@ describe('view calls', () => {
   it('reports a simulation without a result as unavailable', async () => {
     const vault = await loadVault()
     rpcMock.simulateTransaction.mockResolvedValue({ latestLedger: 1 })
-    await expect(vault.fetchPortfolio(USER)).rejects.toThrow('Soroban simulate returned no result')
+    await expect(vault.fetchPortfolio(USER)).rejects.toThrow('simulationFailed')
     rpcMock.simulateTransaction.mockResolvedValue({ error: 'nope' })
-    await expect(vault.fetchUtilizationBps(USER)).rejects.toThrow('Soroban simulate error: nope')
+    await expect(vault.fetchUtilizationBps(USER)).rejects.toThrow('simulationFailed')
   })
 
   describe('fetchVaultLimits', () => {

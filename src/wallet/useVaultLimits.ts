@@ -62,9 +62,10 @@ export function useVaultLimits() {
           setError(null)
         }
       })
-      .catch((reason: unknown) => {
+      .catch(() => {
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : 'Could not load vault limits')
+          // Error code, not user-facing copy — the component translates (#900).
+          setError('vaultLimitsFailed')
         }
       })
       .finally(() => {

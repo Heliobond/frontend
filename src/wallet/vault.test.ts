@@ -192,7 +192,7 @@ describe('Vault math functions', () => {
 
       await expect(
         submitDeposit(100, testAddress, mockSign, undefined, undefined, longMemo),
-      ).rejects.toThrow('Memo text is too long')
+      ).rejects.toThrow('memoTooLong')
     })
 
     it('accepts submitDeposit with valid memo <= 28 bytes', async () => {
@@ -209,7 +209,7 @@ describe('Vault math functions', () => {
 
       await expect(
         submitWithdraw(50, testAddress, mockSign, undefined, undefined, longMemo),
-      ).rejects.toThrow('Memo text is too long')
+      ).rejects.toThrow('memoTooLong')
     })
 
     it('rejects submitPayment when memo exceeds 28 bytes', async () => {
@@ -218,7 +218,7 @@ describe('Vault math functions', () => {
 
       await expect(
         submitPayment(50, testAddress, testAddress, mockSign, { memo: longMemo }),
-      ).rejects.toThrow('Memo text is too long')
+      ).rejects.toThrow('memoTooLong')
     })
 
     it('accepts submitPayment with valid memo', async () => {
@@ -235,14 +235,14 @@ describe('Vault math functions', () => {
       expect(typoAddress.length).toBe(56)
 
       await expect(submitPayment(50, typoAddress, testAddress, mockSign)).rejects.toThrow(
-        'Invalid Stellar public address checksum (please check for typos)',
+        'addressChecksumFailed',
       )
     })
 
     it('rejects submitPayment when destination address is malformed', async () => {
       const { submitPayment } = await import('./vault')
       await expect(submitPayment(50, 'bad-address', testAddress, mockSign)).rejects.toThrow(
-        'Invalid Stellar public address (must start with G and be 56 characters)',
+        'addressInvalid',
       )
     })
   })

@@ -11,6 +11,7 @@ import { useWallet } from '../wallet/WalletProvider'
 import { getPendingClaims, removePendingClaim, type PendingClaim } from '../wallet/pendingClaims'
 import { submitClaim } from '../wallet/vault'
 import { formatDate, formatDecimal, formatMoney, formatNumber } from '../lib/format'
+import { parseErrorCode } from '../lib/errorMessages'
 import { OnChainPosition } from './OnChainPosition'
 import { usePortfolio } from '../hooks/usePortfolio'
 import { getVirtualRange } from '../lib/virtualRange'
@@ -49,6 +50,7 @@ export interface PortfolioProps {
 
 export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: PortfolioProps) {
   const t = useTranslations('Portfolio')
+  const tErrors = useTranslations('Errors')
   const locale = useLocale()
   const { connected, connect, address, sign } = useWallet()
   const { toast } = useToast()
@@ -95,7 +97,9 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
           e instanceof TransactionPendingError
             ? t('claimPendingTitle')
             : t('claimFailedTitle'),
-        message: e instanceof Error ? e.message : t('claimError'),
+        message: e instanceof TransactionPendingError
+          ? t('claimPendingBody')
+          : tErrors(parseErrorCode(e) as never),
       })
     } finally {
       setClaiming(false)
@@ -172,7 +176,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
                 margin: 0,
               }}
             >
-              {error}
+              {tErrors(error as 'portfolioFailed')}
             </p>
             <Button variant="secondary" size="sm" onClick={refresh}>
               Retry

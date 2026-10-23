@@ -62,7 +62,7 @@ describe('useVault', () => {
     const { result } = renderHook(() => useVault(), { wrapper: createWrapper() })
 
     await waitFor(() => expect(result.current.loading).toBe(false))
-    expect(result.current.error).toBe('RPC unavailable')
+    expect(result.current.error).toBe('vaultReadFailed')
     expect(result.current.sharePrice).toBe(selectSharePrice())
     expect(result.current.totalAssets).toBe(selectTotalAssets())
   })

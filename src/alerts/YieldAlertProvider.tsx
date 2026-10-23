@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   getAlerts,
   getServerAlerts,
@@ -122,7 +123,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       for (const { alert, currentYield } of triggered) {
         toast({
           tone: 'solar',
-          title: '🔔 Yield alert triggered',
+          title: t('triggeredToastTitle'),
           message: t('triggeredToastMessage', {
             name: alert.bondName,
             yield: formatDecimal(currentYield, 1),

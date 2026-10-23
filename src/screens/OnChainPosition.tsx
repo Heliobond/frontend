@@ -3,11 +3,12 @@
 import { TransactionPendingError } from '../wallet/transactions'
 
 import { useEffect, useState, type CSSProperties } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
+import { parseErrorCode } from '../lib/errorMessages'
 import { useVaultRefresh } from '../wallet/useVaultRefresh'
-import { useTranslations } from 'next-intl'
 import { useWallet } from '../wallet/WalletProvider'
 import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wallet/vault'
 
@@ -18,6 +19,7 @@ import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wall
  */
 export function OnChainPosition() {
   const t = useTranslations('Portfolio')
+  const tErrors = useTranslations('Errors')
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
   const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
@@ -36,9 +38,8 @@ export function OnChainPosition() {
         setPortfolio(next)
         setError(null)
       },
-      (e: unknown) => {
-        if (!cancelled)
-          setError(e instanceof Error ? e.message : 'Could not read your vault position')
+      () => {
+        if (!cancelled) setError('onchainReadError')
       },
     )
     return () => {
@@ -81,7 +82,9 @@ export function OnChainPosition() {
       refreshBalances()
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
-      const errorMessage = e instanceof Error ? e.message : t('onchainClaimError')
+      const errorMessage = isPending
+        ? t('onchainClaimPendingBody')
+        : tErrors(parseErrorCode(e) as never)
       toast({
         tone: isPending ? 'solar' : 'error',
         title: isPending ? t('onchainClaimPendingTitle') : t('onchainClaimFailedTitle'),
@@ -117,7 +120,7 @@ export function OnChainPosition() {
       <h3 style={titleStyle}>{t('onchainTitle')}</h3>
       {error ? (
         <p role="alert" style={noteStyle}>
-          {error}
+          {t(error as 'onchainReadError')}
         </p>
       ) : !portfolio ? (
         <p style={noteStyle}>{t('onchainReading')}</p>

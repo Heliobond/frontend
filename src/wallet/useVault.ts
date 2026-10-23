@@ -51,9 +51,10 @@ export function useVault(): VaultState {
         setTotalAssets(assets)
         setFetchedAt(new Date())
       })
-      .catch((e: unknown) => {
+      .catch(() => {
         if (cancelled) return
-        setError(e instanceof Error ? e.message : 'Could not read vault')
+        // Error code, not user-facing copy — the component translates (#900).
+        setError('vaultReadFailed')
         // Do NOT advance `fetchedAt` on a failed read: the displayed values are
         // whatever the last successful read produced, so keep their timestamp
         // (issue #624).
