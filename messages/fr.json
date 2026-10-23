@@ -493,7 +493,8 @@
     "pauseCta": "Pause",
     "waitingConfirmation": "En attente de confirmation…",
     "deployLimitExceeded": "Le montant dépasse la limite déployable",
-    "multisigBlockedReason": "Deploiement multisig : les formulaires de financement et de scores sont desactives jusqu'a la livraison du flux multi-signataires."
+    "multisigBlockedReason": "Deploiement multisig : les formulaires de financement et de scores sont desactives jusqu'a la livraison du flux multi-signataires.",
+    "actionAddCreator": "Ajouter un createur"
   },
   "Creator": {
     "goalInvalid": "Entrez un objectif de financement supérieur à 0",

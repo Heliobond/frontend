@@ -50,3 +50,19 @@ export function getScoreError(value: string): string | null {
 export function validateScores(credit: string, green: string): boolean {
   return isSafeScore(credit) && isSafeScore(green)
 }
+
+/**
+ * Validates a Stellar public key address (G...).
+ * Returns true if the address is a valid Ed25519 public key.
+ */
+export function isValidCreatorAddress(address: string): boolean {
+  if (typeof address !== 'string') return false
+  const trimmed = address.trim()
+  if (!trimmed.startsWith('G') || trimmed.length !== 56) return false
+  try {
+    const { StrKey } = require('@stellar/stellar-sdk')
+    return StrKey.isValidEd25519PublicKey(trimmed)
+  } catch {
+    return false
+  }
+}

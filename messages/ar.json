@@ -500,7 +500,8 @@
     "pauseCta": "إيقاف مؤقت",
     "waitingConfirmation": "في انتظار التأكيد…",
     "deployLimitExceeded": "المبلغ يتجاوز الحد القابل للنشر",
-    "multisigBlockedReason": "نشر multisig: نماذج التمويل والدرجات معطلة حتى يتم تسليم تدفق متعدد الموقعين."
+    "multisigBlockedReason": "نشر multisig: نماذج التمويل والدرجات معطلة حتى يتم تسليم تدفق متعدد الموقعين.",
+    "actionAddCreator": "إضافة مبدع"
   },
   "Creator": {
     "goalInvalid": "أدخل هدف تمويل أكبر من 0",
