@@ -13,9 +13,34 @@ import {
 import { useRouter } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import en from '../../messages/en.json'
+import fr from '../../messages/fr.json'
+import es from '../../messages/es.json'
+import ar from '../../messages/ar.json'
+import pt from '../../messages/pt.json'
+import { reportError } from '../lib/errorReporting'
 import { type Locale, RTL_LOCALES } from './config'
+import { getMessageFallback, withEnglishFallback } from './fallback'
 
 export type Messages = typeof en
+
+const CATALOGS: Record<Locale, Messages> = {
+  en,
+  fr: withEnglishFallback(fr),
+  es: withEnglishFallback(es),
+  ar: withEnglishFallback(ar),
+  pt: withEnglishFallback(pt),
+}
+
+function onClientMessageError(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error)
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(`[i18n] ${message}`)
+  }
+  reportError(error instanceof Error ? error : new Error(message), {
+    kind: 'render',
+    context: { i18n: message },
+  })
+}
 
 interface LocaleSwitcherValue {
   locale: Locale
@@ -40,7 +65,7 @@ export function LocaleProvider({
 }) {
   const router = useRouter()
   const [locale, setLocale] = useState(initialLocale)
-  const [messages, setMessages] = useState(initialMessages)
+  const [messages, setMessages] = useState(() => withEnglishFallback(initialMessages))
 
   useEffect(() => {
     document.documentElement.lang = locale
@@ -69,7 +94,12 @@ export function LocaleProvider({
 
   return (
     <LocaleSwitcherContext.Provider value={value}>
-      <NextIntlClientProvider locale={locale} messages={messages}>
+      <NextIntlClientProvider
+        locale={locale}
+        messages={messages}
+        onError={onClientMessageError}
+        getMessageFallback={getMessageFallback}
+      >
         {children}
       </NextIntlClientProvider>
     </LocaleSwitcherContext.Provider>
