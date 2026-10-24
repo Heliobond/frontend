@@ -499,7 +499,9 @@
     "resumeCta": "Resume",
     "pauseCta": "Pause",
     "waitingConfirmation": "Waiting for confirmation…",
-    "deployLimitExceeded": "Amount exceeds deployable limit"
+    "deployLimitExceeded": "Amount exceeds deployable limit",
+    "multisigBlockedReason": "Multisig deployment: fund and score forms are disabled until the multi-signer flow ships.",
+    "actionAddCreator": "Add creator"
   },
   "Creator": {
     "goalInvalid": "Enter a funding goal greater than 0",

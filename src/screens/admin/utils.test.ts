@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { clampScore, parseFundedNum, validateScores } from './utils'
+import { clampScore, parseFundedNum, validateScores, isValidCreatorAddress } from './utils'
 
 describe('admin utils', () => {
   describe('clampScore', () => {
@@ -90,5 +90,25 @@ describe('admin utils', () => {
     it('returns false for invalid numbers', () => {
       expect(validateScores('abc', '50')).toBe(false)
     })
+  })
+})
+
+describe('isValidCreatorAddress (#691)', () => {
+  it('accepts valid Stellar public keys', () => {
+    expect(isValidCreatorAddress('GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM')).toBe(true)
+    expect(isValidCreatorAddress('GCKN3VALO5GPCDVJ37HFG2CSWEVZW2ZIB6CHZAWHRL6IDVJGWSI3JKVZ')).toBe(true)
+  })
+
+  it('rejects invalid addresses', () => {
+    expect(isValidCreatorAddress('GA7QY...solar')).toBe(false)
+    expect(isValidCreatorAddress('GBVIG...tidal')).toBe(false)
+    expect(isValidCreatorAddress('')).toBe(false)
+    expect(isValidCreatorAddress('not-an-address')).toBe(false)
+    expect(isValidCreatorAddress('GA7QY')).toBe(false)
+    expect(isValidCreatorAddress('CA7QY...solar')).toBe(false)
+  })
+
+  it('trims whitespace before validation', () => {
+    expect(isValidCreatorAddress('  GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM  ')).toBe(true)
   })
 })

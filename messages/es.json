@@ -492,7 +492,9 @@
     "resumeCta": "Reanudar",
     "pauseCta": "Pausar",
     "waitingConfirmation": "Esperando confirmación…",
-    "deployLimitExceeded": "El monto supera el límite disponible"
+    "deployLimitExceeded": "El monto supera el límite disponible",
+    "multisigBlockedReason": "Despliegue multifirma: los formularios de financiacion y puntuacion estan deshabilitados hasta que se entregue el flujo multifirmante.",
+    "actionAddCreator": "Agregar creador"
   },
   "Creator": {
     "goalInvalid": "Introduce un objetivo de financiación mayor que 0",

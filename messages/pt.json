@@ -492,7 +492,9 @@
     "resumeCta": "Retomar",
     "pauseCta": "Pausar",
     "waitingConfirmation": "Aguardando confirmação…",
-    "deployLimitExceeded": "O valor excede o limite disponível"
+    "deployLimitExceeded": "O valor excede o limite disponível",
+    "multisigBlockedReason": "Implantacao multisig: formularios de financiamento e pontuacao estao desativados ate o fluxo multi-assinante ser entregue.",
+    "actionAddCreator": "Adicionar criador"
   },
   "Creator": {
     "title": "Painel do Criador de Projetos",

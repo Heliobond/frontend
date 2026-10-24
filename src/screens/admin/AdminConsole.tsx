@@ -29,7 +29,7 @@ import { VAULT_STATS, REGISTRY, WHITELIST, type RegistryEntry, type Creator } fr
 import { RegistryTable } from './RegistryTable'
 import { OracleForms } from './OracleForms'
 import { OFF_SCREEN_PROJECTS_COUNT } from '@/data'
-import { parseFundedNum } from './utils'
+import { parseFundedNum, isValidCreatorAddress } from './utils'
 import { formatMoney as sharedFormatMoney } from '@/lib/format'
 import { parseErrorCode } from '@/lib/errorMessages'
 import { formatSharePrice, fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
@@ -95,6 +95,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const { address, sign } = useWallet()
   const [registry, setRegistry] = useState<RegistryEntry[]>(REGISTRY)
   const [whitelist, setWhitelist] = useState<Creator[]>(WHITELIST)
+  const [newCreatorAddress, setNewCreatorAddress] = useState('')
+  const [newCreatorName, setNewCreatorName] = useState('')
+  const [addressError, setAddressError] = useState<string | null>(null)
   // Vault liquid + deployed shift as the oracle funds projects.
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
   const [deployed, setDeployed] = useState(VAULT_STATS.deployed)
@@ -123,12 +126,19 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const registryPaused = pauseStates.registry.paused === true
 
   // A pause blocks the forms it gates. The reason is shown on each locked control.
-  const fundBlockedReason = vaultPaused
-    ? t('vaultPausedReason')
+  // Multisig deployments block fund/score forms until the multi-signer flow ships.
+  const fundBlockedReason = isMultisig
+    ? t('multisigBlockedReason')
+    : vaultPaused
+      ? t('vaultPausedReason')
+      : registryPaused
+        ? t('registryPausedReason')
+        : undefined
+  const scoresBlockedReason = isMultisig
+    ? t('multisigBlockedReason')
     : registryPaused
       ? t('registryPausedReason')
       : undefined
-  const scoresBlockedReason = registryPaused ? t('registryPausedReason') : undefined
   const whitelistBlockedReason = registryPaused ? t('registryPausedReason') : undefined
 
   // Live contract reads on mount
@@ -208,7 +218,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastScoresTitle'),
         message:
           t('toastScoresMsg', { name, credit, green }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -248,7 +258,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastFundTitle'),
         message:
           t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : '') +
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -261,6 +271,40 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         duration: 5000,
       })
       return false
+    }
+  }
+
+  const addCreator = async () => {
+    const trimmed = newCreatorAddress.trim()
+    if (!isValidCreatorAddress(trimmed)) {
+      setAddressError('Invalid Stellar address')
+      return
+    }
+    if (whitelist.some((c) => c.address === trimmed)) {
+      setAddressError('Address already in whitelist')
+      return
+    }
+    setAddressError(null)
+    const name = newCreatorName.trim() || trimmed.slice(0, 8) + '…'
+    const newCreator: Creator = { name, address: trimmed, status: 'pending', projects: 0 }
+    setWhitelist((list) => [...list, newCreator])
+    setNewCreatorAddress('')
+    setNewCreatorName('')
+    try {
+      await submitSetWhitelist(trimmed, false, address ?? '', sign)
+      toast({
+        tone: 'success',
+        title: t('toastApprovedTitle'),
+        message: t('toastApprovedMsg', { name }),
+        duration: 5000,
+      })
+    } catch (e) {
+      toast({
+        tone: 'error',
+        title: t('txFailedTitle'),
+        message: tErrors(parseErrorCode(e) as never),
+        duration: 5000,
+      })
     }
   }
 
@@ -303,14 +347,13 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         status === 'approved',
         address ?? '',
         sign,
-        isMultisig,
       )
       toast({
         tone: toneMap[status],
         title: titleMap[status],
         message:
           messageMap[status] +
-          (res.approvalCount ? ` (${res.approvalCount} approval recorded)` : ''),
+          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : ''),
         action:
           status !== 'approved' ? (
             <button
@@ -532,6 +575,55 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         {whitelistBlockedReason && (
           <div role="status" style={{ ...warningBoxStyle, marginBottom: 12 }}>
             <p style={warningTextStyle}>{whitelistBlockedReason}. Whitelisting is disabled.</p>
+          </div>
+        )}
+        {canManageWhitelist && !whitelistBlockedReason && (
+          <div style={{ marginBottom: 16, padding: '12px 0', borderBottom: '1px solid var(--ink-12)' }}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              <input
+                type="text"
+                placeholder="G... (Stellar address)"
+                value={newCreatorAddress}
+                onChange={(e) => {
+                  setNewCreatorAddress(e.target.value)
+                  setAddressError(null)
+                }}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: addressError ? '1px solid var(--error)' : '1px solid var(--ink-12)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 'var(--type-data)',
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Display name (optional)"
+                value={newCreatorName}
+                onChange={(e) => setNewCreatorName(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--ink-12)',
+                  fontSize: 'var(--type-data)',
+                }}
+              />
+              <Button
+                size="sm"
+                variant="primary"
+                disabled={!newCreatorAddress.trim() || Boolean(addressError)}
+                onClick={addCreator}
+              >
+                {t('actionAddCreator')}
+              </Button>
+            </div>
+            {addressError && (
+              <div style={{ color: 'var(--error)', fontSize: 'var(--type-caption)' }}>
+                {addressError}
+              </div>
+            )}
           </div>
         )}
         <div>
