@@ -48,4 +48,3 @@ describe('first-visit locale negotiation (#895)', () => {
     expect(response.cookies.get('NEXT_LOCALE')?.value).toBe('ar')
   })
 })
-

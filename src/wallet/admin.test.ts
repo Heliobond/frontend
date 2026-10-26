@@ -76,9 +76,7 @@ describe('admin multisig arg building (#689)', () => {
       const { Address, nativeToScVal } = await import('@stellar/stellar-sdk')
       const projectId = 42
       const amount = 100
-      const approvals = [
-        'GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM',
-      ]
+      const approvals = ['GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM']
 
       const args = buildFundProjectArgs(projectId, amount)
       expect(args).toHaveLength(2)
@@ -98,9 +96,7 @@ describe('admin multisig arg building (#689)', () => {
       const projectId = 7
       const credit = 85
       const green = 90
-      const approvals = [
-        'GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM',
-      ]
+      const approvals = ['GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM']
 
       const args = buildUpdateScoresArgs(projectId, credit, green)
       expect(args).toHaveLength(3)

@@ -22,7 +22,6 @@ import {
   type AlertOperator,
 } from '../lib/yieldAlerts'
 import { useToast } from '../components/Toast'
-import { useTranslations } from 'next-intl'
 import { selectProjects } from '../state/selectors'
 import { useRemoteSync } from '../session/useRemoteSync'
 import { formatDecimal } from '../lib/format'

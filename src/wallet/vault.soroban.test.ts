@@ -389,9 +389,7 @@ describe('signed transactions', () => {
   it('does not ask the wallet to sign when simulation fails', async () => {
     const vault = await loadVault()
     rpcMock.simulateTransaction.mockResolvedValue({ error: 'HostError: Error(Contract, #12)' })
-    await expect(settle(vault.submitDeposit(100, USER, sign))).rejects.toThrow(
-      'simulationFailed',
-    )
+    await expect(settle(vault.submitDeposit(100, USER, sign))).rejects.toThrow('simulationFailed')
     expect(sign).not.toHaveBeenCalled()
     expect(rpcMock.sendTransaction).not.toHaveBeenCalled()
   })

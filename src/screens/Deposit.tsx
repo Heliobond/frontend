@@ -102,6 +102,7 @@ export function Deposit({ onDone }: DepositProps) {
   // Idempotency guard: detect if a prior deposit is still in-flight (#433).
   const { markPending, clearPending, getPending } = useDepositGuard()
   const pendingDeposit = getPending()
+  const now = useVisibleNow()
 
   useEffect(() => {
     mountedRef.current = true
@@ -463,9 +464,13 @@ export function Deposit({ onDone }: DepositProps) {
                 </strong>
                 {t.rich('pendingDepositBody', {
                   amount: formatDecimal(pendingDeposit.amount, 2),
-                  age: <PendingDepositAge startedAt={pendingDeposit.startedAt} />,
+                  age: t('pendingDepositAge', {
+                    seconds: Math.floor((now - pendingDeposit.startedAt) / 1000),
+                  }),
                   amt: (chunks) => (
-                    <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600 }}>{chunks}</span>
+                    <span style={{ fontFamily: 'var(--font-data)', fontWeight: 600 }}>
+                      {chunks}
+                    </span>
                   ),
                 })}{' '}
                 {t('checkPortfolioFirst')}{' '}
@@ -710,11 +715,6 @@ export function Deposit({ onDone }: DepositProps) {
       {renderStep(step)}
     </main>
   )
-}
-
-function PendingDepositAge({ startedAt }: { startedAt: number }) {
-  const now = useVisibleNow()
-  return <>{Math.floor((now - startedAt) / 1000)}s</>
 }
 
 function RateAge({

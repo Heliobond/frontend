@@ -32,6 +32,23 @@ vi.mock('next-intl/server', async () => {
   }
 })
 
+/**
+ * `LocaleProvider` calls `useRouter()`, which throws outside a mounted App Router.
+ * The shared render helper wraps everything in it, so tests get a no-op router
+ * unless a test file mocks `next/navigation` itself.
+ */
+vi.mock('next/navigation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/navigation')>()),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}))
+
 if (typeof window !== 'undefined') {
   if (!window.localStorage || typeof window.localStorage.clear !== 'function') {
     const store = new Map<string, string>()

@@ -13,23 +13,11 @@ import {
 import { useRouter } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import en from '../../messages/en.json'
-import fr from '../../messages/fr.json'
-import es from '../../messages/es.json'
-import ar from '../../messages/ar.json'
-import pt from '../../messages/pt.json'
 import { reportError } from '../lib/errorReporting'
 import { type Locale, RTL_LOCALES } from './config'
 import { getMessageFallback, withEnglishFallback } from './fallback'
 
 export type Messages = typeof en
-
-const CATALOGS: Record<Locale, Messages> = {
-  en,
-  fr: withEnglishFallback(fr),
-  es: withEnglishFallback(es),
-  ar: withEnglishFallback(ar),
-  pt: withEnglishFallback(pt),
-}
 
 function onClientMessageError(error: unknown): void {
   const message = error instanceof Error ? error.message : String(error)

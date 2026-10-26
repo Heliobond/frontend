@@ -95,8 +95,12 @@ describe('admin utils', () => {
 
 describe('isValidCreatorAddress (#691)', () => {
   it('accepts valid Stellar public keys', () => {
-    expect(isValidCreatorAddress('GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM')).toBe(true)
-    expect(isValidCreatorAddress('GCKN3VALO5GPCDVJ37HFG2CSWEVZW2ZIB6CHZAWHRL6IDVJGWSI3JKVZ')).toBe(true)
+    expect(isValidCreatorAddress('GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM')).toBe(
+      true,
+    )
+    expect(isValidCreatorAddress('GCKN3VALO5GPCDVJ37HFG2CSWEVZW2ZIB6CHZAWHRL6IDVJGWSI3JKVZ')).toBe(
+      true,
+    )
   })
 
   it('rejects invalid addresses', () => {
@@ -109,6 +113,8 @@ describe('isValidCreatorAddress (#691)', () => {
   })
 
   it('trims whitespace before validation', () => {
-    expect(isValidCreatorAddress('  GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM  ')).toBe(true)
+    expect(
+      isValidCreatorAddress('  GAQG5ETYGHGKH7SXCSMOPGIENAWWK2BG7VQBJA2ORDFNAE4GWYJLZQGM  '),
+    ).toBe(true)
   })
 })

@@ -61,7 +61,7 @@ function parseIcu(message: string, path: string): IcuArgs {
 
   const readToken = (i: number, end: number, pattern: RegExp, what: string): [string, number] => {
     const match = pattern.exec(message.slice(i, end))
-    if (!match) fail(i, `expected ${what}`)
+    if (!match) return fail(i, `expected ${what}`)
     return [match[0], i + match[0].length]
   }
 
@@ -199,33 +199,30 @@ describe('Message catalog parity', () => {
     expect(missing).toEqual([])
   })
 
-  it.each(NON_EN)(
-    '%s uses the same ICU argument names and types as en.json',
-    (_name, catalog) => {
-      const enEntries = getLeafEntries(en as Catalog)
-      const entries = getLeafEntries(catalog as Catalog)
-      const mismatches: string[] = []
+  it.each(NON_EN)('%s uses the same ICU argument names and types as en.json', (_name, catalog) => {
+    const enEntries = getLeafEntries(en as Catalog)
+    const entries = getLeafEntries(catalog as Catalog)
+    const mismatches: string[] = []
 
-      for (const [key, val] of Object.entries(enEntries)) {
-        if (typeof val !== 'string') continue
-        const other = entries[key]
-        if (typeof other !== 'string') continue
-        try {
-          const enParsed = parseIcu(val, `en.json:${key}`)
-          const otherParsed = parseIcu(other, `${_name}:${key}`)
-          if (argSignature(enParsed) !== argSignature(otherParsed)) {
-            mismatches.push(
-              `${key}: en [${argSignature(enParsed)}] vs ${_name} [${argSignature(otherParsed)}]`,
-            )
-          }
-        } catch (error) {
-          mismatches.push(error instanceof Error ? error.message : String(error))
+    for (const [key, val] of Object.entries(enEntries)) {
+      if (typeof val !== 'string') continue
+      const other = entries[key]
+      if (typeof other !== 'string') continue
+      try {
+        const enParsed = parseIcu(val, `en.json:${key}`)
+        const otherParsed = parseIcu(other, `${_name}:${key}`)
+        if (argSignature(enParsed) !== argSignature(otherParsed)) {
+          mismatches.push(
+            `${key}: en [${argSignature(enParsed)}] vs ${_name} [${argSignature(otherParsed)}]`,
+          )
         }
+      } catch (error) {
+        mismatches.push(error instanceof Error ? error.message : String(error))
       }
+    }
 
-      expect(mismatches).toEqual([])
-    },
-  )
+    expect(mismatches).toEqual([])
+  })
 
   it('does not misread literal words inside plural branches as arguments', () => {
     for (const key of ['Admin.liveProject', 'TaxReports.skippedAlert']) {
@@ -273,9 +270,7 @@ describe('Message catalog parity', () => {
   it.each(NON_EN)(
     '%s plural messages cover every CLDR plural category for the locale',
     (_name, catalog, locale) => {
-      const required = new Set(
-        new Intl.PluralRules(locale).resolvedOptions().pluralCategories,
-      )
+      const required = new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories)
       const mismatches: string[] = []
       const entries = getLeafEntries(catalog as Catalog)
 
@@ -302,18 +297,15 @@ describe('Message catalog parity', () => {
     },
   )
 
-  it.each(NON_EN)(
-    'does not ship untranslated English values in %s',
-    (_name, catalog) => {
-      const enEntries = getLeafEntries(en as Catalog)
-      const entries = getLeafEntries(catalog as Catalog)
+  it.each(NON_EN)('does not ship untranslated English values in %s', (_name, catalog) => {
+    const enEntries = getLeafEntries(en as Catalog)
+    const entries = getLeafEntries(catalog as Catalog)
 
-      const identical = Object.entries(entries).filter(
-        ([key, val]) => typeof val === 'string' && enEntries[key] === val,
-      )
-      const nonAllowlisted = identical.filter(([key]) => !IDENTICAL_ALLOWLIST.has(key))
+    const identical = Object.entries(entries).filter(
+      ([key, val]) => typeof val === 'string' && enEntries[key] === val,
+    )
+    const nonAllowlisted = identical.filter(([key]) => !IDENTICAL_ALLOWLIST.has(key))
 
-      expect(nonAllowlisted.map(([key, val]) => `${key}: ${val}`)).toEqual([])
-    },
-  )
+    expect(nonAllowlisted.map(([key, val]) => `${key}: ${val}`)).toEqual([])
+  })
 })
