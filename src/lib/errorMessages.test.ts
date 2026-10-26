@@ -53,6 +53,8 @@ describe('errorMessages mapping', () => {
     expect(getErrorCode('Invalid Stellar public address checksum (please check for typos)')).toBe(
       'invalidAddress',
     )
-    expect(getErrorCode('Error: Stellar address checksum verification failed')).toBe('invalidAddress')
+    expect(getErrorCode('Error: Stellar address checksum verification failed')).toBe(
+      'invalidAddress',
+    )
   })
 })

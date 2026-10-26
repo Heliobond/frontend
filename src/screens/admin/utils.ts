@@ -1,3 +1,4 @@
+import { StrKey } from '@stellar/stellar-sdk'
 /**
  * Clamps a score value (string) between 0 and 100 as an integer.
  */
@@ -60,7 +61,6 @@ export function isValidCreatorAddress(address: string): boolean {
   const trimmed = address.trim()
   if (!trimmed.startsWith('G') || trimmed.length !== 56) return false
   try {
-    const { StrKey } = require('@stellar/stellar-sdk')
     return StrKey.isValidEd25519PublicKey(trimmed)
   } catch {
     return false

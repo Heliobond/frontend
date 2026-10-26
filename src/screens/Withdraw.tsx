@@ -232,7 +232,7 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                   color: 'var(--ember)',
                 }}
               >
-                {t('capExceeded', { max: maxTx.toFixed(2) })}
+                {t('capExceeded', { max: `$${maxTx.toFixed(2)}` })}
               </div>
             )}
             {n > 0 && (

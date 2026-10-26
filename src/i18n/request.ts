@@ -15,9 +15,7 @@ export default getRequestConfig(async () => {
     ? (cookieLocale as Locale)
     : DEFAULT_LOCALE
 
-  const messages = withEnglishFallback(
-    (await import(`../../messages/${locale}.json`)).default,
-  )
+  const messages = withEnglishFallback((await import(`../../messages/${locale}.json`)).default)
   return {
     locale,
     messages,

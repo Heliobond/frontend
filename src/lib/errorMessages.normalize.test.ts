@@ -72,9 +72,9 @@ describe('parseErrorCode', () => {
   })
 
   it('resolves a data.message payload', () => {
-    expect(
-      parseErrorCode({ response: { status: 400, data: { message: 'amount-too-low' } } }),
-    ).toBe(ERROR_CODE_MAP.amount_too_low)
+    expect(parseErrorCode({ response: { status: 400, data: { message: 'amount-too-low' } } })).toBe(
+      ERROR_CODE_MAP.amount_too_low,
+    )
   })
 
   it('resolves a string response.data payload', () => {

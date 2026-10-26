@@ -218,7 +218,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastScoresTitle'),
         message:
           t('toastScoresMsg', { name, credit, green }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
+          (res.approvalCount
+            ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)`
+            : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -258,7 +260,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: t('toastFundTitle'),
         message:
           t('toastFundMsg', { name, amount: sharedFormatMoney(amount) }) +
-          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : '') +
+          (res.approvalCount
+            ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)`
+            : '') +
           ` · tx ${res.hash.slice(0, 8)}…`,
         duration: 5000,
       })
@@ -353,7 +357,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         title: titleMap[status],
         message:
           messageMap[status] +
-          (res.approvalCount ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)` : ''),
+          (res.approvalCount
+            ? ` (${res.approvalCount} approval${res.approvalCount > 1 ? 's' : ''} recorded)`
+            : ''),
         action:
           status !== 'approved' ? (
             <button
@@ -484,10 +490,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
       </section>
 
       {/* Circuit breakers */}
-      <Section
-        title={t('circuitBreakersTitle')}
-        caption={t('circuitBreakersCaption')}
-      >
+      <Section title={t('circuitBreakersTitle')} caption={t('circuitBreakersCaption')}>
         <PauseRow
           label={t('investmentVault')}
           state={pauseStates.vault}
@@ -578,7 +581,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
           </div>
         )}
         {canManageWhitelist && !whitelistBlockedReason && (
-          <div style={{ marginBottom: 16, padding: '12px 0', borderBottom: '1px solid var(--ink-12)' }}>
+          <div
+            style={{ marginBottom: 16, padding: '12px 0', borderBottom: '1px solid var(--ink-12)' }}
+          >
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <input
                 type="text"
@@ -690,11 +695,7 @@ function PauseRow({
   const t = useTranslations('Admin')
   const unknown = state.paused === null
   const paused = state.paused === true
-  const reason = unknown
-    ? t('statusUnavailable')
-    : !canAct
-      ? t('ownerOnly')
-      : undefined
+  const reason = unknown ? t('statusUnavailable') : !canAct ? t('ownerOnly') : undefined
 
   return (
     <div

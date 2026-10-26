@@ -467,7 +467,7 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
 
     it('submitSetWhitelist with isMultisig=false calls set_whitelist with matching ABI', async () => {
       const { submitSetWhitelist } = await import('./admin')
-      await submitSetWhitelist(TEST_ACCOUNT, true, TEST_ACCOUNT, mockSign, false).catch(() => {})
+      await submitSetWhitelist(TEST_ACCOUNT, true, TEST_ACCOUNT, mockSign).catch(() => {})
 
       const call = mockState.recordedCalls.find((c) => c.method === 'set_whitelist')
       expect(call).toBeDefined()

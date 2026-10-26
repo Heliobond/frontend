@@ -127,9 +127,17 @@ export function OnChainPosition() {
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 28, alignItems: 'flex-end' }}>
           <div data-testid="onchain-shares">
-            <StatBlock label={t('onchainShares')} value={formatDecimal(portfolio.shares, 2)} size="md" />
+            <StatBlock
+              label={t('onchainShares')}
+              value={formatDecimal(portfolio.shares, 2)}
+              size="md"
+            />
           </div>
-          <StatBlock label={t('onchainValue')} value={`$${formatDecimal(portfolio.usdcValue, 2)}`} size="md" />
+          <StatBlock
+            label={t('onchainValue')}
+            value={`$${formatDecimal(portfolio.usdcValue, 2)}`}
+            size="md"
+          />
           <div data-testid="onchain-claimable-yield">
             <StatBlock
               label={t('onchainClaimable')}

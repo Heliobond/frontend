@@ -176,7 +176,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
         expect.objectContaining({
           tone: 'error',
           title: 'Claim failed',
-          message: 'Could not claim yield right now.',
+          message: 'Cannot reach Stellar network — showing cached data.',
         }),
       )
     })
