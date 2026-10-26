@@ -94,12 +94,11 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
       toast({
         tone: e instanceof TransactionPendingError ? 'solar' : 'error',
         title:
+          e instanceof TransactionPendingError ? t('claimPendingTitle') : t('claimFailedTitle'),
+        message:
           e instanceof TransactionPendingError
-            ? t('claimPendingTitle')
-            : t('claimFailedTitle'),
-        message: e instanceof TransactionPendingError
-          ? t('claimPendingBody')
-          : tErrors(parseErrorCode(e) as never),
+            ? t('claimPendingBody')
+            : tErrors(parseErrorCode(e) as never),
       })
     } finally {
       setClaiming(false)

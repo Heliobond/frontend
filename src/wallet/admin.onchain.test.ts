@@ -159,7 +159,7 @@ describe('admin on-chain client local network support (#720)', () => {
     })
 
     await expect(submitSetPaused('vault', true, TEST_ADDRESS, vi.fn())).rejects.toThrow(
-      'Simulation failed: stop after inspecting transaction',
+      'simulationFailed',
     )
 
     expect(rpcMock.serverUrls).toContain(rpcUrl)

@@ -73,10 +73,30 @@ export const REGISTRY: RegistryEntry[] = selectProjects().map((p, i) => ({
 }))
 
 export const WHITELIST: Creator[] = [
-  { name: 'Sahel Solar Cooperative', address: 'GCKN3VALO5GPCDVJ37HFG2CSWEVZW2ZIB6CHZAWHRL6IDVJGWSI3JKVZ', projects: 2, status: 'approved' },
-  { name: 'Atlántico Marine Energy', address: 'GCC4R2LZPCZFSSR4H5HPRCS4IXCKJQXAEPJ6U5YUAN25V44HABDURPD3', projects: 1, status: 'approved' },
-  { name: 'Andes Agrivoltaic Trust', address: 'GDQSTZWWC5PYN752RCEHESSL453QYT2LHSIPIZGPYBPKUO3MNCR2JTMZ', projects: 1, status: 'approved' },
-  { name: 'Norrland Wind Collective', address: 'GBU6YD7X2LCH46JUW7KBYTVD3NABL6CNNR2F6ZD2IYLI3JCWV322VXBH', projects: 1, status: 'pending' },
+  {
+    name: 'Sahel Solar Cooperative',
+    address: 'GCKN3VALO5GPCDVJ37HFG2CSWEVZW2ZIB6CHZAWHRL6IDVJGWSI3JKVZ',
+    projects: 2,
+    status: 'approved',
+  },
+  {
+    name: 'Atlántico Marine Energy',
+    address: 'GCC4R2LZPCZFSSR4H5HPRCS4IXCKJQXAEPJ6U5YUAN25V44HABDURPD3',
+    projects: 1,
+    status: 'approved',
+  },
+  {
+    name: 'Andes Agrivoltaic Trust',
+    address: 'GDQSTZWWC5PYN752RCEHESSL453QYT2LHSIPIZGPYBPKUO3MNCR2JTMZ',
+    projects: 1,
+    status: 'approved',
+  },
+  {
+    name: 'Norrland Wind Collective',
+    address: 'GBU6YD7X2LCH46JUW7KBYTVD3NABL6CNNR2F6ZD2IYLI3JCWV322VXBH',
+    projects: 1,
+    status: 'pending',
+  },
   {
     name: 'Western Ghats Micro-Hydro',
     address: 'GCFE3PDNULSVG4Y6YQ4LWFMVX6EWE2CR5FHKUYE2CLFT2TKHEOCMLKSO',

@@ -11,8 +11,7 @@ export function mergeCatalogs(base: Catalog, override: Catalog): Catalog {
   const out: Catalog = { ...base }
   for (const [key, value] of Object.entries(override)) {
     const baseValue = base[key]
-    out[key] =
-      isCatalog(value) && isCatalog(baseValue) ? mergeCatalogs(baseValue, value) : value
+    out[key] = isCatalog(value) && isCatalog(baseValue) ? mergeCatalogs(baseValue, value) : value
   }
   return out
 }

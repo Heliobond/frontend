@@ -164,11 +164,7 @@ export function TopBar() {
 
           <span
             role="status"
-            aria-label={
-              networkOnline
-                ? t('networkOnline', { name: NETWORK_NAME })
-                : t('offline')
-            }
+            aria-label={networkOnline ? t('networkOnline', { name: NETWORK_NAME }) : t('offline')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
