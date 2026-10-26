@@ -65,8 +65,10 @@ PR. If an item doesn't apply, write down why.
       project, `NEXT_PUBLIC_*` values are the only variables exposed to the build
       step; server secrets such as `HELIOBOND_API_KEY` are available at runtime
       only. Verify in the dashboard, since this is not configured in the repo.
-- [ ] Production deploys wait for CI. Auto-promotion of `main` is gated on the
-      `build`, `unit tests + coverage`, `hidden-content check` and
-      `supply-chain review gate` checks, so a merge never builds with production secrets before CI is green.
+- [ ] Production deploys wait for CI. This is not configured in the repo yet. In the
+      Vercel project, either turn off auto-promotion of `main`, or add deployment checks
+      that require the `build`, `unit tests + coverage`, `hidden-content check` and
+      `supply-chain review gate` checks. Until then, a merge can build with production
+      secrets before CI is green.
 - [ ] After any reverted merge to `main`, deploy secrets are rotated (see the
       incident response steps in [SECURITY.md](../SECURITY.md#incident-response)).
