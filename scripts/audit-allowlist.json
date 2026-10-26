@@ -1,8 +1,8 @@
 [
   {
-    "id": "GHSA-vfj7-8cjw-p6xm",
-    "package": "braces",
-    "reason": "No patched release exists (braces <=3.0.3). Dev-only: reached via eslint-config-next > @next/eslint-plugin-next > fast-glob > micromatch. Remove once a fixed braces is published or the chain is gone.",
+    "id": "GHSA-mrhx-c7xc-m3w5",
+    "package": "zod",
+    "reason": "Fixed only in zod 4.6.6. Transitive: @creit.tech/stellar-wallets-kit > @reown/appkit > @reown/appkit-wallet pins zod 3.22.4 exactly, and eslint-config-next > eslint-plugin-react-hooks (dev-only) uses 3.25.76. Forcing 4.x would change wallet runtime code. The app never validates untrusted oversized collections with zod itself. Remove once the wallet kit moves to zod 4.",
     "expires": "2026-12-31"
   }
 ]
