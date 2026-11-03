@@ -104,7 +104,7 @@ function CreatorPageInner() {
           }}
         />
       )}
-      {tab === 'build' && <ProjectBuilder />}
+      {tab === 'build' && <ProjectBuilder onApply={() => setTab('apply')} />}
       {tab === 'dashboard' && <CreatorDashboard />}
     </main>
   )
