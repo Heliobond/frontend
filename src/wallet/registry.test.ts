@@ -16,6 +16,19 @@ import {
   withSimulationTimeout,
   withFetchTimeout,
   mapOnChainProject,
+  validateProjectUri,
+  validateMaturityDate,
+  buildCanonicalProjectMetadata,
+  serializeProjectMetadata,
+  computeProjectMetadataHash,
+  computeSha256Sync,
+  encodeCreateProjectArgs,
+  encodeVerifyMetadataHashArgs,
+  submitCreateProject,
+  verifyProjectMetadataHash,
+  mapRegistryCreateError,
+  RegistryCreateProjectError,
+  SIMULATION_SOURCE_ADDRESS,
   type OnChainProjectRaw,
 } from './registry'
 
@@ -688,6 +701,236 @@ describe('registry client', () => {
         setSimulateRegistryCall(mockSimulate)
 
         await expect(fetchScoreHistory(1)).rejects.toThrow('Mainnet RPC simulation error')
+      })
+    })
+
+    describe('create_project validation, hashing, ScVal encoding, and submission (#697)', () => {
+      it('validates URI length (8..512) and scheme (ipfs://, https://, ar://)', () => {
+        expect(validateProjectUri('')).toEqual({ valid: false, error: 'UriTooShort' })
+        expect(validateProjectUri('ipfs://')).toEqual({ valid: false, error: 'UriTooShort' })
+        expect(validateProjectUri('ar://ab')).toEqual({ valid: false, error: 'UriTooShort' })
+
+        const maxValid = `ipfs://${'a'.repeat(505)}`
+        expect(maxValid).toHaveLength(512)
+        expect(validateProjectUri(maxValid)).toEqual({ valid: true, uri: maxValid })
+
+        const tooLong = `ipfs://${'a'.repeat(506)}`
+        expect(tooLong).toHaveLength(513)
+        expect(validateProjectUri(tooLong)).toEqual({ valid: false, error: 'UriTooLong' })
+
+        expect(validateProjectUri('http://example.com/meta.json')).toEqual({
+          valid: false,
+          error: 'InvalidUriScheme',
+        })
+        expect(validateProjectUri('ftp://example.com/meta.json')).toEqual({
+          valid: false,
+          error: 'InvalidUriScheme',
+        })
+        expect(validateProjectUri('IPFS://bafybeigdyrzt')).toEqual({
+          valid: false,
+          error: 'InvalidUriScheme',
+        })
+
+        expect(validateProjectUri('  ipfs://bafybeigdyrzt  ')).toEqual({
+          valid: true,
+          uri: 'ipfs://bafybeigdyrzt',
+        })
+        expect(validateProjectUri('https://example.com/project.json')).toEqual({
+          valid: true,
+          uri: 'https://example.com/project.json',
+        })
+        expect(validateProjectUri('ar://tx-id-123456')).toEqual({
+          valid: true,
+          uri: 'ar://tx-id-123456',
+        })
+      })
+
+      it('validates maturity_date (0 or empty for open-ended, future Unix seconds required)', () => {
+        const now = 1_750_000_000
+        expect(validateMaturityDate(0, now)).toEqual({ valid: true, maturityDate: 0 })
+        expect(validateMaturityDate(0n, now)).toEqual({ valid: true, maturityDate: 0 })
+        expect(validateMaturityDate('', now)).toEqual({ valid: true, maturityDate: 0 })
+        expect(validateMaturityDate('0', now)).toEqual({ valid: true, maturityDate: 0 })
+        expect(validateMaturityDate(null, now)).toEqual({ valid: true, maturityDate: 0 })
+        expect(validateMaturityDate(undefined, now)).toEqual({ valid: true, maturityDate: 0 })
+
+        expect(validateMaturityDate(now, now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate(now - 100, now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate(-10, now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate(BigInt(now), now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate(String(now - 1), now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate('2020-01-01', now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+        expect(validateMaturityDate('not-a-date', now)).toEqual({
+          valid: false,
+          error: 'MaturityDateInPast',
+        })
+
+        expect(validateMaturityDate(now + 86400, now)).toEqual({
+          valid: true,
+          maturityDate: now + 86400,
+        })
+        expect(validateMaturityDate(BigInt(now + 3600), now)).toEqual({
+          valid: true,
+          maturityDate: now + 3600,
+        })
+        expect(validateMaturityDate('2035-06-15', now)).toEqual({
+          valid: true,
+          maturityDate: Math.floor(Date.parse('2035-06-15') / 1000),
+        })
+      })
+
+      it('builds canonical metadata JSON and computes matching SHA-256 hash', async () => {
+        const draft = {
+          name: '  Arequipa rooftop solar ',
+          location: ' Arequipa, Peru ',
+          type: 'Solar',
+          story: ' Community array ',
+          fundingGoal: 250000,
+        }
+        const canonical = buildCanonicalProjectMetadata(draft)
+        expect(Object.keys(canonical)).toEqual(['name', 'location', 'type', 'story', 'fundingGoal'])
+        expect(canonical.name).toBe('Arequipa rooftop solar')
+
+        const json = serializeProjectMetadata(draft)
+        const hashFromObj = await computeProjectMetadataHash(draft)
+        const hashFromJson = await computeProjectMetadataHash(json)
+        const hashFromBytes = await computeSha256(new TextEncoder().encode(json))
+        const syncHash = computeSha256Sync(json)
+
+        expect(hashFromObj).toMatch(/^[0-9a-f]{64}$/)
+        expect(hashFromObj).toBe(hashFromJson)
+        expect(hashFromObj).toBe(hashFromBytes)
+        expect(hashFromObj).toBe(syncHash)
+      })
+
+      it('encodes create_project and verify_metadata_hash arguments as Address, String, u64, BytesN<32>', async () => {
+        const { scValToNative } = await import('@stellar/stellar-sdk')
+        const hashHex = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        const args = encodeCreateProjectArgs({
+          creator: SIMULATION_SOURCE_ADDRESS,
+          uri: 'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+          maturityDate: 1_900_000_000,
+          metadataHash: hashHex,
+        })
+
+        expect(args).toHaveLength(4)
+        expect(args[0].switch().name).toBe('scvAddress')
+        expect(scValToNative(args[0])).toBe(SIMULATION_SOURCE_ADDRESS)
+        expect(args[1].switch().name).toBe('scvString')
+        expect(scValToNative(args[1])).toBe(
+          'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+        )
+        expect(args[2].switch().name).toBe('scvU64')
+        expect(scValToNative(args[2])).toBe(1_900_000_000n)
+        expect(args[3].switch().name).toBe('scvBytes')
+        expect(args[3].bytes()).toHaveLength(32)
+        expect(Buffer.from(args[3].bytes()).toString('hex')).toBe(hashHex)
+
+        const verifyArgs = encodeVerifyMetadataHashArgs(7, hashHex)
+        expect(verifyArgs).toHaveLength(2)
+        expect(verifyArgs[0].switch().name).toBe('scvU32')
+        expect(scValToNative(verifyArgs[0])).toBe(7)
+        expect(verifyArgs[1].switch().name).toBe('scvBytes')
+        expect(verifyArgs[1].bytes()).toHaveLength(32)
+        expect(Buffer.from(verifyArgs[1].bytes()).toString('hex')).toBe(hashHex)
+
+        expect(() =>
+          encodeCreateProjectArgs({
+            creator: SIMULATION_SOURCE_ADDRESS,
+            uri: 'ipfs://validuri',
+            maturityDate: 0,
+            metadataHash: 'not-a-valid-hash',
+          }),
+        ).toThrow('Invalid metadata_hash')
+
+        expect(() => encodeVerifyMetadataHashArgs(-1, hashHex)).toThrow('Invalid project_id')
+      })
+
+      it('maps contract errors (NotWhitelisted, UriTooShort, UriTooLong, InvalidUriScheme, MaturityDateInPast, Paused)', () => {
+        expect(mapRegistryCreateError('HostError: Error(Contract, #1)').code).toBe('NotWhitelisted')
+        expect(mapRegistryCreateError('HostError: Error(Contract, #2)').code).toBe('UriTooShort')
+        expect(mapRegistryCreateError('HostError: Error(Contract, #3)').code).toBe('UriTooLong')
+        expect(mapRegistryCreateError('HostError: Error(Contract, #4)').code).toBe(
+          'MaturityDateInPast',
+        )
+        expect(mapRegistryCreateError('HostError: Error(Contract, #29)').code).toBe(
+          'InvalidUriScheme',
+        )
+        expect(mapRegistryCreateError('HostError: Error(Contract, #35)').code).toBe('Paused')
+        expect(mapRegistryCreateError(new Error('NotWhitelisted')).code).toBe('NotWhitelisted')
+      })
+
+      it('submits create_project in demo mode and verifies metadata hash with verifyProjectMetadataHash', async () => {
+        vi.stubEnv('NEXT_PUBLIC_REGISTRY_CONTRACT_ID', '')
+        const json = serializeProjectMetadata({
+          name: 'Atacama Solar',
+          location: 'Atacama, Chile',
+          type: 'Solar',
+          story: 'Clean solar array',
+          fundingGoal: 500000,
+        })
+        const downloadedHash = (await computeProjectMetadataHash(json))!
+        const sign = vi.fn().mockResolvedValue('signed-demo-xdr')
+
+        const result = await submitCreateProject({
+          creator: SIMULATION_SOURCE_ADDRESS,
+          uri: 'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+          maturityDate: 0,
+          metadataHash: downloadedHash,
+          sign,
+        })
+
+        expect(sign).toHaveBeenCalledTimes(1)
+        expect(result.projectId).toBeGreaterThan(0)
+        expect(result.metadataHash).toBe(downloadedHash)
+
+        await expect(verifyProjectMetadataHash(result.projectId, downloadedHash)).resolves.toBe(
+          true,
+        )
+        await expect(verifyProjectMetadataHash(result.projectId, '0'.repeat(64))).resolves.toBe(
+          false,
+        )
+      })
+
+      it('does not call sign when simulation fails with NotWhitelisted', async () => {
+        vi.stubEnv('NEXT_PUBLIC_REGISTRY_CONTRACT_ID', '')
+        setSimulateRegistryCall(
+          vi.fn().mockRejectedValue(new Error('HostError: Error(Contract, #1)')),
+        )
+        const sign = vi.fn()
+
+        await expect(
+          submitCreateProject({
+            creator: SIMULATION_SOURCE_ADDRESS,
+            uri: 'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+            maturityDate: 0,
+            metadataHash: 'a'.repeat(64),
+            sign,
+          }),
+        ).rejects.toMatchObject({
+          name: 'RegistryCreateProjectError',
+          code: 'NotWhitelisted',
+        } satisfies Partial<RegistryCreateProjectError>)
+
+        expect(sign).not.toHaveBeenCalled()
       })
     })
   })

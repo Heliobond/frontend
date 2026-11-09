@@ -444,6 +444,52 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       expect(call).toBeDefined()
       assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
     })
+
+    it('submitCreateProject calls create_project with matching ABI (Address, String, u64, BytesN<32>)', async () => {
+      mockState.simulateTransaction.mockResolvedValueOnce({
+        result: {
+          retval: sdk.nativeToScVal(42, { type: 'u32' }),
+          auth: [],
+        },
+        minResourceFee: '100',
+      })
+      mockState.getTransaction.mockResolvedValueOnce({
+        status: sdk.rpc.Api.GetTransactionStatus.SUCCESS,
+        returnValue: sdk.nativeToScVal(42, { type: 'u32' }),
+      })
+
+      const { submitCreateProject } = await import('./registry')
+      const res = await submitCreateProject({
+        creator: TEST_ACCOUNT,
+        uri: 'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+        maturityDate: 0,
+        metadataHash: 'a'.repeat(64),
+        sign: mockSign,
+      })
+
+      expect(res.projectId).toBe(42)
+      const call = mockState.recordedCalls.find((c) => c.method === 'create_project')
+      expect(call).toBeDefined()
+      assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+    })
+
+    it('verifyProjectMetadataHash calls verify_metadata_hash with matching ABI (u32, BytesN<32>)', async () => {
+      mockState.simulateTransaction.mockResolvedValueOnce({
+        result: {
+          retval: sdk.xdr.ScVal.scvBool(true),
+          auth: [],
+        },
+        minResourceFee: '100',
+      })
+
+      const { verifyProjectMetadataHash } = await import('./registry')
+      const ok = await verifyProjectMetadataHash(42, 'b'.repeat(64), TEST_ACCOUNT)
+
+      expect(ok).toBe(true)
+      const call = mockState.recordedCalls.find((c) => c.method === 'verify_metadata_hash')
+      expect(call).toBeDefined()
+      assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+    })
   })
 
   describe('Admin (src/wallet/admin.ts)', () => {
