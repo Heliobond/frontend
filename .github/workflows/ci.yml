@@ -350,6 +350,13 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('package.json') }}
           restore-keys: bun-${{ runner.os }}-
 
+      - name: Cache E2E Next.js build
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .next/cache
+          key: next-e2e-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('bun.lock', 'package.json') }}-${{ github.sha }}
+          restore-keys: next-e2e-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('bun.lock', 'package.json') }}-
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
