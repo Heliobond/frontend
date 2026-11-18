@@ -30,8 +30,8 @@ export interface ProjectDetail {
   fundingTimeline: FundingEvent[]
   /** Total capital deployed to this project from the pool. */
   fundedAmount: number
-  /** Stated funding goal. */
-  fundingGoal: number
+  /** Stated funding goal, if specified. */
+  fundingGoal?: number
   /** Historical bond price/yield observations, anchored by oracle updates. */
   priceHistory: PricePoint[]
   /** A tasteful CSS gradient for the hero photo placeholder. */

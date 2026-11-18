@@ -408,27 +408,30 @@ export const ProjectDetail = memo(function ProjectDetail({
           {(() => {
             const goal = detail.fundingGoal
             const raised = detail.fundedAmount
-            const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0
+            const hasGoal = typeof goal === 'number' && Number.isFinite(goal) && goal > 0
+            const pct = hasGoal ? Math.min(100, Math.round((raised / goal) * 100)) : 0
             return (
               <>
-                <div
-                  style={{
-                    height: 8,
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--ink-06)',
-                    border: '1px solid var(--ink-12)',
-                    overflow: 'hidden',
-                    marginBottom: 10,
-                  }}
-                >
+                {hasGoal && (
                   <div
                     style={{
-                      width: `${pct}%`,
-                      height: '100%',
-                      background: 'var(--solar)',
+                      height: 8,
+                      borderRadius: 'var(--radius-pill)',
+                      background: 'var(--ink-06)',
+                      border: '1px solid var(--ink-12)',
+                      overflow: 'hidden',
+                      marginBottom: 10,
                     }}
-                  />
-                </div>
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: '100%',
+                        background: 'var(--solar)',
+                      }}
+                    />
+                  </div>
+                )}
                 <div
                   style={{
                     fontFamily: 'var(--font-body)',
@@ -437,19 +440,33 @@ export const ProjectDetail = memo(function ProjectDetail({
                     marginBottom: 14,
                   }}
                 >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-data)',
-                      color: 'var(--ink)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {pct}%
-                  </span>{' '}
-                  {t('fundingGoalLabel', {
-                    raised: formatMoney(raised),
-                    goal: formatMoney(goal),
-                  })}
+                  {hasGoal ? (
+                    <>
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-data)',
+                          color: 'var(--ink)',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {pct}%
+                      </span>{' '}
+                      {t('fundingGoalLabel', {
+                        raised: formatMoney(raised),
+                        goal: formatMoney(goal),
+                      })}
+                    </>
+                  ) : (
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-data)',
+                        color: 'var(--ink)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {formatMoney(raised)}
+                    </span>
+                  )}
                 </div>
               </>
             )

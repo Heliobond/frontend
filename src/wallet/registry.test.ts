@@ -559,9 +559,8 @@ describe('registry client', () => {
         // Valid fields are retained
         expect(res?.project.name).toBe('Real Solar Farm')
         expect(res?.project.location).toBe('Nevada, USA')
-        // Invalid string fundingGoal was dropped, falling back to typed number default 1000000
-        expect(res?.project.fundingGoal).toBe(1000000)
-        expect(typeof res?.project.fundingGoal).toBe('number')
+        // Invalid string fundingGoal was dropped without inventing a million-dollar target (#1061)
+        expect(res?.project.fundingGoal).toBeUndefined()
         // Invalid non-array priceHistory was dropped to empty array
         expect(res?.project.priceHistory).toEqual([])
       })
@@ -652,8 +651,12 @@ describe('registry client', () => {
         expect(mapped.location).toBe('Stellar Network')
         expect(mapped.fundedAmount).toBe(0)
         expect(mapped.funded).toBe('$0')
-        expect(mapped.fundingGoal).toBe(1000000)
+        expect(mapped.fundingGoal).toBeUndefined()
         expect(mapped.priceHistory).toEqual([])
+
+        // Retains normal progress display when an explicit 1M goal was supplied (#1061)
+        const mappedWithExplicitGoal = mapOnChainProject(rawOnChain, 1, { fundingGoal: 1000000 })
+        expect(mappedWithExplicitGoal.fundingGoal).toBe(1000000)
       })
     })
 

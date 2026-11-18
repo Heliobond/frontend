@@ -40,7 +40,8 @@ export function getBondStatus(
   project: Pick<Project, 'status' | 'fundedAmount' | 'fundingGoal'>,
 ): BondStatus {
   if (project.status) return project.status
-  if (project.fundingGoal > 0 && project.fundedAmount >= project.fundingGoal) return 'funded'
+  if (project.fundingGoal && project.fundingGoal > 0 && project.fundedAmount >= project.fundingGoal)
+    return 'funded'
   return 'open'
 }
 

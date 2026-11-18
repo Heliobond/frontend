@@ -458,7 +458,12 @@ export function mapOnChainProject(
   const credit = Number(raw.credit_quality ?? 80)
   const green = Number(raw.green_impact ?? 80)
 
-  const fundingGoal = metadata?.fundingGoal ?? 1000000
+  const fundingGoal =
+    typeof metadata?.fundingGoal === 'number' &&
+    Number.isFinite(metadata.fundingGoal) &&
+    metadata.fundingGoal > 0
+      ? metadata.fundingGoal
+      : undefined
 
   return {
     id,

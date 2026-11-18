@@ -32,8 +32,8 @@ export interface Project {
   funded: string
   /** Capital deployed, as a number. */
   fundedAmount: number
-  /** Stated funding goal. */
-  fundingGoal: number
+  /** Stated funding goal, if specified. */
+  fundingGoal?: number
   /**
    * Funding availability. Optional so remote API rows without it stay valid;
    * `getBondStatus()` in `src/lib/watchlist.ts` derives a fallback from the
