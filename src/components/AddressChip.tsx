@@ -65,8 +65,9 @@ export function AddressChip({
       }
     }
     if (!success) {
+      const previousFocus = document.activeElement
+      const textarea = document.createElement('textarea')
       try {
-        const textarea = document.createElement('textarea')
         textarea.value = value
         textarea.style.position = 'fixed'
         textarea.style.top = '0'
@@ -82,9 +83,11 @@ export function AddressChip({
         textarea.focus()
         textarea.select()
         success = document.execCommand('copy')
-        document.body.removeChild(textarea)
       } catch {
         success = false
+      } finally {
+        textarea.remove()
+        if (previousFocus instanceof HTMLElement) previousFocus.focus({ preventScroll: true })
       }
     }
 
