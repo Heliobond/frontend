@@ -177,5 +177,5 @@ export const selectPriceHistory = (id: number): PricePoint[] =>
 export function selectCreator(id: number): CreatorSummary {
   const creator = PROJECT_DETAILS[id]?.creator
   if (!creator) return { name: 'Unknown creator', verified: false, since: '' }
-  return { name: creator.name, verified: creator.verified, since: creator.since }
+  return { name: creator.name, verified: creator.verified, since: creator.since ?? '' }
 }

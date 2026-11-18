@@ -18,8 +18,9 @@ export interface ProjectDetail {
   location: string
   creator: {
     name: string
-    verified: true
-    since: '2025'
+    verified: boolean
+    since?: string
+    registeredAt?: string
   }
   /** Oracle update histories, trending toward the project's current scores. */
   scoreHistory: {

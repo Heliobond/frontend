@@ -339,6 +339,7 @@ export interface OffChainMetadata {
   story?: string
   heroGradient?: string
   fundingGoal?: number
+  creatorSince?: string
   priceHistory?: Array<{ date: string; price: number; yield: number }>
 }
 
@@ -356,6 +357,10 @@ export function validateOffChainMetadata(data: unknown): OffChainMetadata | null
 
   if (typeof record.name === 'string' && record.name.trim().length > 0) {
     result.name = record.name.trim()
+  }
+
+  if (typeof record.creatorSince === 'string' && record.creatorSince.trim().length > 0) {
+    result.creatorSince = record.creatorSince.trim()
   }
 
   if (typeof record.description === 'string' && record.description.trim().length > 0) {
@@ -710,7 +715,11 @@ export async function fetchProjectWithDetails(
       creator: {
         name: raw.owner ? `${raw.owner.slice(0, 4)}…${raw.owner.slice(-4)}` : 'Creator',
         verified: true,
-        since: '2025',
+        since: offChainMetadata?.creatorSince,
+        registeredAt:
+          typeof raw.created_at !== 'undefined' && Number(raw.created_at) > 0
+            ? new Date(Number(raw.created_at) * 1000).getFullYear().toString()
+            : undefined,
       },
       scoreHistory: scoreHistory ?? { credit: [], green: [] },
       priceHistory: project.priceHistory.map((p) => ({

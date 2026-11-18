@@ -103,7 +103,11 @@ export const ProjectDetail = memo(function ProjectDetail({
   // Flat selectors — destructure the nested detail ONCE here instead of
   // drilling five levels (`detail.scoreHistory.credit.map`, `detail.creator.*`)
   // at every use site.
-  const { name: creatorName, since: creatorSince } = detail.creator
+  const {
+    name: creatorName,
+    since: creatorSince,
+    registeredAt: creatorRegisteredAt,
+  } = detail.creator
   const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
   const creditHistory = useMemo(() => creditPoints.map((p) => p.value), [creditPoints])
   const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
@@ -159,7 +163,11 @@ export const ProjectDetail = memo(function ProjectDetail({
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Badge tone="growth" icon={<ShieldCheckIcon />}>
-              {t('verifiedSince', { since: creatorSince })}
+              {creatorSince
+                ? t('verifiedSince', { since: creatorSince })
+                : creatorRegisteredAt
+                  ? `Registered · ${creatorRegisteredAt}`
+                  : 'Verified creator'}
             </Badge>
             {verifiedMetadata === 'verified' && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>

@@ -228,4 +228,43 @@ describe('ProjectDetail invest button pending state and error handling (#808)', 
       expect(button).not.toHaveAttribute('aria-busy', 'true')
     })
   })
+
+  it('does not display an invented membership year when creator tenure is absent (#1071)', () => {
+    const detailNoTenure: ProjectDetailData = {
+      ...mockDetail,
+      creator: {
+        name: 'New Creator',
+        verified: true,
+      },
+    }
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={detailNoTenure} onInvest={vi.fn()} />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.queryByText(/since 2025/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Verified creator')).toBeInTheDocument()
+  })
+
+  it('renders registered year when creator tenure is absent but registration date is supplied (#1071)', () => {
+    const detailRegistered: ProjectDetailData = {
+      ...mockDetail,
+      creator: {
+        name: 'New Creator',
+        verified: true,
+        registeredAt: '2024',
+      },
+    }
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={detailRegistered} onInvest={vi.fn()} />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.queryByText(/since 2025/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Registered · 2024')).toBeInTheDocument()
+  })
 })
