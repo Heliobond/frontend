@@ -306,7 +306,9 @@ export const ProjectDetail = memo(function ProjectDetail({
                 }}
               >
                 {detail.priceHistory.length > 0
-                  ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price)
+                  ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price, {
+                      fractionDigits: 2,
+                    })
                   : '—'}
               </span>
               {detail.priceHistory.length > 1 && (
@@ -326,6 +328,7 @@ export const ProjectDetail = memo(function ProjectDetail({
                       detail.priceHistory[detail.priceHistory.length - 1].price -
                         detail.priceHistory[0].price,
                     ),
+                    { fractionDigits: 2 },
                   )}
                 </span>
               )}

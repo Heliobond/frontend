@@ -228,4 +228,23 @@ describe('ProjectDetail invest button pending state and error handling (#808)', 
       expect(button).not.toHaveAttribute('aria-busy', 'true')
     })
   })
+
+  it('preserves fractional price movements and two-decimal observation on the detail screen (#1070)', () => {
+    const detailWithFractions: ProjectDetailData = {
+      ...mockDetail,
+      priceHistory: [
+        { date: '2024-09-15', price: 99.1, yield: 8.0, hash: '0x1' },
+        { date: '2024-10-15', price: 99.35, yield: 7.9, hash: '0x2' },
+      ],
+    }
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={detailWithFractions} onInvest={vi.fn()} />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.getAllByText('99.35').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('+0.25')).toBeInTheDocument()
+  })
 })
