@@ -1,9 +1,10 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, render, renderHook } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getAlerts, writeAlerts, type YieldAlert } from '../lib/yieldAlerts'
 import { selectProjects } from '../state/selectors'
 import en from '../../messages/en.json'
+import fr from '../../messages/fr.json'
 import { YieldAlertProvider, useYieldAlerts } from './YieldAlertProvider'
 
 const { toastMock } = vi.hoisted(() => ({ toastMock: vi.fn() }))
@@ -65,6 +66,30 @@ describe('YieldAlertProvider', () => {
     expect(result.current.count).toBe(0)
     expect(clearIntervalSpy).toHaveBeenCalled()
     unmount()
+  })
+
+  it('uses the selected language for an existing alert after a locale switch', () => {
+    writeAlerts([makeAlert()])
+    const { rerender } = render(
+      <NextIntlClientProvider locale="en" messages={en}>
+        <YieldAlertProvider>{null}</YieldAlertProvider>
+      </NextIntlClientProvider>,
+    )
+
+    rerender(
+      <NextIntlClientProvider locale="fr" messages={fr}>
+        <YieldAlertProvider>{null}</YieldAlertProvider>
+      </NextIntlClientProvider>,
+    )
+    act(() => vi.advanceTimersByTime(60_000))
+
+    expect(toastMock).toHaveBeenCalledTimes(1)
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: fr.YieldAlert.triggeredToastTitle,
+        message: expect.stringContaining('Le rendement de Test bond'),
+      }),
+    )
   })
 
   it('skips hidden-tab evaluations and evaluates immediately when the tab becomes visible', () => {

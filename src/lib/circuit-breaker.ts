@@ -38,6 +38,7 @@ export class CircuitOpenError extends Error {
 
 export class CircuitBreaker {
   private state: CircuitState = 'CLOSED'
+  private generation = 0
   private failures = 0
   private successes = 0
   private openedAt: number | null = null
@@ -71,12 +72,14 @@ export class CircuitBreaker {
       throw new CircuitOpenError(this.state)
     }
 
+    // Admission can transition OPEN to HALF_OPEN. Capture its generation afterward.
+    const generation = this.generation
     try {
       const result = await fn()
-      this.onSuccess()
+      if (generation === this.generation) this.onSuccess()
       return result
     } catch (err) {
-      this.onFailure()
+      if (generation === this.generation) this.onFailure()
       if (fallback) return fallback(err)
       throw err
     }
@@ -135,6 +138,7 @@ export class CircuitBreaker {
 
   private transition(state: CircuitState): void {
     this.state = state
+    this.generation++
     if (state === 'OPEN') {
       this.openedAt = Date.now()
       this.successes = 0

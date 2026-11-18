@@ -102,6 +102,40 @@ describe('CircuitBreaker', () => {
     await expect(breaker.execute(async () => 1)).rejects.toBeInstanceOf(CircuitOpenError)
   })
 
+  it.each(['success', 'failure'])(
+    'ignores a late CLOSED call that completes with %s',
+    async (outcome) => {
+      const breaker = new CircuitBreaker({
+        failureThreshold: 1,
+        successThreshold: 2,
+        recoveryTimeoutMs: 0,
+      })
+      const oldCall = deferred<string>()
+      const late = breaker.execute(
+        async () => {
+          const result = await oldCall.promise
+          if (outcome === 'failure') throw new Error('late failure')
+          return result
+        },
+        () => 'fallback',
+      )
+      await tripOpen(breaker)
+
+      const trial = deferred<string>()
+      const canary = breaker.execute(() => trial.promise)
+      oldCall.resolve('late success')
+      await expect(late).resolves.toBe(outcome === 'success' ? 'late success' : 'fallback')
+      expect(breaker.getState()).toBe('HALF_OPEN')
+      await expect(breaker.execute(async () => 'rival')).rejects.toBeInstanceOf(CircuitOpenError)
+
+      trial.resolve('first probe')
+      await expect(canary).resolves.toBe('first probe')
+      expect(breaker.getState()).toBe('HALF_OPEN')
+      await expect(breaker.execute(async () => 'second probe')).resolves.toBe('second probe')
+      expect(breaker.getState()).toBe('CLOSED')
+    },
+  )
+
   describe('#508 — single-trial HALF_OPEN guard', () => {
     it('admits exactly ONE caller while HALF_OPEN; concurrent callers fail fast', async () => {
       const breaker = new CircuitBreaker({ failureThreshold: 1, recoveryTimeoutMs: 5 })

@@ -161,7 +161,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
       if (interval !== undefined) clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [alerts.length, commit, toast])
+  }, [alerts.length, commit, t, toast])
 
   const add = useCallback(
     (bondId: number, bondName: string, threshold: number, operator: AlertOperator): YieldAlert => {
