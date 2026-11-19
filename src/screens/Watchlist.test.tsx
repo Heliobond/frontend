@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@/test/render'
-import { Watchlist } from './Watchlist'
+import { render, screen, waitFor } from '@/test/render'
+import { MAX_CONCURRENT_PROJECT_LOOKUPS, Watchlist } from './Watchlist'
 import { WATCHLIST_STORAGE_KEY } from '@/lib/watchlist'
 import type { ProjectDetail } from '@/data/projectDetails'
 
@@ -70,6 +70,52 @@ describe('Watchlist screen', () => {
     expect(screen.queryByText('Project #999 is no longer available')).not.toBeInTheDocument()
     expect(await screen.findByText('Nothing saved yet')).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || '[]')).not.toContain(999)
+  })
+
+  it('bounds concurrent lookups and keeps saved order with mixed results (#976)', async () => {
+    const ids = [3, 1, 2, 5, 4]
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(ids))
+    let active = 0
+    let maxActive = 0
+
+    const spy = vi
+      .spyOn(await import('@/lib/api'), 'getProject')
+      .mockImplementation(async (id: number) => {
+        active++
+        maxActive = Math.max(maxActive, active)
+        await new Promise((resolve) => setTimeout(resolve, 25))
+        active--
+        if (id === 2) throw new Error('Server unavailable')
+        return {
+          project: {
+            id,
+            name: `Project ${id}`,
+            location: 'Somewhere',
+            type: 'Solar',
+            credit: 60,
+            green: 60,
+            funded: '0%',
+            fundedAmount: 0,
+            fundingGoal: 100,
+            priceHistory: [],
+          },
+          detail: {} as ProjectDetail,
+        }
+      })
+
+    render(<Watchlist onOpen={vi.fn()} />)
+
+    expect(await screen.findByText('Project 3')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Could not load project #2')).toBeInTheDocument())
+
+    expect(maxActive).toBeLessThanOrEqual(MAX_CONCURRENT_PROJECT_LOOKUPS)
+    expect(screen.getAllByText(/^Project \d+$/).map((el) => el.textContent)).toEqual([
+      'Project 3',
+      'Project 1',
+      'Project 5',
+      'Project 4',
+    ])
+    spy.mockRestore()
   })
 
   it('shows a loading status until saved projects resolve', async () => {

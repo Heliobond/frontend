@@ -86,8 +86,10 @@ export function AmountInput({
   const liveMsg = overCap && !wasOverCap ? (capMessage ?? '') : ''
 
   const set = (v: number) => onChange?.(String(v))
+  // Enforceable bounds can be far smaller than a cent, so do not round them
+  // away to "0" — let Intl keep all significant fraction digits (#969).
   const formatBound = (bound: number) =>
-    formatNumber(bound, { appLocale: locale, maximumFractionDigits: 2 })
+    formatNumber(bound, { appLocale: locale, maximumFractionDigits: 20 })
 
   return (
     <div style={{ position: 'relative', ...style }}>
@@ -193,8 +195,8 @@ export function AmountInput({
           }}
         >
           {[
-            min != null && `Min ${formatBound(min)} USDC`,
-            max != null && `Max ${formatBound(max)} USDC`,
+            min != null && `Min ${formatBound(min)} ${currency}`,
+            max != null && `Max ${formatBound(max)} ${currency}`,
           ]
             .filter(Boolean)
             .join(' — ')}

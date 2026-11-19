@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { FormField, FormInput, FormSelect } from './FormField'
 import { Button } from './Button'
@@ -62,7 +62,8 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
     return true
   }
 
-  function handleSubmit() {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     if (!validate()) return
     onSubmit?.(values)
   }
@@ -85,7 +86,11 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
       <p
         style={{
           fontFamily: 'var(--font-body)',
@@ -187,10 +192,10 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
         </div>
       </div>
 
-      <Button variant="primary" onClick={handleSubmit}>
+      <Button variant="primary" type="submit">
         {t('submit')}
       </Button>
-    </div>
+    </form>
   )
 }
 

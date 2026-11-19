@@ -26,6 +26,11 @@ describe('AmountInput', () => {
       expect(queryByText(/Min .* USDC/)).not.toBeInTheDocument()
       expect(queryByText(/Max .* USDC/)).not.toBeInTheDocument()
     })
+
+    it('uses the supplied currency and keeps a small nonzero bound visible (#969)', () => {
+      const { getByText } = render(<AmountInput currency="EUR" min={0.001} max={2500} />)
+      expect(getByText('Min 0.001 EUR — Max 2,500 EUR')).toBeInTheDocument()
+    })
   })
 
   describe('Input sanitization', () => {

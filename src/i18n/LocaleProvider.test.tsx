@@ -51,9 +51,9 @@ describe('LocaleProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('locale')).toHaveTextContent('ar')
+      expect(document.documentElement.dir).toBe('rtl')
+      expect(document.documentElement.lang).toBe('ar')
     })
-    expect(document.documentElement.dir).toBe('rtl')
-    expect(document.documentElement.lang).toBe('ar')
   })
 
   it('calls router.refresh() after switching locale (#890)', async () => {

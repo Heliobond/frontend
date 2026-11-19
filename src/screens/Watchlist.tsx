@@ -23,6 +23,33 @@ interface WatchlistItem {
   status: 'loaded' | 'missing' | 'error'
 }
 
+/** Cap on simultaneous registry/API lookups so a large saved list cannot burst the service (#976). */
+export const MAX_CONCURRENT_PROJECT_LOOKUPS = 5
+
+/**
+ * Apply an async worker to every item with at most `limit` in flight, writing
+ * each result back to its original index so the saved order is preserved even
+ * when lookups settle out of order or fail (#976).
+ */
+export function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let cursor = 0
+
+  async function run(): Promise<void> {
+    while (cursor < items.length) {
+      const index = cursor++
+      results[index] = await worker(items[index])
+    }
+  }
+
+  const workerCount = Math.min(Math.max(1, limit), items.length)
+  return Promise.all(Array.from({ length: workerCount }, run)).then(() => results)
+}
+
 export function Watchlist({ onOpen }: WatchlistProps) {
   const t = useTranslations('Watchlist')
   const { ids, remove } = useWatchlist()
@@ -44,8 +71,10 @@ export function Watchlist({ onOpen }: WatchlistProps) {
 
       setLoading(true)
       try {
-        const resolved = await Promise.all(
-          ids.map(async (id) => {
+        const resolved = await mapWithConcurrency(
+          ids,
+          MAX_CONCURRENT_PROJECT_LOOKUPS,
+          async (id) => {
             try {
               const res = await getProject(id)
               return {
@@ -56,7 +85,7 @@ export function Watchlist({ onOpen }: WatchlistProps) {
             } catch {
               return { id, project: null, status: 'error' as const }
             }
-          }),
+          },
         )
         if (active) setItems(resolved)
       } finally {

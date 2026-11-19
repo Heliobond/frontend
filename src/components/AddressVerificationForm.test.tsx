@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render as rtlRender } from '@testing-library/react'
 import { render, screen, fireEvent } from '@/test/render'
+import userEvent from '@testing-library/user-event'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import fr from '../../messages/fr.json'
 import { AddressVerificationForm } from './AddressVerificationForm'
@@ -130,6 +131,27 @@ describe('AddressVerificationForm', () => {
     render(<AddressVerificationForm onSubmit={onSubmit} />)
     fillForm({ street: '1 Main St', city: 'Springfield', state: 'IL', zip: 'abc', country: 'US' })
     fireEvent.click(screen.getByText('Verify address'))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(
+      screen.getByText('Enter a ZIP / postal code in the format used by the selected country'),
+    ).toBeInTheDocument()
+  })
+
+  it('invokes onSubmit once when Enter is pressed in a valid field (#964)', async () => {
+    const onSubmit = vi.fn()
+    const user = userEvent.setup()
+    render(<AddressVerificationForm onSubmit={onSubmit} />)
+    fillForm({ street: '123 Main St', city: 'Springfield', state: 'IL', zip: '', country: 'US' })
+    await user.type(screen.getByLabelText('ZIP / Postal code *'), '62701{Enter}')
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+  })
+
+  it('exposes the same field errors for keyboard submission as for a click (#964)', () => {
+    const onSubmit = vi.fn()
+    render(<AddressVerificationForm onSubmit={onSubmit} />)
+    fillForm({ street: '1 Main St', city: 'Springfield', state: 'IL', zip: 'abc', country: 'US' })
+    const form = screen.getByLabelText('Street address *').closest('form')!
+    fireEvent.submit(form)
     expect(onSubmit).not.toHaveBeenCalled()
     expect(
       screen.getByText('Enter a ZIP / postal code in the format used by the selected country'),
