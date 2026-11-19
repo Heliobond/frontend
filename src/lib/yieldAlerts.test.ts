@@ -11,6 +11,7 @@ import {
   getEffectiveYield,
   evaluateAlerts,
   generateAlertId,
+  mergeAlerts,
   type YieldAlert,
   YIELD_ALERTS_STORAGE_KEY,
 } from './yieldAlerts'
@@ -395,6 +396,31 @@ describe('yieldAlerts', () => {
       unsubscribe()
       setAlerts([alert('a')])
       expect(listener).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('mergeAlerts (#956)', () => {
+    const base: YieldAlert = {
+      id: 'alert-1',
+      bondId: 1,
+      bondName: 'Test Bond',
+      threshold: 5,
+      operator: 'above',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }
+
+    it('keeps a newer offline edit over an older server row', () => {
+      const local: YieldAlert[] = [{ ...base, threshold: 9, updatedAt: '2026-01-02T00:00:00.000Z' }]
+      const remote: YieldAlert[] = [{ ...base, threshold: 5 }]
+      expect(mergeAlerts(local, remote)).toEqual([local[0]])
+    })
+
+    it('accepts a newer remote edit when the local cache is unchanged', () => {
+      const local: YieldAlert[] = [{ ...base }]
+      const remote: YieldAlert[] = [
+        { ...base, threshold: 8, updatedAt: '2026-01-03T00:00:00.000Z' },
+      ]
+      expect(mergeAlerts(local, remote)).toEqual([remote[0]])
     })
   })
 

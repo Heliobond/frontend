@@ -18,6 +18,7 @@ import {
   subscribeAlerts,
   evaluateAlerts,
   generateAlertId,
+  mergeAlerts,
   type YieldAlert,
   type AlertOperator,
 } from '../lib/yieldAlerts'
@@ -85,12 +86,7 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
     resource: 'alerts',
     value: alerts,
     apply: commit,
-    merge: (local, remote) => {
-      const byId = new Map<string, YieldAlert>()
-      for (const alert of Array.isArray(remote) ? remote : []) byId.set(alert.id, alert)
-      for (const alert of local) if (!byId.has(alert.id)) byId.set(alert.id, alert)
-      return [...byId.values()]
-    },
+    merge: mergeAlerts,
   })
 
   // Evaluate alerts while there is work to do and the page is visible.
@@ -190,7 +186,15 @@ export function YieldAlertProvider({ children }: { children: ReactNode }) {
     (alertId: string, threshold: number, operator: AlertOperator) => {
       commit(
         alertsRef.current.map((a) =>
-          a.id === alertId ? { ...a, threshold, operator, lastTriggeredAt: undefined } : a,
+          a.id === alertId
+            ? {
+                ...a,
+                threshold,
+                operator,
+                lastTriggeredAt: undefined,
+                updatedAt: new Date().toISOString(),
+              }
+            : a,
         ),
       )
     },

@@ -25,6 +25,8 @@ export interface YieldAlert {
   createdAt: string
   /** ISO timestamp of the last time this alert fired. Undefined if never. */
   lastTriggeredAt?: string
+  /** ISO timestamp of the last local edit. Set when an alert is revised offline. */
+  updatedAt?: string
 }
 
 export interface TriggeredAlert {
@@ -117,6 +119,31 @@ export function setAlerts(next: YieldAlert[]): void {
   snapshot = next
   writeAlerts(next)
   listeners.forEach((listener) => listener())
+}
+
+/** Last revision of an alert; a locally edited alert carries `updatedAt`. */
+function revisionTime(alert: YieldAlert): number {
+  const time = Date.parse(alert.updatedAt ?? alert.createdAt)
+  return Number.isFinite(time) ? time : 0
+}
+
+/**
+ * Reconcile the offline cache with the server copy on sign-in (#956). Remote
+ * rows are the base, unseen local alerts are kept, and a local alert that was
+ * revised more recently than its server row wins so offline edits survive.
+ */
+export function mergeAlerts(local: YieldAlert[], remote: YieldAlert[]): YieldAlert[] {
+  const byId = new Map<string, YieldAlert>()
+
+  for (const alert of Array.isArray(remote) ? remote : []) byId.set(alert.id, alert)
+  for (const alert of Array.isArray(local) ? local : []) {
+    const serverAlert = byId.get(alert.id)
+    if (!serverAlert || revisionTime(alert) > revisionTime(serverAlert)) {
+      byId.set(alert.id, alert)
+    }
+  }
+
+  return [...byId.values()]
 }
 
 /**
