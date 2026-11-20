@@ -62,21 +62,7 @@ export function OnChainPosition() {
         title: t('onchainClaimedTitle'),
         message: t('onchainClaimedBody'),
         href: explorerUrl,
-        action: (
-          <a
-            href={explorerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-small)',
-              color: 'var(--solar)',
-              textDecoration: 'underline',
-            }}
-          >
-            {t('onchainViewExplorer')}
-          </a>
-        ),
+        action: explorerLink(explorerUrl, t('onchainViewExplorer')),
       })
       // Refresh balances after confirmation (#590)
       refreshBalances()
@@ -85,11 +71,15 @@ export function OnChainPosition() {
       const errorMessage = isPending
         ? t('onchainClaimPendingBody')
         : tErrors(parseErrorCode(e) as never)
+      const explorerUrl = isPending ? getExplorerTxUrl(e.hash) : undefined
       toast({
         tone: isPending ? 'solar' : 'error',
         title: isPending ? t('onchainClaimPendingTitle') : t('onchainClaimFailedTitle'),
         message: errorMessage,
-        action: isPending ? undefined : (
+        href: explorerUrl,
+        action: explorerUrl ? (
+          explorerLink(explorerUrl, t('onchainViewExplorer'))
+        ) : (
           <button
             type="button"
             onClick={() => void handleClaimYield()}
@@ -158,6 +148,24 @@ export function OnChainPosition() {
         </div>
       )}
     </Card>
+  )
+}
+
+function explorerLink(explorerUrl: string, label: string) {
+  return (
+    <a
+      href={explorerUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--type-small)',
+        color: 'var(--solar)',
+        textDecoration: 'underline',
+      }}
+    >
+      {label}
+    </a>
   )
 }
 

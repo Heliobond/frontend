@@ -419,39 +419,30 @@ export async function fetchVaultLimits(
     utilizationBps: 0,
   }
 
-  if (!CONTRACT_ID || offline) {
-    return defaults
-  }
+  if (!CONTRACT_ID) return defaults
 
   const { scValToNative, Address } = await import('@stellar/stellar-sdk')
+  const [pausedVal, lockVal, maxTxVal, utilVal] = await Promise.all([
+    sorobanSimulate(sourceAddress, 'is_paused', [], network).catch(() => undefined),
+    // Withdrawal availability depends on a verified lock expiry.
+    sorobanSimulate(
+      sourceAddress,
+      'get_deposit_lock_expiry',
+      [new Address(sourceAddress).toScVal()],
+      network,
+    ),
+    sorobanSimulate(sourceAddress, 'max_transaction_amount', [], network).catch(() => undefined),
+    sorobanSimulate(sourceAddress, 'get_utilization_bps', [], network).catch(() => undefined),
+  ])
 
-  try {
-    const [pausedVal, lockVal, maxTxVal, utilVal] = await Promise.all([
-      sorobanSimulate(sourceAddress, 'is_paused', [], network).catch(() => undefined),
-      sorobanSimulate(
-        sourceAddress,
-        'get_deposit_lock_expiry',
-        [new Address(sourceAddress).toScVal()],
-        network,
-      ).catch(() => undefined),
-      sorobanSimulate(sourceAddress, 'max_transaction_amount', [], network).catch(() => undefined),
-      sorobanSimulate(sourceAddress, 'get_utilization_bps', [], network).catch(() => undefined),
-    ])
-
-    return {
-      paused: pausedVal !== undefined ? Boolean(scValToNative(pausedVal)) : defaults.paused,
-      minDeposit: defaults.minDeposit,
-      minWithdrawShares: defaults.minWithdrawShares,
-      maxTx: maxTxVal !== undefined ? Number(scValToNative(maxTxVal)) / SCALE : defaults.maxTx,
-      lockExpiresAt:
-        lockVal !== undefined ? Number(scValToNative(lockVal)) : defaults.lockExpiresAt,
-      utilizationBps:
-        utilVal !== undefined ? Number(scValToNative(utilVal)) : defaults.utilizationBps,
-    }
-  } catch {
-    // An unreachable node or a missing contract must not break the screen;
-    // the documented defaults are safe to render.
-    return defaults
+  return {
+    paused: pausedVal !== undefined ? Boolean(scValToNative(pausedVal)) : defaults.paused,
+    minDeposit: defaults.minDeposit,
+    minWithdrawShares: defaults.minWithdrawShares,
+    maxTx: maxTxVal !== undefined ? Number(scValToNative(maxTxVal)) / SCALE : defaults.maxTx,
+    lockExpiresAt: Number(scValToNative(lockVal)),
+    utilizationBps:
+      utilVal !== undefined ? Number(scValToNative(utilVal)) : defaults.utilizationBps,
   }
 }
 

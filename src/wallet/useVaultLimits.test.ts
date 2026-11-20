@@ -85,6 +85,23 @@ it('stops loading when the request fails, keeping the defaults', async () => {
   expect(result.current.maxTx).toBe(100000)
 })
 
+it('discards the previous lock and exposes a failed read for the new wallet', async () => {
+  fetchVaultLimits.mockResolvedValueOnce(LIMITS).mockRejectedValueOnce(new Error('rpc down'))
+  const { result, rerender } = renderHook(() => useVaultLimits())
+  await waitFor(() => expect(result.current.lockExpiresAt).toBe(LIMITS.lockExpiresAt))
+
+  wallet.address = 'new-wallet'
+  rerender()
+  expect(result.current).toMatchObject({ lockExpiresAt: 0, loading: true, error: null })
+  await waitFor(() =>
+    expect(result.current).toMatchObject({
+      lockExpiresAt: 0,
+      loading: false,
+      error: 'vaultLimitsFailed',
+    }),
+  )
+})
+
 it('is not loading and does not fetch when no vault is configured', async () => {
   vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', '')
   const { result } = renderHook(() => useVaultLimits())

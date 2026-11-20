@@ -767,7 +767,7 @@ describe('view calls', () => {
       expect(limits.minWithdrawShares).toBe(100)
     })
 
-    it('falls back to defaults if offline or contract missing', async () => {
+    it('falls back to defaults if the contract is missing', async () => {
       const vault = await loadVault(null)
       const limits = await vault.fetchVaultLimits(USER)
       expect(limits.paused).toBe(false)
@@ -775,12 +775,21 @@ describe('view calls', () => {
       expect(limits.minDeposit).toBe(100)
     })
 
-    it('falls back to defaults if RPC errors', async () => {
+    it('reports an unavailable lock and accepts a verified zero on retry', async () => {
       const vault = await loadVault()
       rpcMock.simulateTransaction.mockRejectedValue(new Error('RPC error'))
-      const limits = await vault.fetchVaultLimits(USER)
-      expect(limits.paused).toBe(false)
-      expect(limits.maxTx).toBe(482)
+      await expect(vault.fetchVaultLimits(USER)).rejects.toThrow('RPC error')
+
+      rpcMock.simulateTransaction.mockImplementation((tx: Transaction) =>
+        invocation(tx).method === 'get_deposit_lock_expiry'
+          ? Promise.resolve(okSimulation(nativeToScVal(0n, { type: 'u64' })))
+          : Promise.reject(new Error('RPC error')),
+      )
+      await expect(vault.fetchVaultLimits(USER)).resolves.toMatchObject({
+        lockExpiresAt: 0,
+        paused: false,
+        maxTx: 482,
+      })
     })
   })
 })

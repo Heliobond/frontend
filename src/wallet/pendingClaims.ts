@@ -1,6 +1,6 @@
 /**
  * Storage and management of queued withdrawal claims.
- * Persists pending claims across page reloads in localStorage.
+ * Persists pending claims across page reloads in window.localStorage.
  */
 
 export interface PendingClaim {
@@ -14,14 +14,16 @@ export interface PendingClaim {
 export const PENDING_CLAIMS_STORAGE_KEY = 'hb-pending-claims'
 const STORAGE_KEY = PENDING_CLAIMS_STORAGE_KEY
 
-function isStorageAvailable(): boolean {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+const CHANGE_EVENT = 'hb-pending-claims-change'
+
+export function subscribePendingClaims(listener: () => void): () => void {
+  window.addEventListener(CHANGE_EVENT, listener)
+  return () => window.removeEventListener(CHANGE_EVENT, listener)
 }
 
 export function getPendingClaims(address?: string): PendingClaim[] {
-  if (!isStorageAvailable()) return []
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw) as PendingClaim[]
     if (!Array.isArray(parsed)) return []
@@ -35,31 +37,31 @@ export function getPendingClaims(address?: string): PendingClaim[] {
 }
 
 export function addPendingClaim(claim: PendingClaim): void {
-  if (!isStorageAvailable()) return
   try {
     const current = getPendingClaims()
     const next = [claim, ...current.filter((c) => c.hash !== claim.hash && c.id !== claim.id)]
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGE_EVENT))
   } catch {
     /* ignore storage errors */
   }
 }
 
 export function removePendingClaim(idOrHash: string): void {
-  if (!isStorageAvailable()) return
   try {
     const current = getPendingClaims()
     const next = current.filter((c) => c.id !== idOrHash && c.hash !== idOrHash)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.dispatchEvent(new Event(CHANGE_EVENT))
   } catch {
     /* ignore storage errors */
   }
 }
 
 export function clearPendingClaims(): void {
-  if (!isStorageAvailable()) return
   try {
-    localStorage.removeItem(STORAGE_KEY)
+    window.localStorage.removeItem(STORAGE_KEY)
+    window.dispatchEvent(new Event(CHANGE_EVENT))
   } catch {
     /* ignore storage errors */
   }

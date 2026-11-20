@@ -8,7 +8,12 @@ import { useLocale, useTranslations } from 'next-intl'
 import { Button, StatBlock, LiquidityMeter, Card, AddressChip, useToast } from '../components'
 import { Helio } from '../brand/Helio'
 import { useWallet } from '../wallet/WalletProvider'
-import { getPendingClaims, removePendingClaim, type PendingClaim } from '../wallet/pendingClaims'
+import {
+  getPendingClaims,
+  removePendingClaim,
+  subscribePendingClaims,
+  type PendingClaim,
+} from '../wallet/pendingClaims'
 import { submitClaim } from '../wallet/vault'
 import { formatDate, formatDecimal, formatMoney, formatNumber } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
@@ -77,6 +82,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
 
   useEffect(() => {
     refreshClaims()
+    return subscribePendingClaims(refreshClaims)
   }, [refreshClaims])
 
   const handleClaim = async () => {
@@ -84,7 +90,6 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
     try {
       await submitClaim(address ?? '', sign)
       pendingClaims.forEach((c) => removePendingClaim(c.hash))
-      refreshClaims()
       toast({
         tone: 'success',
         title: t('claimedToastTitle'),
