@@ -1,6 +1,6 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ThemeProvider, useTheme } from './ThemeProvider'
 
 let systemIsDark = false
@@ -52,6 +52,10 @@ describe('ThemeProvider', () => {
         dispatchEvent: vi.fn(),
       })),
     )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('hydrates from the pre-paint theme and preserves an explicit choice', async () => {
@@ -106,6 +110,44 @@ describe('ThemeProvider', () => {
     expect(document.documentElement.dataset.theme).toBe('light')
     changeSystemTheme(true)
     expect(document.documentElement.dataset.theme).toBe('dark')
+  })
+
+  it('matches browser chrome to an explicit theme and resumes following the OS', async () => {
+    const metas = [
+      ['light', '#F3F5F1'],
+      ['dark', '#0D1714'],
+    ].map(([theme, color]) => {
+      const meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      meta.media = `(prefers-color-scheme: ${theme})`
+      meta.content = color
+      document.head.append(meta)
+      return meta
+    })
+
+    try {
+      localStorage.setItem('hb-theme', 'dark')
+      const user = userEvent.setup()
+      render(
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>,
+      )
+
+      expect(metas.map((meta) => meta.content)).toEqual(['#0D1714', '#0D1714'])
+      const oldLight = metas[0]
+      metas[0] = oldLight.cloneNode() as HTMLMetaElement
+      metas[0].content = '#F3F5F1'
+      oldLight.replaceWith(metas[0])
+      await waitFor(() => expect(metas[0].content).toBe('#0D1714'))
+
+      await user.click(screen.getByRole('button', { name: 'Set system' }))
+      expect(metas.map((meta) => meta.content)).toEqual(['#F3F5F1', '#F3F5F1'])
+      changeSystemTheme(true)
+      expect(metas.map((meta) => meta.content)).toEqual(['#0D1714', '#0D1714'])
+    } finally {
+      metas.forEach((meta) => meta.remove())
+    }
   })
 
   it('synchronizes theme changes from another tab', () => {

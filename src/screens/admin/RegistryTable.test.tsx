@@ -15,6 +15,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 1180000,
     fundingGoal: 1500000,
     lastVerified: '2 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 29),
     priceHistory: [],
   },
   {
@@ -28,6 +29,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 430000,
     fundingGoal: 600000,
     lastVerified: '6 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 25),
     priceHistory: [],
   },
   {
@@ -41,6 +43,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 2750000,
     fundingGoal: 3000000,
     lastVerified: '11 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 20),
     priceHistory: [],
   },
 ]
@@ -134,6 +137,28 @@ describe('RegistryTable sort by credit', () => {
     expect(names[1]).toBe('Benin Solar Farm') // credit 82
     expect(names[2]).toBe('Mekong Hydro') // credit 91
   })
+})
+
+it('sorts verification timestamps in both directions with unknown times last', () => {
+  const unknown = { ...rows[0], id: 4, name: 'Unknown project', lastVerifiedAt: undefined }
+  render(<RegistryTable rows={[unknown, ...rows]} onSave={async () => true} />)
+  const sort = screen.getByRole('button', { name: /sort by last verified/i })
+
+  fireEvent.click(sort)
+  expect(rowNames()).toEqual([
+    'Mekong Hydro',
+    'Atacama Wind Park',
+    'Benin Solar Farm',
+    'Unknown project',
+  ])
+
+  fireEvent.click(sort)
+  expect(rowNames()).toEqual([
+    'Benin Solar Farm',
+    'Atacama Wind Park',
+    'Mekong Hydro',
+    'Unknown project',
+  ])
 })
 
 // ---------------------------------------------------------------------------

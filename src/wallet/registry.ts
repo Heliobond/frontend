@@ -457,6 +457,7 @@ export function mapOnChainProject(
 ): Project {
   const credit = Number(raw.credit_quality ?? 80)
   const green = Number(raw.green_impact ?? 80)
+  const lastVerifiedAt = Number(raw.last_update_timestamp) * 1000
 
   const fundingGoal = metadata?.fundingGoal ?? 1000000
 
@@ -467,6 +468,10 @@ export function mapOnChainProject(
     type: metadata?.type || 'Solar',
     credit: Number.isFinite(credit) ? credit : 80,
     green: Number.isFinite(green) ? green : 80,
+    lastVerifiedAt:
+      lastVerifiedAt > 0 && Number.isFinite(new Date(lastVerifiedAt).getTime())
+        ? lastVerifiedAt
+        : undefined,
     funded: '$0',
     fundedAmount: 0,
     fundingGoal,

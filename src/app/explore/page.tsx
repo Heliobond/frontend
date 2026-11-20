@@ -9,6 +9,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ExplorePage() {
-  const data = await getProjectsPaginated(1, 50).catch(() => ({ projects: [], total: 0 }))
-  return <ExploreClient initialProjects={data.projects} initialTotal={data.total} />
+  const data = await getProjectsPaginated(1, 50).catch(() => undefined)
+  return <ExploreClient initialProjects={data?.projects} initialTotal={data?.total} />
 }

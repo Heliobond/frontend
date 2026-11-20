@@ -44,7 +44,7 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
       : false,
   )
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(!initialProjects || initialProjects.length === 0)
+  const [loading, setLoading] = useState(initialProjects === undefined)
   const [loadingMore, setLoadingMore] = useState(false)
   const [apiError, setApiError] = useState(false)
   // The URL is the source of truth so back/forward and shared links update
@@ -53,7 +53,7 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
   const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
-    if (initialProjects && initialProjects.length > 0) return
+    if (initialProjects !== undefined) return
     getProjectsPaginated(1, 50)
       .then((res) => {
         setProjects(res.projects)
