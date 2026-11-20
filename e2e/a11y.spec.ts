@@ -46,7 +46,8 @@ test.describe('Automated Axe Accessibility Audit', () => {
   for (const theme of themes) {
     test.describe(`Theme: ${theme}`, () => {
       for (const route of allTargetRoutes) {
-        test(`route ${route.path} meets WCAG standards in ${theme} mode`, async ({
+        const sessionState = route.needsAuth ? 'authenticated' : 'guest'
+        test(`route ${route.path} (${sessionState}) meets WCAG standards in ${theme} mode`, async ({
           page,
         }, testInfo) => {
           await seedSession(page, theme, route.needsAuth)
@@ -59,7 +60,7 @@ test.describe('Automated Axe Accessibility Audit', () => {
             .analyze()
 
           await testInfo.attach(
-            `axe-results-${route.path.replace(/\//g, '_') || 'root'}-${theme}`,
+            `axe-results-${route.path.replace(/\//g, '_') || 'root'}-${sessionState}-${theme}`,
             {
               body: JSON.stringify(results, null, 2),
               contentType: 'application/json',
@@ -72,7 +73,7 @@ test.describe('Automated Axe Accessibility Audit', () => {
 
           expect(
             criticalAndSeriousViolations,
-            `Unallowlisted accessibility violations detected on ${route.path} (${theme} mode): ` +
+            `Unallowlisted accessibility violations detected on ${route.path} (${sessionState}, ${theme} mode): ` +
               JSON.stringify(
                 criticalAndSeriousViolations.map((v) => ({
                   id: v.id,
