@@ -132,4 +132,70 @@ describe('usePortfolio (#821)', () => {
     await waitFor(() => expect(result.current.portfolio?.usdcValue).toBe(7))
     expect(result.current.loading).toBe(false)
   })
+
+  describe('vault liquidity supporting reads (#972)', () => {
+    it('represents vault liquidity as null when liquid and utilization reads both fail', async () => {
+      vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(10))
+      vi.mocked(vault.fetchTotalAssets).mockResolvedValue(1000)
+      vi.mocked(vault.fetchVaultLiquidUsdc).mockRejectedValueOnce(new Error('liquid failed'))
+      vi.mocked(vault.fetchUtilizationBps).mockRejectedValueOnce(new Error('utilization failed'))
+
+      const { result } = renderHook(() => usePortfolio())
+      await waitFor(() => expect(result.current.loading).toBe(false))
+
+      expect(result.current.vaultLiquidity).toBeNull()
+    })
+
+    it('permits a full-liquidity estimate when zero utilization is confirmed', async () => {
+      vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(10))
+      vi.mocked(vault.fetchTotalAssets).mockResolvedValue(1000)
+      vi.mocked(vault.fetchVaultLiquidUsdc).mockRejectedValueOnce(new Error('liquid failed'))
+      vi.mocked(vault.fetchUtilizationBps).mockResolvedValueOnce(0)
+
+      const { result } = renderHook(() => usePortfolio())
+      await waitFor(() => expect(result.current.loading).toBe(false))
+
+      expect(result.current.vaultLiquidity).toEqual({
+        liquid: 1000,
+        total: 1000,
+      })
+    })
+
+    it('derives liquidity estimate from confirmed non-zero utilization when direct liquid read fails', async () => {
+      vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(10))
+      vi.mocked(vault.fetchTotalAssets).mockResolvedValue(1000)
+      vi.mocked(vault.fetchVaultLiquidUsdc).mockRejectedValueOnce(new Error('liquid failed'))
+      vi.mocked(vault.fetchUtilizationBps).mockResolvedValueOnce(2000) // 20%
+
+      const { result } = renderHook(() => usePortfolio())
+      await waitFor(() => expect(result.current.loading).toBe(false))
+
+      expect(result.current.vaultLiquidity).toEqual({
+        liquid: 800,
+        total: 1000,
+      })
+    })
+
+    it('retains a known vault liquidity reading when a subsequent refetch fails both supporting reads', async () => {
+      vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(10))
+      vi.mocked(vault.fetchTotalAssets).mockResolvedValue(1000)
+      vi.mocked(vault.fetchVaultLiquidUsdc).mockResolvedValueOnce(900)
+      vi.mocked(vault.fetchUtilizationBps).mockResolvedValueOnce(1000)
+
+      const { result } = renderHook(() => usePortfolio())
+      await waitFor(() => expect(result.current.loading).toBe(false))
+      expect(result.current.vaultLiquidity).toEqual({ liquid: 900, total: 1000 })
+
+      // Next fetch fails both supporting reads
+      vi.mocked(vault.fetchVaultLiquidUsdc).mockRejectedValueOnce(new Error('fail'))
+      vi.mocked(vault.fetchUtilizationBps).mockRejectedValueOnce(new Error('fail'))
+
+      act(() => {
+        result.current.refresh()
+      })
+
+      await waitFor(() => expect(result.current.loading).toBe(false))
+      expect(result.current.vaultLiquidity).toEqual({ liquid: 900, total: 1000 })
+    })
+  })
 })
