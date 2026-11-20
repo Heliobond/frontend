@@ -171,6 +171,30 @@ export function formatDateTime(value: DateInput, locale?: string): string {
 }
 
 /**
+ * Formats a timestamp into a compact relative age string (e.g. "1m", "2h", "5d", "3mo", "1y").
+ * Accepts timestamps in milliseconds (or seconds if < 1e10). Returns empty string if invalid.
+ */
+export function formatRelativeAge(timestamp?: number | null, now: number = Date.now()): string {
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp) || timestamp <= 0) {
+    return ''
+  }
+  const ms = timestamp < 10_000_000_000 ? timestamp * 1000 : timestamp
+  const diffMs = Math.max(0, now - ms)
+  const seconds = Math.floor(diffMs / 1000)
+  if (seconds < 60) return '1m'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${months}mo`
+  const years = Math.floor(days / 365)
+  return `${years}y`
+}
+
+/**
  * Sanitizes input strings by removing non-numeric characters except a single decimal point,
  * stripping leading zeros from the whole-number part.
  */

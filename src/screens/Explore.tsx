@@ -8,6 +8,7 @@ import { type Project, type ProjectType } from '../data'
 import { selectProjects } from '../state/selectors'
 import { getProjectsPaginated } from '../lib/api'
 import { searchBondsByName } from '../lib/bondUtils'
+import { formatRelativeAge } from '../lib/format'
 
 /**
  * Explore — a living atlas, not a shop. Grid of all registered projects with
@@ -319,22 +320,29 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
           <div className="hb-projects-grid">
             {loading
               ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-              : paged.map((p) => (
-                  <ProjectCard
-                    key={p.id}
-                    name={p.name}
-                    location={p.location}
-                    credit={p.credit}
-                    green={p.green}
-                    funded={p.funded}
-                    fundedLabel={t('cardFundedFromPool')}
-                    verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
-                    onOpen={() => onOpen(p)}
-                    fundingGoal={p.fundingGoal}
-                    fundedAmount={p.fundedAmount}
-                    action={<WatchlistButton bondId={p.id} bondName={p.name} />}
-                  />
-                ))}
+              : paged.map((p) => {
+                  const verifiedAge =
+                    typeof p.lastVerifiedAt === 'number' ? formatRelativeAge(p.lastVerifiedAt) : ''
+                  const verifiedLabel = verifiedAge
+                    ? t('cardVerifiedAgo', { ago: verifiedAge })
+                    : undefined
+                  return (
+                    <ProjectCard
+                      key={p.id}
+                      name={p.name}
+                      location={p.location}
+                      credit={p.credit}
+                      green={p.green}
+                      funded={p.funded}
+                      fundedLabel={t('cardFundedFromPool')}
+                      verifiedLabel={verifiedLabel}
+                      onOpen={() => onOpen(p)}
+                      fundingGoal={p.fundingGoal}
+                      fundedAmount={p.fundedAmount}
+                      action={<WatchlistButton bondId={p.id} bondName={p.name} />}
+                    />
+                  )
+                })}
           </div>
           {!loading && shown.length > 0 && (
             <div
