@@ -11,6 +11,8 @@ import { Button } from './Button'
 import { registerBiometric, loginBiometric } from '../lib/webauthn'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
+const DIALOG_LAYER = 9999
+
 export interface EmailAuthModalProps {
   /** Whether the modal is visible. */
   open: boolean
@@ -43,7 +45,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
   const [bioLoading, setBioLoading] = useState(false)
   const [bioError, setBioError] = useState<string | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
-  useFocusTrap(open, dialogRef, undefined, onClose)
+  useFocusTrap(open, dialogRef, undefined, onClose, DIALOG_LAYER)
 
   const detection = detectEmailAuthProvider(email)
   const showConflict =
@@ -121,7 +123,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: DIALOG_LAYER,
         padding: 20,
       }}
     >

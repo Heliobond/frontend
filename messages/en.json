@@ -16,8 +16,12 @@
     "portfolio": "Your portfolio",
     "referral": "Referral",
     "shareLink": "Share your referral link",
-    "switchToDark": "Switch to dark",
-    "switchToLight": "Switch to light",
+    "theme": "Theme",
+    "themeOptions": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "preferences": "Preferences",
     "language": "Language",
     "account": "Account",

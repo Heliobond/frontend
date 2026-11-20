@@ -7,6 +7,20 @@ import fr from '../../messages/fr.json'
 import { AddressVerificationForm } from './AddressVerificationForm'
 
 describe('AddressVerificationForm', () => {
+  it('exposes address autofill purposes in form order with country codes', () => {
+    const { container } = render(<AddressVerificationForm />)
+    const fields = Array.from(container.querySelectorAll('input, select'))
+    expect(fields.map((field) => field.getAttribute('autocomplete'))).toEqual([
+      'address-line1',
+      'address-line2',
+      'address-level2',
+      'address-level1',
+      'postal-code',
+      'country',
+    ])
+    expect(screen.getByRole('option', { name: 'United Kingdom' })).toHaveValue('GB')
+  })
+
   it('does not submit when address contains XSS payload', () => {
     const onSubmit = vi.fn()
     render(<AddressVerificationForm onSubmit={onSubmit} />)

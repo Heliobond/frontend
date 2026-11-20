@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@/test/render'
+import { TransactionsProvider } from '../wallet/TransactionsProvider'
 import { SessionTimeoutModal } from './SessionTimeoutModal'
+import { TransactionsDrawer } from './TransactionsDrawer'
 
 describe('SessionTimeoutModal', () => {
   it('does not render when open is false', () => {
@@ -77,5 +79,43 @@ describe('SessionTimeoutModal', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onExtend).toHaveBeenCalledTimes(1)
+  })
+
+  it('owns Tab and Escape over the transaction drawer and returns focus on close', () => {
+    const onExtend = vi.fn()
+    const onClose = vi.fn()
+    const dialogs = (warningOpen: boolean) => (
+      <TransactionsProvider>
+        <SessionTimeoutModal
+          open={warningOpen}
+          formattedTime="01:45"
+          onExtend={onExtend}
+          onLogout={vi.fn()}
+        />
+        <TransactionsDrawer open onClose={onClose} />
+      </TransactionsProvider>
+    )
+    const { rerender } = render(dialogs(false))
+    const closeDrawer = screen.getByRole('button', { name: 'Close activity panel' })
+    expect(closeDrawer).toHaveFocus()
+
+    rerender(dialogs(true))
+    const stay = screen.getByRole('button', { name: 'Stay connected' })
+    expect(stay).toHaveFocus()
+    fireEvent.keyDown(stay, { key: 'Tab' })
+    const disconnect = screen.getByRole('button', { name: 'Disconnect now' })
+    expect(disconnect).toHaveFocus()
+    closeDrawer.focus()
+    expect(disconnect).toHaveFocus()
+    fireEvent.keyDown(disconnect, { key: 'Tab', shiftKey: true })
+    expect(stay).toHaveFocus()
+    fireEvent.keyDown(stay, { key: 'Escape' })
+    expect(onExtend).toHaveBeenCalledOnce()
+    expect(onClose).not.toHaveBeenCalled()
+
+    rerender(dialogs(false))
+    expect(closeDrawer).toHaveFocus()
+    fireEvent.keyDown(closeDrawer, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

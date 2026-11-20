@@ -15,8 +15,12 @@
     "networkStatus": "Red: Testnet activa",
     "portfolio": "Tu cartera",
     "watchlist": "Lista de seguimiento",
-    "switchToDark": "Cambiar a oscuro",
-    "switchToLight": "Cambiar a claro",
+    "theme": "Tema",
+    "themeOptions": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
     "preferences": "Preferencias",
     "language": "Idioma",
     "account": "Cuenta",
