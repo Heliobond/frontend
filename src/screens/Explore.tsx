@@ -73,11 +73,14 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
     setVisibleCount(PAGE_SIZE)
+    const params = new URLSearchParams(searchParams?.toString() ?? '')
     if (next === 'All') {
-      router.replace('/explore', { scroll: false })
+      params.delete('type')
     } else {
-      router.replace(`/explore?type=${next}`, { scroll: false })
+      params.set('type', next)
     }
+    const queryStr = params.toString()
+    router.replace(queryStr ? `/explore?${queryStr}` : '/explore', { scroll: false })
   }
 
   const query = searchTerm.trim().toLowerCase()

@@ -204,4 +204,37 @@ describe('Explore — pagination', () => {
     expect(cards()[59]).toHaveTextContent('Project 60')
     expect(screen.queryByRole('button', { name: /more/i })).not.toBeInTheDocument()
   })
+
+  it('preserves unrelated query parameters when selecting a type (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?yieldRange=4-8&campaign=fall'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'Wind' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore?yieldRange=4-8&campaign=fall&type=Wind', {
+      scroll: false,
+    })
+  })
+
+  it('removes type while preserving unrelated parameters when selecting All (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?type=Wind&campaign=fall&yieldRange=4-8'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore?campaign=fall&yieldRange=4-8', {
+      scroll: false,
+    })
+  })
+
+  it('routes to /explore with no query string when selecting All if type was the only parameter (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?type=Wind'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore', {
+      scroll: false,
+    })
+  })
 })
