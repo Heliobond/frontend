@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { THEME_COLORS } from './themeScript'
 
 export type Theme = 'light' | 'dark'
 export type ThemePreference = Theme | 'system'
@@ -39,8 +40,11 @@ function readStoredTheme(): Theme | null {
   }
 }
 
-function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme = theme
+function syncThemeColor(theme: Theme) {
+  const color = THEME_COLORS[theme]
+  for (const meta of document.head.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
+    if (meta.content !== color) meta.content = color
+  }
 }
 
 function systemMedia() {
@@ -71,7 +75,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const next = { preference: nextPreference, theme: nextTheme }
     currentRef.current = next
     setCurrent(next)
-    applyTheme(nextTheme)
+    document.documentElement.dataset.theme = nextTheme
+    syncThemeColor(nextTheme)
   }, [])
 
   useEffect(() => {
@@ -96,9 +101,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       updateTheme(stored ?? 'system', stored ?? (media?.matches ? 'dark' : 'light'))
     }
 
+    // Next replaces the viewport tags during client navigation.
+    const viewportObserver = new MutationObserver(() => syncThemeColor(currentRef.current.theme))
+    viewportObserver.observe(document.head, { childList: true })
     media?.addEventListener('change', syncSystemTheme)
     window.addEventListener('storage', syncOtherTabs)
     return () => {
+      viewportObserver.disconnect()
       media?.removeEventListener('change', syncSystemTheme)
       window.removeEventListener('storage', syncOtherTabs)
     }

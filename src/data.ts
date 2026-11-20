@@ -28,6 +28,8 @@ export interface Project {
   credit: number
   /** Green Impact, oracle-verified, 0–100. */
   green: number
+  /** Last confirmed oracle score update, in milliseconds since the Unix epoch. */
+  lastVerifiedAt?: number
   /** Capital deployed to this project from the pool (display string). */
   funded: string
   /** Capital deployed, as a number. */

@@ -1,3 +1,5 @@
+export const THEME_COLORS = { light: '#F3F5F1', dark: '#0D1714' } as const
+
 // Inline, render-blocking theme bootstrap — runs in <head> before first paint so
 // there's no flash of the wrong theme. Reads the saved choice or the OS
 // preference and sets data-theme on <html>, which swaps the token set

@@ -40,9 +40,16 @@ export function RegistryTable({ rows, onSave, updateDisabledReason }: RegistryTa
       switch (sortKey) {
         case 'name':
         case 'type':
-        case 'lastVerified':
           cmp = String(a[sortKey]).localeCompare(String(b[sortKey]))
           break
+        case 'lastVerified': {
+          const left = a.lastVerifiedAt
+          const right = b.lastVerifiedAt
+          if (left === undefined) return right === undefined ? a.id - b.id : 1
+          if (right === undefined) return -1
+          cmp = left - right
+          break
+        }
         case 'funded':
           cmp = parseFundedNum(a.funded) - parseFundedNum(b.funded)
           break

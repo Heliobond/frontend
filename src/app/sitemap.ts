@@ -17,9 +17,14 @@ const STATIC_LAST_MODIFIED = new Date('2026-01-01T00:00:00.000Z')
 async function getAllProjects() {
   const all: Awaited<ReturnType<typeof getProjectsPaginated>>['projects'] = []
   for (let page = 1; page <= MAX_PAGES; page++) {
-    const result = await getProjectsPaginated(page, PAGE_SIZE)
-    all.push(...result.projects)
-    if (!result.hasMore || result.projects.length === 0) break
+    try {
+      const result = await getProjectsPaginated(page, PAGE_SIZE)
+      all.push(...result.projects)
+      if (!result.hasMore || result.projects.length === 0) break
+    } catch (error) {
+      console.error(`[sitemap] failed to load project page ${page}; keeping loaded routes`, error)
+      break
+    }
   }
   return all
 }
@@ -54,12 +59,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(STATIC_ROUTE_PRIORITY[route] ?? { changeFrequency: 'weekly', priority: 0.5 }),
   }))
 
-  // Never let a backend hiccup take the sitemap down — an empty project list
-  // still leaves the static routes valid — but do not swallow it silently.
-  const projects = await getAllProjects().catch((error) => {
-    console.error('[sitemap] failed to load projects; emitting static routes only', error)
-    return []
-  })
+  const projects = await getAllProjects()
 
   const projectRoutes: MetadataRoute.Sitemap = projects.map((project) => ({
     url: `${BASE_URL}/project/${project.id}`,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, type ReactNode } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Badge, Button, AddressChip, useToast } from '@/components'
 import {
   sectionCard,
@@ -30,7 +30,7 @@ import { RegistryTable } from './RegistryTable'
 import { OracleForms } from './OracleForms'
 import { OFF_SCREEN_PROJECTS_COUNT } from '@/data'
 import { parseFundedNum, isValidCreatorAddress } from './utils'
-import { formatMoney as sharedFormatMoney } from '@/lib/format'
+import { formatDate, formatMoney as sharedFormatMoney } from '@/lib/format'
 import { parseErrorCode } from '@/lib/errorMessages'
 import { formatSharePrice, fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
 import { useWallet } from '@/wallet/WalletProvider'
@@ -58,12 +58,16 @@ const NO_PAUSE: PauseState = { paused: null, emergencyAdmin: null }
 const NO_PAUSES: PauseStates = { vault: NO_PAUSE, registry: NO_PAUSE }
 
 /** Live registry rows, or null when the registry has no projects to show. */
-async function loadRegistryRows(address: string | null): Promise<RegistryEntry[] | null> {
+async function loadRegistryRows(
+  address: string | null,
+  locale: string,
+): Promise<RegistryEntry[] | null> {
+  if (!isRegistryConfigured()) return null
   const res = await fetchProjectsPage(0, 50, address ?? undefined)
   if (res.projects.length === 0) return null
-  return res.projects.map((p, i) => ({
+  return res.projects.map((p) => ({
     ...p,
-    lastVerified: REGISTRY[i]?.lastVerified ?? 'on-chain',
+    lastVerified: p.lastVerifiedAt === undefined ? '—' : formatDate(p.lastVerifiedAt, locale),
   }))
 }
 
@@ -90,6 +94,7 @@ async function loadPauseStates(address: string | null): Promise<PauseStates> {
 
 export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const t = useTranslations('Admin')
+  const locale = useLocale()
   const tErrors = useTranslations('Errors')
   const { toast } = useToast()
   const { address, sign } = useWallet()
@@ -145,7 +150,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   useEffect(() => {
     let active = true
 
-    loadRegistryRows(address)
+    loadRegistryRows(address, locale)
       .then((rows) => {
         if (active && rows) setRegistry(rows)
       })
@@ -170,14 +175,14 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     return () => {
       active = false
     }
-  }, [address])
+  }, [address, locale])
 
   // Re-read the registry from chain after a write. Returns false when there is no
   // chain to read (demo mode) or the read failed, so the caller can apply the change locally.
   const refreshRegistry = async (): Promise<boolean> => {
     if (!isRegistryConfigured()) return false
     clearRegistryCache()
-    const rows = await loadRegistryRows(address).catch(() => null)
+    const rows = await loadRegistryRows(address, locale).catch(() => null)
     if (rows) setRegistry(rows)
     return rows !== null
   }
@@ -205,11 +210,17 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     const name = registry.find((r) => r.id === id)?.name ?? 'project'
     try {
       const res = await submitUpdateScores(id, credit, green, address ?? '', sign, isMultisig)
+      const confirmedAt = Date.now()
       const refreshed = await refreshRegistry()
       setRegistry((rows) =>
         rows.map((r) =>
           r.id === id
-            ? { ...r, ...(refreshed ? {} : { credit, green }), lastVerified: 'just now' }
+            ? {
+                ...r,
+                ...(refreshed ? {} : { credit, green }),
+                lastVerified: 'just now',
+                lastVerifiedAt: confirmedAt,
+              }
             : r,
         ),
       )

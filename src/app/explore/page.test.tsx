@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@/test/render'
 import en from '../../../messages/en.json'
+import { getProjectsPaginated } from '../../lib/api'
 import ExplorePage, { generateMetadata } from './page'
 
 vi.mock('next/navigation', () => ({
@@ -45,5 +46,34 @@ describe('ExplorePage (Server Component)', () => {
     const pageElement = await ExplorePage()
     render(pageElement)
     expect(screen.getByText('Server Rendered Solar')).toBeInTheDocument()
+  })
+
+  it('renders a successful empty server page without refetching on the client', async () => {
+    const getProjects = vi.mocked(getProjectsPaginated)
+    getProjects.mockClear()
+    getProjects.mockResolvedValueOnce({
+      projects: [],
+      total: 0,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    })
+
+    render(await ExplorePage())
+
+    expect(screen.getByText(en.Explore.emptyTitle)).toBeInTheDocument()
+    expect(getProjects).toHaveBeenCalledExactlyOnceWith(1, 50)
+  })
+
+  it('retries on the client when page one was unavailable on the server', async () => {
+    const getProjects = vi.mocked(getProjectsPaginated)
+    getProjects.mockClear()
+    getProjects.mockRejectedValueOnce(new Error('Registry unavailable'))
+
+    render(await ExplorePage())
+
+    expect(await screen.findByText('Server Rendered Solar')).toBeInTheDocument()
+    expect(getProjects).toHaveBeenCalledTimes(2)
+    expect(getProjects).toHaveBeenNthCalledWith(2, 1, 50)
   })
 })

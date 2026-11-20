@@ -57,20 +57,19 @@ export interface Creator {
   rejectionReason?: string
 }
 
-// Last-verified stamps, paired to the registry projects in order. Fixed strings.
-const VERIFIED_AT: string[] = [
-  '2 days ago',
-  '6 days ago',
-  '11 days ago',
-  '3 days ago',
-  '18 days ago',
-  '5 days ago',
-]
+// Demo verification ages, paired to the registry projects in order.
+const VERIFICATION_AGE_DAYS = [2, 6, 11, 3, 18, 5]
+const DEMO_VERIFICATION_REFERENCE = Date.UTC(2026, 0, 1)
 
-export const REGISTRY: RegistryEntry[] = selectProjects().map((p, i) => ({
-  ...p,
-  lastVerified: VERIFIED_AT[i] ?? 'over a month ago',
-}))
+export const REGISTRY: RegistryEntry[] = selectProjects().map((p, i) => {
+  const ageDays = VERIFICATION_AGE_DAYS[i]
+  return {
+    ...p,
+    lastVerified: ageDays === undefined ? 'over a month ago' : `${ageDays} days ago`,
+    lastVerifiedAt:
+      ageDays === undefined ? undefined : DEMO_VERIFICATION_REFERENCE - ageDays * 86_400_000,
+  }
+})
 
 export const WHITELIST: Creator[] = [
   {
