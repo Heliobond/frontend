@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
@@ -224,6 +224,19 @@ function Row({
   const [credit, setCredit] = useState(String(row.credit))
   const [green, setGreen] = useState(String(row.green))
   const [saving, setSaving] = useState(false)
+  const creditInputRef = useRef<HTMLInputElement | null>(null)
+  const updateBtnRef = useRef<HTMLButtonElement | null>(null)
+  const wasEditingRef = useRef(false)
+
+  useEffect(() => {
+    if (editing) {
+      wasEditingRef.current = true
+      creditInputRef.current?.focus()
+    } else if (wasEditingRef.current) {
+      wasEditingRef.current = false
+      updateBtnRef.current?.focus()
+    }
+  }, [editing])
 
   // Reset draft to current values each time the editor opens.
   const open = () => {
@@ -266,6 +279,7 @@ function Row({
         <td style={tdActionsStyle}>
           {!editing && (
             <Button
+              ref={updateBtnRef}
               size="sm"
               variant="ghost"
               disabled={Boolean(updateDisabledReason)}
@@ -283,6 +297,7 @@ function Row({
             <div style={editorFlexStyle}>
               <span style={reVerifySpanStyle}>{reVerifyLabel}</span>
               <ScoreField
+                inputRef={creditInputRef}
                 id={`credit-${row.id}`}
                 label={creditFieldLabel}
                 value={credit}
@@ -318,12 +333,14 @@ function ScoreField({
   value,
   error,
   onChange,
+  inputRef,
 }: {
   id: string
   label: string
   value: string
   error: string | null
   onChange: (v: string) => void
+  inputRef?: React.Ref<HTMLInputElement>
 }) {
   const errorId = `${id}-error`
   return (
@@ -331,6 +348,7 @@ function ScoreField({
       <label htmlFor={id} style={scoreLabelStyle}>
         <span className="hb-eyebrow">{label}</span>
         <input
+          ref={inputRef}
           id={id}
           type="text"
           inputMode="numeric"

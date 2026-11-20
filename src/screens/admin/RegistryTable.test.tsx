@@ -299,3 +299,41 @@ describe('RegistryTable pending and rollback (#692)', () => {
     expect(screen.getAllByRole('button', { name: /update scores/i })[0]).toBeDisabled()
   })
 })
+
+describe('RegistryTable keyboard focus management (#1020)', () => {
+  it('focuses credit input when opening the editor with the keyboard', () => {
+    render(<RegistryTable rows={rows} onSave={vi.fn()} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    updateBtn.focus()
+    expect(document.activeElement).toBe(updateBtn)
+
+    fireEvent.click(updateBtn)
+    const creditInput = screen.getByLabelText(/credit quality/i)
+    expect(document.activeElement).toBe(creditInput)
+  })
+
+  it('returns focus to the row Update button after canceling the editor', () => {
+    render(<RegistryTable rows={rows} onSave={vi.fn()} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    fireEvent.click(updateBtn)
+    expect(document.activeElement).toBe(screen.getByLabelText(/credit quality/i))
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    expect(document.activeElement).toBe(restoredUpdateBtn)
+  })
+
+  it('returns focus to the row Update button after a successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue(true)
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    fireEvent.click(updateBtn)
+    fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+      expect(document.activeElement).toBe(restoredUpdateBtn)
+    })
+  })
+})
