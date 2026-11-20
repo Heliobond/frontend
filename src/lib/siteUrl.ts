@@ -14,6 +14,10 @@
  * - Email templates with absolute links
  */
 
+function normalizeOrigin(url: string): string {
+  return url.replace(/\/+$/, '')
+}
+
 /**
  * Get the site URL from environment variables.
  * Returns an absolute URL with protocol and domain.
@@ -21,17 +25,17 @@
 export function getSiteUrl(): string {
   // 1. Explicit override (production, staging, development)
   if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL
+    return normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL)
   }
 
   // 2. Vercel production URL (automatic in production deployments)
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    return normalizeOrigin(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
   }
 
   // 3. Vercel preview URL (automatic in preview deployments)
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
+    return normalizeOrigin(`https://${process.env.VERCEL_URL}`)
   }
 
   // 4. Local development fallback
