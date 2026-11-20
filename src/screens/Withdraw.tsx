@@ -339,26 +339,28 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
                     controller.signal,
                     slippageTolerance,
                   )
+                  const hash = typeof result === 'string' ? result : result.hash
+                  const queued = typeof result === 'object' ? Boolean(result.queued) : false
+                  const est =
+                    typeof result === 'object' && result.estimatedAmount !== undefined
+                      ? result.estimatedAmount
+                      : undefined
+                  if (queued) {
+                    addPendingClaim({
+                      id: hash,
+                      hash,
+                      ...(est === undefined ? {} : { amount: est }),
+                      timestamp: Date.now(),
+                      address: address ?? undefined,
+                    })
+                  }
                   if (mountedRef.current) {
-                    const hash = typeof result === 'string' ? result : result.hash
-                    const queued = typeof result === 'object' ? Boolean(result.queued) : false
-                    const est =
-                      typeof result === 'object' && result.estimatedAmount !== undefined
-                        ? result.estimatedAmount
-                        : undefined
                     setTxHash(hash)
                     setIsQueued(queued)
                     setEstimatedAmount(est ?? null)
                     changeStep('success')
 
                     if (queued) {
-                      addPendingClaim({
-                        id: hash,
-                        hash,
-                        ...(est === undefined ? {} : { amount: est }),
-                        timestamp: Date.now(),
-                        address: address ?? undefined,
-                      })
                       toast({
                         tone: 'solar',
                         title: t('pendingH1'),

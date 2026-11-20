@@ -32,55 +32,44 @@ export function useVaultLimits() {
     walletNetwork?.toLowerCase() ||
     'public') as 'public' | 'testnet'
 
-  const [limits, setLimits] = useState<VaultLimits>(defaultLimits)
-  const [error, setError] = useState<string | null>(null)
   const enabled = !!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID && !isDemo && !!address
 
   const { tick } = useVaultRefresh(enabled)
 
   const e2eLockExpiresAt = useSyncExternalStore(subscribeNever, readE2eLockExpiresAt, () => null)
 
-  /**
-   * Identifies the fetch whose result `limits` holds. `loading` is derived from
-   * whether that request has settled, instead of being toggled from the effect
-   * body where it would cause a cascading render (#598).
-   */
-  const requestKey = enabled && address ? `${address}:${network}:${tick}` : null
-  const [settledKey, setSettledKey] = useState<string | null>(null)
-  const loading = requestKey !== null && settledKey !== requestKey
+  const walletKey = enabled ? `${address}:${network}` : null
+  const [settled, setSettled] = useState<{
+    walletKey: string
+    tick: number
+    limits: VaultLimits | null
+  } | null>(null)
+  const current = settled?.walletKey === walletKey ? settled : null
+  const loading = walletKey !== null && current?.tick !== tick
+  const limits = current?.limits ?? defaultLimits
 
   useEffect(() => {
-    if (!enabled || !address || document.hidden) return
+    if (!walletKey || !address || document.hidden) return
 
     let cancelled = false
-    const key = `${address}:${network}:${tick}`
-
-    fetchVaultLimits(address, network)
-      .then((data) => {
-        if (!cancelled) {
-          setLimits(data)
-          setError(null)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          // Error code, not user-facing copy — the component translates (#900).
-          setError('vaultLimitsFailed')
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setSettledKey(key)
-      })
+    fetchVaultLimits(address, network).then(
+      (limits) => {
+        if (!cancelled) setSettled({ walletKey, tick, limits })
+      },
+      () => {
+        if (!cancelled) setSettled({ walletKey, tick, limits: null })
+      },
+    )
 
     return () => {
       cancelled = true
     }
-  }, [address, enabled, network, tick])
+  }, [address, network, tick, walletKey])
 
   return {
     ...limits,
     lockExpiresAt: e2eLockExpiresAt ?? limits.lockExpiresAt,
     loading,
-    error,
+    error: !loading && current?.limits === null ? 'vaultLimitsFailed' : null,
   }
 }

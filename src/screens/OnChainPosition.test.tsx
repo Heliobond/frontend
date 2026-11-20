@@ -6,6 +6,9 @@ import * as toastModule from '../components/Toast'
 import { notifyTransactionConfirmed } from '../wallet/vaultEvents'
 import { vaultEventStream } from '../lib/websocket'
 
+import { getExplorerTxUrl } from '../config/network'
+import { TransactionPendingError } from '../wallet/transactions'
+
 const mockToast = vi.fn()
 vi.mock('../components/Toast', async (importOriginal) => {
   const actual = await importOriginal<typeof toastModule>()
@@ -153,6 +156,25 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
     expect(vault.fetchPortfolio).toHaveBeenCalledTimes(2)
   })
 
+  it('offers an explorer link for a pending yield claim', async () => {
+    const hash = 'a'.repeat(64)
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue(portfolio(100))
+    vi.mocked(vault.submitClaimYield).mockRejectedValue(new TransactionPendingError(hash))
+    render(<OnChainPosition />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /claim yield/i }))
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1))
+
+    const notification = mockToast.mock.lastCall?.[0]
+    expect(notification).toMatchObject({ tone: 'solar', href: getExplorerTxUrl(hash) })
+    render(notification.action)
+    expect(screen.getByRole('link', { name: /explorer/i })).toHaveAttribute(
+      'href',
+      getExplorerTxUrl(hash),
+    )
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
+  })
+
   it('displays failure state with retry button when claim fails', async () => {
     vi.mocked(vault.fetchPortfolio).mockResolvedValue({
       shares: 100,
@@ -180,6 +202,8 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
         }),
       )
     })
+    render(mockToast.mock.lastCall?.[0].action)
+    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
   })
 
   it('updates personal shares after a confirmed transaction and live vault event', async () => {

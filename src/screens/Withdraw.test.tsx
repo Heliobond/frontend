@@ -1,8 +1,16 @@
-import { render as rtlRender, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import {
+  render as rtlRender,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+  act,
+} from '@testing-library/react'
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import en from '../../messages/en.json'
+import { clearPendingClaims, getPendingClaims } from '../wallet/pendingClaims'
 import { submitWithdraw } from '../wallet/vault'
 import { Withdraw } from './Withdraw'
 import type { ReactNode } from 'react'
@@ -180,6 +188,7 @@ function mockClipboard() {
 
 describe('Withdraw', () => {
   beforeEach(() => {
+    clearPendingClaims()
     vi.mocked(submitWithdraw).mockResolvedValue({
       hash: FULL_TX_HASH,
       queued: false,
@@ -262,6 +271,28 @@ describe('Withdraw', () => {
     expect(screen.getByText('Queued — owed amount $300.00 USDC')).toBeVisible()
     expect(screen.getByText('abcdef…567890')).toBeVisible()
   })
+
+  test.each([true, false])(
+    'records a queued result after unmount only on success (%s)',
+    async (success) => {
+      const submission = Promise.withResolvers<Awaited<ReturnType<typeof submitWithdraw>>>()
+      vi.mocked(submitWithdraw).mockReturnValueOnce(submission.promise)
+      const { unmount } = render(<Withdraw onDone={vi.fn()} onBack={vi.fn()} />)
+      fireEvent.change(screen.getByLabelText('Amount'), { target: { value: '300' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Enqueue withdrawal for $300.00' }))
+      expect(submitWithdraw).toHaveBeenCalled()
+      unmount()
+
+      await act(async () => {
+        if (success) {
+          submission.resolve({ hash: FULL_TX_HASH, queued: true, toString: () => FULL_TX_HASH })
+        } else {
+          submission.reject(new Error('Submission failed'))
+        }
+      })
+      expect(getPendingClaims().map(({ hash }) => hash)).toEqual(success ? [FULL_TX_HASH] : [])
+    },
+  )
 
   test('shows the connected wallet position as Your value instead of maxTx limit (#699)', () => {
     mockPortfolioState.portfolio.usdcValue = 750

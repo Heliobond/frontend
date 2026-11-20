@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@/test/render'
+import { act, render, screen, waitFor } from '@/test/render'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Portfolio } from './Portfolio'
 import * as vault from '../wallet/vault'
+import { addPendingClaim, clearPendingClaims } from '../wallet/pendingClaims'
 
 const mockWallet = {
   address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
@@ -46,6 +47,7 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
   })
 
   afterEach(() => {
+    clearPendingClaims()
     vi.unstubAllEnvs()
   })
 
@@ -61,6 +63,28 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
     render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
     expect(screen.getByTestId('portfolio-value')).toBeInTheDocument()
     expect(vault.fetchPortfolio).not.toHaveBeenCalled()
+  })
+
+  it('shows late queued withdrawals on an already mounted portfolio', () => {
+    vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', '')
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+    expect(screen.getByText(/No queued withdrawals/i)).toBeInTheDocument()
+
+    act(() => addPendingClaim({ id: 'tx', hash: 'tx', timestamp: 1, address: mockWallet.address }))
+    expect(screen.getByText('1 queued FIFO claim awaiting vault liquidity.')).toBeInTheDocument()
+  })
+
+  it('renders when the browser denies access to localStorage', () => {
+    vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', '')
+    const storage = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage denied', 'SecurityError')
+    })
+    try {
+      render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+      expect(screen.getByText(/No queued withdrawals/i)).toBeInTheDocument()
+    } finally {
+      storage.mockRestore()
+    }
   })
 
   it('renders two different holdings for two different wallet addresses (Wallet A vs Wallet B)', async () => {

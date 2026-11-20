@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   getPendingClaims,
   addPendingClaim,
@@ -9,6 +9,20 @@ import {
 describe('pendingClaims storage', () => {
   beforeEach(() => {
     clearPendingClaims()
+  })
+
+  it('allows reads and optional writes when the browser denies access to localStorage', () => {
+    const getter = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage denied', 'SecurityError')
+    })
+
+    try {
+      expect(getPendingClaims('GUSER1')).toEqual([])
+      expect(() => addPendingClaim({ id: 'claim', hash: 'tx', timestamp: 1 })).not.toThrow()
+      expect(() => removePendingClaim('claim')).not.toThrow()
+    } finally {
+      getter.mockRestore()
+    }
   })
 
   it('stores and retrieves pending claims across reloads', () => {
