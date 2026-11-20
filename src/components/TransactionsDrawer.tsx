@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { useVisibleNow } from '../hooks/useVisibleNow'
 import { useLocale, useTranslations } from 'next-intl'
 import { AddressChip } from './AddressChip'
 import { useTransactions, type TransactionItem } from '../wallet/TransactionsProvider'
@@ -179,7 +180,8 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
 function TransactionRow({ item }: { item: TransactionItem }) {
   const t = useTranslations('Components.TransactionsDrawer')
   const locale = useLocale()
-  const timeAgo = formatTimeAgo(item.submittedAt, locale)
+  const now = useVisibleNow('seconds')
+  const timeAgo = formatTimeAgo(item.submittedAt, locale, now)
 
   return (
     <div
@@ -305,8 +307,8 @@ function StatusBadge({ status }: { status: TransactionItem['status'] }) {
   )
 }
 
-function formatTimeAgo(timestamp: number, locale: string): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+function formatTimeAgo(timestamp: number, locale: string, now: number): string {
+  const seconds = Math.floor((now - timestamp) / 1000)
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'always', style: 'short' })
   if (seconds < 60) return formatter.format(-Math.max(1, seconds), 'second')
   const minutes = Math.floor(seconds / 60)

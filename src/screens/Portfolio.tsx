@@ -532,7 +532,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
             role="region"
             aria-label={t('activityRegion', { count: activity.length })}
             tabIndex={0}
-            onScroll={(event) => setActivityScrollTop(event.currentTarget.scrollTop)}
+            onScroll={(event) => setActivityScrollTop(Math.max(0, event.currentTarget.scrollTop))}
             style={{
               maxHeight: ACTIVITY_VIEWPORT_HEIGHT,
               overflowY: 'auto',
