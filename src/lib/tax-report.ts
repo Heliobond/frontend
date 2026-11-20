@@ -263,6 +263,8 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
         '', // type (empty for summary)
         '', // amount (empty for summary)
         '', // cost basis (empty for summary)
+        '',
+        '', // event date/id (empty for summary)
       ]),
     )
 
@@ -273,7 +275,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
         (event.costBasisUSD === undefined || event.costBasisStatus === 'unavailable')
       detailRows.push(
         csvRow([
-          '', // quarter (empty for detail rows)
+          line.quarter,
           'Event Detail',
           '', // total deposits (empty for detail)
           '', // total withdrawals (empty for detail)
@@ -283,6 +285,8 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
           event.type,
           event.amountUSD.toFixed(2),
           isBasisUnavailable ? 'Unavailable' : (event.costBasisUSD ?? 0).toFixed(2),
+          event.date,
+          event.id,
         ]),
       )
     }
@@ -299,6 +303,8 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
     'Event Type',
     'Amount (USD)',
     'Cost Basis (USD)',
+    'Event Date',
+    'Event ID',
   ])
 
   return [header, ...detailRows].join('\n')
