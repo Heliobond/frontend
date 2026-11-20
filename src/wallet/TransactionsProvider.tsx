@@ -79,7 +79,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
           controller = requestController
           let requestTimedOut = false
           const timeout = setTimeout(() => {
+            if (requestController.signal.aborted) return
             requestTimedOut = true
+            hadFailure = true
             requestController.abort()
           }, 8000)
           try {
@@ -94,16 +96,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
                 params: { hash: item.hash },
               }),
             })
-            if (requestController.signal.aborted) {
-              if (requestTimedOut && !isHidden()) hadFailure = true
-              break
-            }
+            if (stopped || isHidden() || pollOnResume) break
+            if (requestTimedOut) continue
             if (!response.ok) {
-              if (!isHidden()) hadFailure = true
+              hadFailure = true
               continue
             }
             const data = await response.json()
-            if (stopped || isHidden() || requestController.signal.aborted) continue
+            if (stopped || isHidden() || pollOnResume) break
+            if (requestTimedOut) continue
             const current = getTransactions().find((tx) => tx.hash === item.hash)
             if (!current || !isPending(current)) continue
             let status: TransactionStatus = isTimedOut ? 'timeout_pending' : 'pending'
@@ -116,21 +117,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
             })
             if (status === 'confirmed') notifyTransactionConfirmed(item.hash, item.kind)
           } catch {
-            if (!isHidden() && (!requestController.signal.aborted || requestTimedOut))
-              hadFailure = true
+            if (!requestController.signal.aborted) hadFailure = true
             /* An unavailable node cannot establish failure. Retry later. */
           } finally {
             clearTimeout(timeout)
             if (controller === requestController) controller = undefined
           }
-          if (requestController.signal.aborted) break
+          if (stopped || isHidden() || pollOnResume) break
           const current = getTransactions().find((tx) => tx.hash === item.hash)
-          if (
-            !stopped &&
-            !isHidden() &&
-            current?.status === 'pending' &&
-            Date.now() - current.submittedAt >= 30000
-          ) {
+          if (current?.status === 'pending' && Date.now() - current.submittedAt >= 30000) {
             updateTransaction(item.hash, 'timeout_pending')
             hasTimedOutPending = true
           }

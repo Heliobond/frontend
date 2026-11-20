@@ -656,7 +656,7 @@
     "columnRealizedGain": "Gain réalisé",
     "currencyFormat": "{amount} $",
     "skippedBadge": "Avis",
-    "skippedAlert": "{count, plural, one {# événement avec une date invalide a été exclu de ce rapport.} many {# événements avec des dates invalides ont été exclus de ce rapport.} other {# événements avec des dates invalides ont été exclus de ce rapport.}}",
+    "skippedAlert": "{count, plural, one {# événement avec une date ou un montant invalide a été exclu de ce rapport.} many {# événements avec des dates ou des montants invalides ont été exclus de ce rapport.} other {# événements avec des dates ou des montants invalides ont été exclus de ce rapport.}}",
     "emptyState": "Aucune activité d'investissement enregistrée pour ce portefeuille."
   },
   "PasswordResetEmail": {

@@ -3,6 +3,34 @@ import { render, fireEvent, screen } from '@testing-library/react'
 import { MemoInput } from './MemoInput'
 
 describe('MemoInput', () => {
+  it('keeps native and callback validity in sync for required and optional memos', () => {
+    const onValidityChange = vi.fn()
+    const props = { onChange: vi.fn(), onValidityChange, maxBytes: 4 }
+    const { rerender } = render(<MemoInput {...props} optional={false} value="" />)
+    const input = screen.getByRole('textbox')
+
+    expect(input).toBeRequired()
+    expect(input).toBeInvalid()
+    expect(onValidityChange).toHaveBeenLastCalledWith(false)
+
+    rerender(<MemoInput {...props} optional={false} value="   " />)
+    expect(input).toBeInvalid()
+    expect(onValidityChange).toHaveBeenLastCalledWith(false)
+
+    rerender(<MemoInput {...props} optional={false} value="🌱" />)
+    expect(input).toBeValid()
+    expect(onValidityChange).toHaveBeenLastCalledWith(true)
+
+    rerender(<MemoInput {...props} optional={false} value="🌱a" />)
+    expect(input).toBeInvalid()
+    expect(onValidityChange).toHaveBeenLastCalledWith(false)
+
+    rerender(<MemoInput {...props} value="" />)
+    expect(input).not.toBeRequired()
+    expect(input).toBeValid()
+    expect(onValidityChange).toHaveBeenLastCalledWith(true)
+  })
+
   it('renders input with label and placeholder', () => {
     render(<MemoInput value="" onChange={vi.fn()} label="Custom Memo" placeholder="Enter memo" />)
     expect(screen.getByLabelText(/Custom Memo/i)).toBeInTheDocument()

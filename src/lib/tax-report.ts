@@ -43,6 +43,8 @@ export interface TaxReportSummary {
   skippedEvents: InvestmentEvent[]
 }
 
+const ACTIVITY_AMOUNT = /^[+-]?\$?((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)(?:\s+(?:USD|USDC))?$/i
+
 /** Maps portfolio activity feed items into investment events for tax reporting. */
 export function activityToInvestmentEvents(activity: Activity[]): InvestmentEvent[] {
   const events: InvestmentEvent[] = []
@@ -58,9 +60,10 @@ export function activityToInvestmentEvents(activity: Activity[]): InvestmentEven
           : null
     if (!type) continue
 
-    const amount =
-      typeof item.amount === 'string' ? item.amount.replace(/[^0-9.-]+/g, '') : item.amount
-    const amountUSD = Math.abs(Number.parseFloat(String(amount))) || 0
+    const amount: unknown = item.amount
+    const digits = typeof amount === 'string' ? ACTIVITY_AMOUNT.exec(amount.trim())?.[1] : undefined
+    const amountUSD =
+      typeof amount === 'number' ? Math.abs(amount) : Number(digits?.replace(/,/g, ''))
 
     events.push({
       id: item.hash || `${type}-${item.when}-${amountUSD}-${events.length}`,
@@ -99,7 +102,7 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
 
   for (const event of events) {
     const quarterInfo = getQuarter(event?.date)
-    if (!quarterInfo) {
+    if (!quarterInfo || !Number.isFinite(event.amountUSD)) {
       skippedEvents.push(event)
       continue
     }

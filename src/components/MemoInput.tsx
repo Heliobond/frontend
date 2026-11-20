@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, type CSSProperties } from 'react'
+import { useEffect, useId, useRef, type CSSProperties } from 'react'
 import {
   getMemoByteLength,
   validateMemoLength,
@@ -51,13 +51,23 @@ export function MemoInput({
   const errorId = `memo-error-${generatedId}`
   const counterId = `memo-counter-${generatedId}`
 
+  const inputRef = useRef<HTMLInputElement>(null)
   const byteLength = getMemoByteLength(value)
   const validation = validateMemoLength(value, maxBytes)
   const isOverLimit = !validation.valid
 
+  const isMissing = !optional && value.trim() === ''
+  const limitMessage = `Memo cannot exceed ${maxBytes} bytes (currently ${byteLength} bytes).`
+  const validationMessage = isOverLimit ? limitMessage : isMissing ? 'Enter a memo.' : ''
+  const isValid = !validationMessage
+
   useEffect(() => {
-    onValidityChange?.(!isOverLimit)
-  }, [isOverLimit, onValidityChange])
+    inputRef.current?.setCustomValidity(validationMessage)
+  }, [validationMessage])
+
+  useEffect(() => {
+    onValidityChange?.(isValid)
+  }, [isValid, onValidityChange])
 
   return (
     <div style={{ marginBottom: 18, ...style }}>
@@ -113,12 +123,14 @@ export function MemoInput({
 
       <input
         id={inputId}
+        ref={inputRef}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
-        aria-invalid={isOverLimit}
+        required={!optional}
+        aria-invalid={!isValid}
         aria-describedby={isOverLimit ? `${errorId} ${counterId}` : counterId}
         style={{
           width: '100%',
@@ -148,7 +160,7 @@ export function MemoInput({
             lineHeight: 1.4,
           }}
         >
-          Memo cannot exceed {maxBytes} bytes (currently {byteLength} bytes).
+          {limitMessage}
         </div>
       )}
 

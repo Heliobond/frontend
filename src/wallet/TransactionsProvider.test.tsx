@@ -88,6 +88,43 @@ describe('TransactionsProvider', () => {
     expect(fetch).toHaveBeenCalledTimes(calls)
   })
 
+  it.each(['timeout', 'hide', 'unmount'])(
+    'only continues to later hashes after a per-request timeout (%s)',
+    async (interrupt) => {
+      vi.useFakeTimers()
+      sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([saved('slow'), saved('later')]))
+      vi.mocked(fetch)
+        .mockImplementationOnce(
+          (_url, init) =>
+            new Promise((_resolve, reject) => {
+              init?.signal?.addEventListener('abort', () => reject(new Error('Aborted')))
+            }),
+        )
+        .mockResolvedValueOnce(rpc('SUCCESS'))
+
+      const { result, unmount } = renderHook(useTransactions, { wrapper })
+      expect(fetch).toHaveBeenCalledTimes(1)
+      const signal = vi.mocked(fetch).mock.calls[0][1]?.signal
+
+      await act(async () => {
+        if (interrupt === 'hide') {
+          Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+          document.dispatchEvent(new Event('visibilitychange'))
+        }
+        if (interrupt === 'unmount') unmount()
+        await vi.advanceTimersByTimeAsync(8000)
+      })
+
+      expect(signal?.aborted).toBe(true)
+      expect(fetch).toHaveBeenCalledTimes(interrupt === 'timeout' ? 2 : 1)
+      if (interrupt === 'timeout') {
+        expect(result.current.transactions.find((item) => item.hash === 'later')?.status).toBe(
+          'confirmed',
+        )
+      }
+    },
+  )
+
   it('pauses polling while hidden and polls immediately when visible', async () => {
     vi.useFakeTimers()
     sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([saved()]))
