@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor, within } from '@/test/render'
+import { render, screen, fireEvent, waitFor, within, act } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
 import type { RegistryEntry } from '@/data/admin'
 
@@ -359,6 +359,70 @@ describe('RegistryTable keyboard focus management (#1020)', () => {
     await waitFor(() => {
       const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
       expect(document.activeElement).toBe(restoredUpdateBtn)
+    })
+  })
+
+  describe('interleaved row saves (#1009)', () => {
+    it("keeps a second project's score editor open when the first save completes", async () => {
+      let resolveFirstSave: (val: boolean) => void = () => {}
+      const firstSavePromise = new Promise<boolean>((resolve) => {
+        resolveFirstSave = resolve
+      })
+
+      const onSave = vi.fn().mockImplementation((id: number) => {
+        if (id === 3) {
+          return firstSavePromise
+        }
+        return Promise.resolve(true)
+      })
+
+      render(<RegistryTable rows={rows} onSave={onSave} />)
+
+      // Open first row editor (id 3: Mekong Hydro, top of default credit sort)
+      const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+      fireEvent.click(updateBtns[0])
+
+      const creditInputA = screen.getByLabelText(/credit quality/i)
+      fireEvent.change(creditInputA, { target: { value: '95' } })
+
+      // Click save on row A (pending)
+      fireEvent.click(screen.getByRole('button', { name: /save/i }))
+      expect(onSave).toHaveBeenCalledWith(3, 95, 85)
+
+      // While row A is saving, open row B editor (Benin Solar Farm)
+      const remainingUpdateBtns = screen.getAllByRole('button', { name: /update scores/i })
+      fireEvent.click(remainingUpdateBtns[0])
+
+      // Row B's editor is now active; modify its draft
+      const creditInputB = screen.getByLabelText(/credit quality/i)
+      fireEvent.change(creditInputB, { target: { value: '88' } })
+      expect(creditInputB).toHaveValue('88')
+
+      // Resolve row A save
+      await act(async () => {
+        resolveFirstSave(true)
+      })
+
+      // Row B editor remains open with its draft
+      expect(screen.getByLabelText(/credit quality/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/credit quality/i)).toHaveValue('88')
+    })
+
+    it('saving the active row exits edit mode', async () => {
+      const onSave = vi.fn().mockResolvedValue(true)
+      render(<RegistryTable rows={rows} onSave={onSave} />)
+
+      const updateBtns = screen.getAllByRole('button', { name: /update scores/i })
+      fireEvent.click(updateBtns[0])
+
+      const creditInput = screen.getByLabelText(/credit quality/i)
+      fireEvent.change(creditInput, { target: { value: '95' } })
+
+      fireEvent.click(screen.getByRole('button', { name: /save/i }))
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText(/credit quality/i)).not.toBeInTheDocument()
+      })
     })
   })
 })
