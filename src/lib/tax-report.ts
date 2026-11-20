@@ -17,8 +17,10 @@ export interface InvestmentEvent {
   date: string
   type: InvestmentEventType
   amountUSD: number
-  /** Cost basis allocated to this event. 0/undefined for deposits. */
+  /** Cost basis allocated to this event. 0/undefined for deposits or when unavailable. */
   costBasisUSD?: number
+  /** Indicates whether the cost basis is known, unavailable, or estimated. */
+  costBasisStatus?: 'known' | 'unavailable' | 'estimated'
 }
 
 export interface QuarterlyTaxLine {
@@ -28,7 +30,8 @@ export interface QuarterlyTaxLine {
   totalDeposits: number
   totalWithdrawals: number
   totalDistributions: number
-  realizedGainUSD: number
+  realizedGainUSD: number | null
+  hasUnavailableBasis?: boolean
   events: InvestmentEvent[]
 }
 
@@ -62,13 +65,58 @@ export function activityToInvestmentEvents(activity: Activity[]): InvestmentEven
       typeof item.amount === 'string' ? item.amount.replace(/[^0-9.-]+/g, '') : item.amount
     const amountUSD = Math.abs(Number.parseFloat(String(amount))) || 0
 
+    const itemWithBasis = item as Activity & {
+      costBasisUSD?: number
+      costBasis?: string | number
+      basis?: string | number
+    }
+
+    let costBasisUSD: number | undefined
+    let costBasisStatus: 'known' | 'unavailable' | 'estimated' | undefined
+
+    if (itemWithBasis.costBasisUSD !== undefined && itemWithBasis.costBasisUSD !== null) {
+      costBasisUSD = Number(itemWithBasis.costBasisUSD)
+      costBasisStatus = 'known'
+    } else if (itemWithBasis.costBasis !== undefined && itemWithBasis.costBasis !== null) {
+      const parsedBasis =
+        typeof itemWithBasis.costBasis === 'string'
+          ? itemWithBasis.costBasis.replace(/[^0-9.-]+/g, '')
+          : itemWithBasis.costBasis
+      costBasisUSD = Number.parseFloat(String(parsedBasis))
+      if (Number.isNaN(costBasisUSD)) {
+        costBasisUSD = undefined
+        costBasisStatus = 'unavailable'
+      } else {
+        costBasisStatus = 'known'
+      }
+    } else if (itemWithBasis.basis !== undefined && itemWithBasis.basis !== null) {
+      const parsedBasis =
+        typeof itemWithBasis.basis === 'string'
+          ? itemWithBasis.basis.replace(/[^0-9.-]+/g, '')
+          : itemWithBasis.basis
+      costBasisUSD = Number.parseFloat(String(parsedBasis))
+      if (Number.isNaN(costBasisUSD)) {
+        costBasisUSD = undefined
+        costBasisStatus = 'unavailable'
+      } else {
+        costBasisStatus = 'known'
+      }
+    } else if (type === 'deposit' || type === 'distribution') {
+      costBasisUSD = 0
+      costBasisStatus = 'known'
+    } else {
+      costBasisUSD = undefined
+      costBasisStatus = 'unavailable'
+    }
+
     events.push({
       id: item.hash || `${type}-${item.when}-${amountUSD}-${events.length}`,
       projectName: 'Heliobond Vault',
       date: item.when,
       type,
       amountUSD,
-      costBasisUSD: type === 'withdrawal' ? amountUSD : 0,
+      costBasisUSD,
+      costBasisStatus,
     })
   }
 
@@ -86,8 +134,14 @@ export function getQuarter(dateStr: string): { year: number; quarterNumber: 1 | 
   return { year, quarterNumber }
 }
 
-function realizedGain(event: InvestmentEvent): number {
+function realizedGain(event: InvestmentEvent): number | null {
   if (event.type === 'deposit') return 0
+  if (
+    event.type === 'withdrawal' &&
+    (event.costBasisUSD === undefined || event.costBasisStatus === 'unavailable')
+  ) {
+    return null
+  }
   return event.amountUSD - (event.costBasisUSD ?? 0)
 }
 
@@ -116,6 +170,7 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
         totalWithdrawals: 0,
         totalDistributions: 0,
         realizedGainUSD: 0,
+        hasUnavailableBasis: false,
         events: [],
       })
     }
@@ -127,7 +182,13 @@ export function computeQuarterlyTaxReport(events: InvestmentEvent[]): QuarterlyT
     if (event.type === 'withdrawal') line.totalWithdrawals += event.amountUSD
     if (event.type === 'distribution') line.totalDistributions += event.amountUSD
 
-    line.realizedGainUSD += realizedGain(event)
+    const gain = realizedGain(event)
+    if (gain === null) {
+      line.hasUnavailableBasis = true
+      line.realizedGainUSD = null
+    } else if (!line.hasUnavailableBasis && line.realizedGainUSD !== null) {
+      line.realizedGainUSD += gain
+    }
   }
 
   const result = Array.from(byQuarter.values()).sort((a, b) =>
@@ -194,7 +255,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
         line.totalDeposits.toFixed(2),
         line.totalWithdrawals.toFixed(2),
         line.totalDistributions.toFixed(2),
-        line.realizedGainUSD.toFixed(2),
+        line.realizedGainUSD !== null ? line.realizedGainUSD.toFixed(2) : 'Unavailable',
         '', // project (empty for summary)
         '', // type (empty for summary)
         '', // amount (empty for summary)
@@ -204,6 +265,9 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
 
     // Event-level details for transparency and full audit trail
     for (const event of line.events) {
+      const isBasisUnavailable =
+        event.type === 'withdrawal' &&
+        (event.costBasisUSD === undefined || event.costBasisStatus === 'unavailable')
       detailRows.push(
         csvRow([
           '', // quarter (empty for detail rows)
@@ -215,7 +279,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
           event.projectName,
           event.type,
           event.amountUSD.toFixed(2),
-          (event.costBasisUSD ?? 0).toFixed(2),
+          isBasisUnavailable ? 'Unavailable' : (event.costBasisUSD ?? 0).toFixed(2),
         ]),
       )
     }

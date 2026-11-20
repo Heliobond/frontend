@@ -212,7 +212,59 @@ describe('activityToInvestmentEvents (#787)', () => {
       type: 'withdrawal',
       amountUSD: 400,
       date: '2025-04-10',
+      costBasisStatus: 'unavailable',
     })
+    expect(events[1].costBasisUSD).toBeUndefined()
+  })
+
+  it('distinguishes missing withdrawal basis from explicit basis (#977)', () => {
+    const activityWithExplicit: (Activity & { costBasis?: string })[] = [
+      {
+        kind: 'Withdrawal',
+        amount: '$500.00',
+        shares: '500 HBS',
+        when: '2025-04-10',
+        hash: '0xexplicit',
+        costBasis: '$350.00',
+      },
+      {
+        kind: 'Withdrawal',
+        amount: '$200.00',
+        shares: '200 HBS',
+        when: '2025-04-11',
+        hash: '0xmissing',
+      },
+    ]
+
+    const events = activityToInvestmentEvents(activityWithExplicit)
+    expect(events[0].costBasisUSD).toBe(350)
+    expect(events[0].costBasisStatus).toBe('known')
+    expect(events[1].costBasisUSD).toBeUndefined()
+    expect(events[1].costBasisStatus).toBe('unavailable')
+
+    const report = computeQuarterlyTaxReport(events)
+    expect(report[0].hasUnavailableBasis).toBe(true)
+    expect(report[0].realizedGainUSD).toBeNull()
+
+    const csv = quarterlyReportToCsv(report)
+    expect(csv).toContain('2025-Q2,Quarter Summary')
+    expect(csv).toContain('Unavailable')
+  })
+
+  it('retains computed gain when explicit basis is supplied (#977)', () => {
+    const explicitEvent: InvestmentEvent = {
+      id: 'w1',
+      projectName: 'Solar Farm A',
+      date: '2025-04-05',
+      type: 'withdrawal',
+      amountUSD: 600,
+      costBasisUSD: 500,
+      costBasisStatus: 'known',
+    }
+
+    const report = computeQuarterlyTaxReport([explicitEvent])
+    expect(report[0].hasUnavailableBasis).toBe(false)
+    expect(report[0].realizedGainUSD).toBe(100)
   })
 
   it('handles empty activity list', () => {

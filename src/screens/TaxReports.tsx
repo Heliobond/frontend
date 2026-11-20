@@ -278,7 +278,9 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
                           index < report.length - 1 ? '1px solid var(--ink-12)' : 'none',
                       }}
                     >
-                      {t('currencyFormat', { amount: formatDecimal(line.realizedGainUSD, 2) })}
+                      {line.realizedGainUSD !== null
+                        ? t('currencyFormat', { amount: formatDecimal(line.realizedGainUSD, 2) })
+                        : 'Unavailable'}
                     </td>
                   </tr>
                 ))
