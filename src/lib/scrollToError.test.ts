@@ -7,14 +7,12 @@ describe('scrollToError', () => {
   let container: HTMLDivElement
 
   beforeEach(() => {
-    vi.useFakeTimers()
     // Create a fresh container for each test
     container = document.createElement('div')
     document.body.appendChild(container)
   })
 
   afterEach(() => {
-    vi.useRealTimers()
     document.body.innerHTML = ''
   })
 
@@ -87,7 +85,7 @@ describe('scrollToError', () => {
       expect(input.scrollIntoView).not.toHaveBeenCalled()
     })
 
-    it('should focus the first focusable child after 300ms delay', () => {
+    it('should focus the first focusable child immediately', () => {
       const input = document.createElement('input')
       input.setAttribute('aria-invalid', 'true')
       input.scrollIntoView = vi.fn()
@@ -96,13 +94,6 @@ describe('scrollToError', () => {
 
       scrollToFirstError(container, { focus: true })
 
-      // Focus should not be called immediately
-      expect(input.focus).not.toHaveBeenCalled()
-
-      // Advance timers by 300ms
-      vi.advanceTimersByTime(300)
-
-      // Now focus should be called with preventScroll: true
       expect(input.focus).toHaveBeenCalledWith({ preventScroll: true })
     })
 
@@ -115,7 +106,6 @@ describe('scrollToError', () => {
 
       scrollToFirstError(container, { focus: false })
 
-      vi.advanceTimersByTime(300)
       expect(input.focus).not.toHaveBeenCalled()
     })
 
@@ -129,7 +119,6 @@ describe('scrollToError', () => {
       container.appendChild(div)
 
       scrollToFirstError(container, { focus: true })
-      vi.advanceTimersByTime(300)
 
       expect(div.focus).toHaveBeenCalledWith({ preventScroll: true })
     })
@@ -144,7 +133,6 @@ describe('scrollToError', () => {
       // Should not throw
       expect(() => {
         scrollToFirstError(container, { focus: true })
-        vi.advanceTimersByTime(300)
       }).not.toThrow()
     })
 
@@ -189,7 +177,7 @@ describe('scrollToError', () => {
       expect(input2.scrollIntoView).not.toHaveBeenCalled()
     })
 
-    it('should focus input inside field-wrapper after setTimeout', () => {
+    it('should focus input inside field-wrapper immediately', () => {
       const wrapper = document.createElement('div')
       wrapper.setAttribute('data-field-wrapper', '')
       wrapper.setAttribute('aria-invalid', 'true')
@@ -201,7 +189,6 @@ describe('scrollToError', () => {
       container.appendChild(wrapper)
 
       scrollToFirstError(container, { focus: true })
-      vi.advanceTimersByTime(300)
 
       expect(input.focus).toHaveBeenCalledWith({ preventScroll: true })
     })
@@ -224,7 +211,7 @@ describe('scrollToError', () => {
       expect(input.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
     })
 
-    it('should focus the field after 300ms delay', () => {
+    it('should focus the field immediately', () => {
       const input = document.createElement('input')
       input.id = 'email-field'
       input.scrollIntoView = vi.fn()
@@ -233,8 +220,6 @@ describe('scrollToError', () => {
 
       scrollToField('email-field', { focus: true })
 
-      expect(input.focus).not.toHaveBeenCalled()
-      vi.advanceTimersByTime(300)
       expect(input.focus).toHaveBeenCalledWith({ preventScroll: true })
     })
 
@@ -247,7 +232,6 @@ describe('scrollToError', () => {
 
       scrollToField('email-field', { focus: false })
 
-      vi.advanceTimersByTime(300)
       expect(input.focus).not.toHaveBeenCalled()
     })
 
@@ -270,7 +254,6 @@ describe('scrollToError', () => {
       // Should not throw even if focus is not a function
       expect(() => {
         scrollToField('non-focusable', { focus: true })
-        vi.advanceTimersByTime(300)
       }).not.toThrow()
     })
 
@@ -282,7 +265,6 @@ describe('scrollToError', () => {
       container.appendChild(textarea)
 
       scrollToField('comment', { focus: true })
-      vi.advanceTimersByTime(300)
 
       expect(textarea.scrollIntoView).toHaveBeenCalled()
       expect(textarea.focus).toHaveBeenCalled()

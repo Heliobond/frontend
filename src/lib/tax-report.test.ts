@@ -86,7 +86,7 @@ describe('computeQuarterlyTaxReport', () => {
 })
 
 describe('quarterlyReportToCsv', () => {
-  it('produces a header row plus one row per quarter', () => {
+  it('produces a header, quarter summary, and event detail', () => {
     const events: InvestmentEvent[] = [
       {
         id: '1',
@@ -99,10 +99,10 @@ describe('quarterlyReportToCsv', () => {
     const csv = quarterlyReportToCsv(computeQuarterlyTaxReport(events))
     const lines = csv.split('\n')
     expect(lines[0]).toBe(
-      'Quarter,Type,Total Deposits (USD),Total Withdrawals (USD),Total Distributions (USD),Realized Gain (USD),Project Name,Event Type,Amount (USD),Cost Basis (USD)',
+      'Quarter,Type,Total Deposits (USD),Total Withdrawals (USD),Total Distributions (USD),Realized Gain (USD),Project Name,Event Type,Amount (USD),Cost Basis (USD),Event Date,Event ID',
     )
-    expect(lines[1]).toBe('2025-Q1,Quarter Summary,1000.00,0.00,0.00,0.00,,,,')
-    expect(lines[2]).toBe(',Event Detail,,,,,Solar Farm A,deposit,1000.00,0.00')
+    expect(lines[1]).toBe('2025-Q1,Quarter Summary,1000.00,0.00,0.00,0.00,,,,,,')
+    expect(lines[2]).toBe('2025-Q1,Event Detail,,,,,Solar Farm A,deposit,1000.00,0.00,2025-01-10,1')
   })
 
   it('quotes commas, quotes and newlines in project names', () => {
@@ -169,7 +169,7 @@ describe('quarterlyReportToCsv', () => {
       },
     ]
     const csv = quarterlyReportToCsv(computeQuarterlyTaxReport(events))
-    expect(csv.split('\n')[1]).toBe('2025-Q1,Quarter Summary,0.00,100.00,0.00,-100.00,,,,')
+    expect(csv.split('\n')[1]).toBe('2025-Q1,Quarter Summary,0.00,100.00,0.00,-100.00,,,,,,')
   })
 })
 
