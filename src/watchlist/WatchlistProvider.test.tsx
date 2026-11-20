@@ -81,6 +81,33 @@ describe('WatchlistProvider', () => {
     expect(await screen.findByText('7')).toBeInTheDocument()
   })
 
+  it('empties list when another tab clears storage (key is null) (#952)', async () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([7, 9]))
+    renderProbe()
+    expect(await screen.findByText('7,9')).toBeInTheDocument()
+
+    act(() => {
+      localStorage.clear()
+      window.dispatchEvent(new StorageEvent('storage', { key: null }))
+    })
+
+    expect(screen.getByLabelText('ids')).toHaveTextContent('')
+    expect(screen.getByLabelText('count')).toHaveTextContent('0')
+  })
+
+  it('leaves list intact on unrelated single-key storage event (#952)', async () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([7, 9]))
+    renderProbe()
+    expect(await screen.findByText('7,9')).toBeInTheDocument()
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated-key', newValue: 'foo' }))
+    })
+
+    expect(screen.getByLabelText('ids')).toHaveTextContent('7,9')
+    expect(screen.getByLabelText('count')).toHaveTextContent('2')
+  })
+
   it('throws when useWatchlist is used outside the provider', () => {
     const Bare = () => {
       useWatchlist()
