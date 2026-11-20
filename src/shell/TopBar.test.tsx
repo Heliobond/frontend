@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@/test/render'
 import { TopBar } from './TopBar'
 
@@ -29,46 +29,40 @@ Object.defineProperty(window, 'IntersectionObserver', {
 })
 
 describe('TopBar preferences menu', () => {
+  beforeEach(() => localStorage.removeItem('hb-theme'))
+
   const openMenu = async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
     return screen.findByRole('menu')
   }
 
-  it('announces the dark theme as checked', async () => {
-    document.documentElement.dataset.theme = 'dark'
+  it('announces a stored dark preference and lets users return to System', async () => {
+    localStorage.setItem('hb-theme', 'dark')
 
     render(<TopBar />)
     await openMenu()
+    const themes = within(screen.getByRole('group', { name: 'Theme' }))
+    const dark = themes.getByRole('menuitemradio', { name: 'Dark' })
+    const system = themes.getByRole('menuitemradio', { name: 'System' })
+    expect(dark).toHaveAttribute('aria-checked', 'true')
+    expect(system).toHaveAttribute('aria-checked', 'false')
 
-    await waitFor(() => {
-      expect(screen.getByRole('menuitemcheckbox', { name: /Switch to light/ })).toHaveAttribute(
-        'aria-checked',
-        'true',
-      )
-    })
-  })
+    fireEvent.click(system)
+    expect(system).toHaveAttribute('aria-checked', 'true')
+    expect(dark).toHaveAttribute('aria-checked', 'false')
+    expect(localStorage.getItem('hb-theme')).toBeNull()
 
-  it('announces the light theme as not checked', async () => {
-    document.documentElement.dataset.theme = 'light'
-
-    render(<TopBar />)
-    await openMenu()
-
-    await waitFor(() => {
-      expect(screen.getByRole('menuitemcheckbox', { name: /Switch to dark/ })).toHaveAttribute(
-        'aria-checked',
-        'false',
-      )
-    })
+    const light = themes.getByRole('menuitemradio', { name: 'Light' })
+    fireEvent.click(light)
+    expect(light).toHaveAttribute('aria-checked', 'true')
+    expect(system).toHaveAttribute('aria-checked', 'false')
+    expect(localStorage.getItem('hb-theme')).toBe('light')
   })
 
   it('moves focus with the arrow keys and closes on Escape', async () => {
     render(<TopBar />)
     const menu = await openMenu()
-    const items = [
-      ...within(menu).queryAllByRole('menuitemcheckbox'),
-      ...within(menu).queryAllByRole('menuitemradio'),
-    ]
+    const items = within(menu).getAllByRole('menuitemradio')
 
     await waitFor(() => expect(items[0]).toHaveFocus())
     fireEvent.keyDown(menu, { key: 'ArrowDown' })

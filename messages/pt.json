@@ -18,8 +18,12 @@
     "how": "Como funciona",
     "testnet": "Testnet (ativo)",
     "networkStatus": "Rede: Testnet ativa",
-    "switchToDark": "Alternar para escuro",
-    "switchToLight": "Alternar para claro",
+    "theme": "Tema",
+    "themeOptions": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Escuro"
+    },
     "account": "Conta",
     "copyAddress": "Copiar endereço",
     "copied": "Copiado",

@@ -7,6 +7,8 @@ import { useTransactions, type TransactionItem } from '../wallet/TransactionsPro
 import { getExplorerTxUrl } from '../config/network'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
+const DIALOG_LAYER = 1000
+
 export interface TransactionsDrawerProps {
   open: boolean
   onClose: () => void
@@ -17,7 +19,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
   const { transactions, pendingCount, clearCompleted } = useTransactions()
 
   const panel = useRef<HTMLDivElement>(null)
-  useFocusTrap(open, panel, undefined, onClose)
+  useFocusTrap(open, panel, undefined, onClose, DIALOG_LAYER)
   if (!open) return null
 
   return (
@@ -28,7 +30,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
         right: 0,
         bottom: 0,
         left: 0,
-        zIndex: 1000,
+        zIndex: DIALOG_LAYER,
         display: 'flex',
         justifyContent: 'flex-end',
       }}

@@ -22,8 +22,12 @@
     "networkStatus": "الشبكة: شبكة الاختبار نشطة",
     "portfolio": "محفظتك",
     "watchlist": "قائمة المتابعة",
-    "switchToDark": "التبديل إلى الوضع الداكن",
-    "switchToLight": "التبديل إلى الوضع الفاتح",
+    "theme": "المظهر",
+    "themeOptions": {
+      "system": "النظام",
+      "light": "فاتح",
+      "dark": "داكن"
+    },
     "preferences": "التفضيلات",
     "language": "اللغة",
     "account": "الحساب",

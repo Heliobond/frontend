@@ -106,6 +106,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
         <FormField label={`${t('street')} *`} htmlFor="addr-street">
           <FormInput
             id="addr-street"
+            autoComplete="address-line1"
             value={values.street}
             onChange={(e) => setValues({ ...values, street: e.target.value })}
             {...errorProps('street')}
@@ -119,6 +120,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
         <FormField label={t('apartment')} htmlFor="addr-apt">
           <FormInput
             id="addr-apt"
+            autoComplete="address-line2"
             value={values.apartment}
             onChange={(e) => setValues({ ...values, apartment: e.target.value })}
             placeholder={t('apartmentPlaceholder')}
@@ -133,6 +135,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           <FormField label={`${t('city')} *`} htmlFor="addr-city">
             <FormInput
               id="addr-city"
+              autoComplete="address-level2"
               value={values.city}
               onChange={(e) => setValues({ ...values, city: e.target.value })}
               {...errorProps('city')}
@@ -145,6 +148,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           <FormField label={`${t('state')} *`} htmlFor="addr-state">
             <FormInput
               id="addr-state"
+              autoComplete="address-level1"
               value={values.state}
               onChange={(e) => setValues({ ...values, state: e.target.value })}
               {...errorProps('state')}
@@ -160,6 +164,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           <FormField label={`${t('zip')} *`} htmlFor="addr-zip">
             <FormInput
               id="addr-zip"
+              autoComplete="postal-code"
               value={values.zip}
               onChange={(e) => setValues({ ...values, zip: e.target.value })}
               {...errorProps('zip')}
@@ -172,6 +177,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           <FormField label={`${t('country')} *`} htmlFor="addr-country">
             <FormSelect
               id="addr-country"
+              autoComplete="country"
               value={values.country}
               onChange={(e) => setValues({ ...values, country: e.target.value })}
               {...errorProps('country')}

@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useEffectEvent, type RefObject } from 'react'
 
 const FOCUSABLE = [
   'a[href]',
@@ -12,13 +12,31 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
+interface FocusTrap {
+  container: HTMLElement
+  previous: HTMLElement | null
+  layer: number
+  focusInside: () => void
+}
+
+// Highest layer wins. For dialogs on the same layer, the latest one wins.
+const traps: FocusTrap[] = []
+
 /** Keep keyboard and programmatic focus inside an open modal and restore it on close. */
 export function useFocusTrap<T extends HTMLElement>(
   open: boolean,
   containerRef: RefObject<T | null>,
   initialFocusRef?: RefObject<HTMLElement | null>,
   onEscape?: () => void,
+  layer = 0,
 ) {
+  const handleEscape = useEffectEvent((event: KeyboardEvent) => {
+    if (!onEscape) return
+    event.preventDefault()
+    event.stopPropagation()
+    onEscape()
+  })
+
   useEffect(() => {
     const container = containerRef.current
     if (!open || !container) return
@@ -31,16 +49,29 @@ export function useFocusTrap<T extends HTMLElement>(
           !element.closest('[hidden], [inert], [aria-hidden="true"]') &&
           element.getAttribute('aria-disabled') !== 'true',
       )
-    const focusFirst = () => {
+    const focusInside = () => {
+      if (lastInside && container.contains(lastInside)) {
+        lastInside.focus()
+        if (document.activeElement === lastInside) return
+      }
       const target = initialFocusRef?.current ?? focusable()[0] ?? container
       target.focus()
-      lastInside = target
     }
 
+    const trap: FocusTrap = { container, previous, layer, focusInside }
+    const above = traps.findIndex((other) => other.layer > layer)
+    if (above === -1) {
+      traps.push(trap)
+    } else {
+      trap.previous = traps[above].previous
+      traps.splice(above, 0, trap)
+    }
+    const isForemost = () => traps.at(-1) === trap
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && onEscape) {
-        event.preventDefault()
-        onEscape()
+      if (!isForemost() || event.defaultPrevented) return
+      if (event.key === 'Escape') {
+        handleEscape(event)
         return
       }
       if (event.key !== 'Tab') return
@@ -65,23 +96,35 @@ export function useFocusTrap<T extends HTMLElement>(
     }
 
     const handleFocusIn = (event: FocusEvent) => {
+      if (!isForemost()) return
       const target = event.target
       if (!(target instanceof HTMLElement)) return
       if (container.contains(target)) {
         lastInside = target
         return
       }
-      ;(lastInside ?? initialFocusRef?.current ?? focusable()[0] ?? container).focus()
+      focusInside()
     }
 
     window.addEventListener('keydown', handleKeyDown, true)
     document.addEventListener('focusin', handleFocusIn, true)
-    focusFirst()
+    if (isForemost()) focusInside()
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true)
       document.removeEventListener('focusin', handleFocusIn, true)
-      if (previous?.isConnected) previous.focus()
+      const wasForemost = isForemost()
+      traps.splice(traps.indexOf(trap), 1)
+      for (const other of traps) {
+        if (container.contains(other.previous)) other.previous = trap.previous
+      }
+      if (!wasForemost) return
+
+      const next = traps.at(-1)
+      if (trap.previous?.isConnected && (!next || next.container.contains(trap.previous))) {
+        trap.previous.focus()
+      }
+      if (next && !next.container.contains(document.activeElement)) next.focusInside()
     }
-  }, [open, containerRef, initialFocusRef, onEscape])
+  }, [open, containerRef, initialFocusRef, layer])
 }

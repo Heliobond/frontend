@@ -1,6 +1,5 @@
 'use client'
 
-import { useId } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { StatBlock, ScoreGauge, Badge, Card, Sparkline } from '@/components'
 import {
@@ -32,9 +31,12 @@ export interface CreatorDashboardProps {
 export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardProps) {
   const locale = useLocale()
   const t = useTranslations('Creator')
-  const fundingCaptionId = useId()
   const fundedPct =
     data.fundingGoal > 0 ? Math.round((data.fundingReceived / data.fundingGoal) * 100) : 0
+  const fundingCaption = t('dashGoalDeployed', {
+    pct: fundedPct,
+    goal: formatNumber(data.fundingGoal, { appLocale: locale }),
+  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -83,11 +85,8 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.min(100, Math.max(0, fundedPct))}
-              aria-valuetext={t('dashGoalDeployed', {
-                pct: fundedPct,
-                goal: formatNumber(data.fundingGoal, { appLocale: locale }),
-              })}
-              aria-labelledby={fundingCaptionId}
+              aria-valuetext={fundingCaption}
+              aria-label={t('dashFunding')}
               style={{
                 height: 8,
                 borderRadius: 'var(--radius-pill)',
@@ -113,7 +112,6 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
               />
             </div>
             <div
-              id={fundingCaptionId}
               style={{
                 fontFamily: 'var(--font-body)',
                 fontSize: 'var(--type-caption)',
@@ -121,15 +119,7 @@ export function CreatorDashboard({ data = CREATOR_DASHBOARD }: CreatorDashboardP
                 marginTop: 8,
               }}
             >
-              <span
-                style={{ fontFamily: 'var(--font-data)', color: 'var(--ink)', fontWeight: 600 }}
-              >
-                {fundedPct}%
-              </span>{' '}
-              {t('dashGoalDeployed', {
-                pct: fundedPct,
-                goal: formatMoney(data.fundingGoal),
-              })}
+              {fundingCaption}
             </div>
           </div>
         </Card>
