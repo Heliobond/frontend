@@ -79,6 +79,23 @@ describe('TaxReports screen (#787)', () => {
     expect(screen.getByText('$500.00')).toBeInTheDocument()
   })
 
+  it('excludes malformed activity amounts and retains a real zero in the exported report', () => {
+    const deposit = { kind: 'Deposit', shares: '', when: '2025-02-10' } as const
+    mockPortfolio.activity = [
+      { ...deposit, hash: 'valid-zero', amount: '$0.00' },
+      { ...deposit, hash: 'missing-amount', amount: '' },
+      { ...deposit, hash: 'bad-grouping', amount: '$1,00.00' },
+      { ...deposit, hash: 'partially-readable', amount: '$6.00 garbage' },
+    ]
+
+    render(<TaxReports />)
+    expect(screen.getByRole('status')).toHaveTextContent('3 events with invalid dates or amounts')
+    fireEvent.click(screen.getByRole('button', { name: /export csv/i }))
+    const csv = vi.mocked(taxReportLib.downloadCsv).mock.lastCall?.[1]
+    expect(csv?.match(/Event Detail/g)).toHaveLength(1)
+    expect(csv).toContain('Heliobond Vault,deposit,0.00,0.00')
+  })
+
   it('displays empty state message when connected real wallet has no activity', () => {
     mockWallet.connected = true
     mockWallet.isDemo = false

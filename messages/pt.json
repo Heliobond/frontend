@@ -656,7 +656,7 @@
     "columnRealizedGain": "Ganho realizado",
     "currencyFormat": "US$ {amount}",
     "skippedBadge": "Aviso",
-    "skippedAlert": "{count, plural, one {# evento com data inválida foi excluído deste relatório.} many {# eventos com datas inválidas foram excluídos deste relatório.} other {# eventos com datas inválidas foram excluídos deste relatório.}}",
+    "skippedAlert": "{count, plural, one {# evento com data ou valor inválido foi excluído deste relatório.} many {# eventos com datas ou valores inválidos foram excluídos deste relatório.} other {# eventos com datas ou valores inválidos foram excluídos deste relatório.}}",
     "emptyState": "Nenhuma atividade de investimento registrada para esta carteira."
   },
   "PasswordResetEmail": {

@@ -83,6 +83,20 @@ describe('usePortfolio (#821)', () => {
     expect(result.current.portfolio).toBeNull()
   })
 
+  it.each([0, null])('uses dedicated yield %s when available', async (dedicated) => {
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue({ ...position(111), claimableYield: 12 })
+    if (dedicated === null) {
+      vi.mocked(vault.fetchClaimableYield).mockRejectedValueOnce(new Error('rpc down'))
+    } else {
+      vi.mocked(vault.fetchClaimableYield).mockResolvedValueOnce(dedicated)
+    }
+
+    const { result } = renderHook(() => usePortfolio())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.portfolio?.claimableYield).toBe(12)
+    expect(result.current.claimableYield).toBe(dedicated ?? 12)
+  })
+
   it('ends loading when on-chain calls finish, without waiting for activity', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test')
     vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(5))

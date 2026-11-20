@@ -32,7 +32,7 @@ export interface UsePortfolioResult {
 interface ChainState {
   address: string
   portfolio: OnChainPortfolio | null
-  claimableYield: number
+  claimableYield: number | null
   vaultLiquidity: VaultLiquidity | null
   error: string | null
 }
@@ -107,7 +107,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         if (isCancelled()) return
 
         const portfolioValue = portResult.status === 'fulfilled' ? portResult.value : null
-        let claimable = 0
+        let claimable: number | null = null
         let error: string | null = null
 
         if (portResult.status === 'rejected') {
@@ -117,7 +117,6 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         if (yieldResult.status === 'fulfilled') {
           claimable = yieldResult.value
         } else if (portfolioValue) {
-          claimable = portfolioValue.claimableYield
           error = 'portfolioFailed'
         }
 
@@ -143,7 +142,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
           setChain((prev) => ({
             address,
             portfolio: prev?.address === address ? prev.portfolio : null,
-            claimableYield: prev?.address === address ? prev.claimableYield : 0,
+            claimableYield: prev?.address === address ? prev.claimableYield : null,
             vaultLiquidity: prev?.address === address ? prev.vaultLiquidity : null,
             // Error code, not user-facing copy — the component translates (#900).
             error: 'portfolioFailed',
@@ -181,7 +180,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
   const current = chain && chain.address === address ? chain : null
   const portfolio = current?.portfolio ?? null
-  const claimableYield = current?.claimableYield ?? 0
+  const claimableYield = current?.claimableYield ?? portfolio?.claimableYield ?? 0
   const vaultLiquidity = current?.vaultLiquidity ?? null
   const error = current?.error ?? null
   const activityFeed = activityState && activityState.address === address ? activityState.feed : []
@@ -230,7 +229,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
   return {
     portfolio: enabled ? portfolio : null,
-    claimableYield: enabled ? claimableYield || (portfolio?.claimableYield ?? 0) : 0,
+    claimableYield: enabled ? claimableYield : 0,
     you: enabled && portfolio ? derivedYou : demoYou,
     activity: finalActivity,
     loading: enabled ? loading : false,
