@@ -57,7 +57,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
     }
 
     const syncOtherTabs = (event: StorageEvent) => {
-      if (event.key !== WATCHLIST_STORAGE_KEY) return
+      if (event.key !== null && event.key !== WATCHLIST_STORAGE_KEY) return
       const next = readWatchlist()
       idsRef.current = next
       setIds(next)

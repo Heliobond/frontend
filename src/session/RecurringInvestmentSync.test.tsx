@@ -50,4 +50,35 @@ describe('RecurringInvestmentSync', () => {
     ])
     expect(readRecurringInvestments()).toEqual([])
   })
+
+  it('empties plans when another tab clears storage (key is null) (#952)', () => {
+    localStorage.setItem(RECURRING_STORAGE_KEY, JSON.stringify([first]))
+    render(<RecurringInvestmentSync />)
+    expect(mocks.useRemoteSync).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resource: 'recurring', value: [first] }),
+    )
+
+    localStorage.clear()
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: null }))
+    })
+    expect(mocks.useRemoteSync).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resource: 'recurring', value: [] }),
+    )
+  })
+
+  it('leaves plans intact on unrelated single-key storage event (#952)', () => {
+    localStorage.setItem(RECURRING_STORAGE_KEY, JSON.stringify([first]))
+    render(<RecurringInvestmentSync />)
+    expect(mocks.useRemoteSync).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resource: 'recurring', value: [first] }),
+    )
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: 'unrelated-key', newValue: 'bar' }))
+    })
+    expect(mocks.useRemoteSync).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resource: 'recurring', value: [first] }),
+    )
+  })
 })

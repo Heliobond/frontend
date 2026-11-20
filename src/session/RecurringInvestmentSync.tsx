@@ -21,7 +21,7 @@ export function RecurringInvestmentSync() {
     setPlans(readRecurringInvestments())
     const reload = () => setPlans(readRecurringInvestments())
     const onStorage = (event: StorageEvent) => {
-      if (event.key === RECURRING_STORAGE_KEY) reload()
+      if (event.key === null || event.key === RECURRING_STORAGE_KEY) reload()
     }
     window.addEventListener(RECURRING_CHANGED_EVENT, reload)
     window.addEventListener('storage', onStorage)
