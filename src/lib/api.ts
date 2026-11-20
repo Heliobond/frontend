@@ -44,8 +44,11 @@ function isDemoMode(): boolean {
   return DEMO_MODE
 }
 
+export type ProjectSource = 'registry' | 'backend' | 'demo'
+
 /** Returns true if the UI should show a "Demo data" badge. */
-export function shouldShowDemoBadge(): boolean {
+export function shouldShowDemoBadge(source?: ProjectSource): boolean {
+  if (source !== undefined) return source === 'demo'
   return isDemoMode()
 }
 
@@ -98,6 +101,7 @@ export interface ProjectWithDetail {
   project: Project
   detail: ProjectDetail
   verifiedMetadata?: MetadataVerificationStatus
+  source?: ProjectSource
 }
 
 export interface PaginatedProjectsResponse {
@@ -181,6 +185,7 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
         project: res.project,
         detail: res.detail,
         verifiedMetadata: res.verifiedMetadata,
+        source: 'registry',
       }
     }
   }
@@ -190,7 +195,12 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
 
   if (isDemoMode()) {
     if (!mockProject || !mockDetail) return null
-    return { project: mockProject, detail: mockDetail, verifiedMetadata: 'unverified' }
+    return {
+      project: mockProject,
+      detail: mockDetail,
+      verifiedMetadata: 'unverified',
+      source: 'demo',
+    }
   }
 
   try {
@@ -200,6 +210,7 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
       project: mapBackendProject(raw, mockProject),
       detail: mockDetail ?? ({ id } as unknown as ProjectDetail),
       verifiedMetadata: 'unverified',
+      source: 'backend',
     }
   } catch (error) {
     if (error instanceof ApiError) throw error
