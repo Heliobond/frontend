@@ -100,11 +100,12 @@ export function Withdraw({ onDone, onBack }: WithdrawProps) {
 
   const n = parseAmount(amount)
 
-  const estimatedFee = useTransactionFee('withdraw', n, address, slippageTolerance)
-  const feeLabel =
-    estimatedFee === null
-      ? t('feeEstimateUnavailable')
-      : t('feeLabelEstimated', { fee: estimatedFee.toFixed(7) })
+  const feeEstimate = useTransactionFee('withdraw', n, address, slippageTolerance)
+  const feeLabel = feeEstimate.isPending
+    ? t('feeEstimatePending')
+    : feeEstimate.fee !== null
+      ? t('feeLabelEstimated', { fee: feeEstimate.fee.toFixed(7) })
+      : t('feeEstimateUnavailable')
 
   useEffect(() => {
     mountedRef.current = true

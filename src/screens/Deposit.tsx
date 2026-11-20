@@ -90,11 +90,12 @@ export function Deposit({ onDone }: DepositProps) {
   const amountHasValidationError =
     txError !== null && txError !== 'memo_too_long' && txError !== 'vault_paused'
 
-  const estimatedFee = useTransactionFee('deposit', n, address, slippageTolerance)
-  const feeLabel =
-    estimatedFee === null
-      ? t('feeEstimateUnavailable')
-      : t('feeLabelEstimated', { fee: formatDecimal(estimatedFee, 7) })
+  const feeEstimate = useTransactionFee('deposit', n, address, slippageTolerance)
+  const feeLabel = feeEstimate.isPending
+    ? t('feeEstimatePending')
+    : feeEstimate.fee !== null
+      ? t('feeLabelEstimated', { fee: formatDecimal(feeEstimate.fee, 7) })
+      : t('feeEstimateUnavailable')
 
   const mountedRef = useRef(true)
   const abortControllerRef = useRef<AbortController | null>(null)
