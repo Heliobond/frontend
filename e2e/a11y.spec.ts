@@ -52,7 +52,7 @@ test.describe('Automated Axe Accessibility Audit', () => {
         }, testInfo) => {
           await seedSession(page, theme, route.needsAuth)
           await page.goto(route.path)
-          await page.waitForLoadState('networkidle')
+          await page.waitForLoadState('domcontentloaded')
 
           const results = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])

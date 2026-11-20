@@ -1,11 +1,11 @@
 import { getTranslations } from 'next-intl/server'
-import { Landing } from '../../screens/Landing'
+import { HomeClient } from '../HomeClient'
 
 export default async function VerifyPage() {
   const t = await getTranslations('Footer')
   return (
     <main id="main-content">
-      <Landing onConnect={() => {}} onExplore={() => {}} />
+      <HomeClient />
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '64px 32px', scrollMarginTop: 68 }}>
         <h2
           style={{
