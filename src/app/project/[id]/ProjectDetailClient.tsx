@@ -66,6 +66,7 @@ export function ProjectDetailClient({ id, initialData }: ProjectDetailClientProp
       project={data.project}
       detail={data.detail}
       verifiedMetadata={data.verifiedMetadata}
+      source={data.source}
       onInvest={() => {
         router.push('/connect')
         return Promise.resolve('/connect')

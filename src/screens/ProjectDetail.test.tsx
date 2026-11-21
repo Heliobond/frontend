@@ -78,6 +78,16 @@ describe('ProjectDetail metadata verification badge', () => {
     expect(screen.queryByText('Metadata mismatch')).not.toBeInTheDocument()
   })
 
+  it('renders "Demo data" badge when source is "demo"', () => {
+    renderDetail({ source: 'demo' })
+    expect(screen.getByText('Demo data')).toBeInTheDocument()
+  })
+
+  it('hides "Demo data" badge when source is "registry" (live on-chain data)', () => {
+    renderDetail({ source: 'registry' })
+    expect(screen.queryByText('Demo data')).not.toBeInTheDocument()
+  })
+
   it('defaults to "unverified" when verifiedMetadata prop is omitted (fail closed)', () => {
     renderDetail()
 
