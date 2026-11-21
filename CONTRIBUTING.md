@@ -380,6 +380,39 @@ To add a new namespace for a new screen or surface:
    `src/i18n/next-intl.d.ts` types `Messages` as `typeof en`, so `tsc` cannot
    see a key that exists only in `fr.json` (or the other three).
 
+### Adding a locale
+
+To add a locale, use a lowercase [BCP 47 language
+code](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
+as the catalog filename and update every locale registry in
+`src/i18n/config.ts`:
+
+1. Add the code to `LOCALES`.
+2. Add its short switcher label to `LOCALE_LABELS` and its native display name
+   to `LOCALE_NAMES`.
+3. Add its Open Graph `language_TERRITORY` value to `OG_LOCALES`.
+4. If the language is right-to-left, add it to `RTL_LOCALES`. The root layout
+   reads this set and applies `dir="rtl"`; otherwise, leave the locale out so
+   it uses left-to-right layout.
+5. Create `messages/<code>.json` by copying the key structure of
+   `messages/en.json`, then translate every value. The server request config
+   loads the catalog dynamically, and `LocaleProvider.tsx` also imports the
+   selected catalog dynamically, so neither file needs a per-locale import.
+6. Update `src/__tests__/catalog-parity.test.ts`: import the new catalog and
+   add it to `NON_EN` so key, ICU argument, and translation checks cover it.
+
+Verify the new locale with:
+
+```bash
+bun run test -- src/__tests__/catalog-parity.test.ts
+bun run typecheck
+bun run build
+```
+
+For a documentation-only verification, a maintainer should add a throwaway
+locale using only these steps, run the commands above, and remove the temporary
+catalog and registry entries afterward.
+
 ## Quality bar
 
 - **Builds and type-checks clean.** `bun run build` is the gate; no `any` to paper over types, no `@ts-ignore` without a comment.

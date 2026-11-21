@@ -166,8 +166,10 @@ what each surface reads and writes.
 - **i18n (5 locales)** — `src/i18n/` + `messages/{ar,en,es,fr,pt}.json`, kept in
   leaf-key parity by `src/__tests__/catalog-parity.test.ts`. The shell, the
   investor screens, the creator space and the route metadata are translated;
-  the language switcher sets a cookie and refreshes. Design-system primitives and
-  the tax-report screen still ship English (i18n-ready).
+  the language switcher sets a cookie and refreshes. See
+  [Adding a locale](CONTRIBUTING.md#adding-a-locale) before contributing a new
+  catalog. Design-system primitives and the tax-report screen still ship
+  English (i18n-ready).
 - **Project detail** (`/project/[id]`) — hero, verified-creator badge, two large
   sun-arc scores with on-chain score-history sparklines, funding timeline, the
   expandable return formula, and honest pooled-model framing.
