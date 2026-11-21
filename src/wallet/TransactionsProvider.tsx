@@ -47,11 +47,16 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     let pollOnResume = false
     const baseDelay = 10000
     const maxDelay = 60000
-
     const isHidden = () => typeof document !== 'undefined' && document.hidden
 
+    // Keep restored history visible without querying another chain or an arbitrary stored URL.
+    const canPoll = (item: TransactionItem) =>
+      isPending(item) &&
+      (item.network ?? STELLAR_NETWORK) === STELLAR_NETWORK &&
+      (item.rpcUrl ?? SOROBAN_RPC_URL) === SOROBAN_RPC_URL
+
     const schedulePoll = (delay: number) => {
-      if (stopped || isHidden() || timer !== undefined || !getTransactions().some(isPending)) return
+      if (stopped || isHidden() || timer !== undefined || !getTransactions().some(canPoll)) return
       timer = setTimeout(() => {
         timer = undefined
         void poll()
@@ -65,14 +70,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       let hasTimedOutPending = false
       let hadSuccessfulResponse = false
       try {
-        for (const item of getTransactions().filter(isPending)) {
+        for (const item of getTransactions().filter(canPoll)) {
           if (stopped || isHidden()) break
-          // Do not send a restored hash to a different configured chain or arbitrary stored URL.
-          if (
-            (item.network && item.network !== STELLAR_NETWORK) ||
-            (item.rpcUrl && item.rpcUrl !== SOROBAN_RPC_URL)
-          )
-            continue
           const isTimedOut = Date.now() - item.submittedAt >= 30000
           if (item.status === 'pending' && isTimedOut)
             updateTransaction(item.hash, 'timeout_pending')
@@ -163,11 +162,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       }
     }
     const onTransactionsChange = () => {
-      if (getTransactions().some(isPending) && !isHidden()) {
-        if (timer !== undefined) clearTimeout(timer)
-        timer = undefined
-        void poll()
-      }
+      if (timer !== undefined) clearTimeout(timer)
+      timer = undefined
+      if (getTransactions().some(canPoll)) void poll()
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     const unsubscribe = subscribeTransactions(onTransactionsChange)

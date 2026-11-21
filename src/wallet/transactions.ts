@@ -79,7 +79,6 @@ export function recordTransaction(
     items = [...items, ...saved.filter((item) => !items.some((old) => old.hash === item.hash))]
   }
   const old = items.find((item) => item.hash === tx.hash)
-
   // Background and foreground checks may complete in either order.
   if (old && !isPending(old) && isPending(tx as TransactionItem)) return
   const next = {
@@ -89,7 +88,7 @@ export function recordTransaction(
     ...old,
     ...tx,
   }
-  items = [next, ...items.filter((item) => item.hash !== tx.hash)]
+  items = old ? items.map((item) => (item.hash === tx.hash ? next : item)) : [next, ...items]
   if (next.kind === 'deposit' && !isPending(next)) {
     try {
       const guard = JSON.parse(sessionStorage.getItem('hb_pending_deposit') ?? 'null')

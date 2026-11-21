@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@/test/render'
 import { TopBar } from './TopBar'
 
+const refresh = vi.fn()
 vi.mock('next/navigation', () => ({
   usePathname: () => '/explore',
-  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn(), refresh }),
 }))
 
 vi.mock('../wallet/WalletProvider', () => ({
@@ -29,7 +30,11 @@ Object.defineProperty(window, 'IntersectionObserver', {
 })
 
 describe('TopBar preferences menu', () => {
-  beforeEach(() => localStorage.removeItem('hb-theme'))
+  beforeEach(() => {
+    localStorage.removeItem('hb-theme')
+    document.cookie = 'NEXT_LOCALE=en;path=/'
+    refresh.mockClear()
+  })
 
   const openMenu = async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
@@ -57,6 +62,34 @@ describe('TopBar preferences menu', () => {
     expect(light).toHaveAttribute('aria-checked', 'true')
     expect(system).toHaveAttribute('aria-checked', 'false')
     expect(localStorage.getItem('hb-theme')).toBe('light')
+  })
+
+  it('keeps the last working language selected after a load failure and lets users retry', async () => {
+    vi.doMock('../../messages/fr.json', () => Promise.reject(new Error('Chunk unavailable')))
+
+    try {
+      render(<TopBar />)
+      const menu = await openMenu()
+      const french = within(menu).getByRole('menuitemradio', { name: 'Français' })
+      const english = within(menu).getByRole('menuitemradio', { name: 'English' })
+
+      fireEvent.click(french)
+      expect(
+        await screen.findByText('Could not load that language. Please try again.'),
+      ).toBeInTheDocument()
+      expect(english).toHaveAttribute('aria-checked', 'true')
+      expect(document.cookie).toContain('NEXT_LOCALE=en')
+      expect(refresh).not.toHaveBeenCalled()
+
+      vi.doUnmock('../../messages/fr.json')
+      fireEvent.click(french)
+      await waitFor(() => expect(document.documentElement.lang).toBe('fr'))
+      expect(document.cookie).toContain('NEXT_LOCALE=fr')
+      expect(refresh).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('menu')).toBeNull()
+    } finally {
+      vi.doUnmock('../../messages/fr.json')
+    }
   })
 
   it('moves focus with the arrow keys and closes on Escape', async () => {
