@@ -190,6 +190,7 @@
     "emptyTitle": "No se encontraron proyectos",
     "emptySub": "No hay proyectos que coincidan con la categoría \"{filter}\" en el fondo ahora mismo.",
     "loadMore": "Mostrar {count} más",
+    "searchMore": "Buscar en los proyectos restantes",
     "showingCount": "Mostrando {shown} de {total} proyectos",
     "filterLoadedNotice": "Cubriendo los {loaded} proyectos cargados hasta ahora"
   },
@@ -544,6 +545,7 @@
     "fieldMediaDocs": "Medios y documentos",
     "dropCover": "Foto de portada",
     "dropCoverHint": "PNG o JPG, se muestra en tu tarjeta",
+    "coverUnsupported": "Elige una imagen PNG o JPG para la portada.",
     "dropDocs": "Documentos de verificación",
     "dropDocsHint": "Permisos, PPAs, plan de medición",
     "previewLabel": "Vista previa en directo",

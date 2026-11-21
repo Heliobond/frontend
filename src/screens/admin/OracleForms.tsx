@@ -72,18 +72,21 @@ export function OracleForms({
   onFund,
 }: OracleFormsProps) {
   const t = useTranslations('Admin')
-  const first = projects[0]?.id ?? 0
 
   // Push-scores form state.
-  const [scoreId, setScoreId] = useState(first)
+  const [selectedScoreId, setScoreId] = useState(projects[0]?.id ?? 0)
   const [credit, setCredit] = useState('')
   const [green, setGreen] = useState('')
   const [scorePending, setScorePending] = useState(false)
 
   // Fund form state.
-  const [fundId, setFundId] = useState(first)
+  const [selectedFundId, setFundId] = useState(projects[0]?.id ?? 0)
   const [amount, setAmount] = useState('')
   const [fundPending, setFundPending] = useState(false)
+
+  const fallbackId = projects[0]?.id ?? 0
+  const scoreId = projects.some((p) => p.id === selectedScoreId) ? selectedScoreId : fallbackId
+  const fundId = projects.some((p) => p.id === selectedFundId) ? selectedFundId : fallbackId
 
   const scoresValid = isSafeScore(credit) && isSafeScore(green) && validateScores(credit, green)
 
@@ -99,10 +102,11 @@ export function OracleForms({
   const overLiquid = amountN > deployable
 
   const target = projects.find((p) => p.id === scoreId)
+  const fundTarget = projects.find((p) => p.id === fundId)
 
   // Inputs stay filled on failure, so the admin can retry. They clear only on success.
   const submitScores = async () => {
-    if (!scoresValid || scoresDisabledReason || scorePending) return
+    if (!target || !scoresValid || scoresDisabledReason || scorePending) return
     setScorePending(true)
     try {
       if (await onPushScores(scoreId, clampScore(credit), clampScore(green))) {
@@ -115,7 +119,7 @@ export function OracleForms({
   }
 
   const submitFund = async () => {
-    if (!fundValid || fundPending) return
+    if (!fundTarget || !fundValid || fundPending) return
     setFundPending(true)
     try {
       if (await onFund(fundId, amountN)) setAmount('')
@@ -161,7 +165,7 @@ export function OracleForms({
         <Button
           size="sm"
           variant="primary"
-          disabled={!scoresValid || Boolean(scoresDisabledReason) || scorePending}
+          disabled={!target || !scoresValid || Boolean(scoresDisabledReason) || scorePending}
           reason={scoresDisabledReason ?? t('scoresReason')}
           onClick={submitScores}
         >
@@ -227,7 +231,7 @@ export function OracleForms({
         <Button
           size="sm"
           variant="primary"
-          disabled={!fundValid || fundPending}
+          disabled={!fundTarget || !fundValid || fundPending}
           reason={
             fundDisabledReason ??
             (isPaused

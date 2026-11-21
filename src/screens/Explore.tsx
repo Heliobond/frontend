@@ -289,6 +289,30 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
           >
             {t('emptySub', { filter: filter === 'All' ? t('filterAll') : filter })}
           </p>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              aria-busy={loadingMore}
+              style={{
+                marginTop: 20,
+                height: 44,
+                padding: '0 24px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--ink)',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                fontWeight: 600,
+                cursor: loadingMore ? 'wait' : 'pointer',
+                opacity: loadingMore ? 0.7 : 1,
+              }}
+            >
+              {t('searchMore')}
+            </button>
+          )}
         </div>
       ) : (
         <>

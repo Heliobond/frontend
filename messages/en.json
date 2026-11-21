@@ -190,6 +190,7 @@
     "emptyTitle": "No projects found",
     "emptySub": "There are no projects matching the \"{filter}\" category in the pool right now.",
     "loadMore": "Show {count} more",
+    "searchMore": "Search remaining projects",
     "showingCount": "Showing {shown} of {total} projects",
     "filterLoadedNotice": "Covering the {loaded} projects loaded so far"
   },
@@ -551,6 +552,7 @@
     "fieldMediaDocs": "Media and documents",
     "dropCover": "Cover photo",
     "dropCoverHint": "PNG or JPG, shown on your card",
+    "coverUnsupported": "Choose a PNG or JPG image for the cover.",
     "dropDocs": "Verification docs",
     "dropDocsHint": "Permits, PPAs, metering plan",
     "previewLabel": "Live preview",
