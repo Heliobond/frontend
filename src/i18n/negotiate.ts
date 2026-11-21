@@ -37,6 +37,7 @@ export function parseAcceptLanguage(header: string): { lang: string; quality: nu
 export function negotiateLocale(acceptLanguage: string | null | undefined): Locale {
   if (!acceptLanguage) return DEFAULT_LOCALE
   const tags = parseAcceptLanguage(acceptLanguage)
+
   for (const { lang, quality } of tags) {
     if (quality <= 0) continue
     if (lang === '*') return DEFAULT_LOCALE
