@@ -64,6 +64,7 @@ export function LocaleProvider({
     (target: Locale) => {
       document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000;samesite=lax`
 
+
       import(`../../messages/${target}.json`).then((mod) => {
         startTransition(() => {
           setLocale(target)

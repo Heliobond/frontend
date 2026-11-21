@@ -79,6 +79,7 @@ export function recordTransaction(
     items = [...items, ...saved.filter((item) => !items.some((old) => old.hash === item.hash))]
   }
   const old = items.find((item) => item.hash === tx.hash)
+
   // Background and foreground checks may complete in either order.
   if (old && !isPending(old) && isPending(tx as TransactionItem)) return
   const next = {

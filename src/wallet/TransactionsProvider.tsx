@@ -47,6 +47,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     let pollOnResume = false
     const baseDelay = 10000
     const maxDelay = 60000
+
     const isHidden = () => typeof document !== 'undefined' && document.hidden
 
     const schedulePoll = (delay: number) => {
