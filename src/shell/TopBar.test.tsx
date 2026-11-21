@@ -75,19 +75,42 @@ describe('TopBar preferences menu', () => {
   })
 })
 
-describe('TopBar mobile navigation (#714)', () => {
-  it('opens the mobile menu with all primary destinations and closes on Escape', () => {
+describe('TopBar mobile navigation (#714, #1074)', () => {
+  it('opens the mobile navigation disclosure with all primary destinations and closes on Escape', () => {
     render(<TopBar />)
-    const menu = screen.getByRole('button', { name: 'Open site menu' })
-    fireEvent.click(menu)
+    const toggle = screen.getByRole('button', { name: 'Open site menu' })
+    fireEvent.click(toggle)
 
-    expect(screen.getByRole('menu')).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Open site menu' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    // Ordinary links in Tab order, not a menu that would owe arrow-key handling.
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
     for (const label of ['explore', 'how', 'learn', 'creator']) {
-      expect(screen.getByRole('menuitem', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+      expect(within(nav).getByRole('link', { name: new RegExp(label, 'i') })).toBeInTheDocument()
     }
 
     fireEvent.keyDown(document, { key: 'Escape' })
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
-    expect(menu).toHaveFocus()
+    expect(screen.queryByRole('navigation', { name: 'Open site menu' })).not.toBeInTheDocument()
+    expect(toggle).toHaveFocus()
+  })
+
+  it('closes the preferences popup on Escape first and keeps the site navigation open', () => {
+    render(<TopBar />)
+    const toggle = screen.getByRole('button', { name: 'Open site menu' })
+    fireEvent.click(toggle)
+    const nav = screen.getByRole('navigation', { name: 'Open site menu' })
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Preferences' }))
+    const popup = within(nav).getByRole('menu')
+    fireEvent.keyDown(popup, { key: 'Escape' })
+
+    expect(within(nav).queryByRole('menu')).not.toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Open site menu' })).toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Preferences' })).toHaveFocus()
+
+    // A second Escape, with no popup open, then dismisses the navigation.
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('navigation', { name: 'Open site menu' })).not.toBeInTheDocument()
+    expect(toggle).toHaveFocus()
   })
 })

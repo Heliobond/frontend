@@ -73,7 +73,9 @@ export function TopBar() {
   useEffect(() => {
     if (!mobileMenuOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      // A nested popup (preferences) handles its own Escape and marks it
+      // handled; only an unhandled Escape dismisses the whole panel.
+      if (event.key === 'Escape' && !event.defaultPrevented) {
         setMobileMenuOpen(false)
         mobileMenuButtonRef.current?.focus()
       }
@@ -263,12 +265,15 @@ export function TopBar() {
         </button>
 
         {mobileMenuOpen && (
-          <div id="mobile-site-menu" className="hb-mobile-menu-panel" role="menu">
+          <nav
+            id="mobile-site-menu"
+            className="hb-mobile-menu-panel"
+            aria-label={t('openSiteMenu')}
+          >
             {NAV.map(({ href, key }) => (
               <Link
                 key={key}
                 href={href}
-                role="menuitem"
                 onClick={() => setMobileMenuOpen(false)}
                 className="hb-mobile-menu-link"
               >
@@ -276,7 +281,7 @@ export function TopBar() {
               </Link>
             ))}
             <PreferencesDropdown />
-          </div>
+          </nav>
         )}
         <TransactionsDrawer open={drawerOpen} onClose={closeDrawer} />
       </header>
@@ -469,6 +474,8 @@ function PreferencesDropdown() {
       e.preventDefault()
       items[items.length - 1].focus()
     } else if (e.key === 'Escape') {
+      // Mark handled so an enclosing panel (mobile site nav) stays open.
+      e.preventDefault()
       setOpen(false)
       triggerRef.current?.focus()
     } else if (e.key === 'Tab') {
