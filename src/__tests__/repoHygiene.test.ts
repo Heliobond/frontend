@@ -94,6 +94,17 @@ describe('README accuracy (#659)', () => {
     expect(readme).toMatch(/on-chain when the contract ID is set/i)
     expect(readme).toMatch(/fixture/i)
   })
+
+  it('does not document a demo-mode flag that the source does not read (#873)', () => {
+    const apiReference = readFileSync(path.join(ROOT, 'API_REFERENCE.md'), 'utf8')
+    const envExample = readFileSync(path.join(ROOT, '.env.example'), 'utf8')
+
+    expect(readme).not.toContain('NEXT_PUBLIC_DEMO_MODE')
+    expect(apiReference).not.toContain('NEXT_PUBLIC_DEMO_MODE')
+    expect(envExample).not.toContain('NEXT_PUBLIC_DEMO_MODE')
+    expect(readme).toMatch(/demo fixtures when no backend URL or API key is configured/i)
+    expect(apiReference).toMatch(/no backend URL or API key is configured/i)
+  })
 })
 
 /**
