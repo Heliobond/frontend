@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@/test/render'
 import userEvent from '@testing-library/user-event'
 import { TelemetryConsent, TelemetryPreference } from './TelemetryConsent'
 import { TELEMETRY_CONSENT_KEY, readTelemetryConsent } from '../lib/errorReporting'
+import { isTelemetryAllowed, setTelemetryConsent } from '../lib/telemetryConsent'
 
 const banner = () => screen.queryByTestId('telemetry-consent')
 
@@ -44,6 +45,80 @@ describe('TelemetryConsent (#658)', () => {
     // Nothing is asked on mount; the assertion waits for the effect that reads
     // localStorage to have run.
     await waitFor(() => expect(banner()).not.toBeInTheDocument())
+  })
+})
+
+describe('TelemetryConsent with storage unavailable (#1072)', () => {
+  const blockStorage = (writes: boolean, reads = false) => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      if (writes) throw new DOMException('blocked', 'SecurityError')
+    })
+    if (reads) {
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError')
+      })
+    }
+  }
+  beforeEach(() => {
+    localStorage.clear()
+    setTelemetryConsent(null)
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+    setTelemetryConsent(null)
+  })
+
+  it('dismisses the banner on Decline for the visit and keeps telemetry off', async () => {
+    blockStorage(true)
+    const user = userEvent.setup()
+    render(<TelemetryConsent />)
+
+    await user.click(await screen.findByRole('button', { name: /no thanks/i }))
+    await waitFor(() => expect(banner()).not.toBeInTheDocument())
+    expect(readTelemetryConsent()).toBe('denied')
+    expect(isTelemetryAllowed()).toBe(false)
+  })
+
+  it('also works when reads throw as well as writes', async () => {
+    blockStorage(true, true)
+    const user = userEvent.setup()
+    render(<TelemetryConsent />)
+
+    await user.click(await screen.findByRole('button', { name: /no thanks/i }))
+    await waitFor(() => expect(banner()).not.toBeInTheDocument())
+    expect(isTelemetryAllowed()).toBe(false)
+  })
+
+  it('does not honour an accept that could not be saved', async () => {
+    blockStorage(true)
+    const user = userEvent.setup()
+    render(<TelemetryConsent />)
+
+    await user.click(await screen.findByRole('button', { name: /allow/i }))
+    expect(readTelemetryConsent()).toBeNull()
+    expect(isTelemetryAllowed()).toBe(false)
+  })
+
+  it('does not let a stale in-memory choice shadow working storage', () => {
+    blockStorage(true)
+    setTelemetryConsent('denied')
+    vi.restoreAllMocks()
+
+    setTelemetryConsent('granted')
+    expect(localStorage.getItem(TELEMETRY_CONSENT_KEY)).toBe('granted')
+    localStorage.removeItem(TELEMETRY_CONSENT_KEY)
+    expect(readTelemetryConsent()).toBeNull()
+  })
+
+  it('still persists across reloads when storage works', async () => {
+    const user = userEvent.setup()
+    const first = render(<TelemetryConsent />)
+    await user.click(await screen.findByRole('button', { name: /no thanks/i }))
+    first.unmount()
+
+    render(<TelemetryConsent />)
+    await waitFor(() => expect(banner()).not.toBeInTheDocument())
+    expect(localStorage.getItem(TELEMETRY_CONSENT_KEY)).toBe('denied')
   })
 })
 
