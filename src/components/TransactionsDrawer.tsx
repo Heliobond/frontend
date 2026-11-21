@@ -1,11 +1,14 @@
 'use client'
 
 import { useRef } from 'react'
+import { useVisibleNow } from '../hooks/useVisibleNow'
 import { useLocale, useTranslations } from 'next-intl'
 import { AddressChip } from './AddressChip'
 import { useTransactions, type TransactionItem } from '../wallet/TransactionsProvider'
 import { getExplorerTxUrl } from '../config/network'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+
+const DIALOG_LAYER = 1000
 
 export interface TransactionsDrawerProps {
   open: boolean
@@ -17,7 +20,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
   const { transactions, pendingCount, clearCompleted } = useTransactions()
 
   const panel = useRef<HTMLDivElement>(null)
-  useFocusTrap(open, panel, undefined, onClose)
+  useFocusTrap(open, panel, undefined, onClose, DIALOG_LAYER)
   if (!open) return null
 
   return (
@@ -28,7 +31,7 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
         right: 0,
         bottom: 0,
         left: 0,
-        zIndex: 1000,
+        zIndex: DIALOG_LAYER,
         display: 'flex',
         justifyContent: 'flex-end',
       }}
@@ -177,7 +180,8 @@ export function TransactionsDrawer({ open, onClose }: TransactionsDrawerProps) {
 function TransactionRow({ item }: { item: TransactionItem }) {
   const t = useTranslations('Components.TransactionsDrawer')
   const locale = useLocale()
-  const timeAgo = formatTimeAgo(item.submittedAt, locale)
+  const now = useVisibleNow('seconds')
+  const timeAgo = formatTimeAgo(item.submittedAt, locale, now)
 
   return (
     <div
@@ -303,8 +307,8 @@ function StatusBadge({ status }: { status: TransactionItem['status'] }) {
   )
 }
 
-function formatTimeAgo(timestamp: number, locale: string): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+function formatTimeAgo(timestamp: number, locale: string, now: number): string {
+  const seconds = Math.floor((now - timestamp) / 1000)
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'always', style: 'short' })
   if (seconds < 60) return formatter.format(-Math.max(1, seconds), 'second')
   const minutes = Math.floor(seconds / 60)

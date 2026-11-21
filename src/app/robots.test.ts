@@ -1,4 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
+import * as api from '../lib/api'
+import { selectProjects } from '../state/selectors'
 import robots from './robots'
 import sitemap from './sitemap'
 import { DEV_ROUTES, devRoutesEnabled } from '../lib/devRoutes'
@@ -53,6 +55,38 @@ describe('indexing rules (#657)', () => {
 })
 
 describe('sitemap (#657)', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('keeps project URLs already read when a later page fails', async () => {
+    const project = selectProjects()[0]
+    const load = vi
+      .spyOn(api, 'getProjectsPaginated')
+      .mockResolvedValueOnce({
+        projects: [project],
+        total: 2,
+        page: 1,
+        pageSize: 100,
+        hasMore: true,
+      })
+      .mockRejectedValueOnce(new Error('page unavailable'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const urls = (await sitemap()).map((entry) => entry.url)
+    expect(urls).toContain(`${CANONICAL_ORIGIN}/project/${project.id}`)
+    expect(load.mock.calls).toEqual([
+      [1, 100],
+      [2, 100],
+    ])
+  })
+
+  it('keeps static URLs when the first project page fails', async () => {
+    vi.spyOn(api, 'getProjectsPaginated').mockRejectedValueOnce(new Error('page unavailable'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const urls = (await sitemap()).map((entry) => new URL(entry.url).pathname)
+    expect(urls).toEqual(PUBLIC_ROUTES)
+  })
+
   it('lists the public content pages, including /risk, /verify and /learn', async () => {
     const paths = (await sitemap()).map((entry) => new URL(entry.url).pathname)
     for (const route of ['/', '/explore', '/creator', '/risk', '/verify', '/learn']) {

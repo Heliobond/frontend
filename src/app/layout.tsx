@@ -7,7 +7,7 @@ import { Providers } from './providers'
 import { fontVariables } from '../theme/fonts'
 import { LocaleProvider, type Messages } from '../i18n/LocaleProvider'
 import { type Locale, RTL_LOCALES } from '../i18n/config'
-import { THEME_SCRIPT } from '../theme/themeScript'
+import { THEME_COLORS, THEME_SCRIPT } from '../theme/themeScript'
 import { generateMetadata } from '../lib/routeMetadata.server'
 import '../styles/index.css'
 
@@ -19,8 +19,8 @@ const Footer = dynamic(() => import('../shell/Footer').then((m) => m.Footer))
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F3F5F1' },
-    { media: '(prefers-color-scheme: dark)', color: '#0D1714' },
+    { media: '(prefers-color-scheme: light)', color: THEME_COLORS.light },
+    { media: '(prefers-color-scheme: dark)', color: THEME_COLORS.dark },
   ],
 }
 

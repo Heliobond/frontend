@@ -15,6 +15,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 1180000,
     fundingGoal: 1500000,
     lastVerified: '2 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 29),
     priceHistory: [],
   },
   {
@@ -28,6 +29,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 430000,
     fundingGoal: 600000,
     lastVerified: '6 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 25),
     priceHistory: [],
   },
   {
@@ -41,6 +43,7 @@ const rows: RegistryEntry[] = [
     fundedAmount: 2750000,
     fundingGoal: 3000000,
     lastVerified: '11 days ago',
+    lastVerifiedAt: Date.UTC(2025, 11, 20),
     priceHistory: [],
   },
 ]
@@ -134,6 +137,28 @@ describe('RegistryTable sort by credit', () => {
     expect(names[1]).toBe('Benin Solar Farm') // credit 82
     expect(names[2]).toBe('Mekong Hydro') // credit 91
   })
+})
+
+it('sorts verification timestamps in both directions with unknown times last', () => {
+  const unknown = { ...rows[0], id: 4, name: 'Unknown project', lastVerifiedAt: undefined }
+  render(<RegistryTable rows={[unknown, ...rows]} onSave={async () => true} />)
+  const sort = screen.getByRole('button', { name: /sort by last verified/i })
+
+  fireEvent.click(sort)
+  expect(rowNames()).toEqual([
+    'Mekong Hydro',
+    'Atacama Wind Park',
+    'Benin Solar Farm',
+    'Unknown project',
+  ])
+
+  fireEvent.click(sort)
+  expect(rowNames()).toEqual([
+    'Benin Solar Farm',
+    'Atacama Wind Park',
+    'Mekong Hydro',
+    'Unknown project',
+  ])
 })
 
 // ---------------------------------------------------------------------------
@@ -297,5 +322,43 @@ describe('RegistryTable pending and rollback (#692)', () => {
   it('disables Update scores with the reason when updates are blocked', () => {
     render(<RegistryTable rows={rows} onSave={vi.fn()} updateDisabledReason="Registry is paused" />)
     expect(screen.getAllByRole('button', { name: /update scores/i })[0]).toBeDisabled()
+  })
+})
+
+describe('RegistryTable keyboard focus management (#1020)', () => {
+  it('focuses credit input when opening the editor with the keyboard', () => {
+    render(<RegistryTable rows={rows} onSave={vi.fn()} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    updateBtn.focus()
+    expect(document.activeElement).toBe(updateBtn)
+
+    fireEvent.click(updateBtn)
+    const creditInput = screen.getByLabelText(/credit quality/i)
+    expect(document.activeElement).toBe(creditInput)
+  })
+
+  it('returns focus to the row Update button after canceling the editor', () => {
+    render(<RegistryTable rows={rows} onSave={vi.fn()} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    fireEvent.click(updateBtn)
+    expect(document.activeElement).toBe(screen.getByLabelText(/credit quality/i))
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    expect(document.activeElement).toBe(restoredUpdateBtn)
+  })
+
+  it('returns focus to the row Update button after a successful save', async () => {
+    const onSave = vi.fn().mockResolvedValue(true)
+    render(<RegistryTable rows={rows} onSave={onSave} />)
+    const updateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+    fireEvent.click(updateBtn)
+    fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
+
+    fireEvent.click(screen.getByRole('button', { name: /save/i }))
+    await waitFor(() => {
+      const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
+      expect(document.activeElement).toBe(restoredUpdateBtn)
+    })
   })
 })

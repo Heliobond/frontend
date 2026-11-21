@@ -8,6 +8,8 @@ import { type AlertOperator } from '../lib/yieldAlerts'
 import { formatDecimal } from '../lib/format'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
+const DIALOG_LAYER = 9991
+
 /**
  * YieldAlertModal — dialog for creating or editing a yield alert on a
  * specific bond. Focus-trapped, keyboard accessible, uses the existing
@@ -43,7 +45,7 @@ export function YieldAlertModal({
   const [operator, setOperator] = useState<AlertOperator>(initialOperator)
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstInputRef = useRef<HTMLInputElement>(null)
-  useFocusTrap(open, dialogRef, firstInputRef, onClose)
+  useFocusTrap(open, dialogRef, firstInputRef, onClose, DIALOG_LAYER)
 
   // Reseed the form when the modal opens with new values. Adjusting during
   // render is React's sanctioned way to reset state for a changed prop, and
@@ -102,7 +104,7 @@ export function YieldAlertModal({
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 9991,
+          zIndex: DIALOG_LAYER,
           width: 420,
           maxWidth: '92vw',
           background: 'var(--surface)',

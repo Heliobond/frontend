@@ -138,6 +138,9 @@ describe('registry client', () => {
     expect(mapped.status).toBe('open')
     expect(mapped.location).toBe('Ouarzazate, Morocco')
     expect(mapped.type).toBe('Solar')
+    expect(
+      registry.mapOnChainProject({ ...raw, last_update_timestamp: 0 }, 101).lastVerifiedAt,
+    ).toBeUndefined()
   })
 
   it('maps every ProjectStatus number to a valid UI status', async () => {
@@ -187,6 +190,7 @@ describe('registry client', () => {
     expect(page.projects.every((p) => Number.isInteger(p.id) && !Number.isNaN(p.id))).toBe(true)
     expect(page.projects[0].credit).toBe(66)
     expect(page.projects[0].green).toBe(77)
+    expect(page.projects[0].lastVerifiedAt).toBe(1_700_000_000_000)
     expect(page.projects[0].status).toBe('open')
     expect(page.projects[1].credit).toBe(71)
     expect(page.projects[1].green).toBe(82)

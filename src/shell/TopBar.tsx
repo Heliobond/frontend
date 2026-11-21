@@ -393,21 +393,41 @@ const iconBtnStyle = {
   color: 'var(--ink-60)',
 } as const
 
+const preferenceHeadingStyle: CSSProperties = {
+  padding: '4px 10px',
+  fontFamily: 'var(--font-data)',
+  fontSize: 11,
+  fontWeight: 600,
+  letterSpacing: '0.06em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-40)',
+}
+
+function preferenceItemStyle(selected: boolean): CSSProperties {
+  return {
+    display: 'block',
+    width: '100%',
+    textAlign: 'start',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '9px 10px',
+    borderRadius: 'var(--radius-input)',
+    fontFamily: 'var(--font-body)',
+    fontSize: 14,
+    fontWeight: selected ? 600 : 500,
+    color: selected ? 'var(--ink)' : 'var(--ink-60)',
+    background: 'transparent',
+  }
+}
+
 function PreferencesDropdown() {
   const t = useTranslations('Nav')
   const { locale, switchLocale } = useLocaleSwitcher()
-  const { theme, toggle } = useTheme()
-  // Theme state starts 'light' on server/first render (to avoid a hydration
-  // mismatch), so the theme label can't be trusted until after mount.
-  const [mounted, setMounted] = useState(false)
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), [])
-  const isDarkTheme = mounted && theme === 'dark'
-  const themeToggleLabel = isDarkTheme ? t('switchToLight') : t('switchToDark')
+  const { preference, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
@@ -420,16 +440,21 @@ function PreferencesDropdown() {
 
   useEffect(() => {
     if (open) {
-      const timer = setTimeout(() => itemRefs.current[0]?.focus(), 0)
+      const timer = setTimeout(
+        () => menuRef.current?.querySelector<HTMLElement>('[role="menuitemradio"]')?.focus(),
+        0,
+      )
       return () => clearTimeout(timer)
     }
   }, [open])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const items = itemRefs.current.filter((el): el is HTMLButtonElement => el !== null)
+    const items = Array.from(
+      e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]'),
+    )
     if (!items.length) return
     const focused = document.activeElement
-    const idx = items.indexOf(focused as HTMLButtonElement)
+    const idx = items.findIndex((item) => item === focused)
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
@@ -451,10 +476,6 @@ function PreferencesDropdown() {
     }
   }
 
-  // Reset item refs array before each render
-  // eslint-disable-next-line react-hooks/refs
-  itemRefs.current = []
-
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
@@ -472,6 +493,7 @@ function PreferencesDropdown() {
 
       {open && (
         <div
+          ref={menuRef}
           role="menu"
           aria-orientation="vertical"
           onKeyDown={handleKeyDown}
@@ -488,86 +510,49 @@ function PreferencesDropdown() {
             zIndex: 400,
           }}
         >
-          <button
-            ref={(el) => {
-              itemRefs.current.push(el)
-            }}
-            role="menuitemcheckbox"
-            aria-checked={isDarkTheme}
-            tabIndex={-1}
-            type="button"
-            onClick={toggle}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 10,
-              width: '100%',
-              textAlign: 'start',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '9px 10px',
-              borderRadius: 'var(--radius-input)',
-              fontFamily: 'var(--font-body)',
-              fontSize: 14,
-              fontWeight: 500,
-              color: 'var(--ink-60)',
-              background: 'transparent',
-            }}
-          >
-            {themeToggleLabel}
-            {mounted ? isDarkTheme ? <SunIcon /> : <MoonIcon /> : null}
-          </button>
+          <div role="group" aria-label={t('theme')}>
+            <div aria-hidden="true" style={preferenceHeadingStyle}>
+              {t('theme')}
+            </div>
+            {(['system', 'light', 'dark'] as const).map((option) => (
+              <button
+                key={option}
+                role="menuitemradio"
+                aria-checked={option === preference}
+                tabIndex={-1}
+                type="button"
+                onClick={() => setTheme(option)}
+                style={preferenceItemStyle(option === preference)}
+              >
+                {t(`themeOptions.${option}`)}
+              </button>
+            ))}
+          </div>
           <div
             role="separator"
             style={{ height: 1, background: 'var(--ink-12)', margin: '6px 0' }}
           />
-          <div
-            role="presentation"
-            style={{
-              padding: '4px 10px',
-              fontFamily: 'var(--font-data)',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: 'var(--ink-40)',
-            }}
-          >
-            {t('language')}
+          <div role="group" aria-label={t('language')}>
+            <div aria-hidden="true" style={preferenceHeadingStyle}>
+              {t('language')}
+            </div>
+            {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
+              <button
+                key={code}
+                role="menuitemradio"
+                aria-checked={code === locale}
+                tabIndex={-1}
+                type="button"
+                onClick={() => {
+                  switchLocale(code)
+                  setOpen(false)
+                }}
+                style={preferenceItemStyle(code === locale)}
+              >
+                <span lang={code}>{LOCALE_NAMES[code]}</span>
+              </button>
+            ))}
           </div>
-          {(Object.keys(LOCALE_LABELS) as Locale[]).map((code) => (
-            <button
-              key={code}
-              ref={(el) => {
-                itemRefs.current.push(el)
-              }}
-              role="menuitemradio"
-              aria-checked={code === locale}
-              tabIndex={-1}
-              type="button"
-              onClick={() => {
-                switchLocale(code)
-                setOpen(false)
-              }}
-              style={{
-                display: 'block',
-                width: '100%',
-                textAlign: 'start',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '9px 10px',
-                borderRadius: 'var(--radius-input)',
-                fontFamily: 'var(--font-body)',
-                fontSize: 14,
-                fontWeight: locale === code ? 600 : 500,
-                color: locale === code ? 'var(--ink)' : 'var(--ink-60)',
-                background: 'transparent',
-              }}
-            >
-              <span lang={code}>{LOCALE_NAMES[code]}</span>
-            </button>
-          ))}
         </div>
       )}
     </div>
@@ -592,42 +577,6 @@ function SettingsIcon() {
     </svg>
   )
 }
-function MoonIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
-    </svg>
-  )
-}
-function SunIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
-    </svg>
-  )
-}
-
 /** The connected wallet pill + its account menu (incl. Disconnect / sign out). */
 function WalletMenu({
   address,

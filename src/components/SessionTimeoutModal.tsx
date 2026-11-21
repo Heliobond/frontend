@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl'
 import { Button } from './Button'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
+const DIALOG_LAYER = 10000
+
 export interface SessionTimeoutModalProps {
   /** Whether the modal is currently visible. */
   open: boolean
@@ -31,7 +33,7 @@ export function SessionTimeoutModal({
   const modalRef = useRef<HTMLDivElement | null>(null)
 
   // Escape keeps the existing safe default: extend rather than log out.
-  useFocusTrap(open, modalRef, extendBtnRef, onExtend)
+  useFocusTrap(open, modalRef, extendBtnRef, onExtend, DIALOG_LAYER)
 
   if (!open) return null
 
@@ -48,7 +50,7 @@ export function SessionTimeoutModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: DIALOG_LAYER,
         padding: 20,
       }}
     >
