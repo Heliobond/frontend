@@ -61,6 +61,11 @@ once it cuts its first tagged release (it currently ships continuously from
 
 ### Fixed
 
+- Telemetry prompt: choosing Decline now dismisses the banner for the visit and keeps telemetry off even when `localStorage` writes are blocked (#1072).
+- Disabled buttons with a `reason` now expose it as the accessible description instead of only a hover `title` (#1073).
+- Mobile site menu is now a navigation disclosure (ordinary links, Tab order) rather than a `menu`, and Escape in the nested preferences popup closes only the popup (#1074).
+- Opened `InfoTooltip` help text is now the trigger's accessible description; the reference is removed on close (#1075).
+
 - Concurrent 401s racing each other and the expiry timer on /auth/refresh signing the user out.
 - WCAG AA dark mode contrast for financial figures, deltas, and semantic tokens (`--growth`, `--ember`) (#503).
 - Wallet account menu keyboard navigation with roving tabindex and ARIA menu roles (#66).
