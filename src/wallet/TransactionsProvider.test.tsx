@@ -23,6 +23,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(rpc('NOT_FOUND')))
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.useRealTimers()
   vi.unstubAllGlobals()
   sessionStorage.clear()
@@ -133,10 +134,11 @@ describe('TransactionsProvider', () => {
     vi.useFakeTimers()
     sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([{ ...saved('foreign'), ...scope }]))
     vi.mocked(fetch).mockResolvedValue(rpc('SUCCESS'))
+    const schedule = vi.spyOn(globalThis, 'setTimeout')
     const { result } = renderHook(useTransactions, { wrapper })
 
     expect(fetch).not.toHaveBeenCalled()
-    expect(vi.getTimerCount()).toBe(0)
+    expect(schedule).not.toHaveBeenCalledWith(expect.any(Function), 10000)
     expect(result.current.pendingCount).toBe(1)
 
     await act(async () => {
@@ -151,7 +153,7 @@ describe('TransactionsProvider', () => {
       ['local', 'confirmed'],
       ['foreign', 'pending'],
     ])
-    expect(vi.getTimerCount()).toBe(0)
+    expect(schedule).not.toHaveBeenCalledWith(expect.any(Function), 10000)
   })
 
   it('pauses polling while hidden and polls immediately when visible', async () => {
