@@ -42,6 +42,46 @@ describe('watchlist storage', () => {
     localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(['1', 2, null, 3]))
     expect(readWatchlist()).toEqual([2, 3])
   })
+
+  it('filters out negative project IDs', () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([-1, 1, -5, 2]))
+    expect(readWatchlist()).toEqual([1, 2])
+  })
+
+  it('filters out zero project IDs', () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([0, 1, 2]))
+    expect(readWatchlist()).toEqual([1, 2])
+  })
+
+  it('filters out fractional project IDs', () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([1.5, 2, 3.7, 4]))
+    expect(readWatchlist()).toEqual([2, 4])
+  })
+
+  it('filters out project IDs exceeding 2^32 - 1', () => {
+    const maxValid = 0xffffffff // 2^32 - 1 = 4294967295
+    const tooLarge = 0x100000000 // 2^32 = 4294967296
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([1, maxValid, tooLarge, 2]))
+    expect(readWatchlist()).toEqual([1, maxValid, 2])
+  })
+
+  it('deduplicates project IDs', () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([1, 2, 1, 3, 2, 4]))
+    expect(readWatchlist()).toEqual([1, 2, 3, 4])
+  })
+
+  it('handles mixed invalid and duplicate IDs', () => {
+    localStorage.setItem(
+      WATCHLIST_STORAGE_KEY,
+      JSON.stringify([-1, 1, 1.5, 2, 0, 2, 3, -5, 3, 0xffffffff, 0x100000000]),
+    )
+    expect(readWatchlist()).toEqual([1, 2, 3, 0xffffffff])
+  })
+
+  it('filters out NaN and Infinity', () => {
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify([1, NaN, 2, Infinity, 3, -Infinity]))
+    expect(readWatchlist()).toEqual([1, 2, 3])
+  })
 })
 
 describe('getBondStatus / isBondAvailable', () => {
