@@ -52,6 +52,11 @@ describe('indexing rules (#657)', () => {
   it('points at the sitemap on the canonical origin', () => {
     expect(robots().sitemap).toBe(`${CANONICAL_ORIGIN}/sitemap.xml`)
   })
+
+  it('has exactly one slash before sitemap.xml in the robots sitemap pointer (#1002)', () => {
+    expect(robots().sitemap).not.toContain('//sitemap.xml')
+    expect(robots().sitemap).toMatch(/\/sitemap\.xml$/)
+  })
 })
 
 describe('sitemap (#657)', () => {

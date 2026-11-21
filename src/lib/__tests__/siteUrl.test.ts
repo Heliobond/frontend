@@ -71,4 +71,32 @@ describe('getSiteUrl', () => {
     // Empty string is falsy, so should fall back to next priority
     expect(getSiteUrl()).toBe('https://production.vercel.app')
   })
+
+  it('normalizes trailing slashes on NEXT_PUBLIC_SITE_URL (#1002)', () => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com/'
+    expect(getSiteUrl()).toBe('https://example.com')
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com///'
+    expect(getSiteUrl()).toBe('https://example.com')
+  })
+
+  it('normalizes trailing slashes on Vercel deployment URLs (#1002)', () => {
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'prod.vercel.app/'
+    expect(getSiteUrl()).toBe('https://prod.vercel.app')
+
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL
+    process.env.VERCEL_URL = 'preview.vercel.app///'
+    expect(getSiteUrl()).toBe('https://preview.vercel.app')
+  })
+
+  it('produces the same result for equivalent origins with or without trailing slash (#1002)', () => {
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://heliobond.fi'
+    const withoutSlash = getSiteUrl()
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://heliobond.fi/'
+    const withSlash = getSiteUrl()
+
+    expect(withSlash).toBe(withoutSlash)
+    expect(`${withSlash}/sitemap.xml`).toBe('https://heliobond.fi/sitemap.xml')
+  })
 })
