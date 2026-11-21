@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useId,
   useState,
   type ButtonHTMLAttributes,
   type CSSProperties,
@@ -48,6 +49,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref,
 ) {
+  const reasonId = useId()
+  const explanation = disabled && reason ? reason : undefined
+  // Preserve any describedby the caller passed, adding the reason's id.
+  const describedBy =
+    [rest['aria-describedby'], explanation ? reasonId : undefined].filter(Boolean).join(' ') ||
+    undefined
   const [hover, setHover] = useState(false)
   const [active, setActive] = useState(false)
 
@@ -100,12 +107,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     ...palette[variant],
   }
 
-  return (
+  const button = (
     <button
       ref={ref}
       type={type}
       disabled={disabled}
-      title={disabled && reason ? reason : undefined}
+      title={explanation}
       aria-busy={loading || undefined}
       onClick={disabled ? undefined : onClick}
       onMouseEnter={() => setHover(true)}
@@ -117,13 +124,41 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       onMouseUp={() => setActive(false)}
       style={base}
       {...rest}
+      aria-describedby={describedBy}
     >
       {loading ? <Spinner /> : icon}
       {children}
       {!loading && iconRight}
     </button>
   )
+
+  if (!explanation) return button
+  // A natively disabled button is skipped by keyboard focus and a `title` is
+  // not reachable by touch, so the reason is also real text next to the button,
+  // linked with aria-describedby. It is visually hidden (the hover title stays
+  // for pointer users) but is read in the accessibility tree, and each control
+  // gets its own id.
+  return (
+    <>
+      {button}
+      <span id={reasonId} style={visuallyHidden}>
+        {explanation}
+      </span>
+    </>
+  )
 })
+
+const visuallyHidden: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+}
 
 function Spinner() {
   return (
