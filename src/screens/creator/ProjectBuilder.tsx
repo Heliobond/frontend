@@ -386,7 +386,13 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
 
           <Label>{t('fieldMediaDocs')}</Label>
           <div className="hb-builder-drops">
-            <DropZone label={t('dropCover')} hint={t('dropCoverHint')} />
+            <DropZone
+              label={t('dropCover')}
+              hint={t('dropCoverHint')}
+              accept="image/png,image/jpeg,.jpg,.jpeg"
+              validate={isCoverImage}
+              errorMessage={t('coverUnsupported')}
+            />
             <DropZone label={t('dropDocs')} hint={t('dropDocsHint')} />
           </div>
         </Card>
@@ -527,21 +533,32 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
   )
 }
 
+function isCoverImage(file: File): boolean {
+  if (file.type) return file.type === 'image/png' || file.type === 'image/jpeg'
+  return /\.(png|jpe?g)$/i.test(file.name)
+}
+
 function DropZone({
   label,
   hint,
   accept,
   multiple = false,
+  validate,
+  errorMessage,
 }: {
   label: string
   hint: string
   accept?: string
   multiple?: boolean
+  validate?: (file: File) => boolean
+  errorMessage?: string
 }) {
   const inputId = useId()
   const hintId = `${inputId}-hint`
+  const errorId = `${inputId}-error`
   const [isFocused, setIsFocused] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <label
@@ -567,11 +584,21 @@ function DropZone({
         type="file"
         accept={accept}
         multiple={multiple}
-        aria-describedby={hintId}
+        aria-label={label}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         onChange={(event) => {
           const files = Array.from(event.target.files ?? [])
+          const rejected = validate ? files.filter((file) => !validate(file)) : []
+          if (rejected.length > 0) {
+            setError(errorMessage ?? 'Unsupported file type')
+            setSelectedFiles('')
+            event.target.value = ''
+            return
+          }
+          setError(null)
           setSelectedFiles(
             files.length === 0
               ? ''
@@ -594,6 +621,11 @@ function DropZone({
       <div id={hintId} style={hintText}>
         {selectedFiles || hint}
       </div>
+      {error && (
+        <p id={errorId} role="alert" style={errorText}>
+          {error}
+        </p>
+      )}
     </label>
   )
 }

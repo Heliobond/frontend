@@ -237,4 +237,37 @@ describe('Explore — pagination', () => {
       scroll: false,
     })
   })
+
+  it('reaches a matching project on page two from a zero-match first page (#1003)', async () => {
+    const user = userEvent.setup()
+    const firstPage = makeProjects(50)
+    const target = { ...makeProjects(1, 'Solar', 50)[0], name: 'Hidden Gem' }
+    mockPaginated([...firstPage, target])
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(cards().length).toBe(12))
+
+    await user.type(screen.getByRole('searchbox'), 'Hidden Gem')
+    expect(await screen.findByText('No projects found')).toBeInTheDocument()
+    const searchMore = screen.getByRole('button', { name: 'Search remaining projects' })
+
+    await user.click(searchMore)
+    await waitFor(() => expect(cards().length).toBe(1))
+    expect(cards()[0]).toHaveTextContent('Hidden Gem')
+    expect(screen.queryByText('No projects found')).not.toBeInTheDocument()
+  })
+
+  it('keeps the empty state when the search is genuinely exhausted (#1003)', async () => {
+    const user = userEvent.setup()
+    mockPaginated(makeProjects(5))
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(cards().length).toBe(5))
+
+    await user.type(screen.getByRole('searchbox'), 'nothing matches')
+    expect(await screen.findByText('No projects found')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Search remaining projects' }),
+    ).not.toBeInTheDocument()
+  })
 })

@@ -205,3 +205,67 @@ describe('OracleForms validation', () => {
     })
   })
 })
+
+describe('Issue #1007: selected IDs follow the current rows', () => {
+  const liveProjects: RegistryEntry[] = [
+    { ...mockProjects[0], id: 101, name: 'Live Solar', credit: 70, green: 60 },
+    { ...mockProjects[0], id: 202, name: 'Live Wind', type: 'Wind', credit: 55, green: 65 },
+  ]
+
+  it('selects an actual current project after the fixture list is replaced', () => {
+    const onPushScores = vi.fn().mockResolvedValue(true)
+    const onFund = vi.fn().mockResolvedValue(true)
+    const { rerender } = render(
+      <OracleForms
+        projects={mockProjects}
+        liquid={50_000}
+        onPushScores={onPushScores}
+        onFund={onFund}
+      />,
+    )
+
+    rerender(
+      <OracleForms
+        projects={liveProjects}
+        liquid={50_000}
+        onPushScores={onPushScores}
+        onFund={onFund}
+      />,
+    )
+
+    const selects = screen.getAllByRole('combobox')
+    expect(selects[0]).toHaveValue('101')
+    expect(selects[1]).toHaveValue('101')
+
+    const scoreInputs = screen.getAllByRole('spinbutton')
+    fireEvent.change(scoreInputs[0], { target: { value: '40' } })
+    fireEvent.change(scoreInputs[1], { target: { value: '50' } })
+    fireEvent.click(screen.getByText('Update on-chain scores'))
+    expect(onPushScores).toHaveBeenCalledWith(101, 40, 50)
+
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1000' } })
+    fireEvent.click(screen.getByText('Fund from the vault'))
+    expect(onFund).toHaveBeenCalledWith(101, 1000)
+  })
+
+  it('invokes neither handler when there are no projects to act on', () => {
+    const onPushScores = vi.fn().mockResolvedValue(true)
+    const onFund = vi.fn().mockResolvedValue(true)
+    render(
+      <OracleForms projects={[]} liquid={50_000} onPushScores={onPushScores} onFund={onFund} />,
+    )
+
+    const scoreInputs = screen.getAllByRole('spinbutton')
+    fireEvent.change(scoreInputs[0], { target: { value: '40' } })
+    fireEvent.change(scoreInputs[1], { target: { value: '50' } })
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1000' } })
+
+    expect(screen.getByText('Update on-chain scores')).toBeDisabled()
+    expect(screen.getByText('Fund from the vault')).toBeDisabled()
+    fireEvent.click(screen.getByText('Update on-chain scores'))
+    fireEvent.click(screen.getByText('Fund from the vault'))
+
+    expect(onPushScores).not.toHaveBeenCalled()
+    expect(onFund).not.toHaveBeenCalled()
+  })
+})
