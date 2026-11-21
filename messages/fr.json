@@ -65,7 +65,12 @@
       "returns": "Rendements",
       "yield": "Rendement",
       "historyChartLabel": "Historique : {label}",
-      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures."
+      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures.",
+      "failed": "Impossible de charger les performances historiques. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
+      "showDataTable": "Voir le tableau de données",
+      "hideDataTable": "Masquer le tableau de données",
+      "dateColumn": "Date"
     },
     "TransactionsDrawer": {
       "title": "Activité des transactions",
