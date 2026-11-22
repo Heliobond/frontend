@@ -95,8 +95,8 @@ only the values needed for the mode you are testing.
 | `NEXT_PUBLIC_SOROBAN_RPC_URL`      | No        | Network-specific Stellar RPC URL            | Override the Soroban RPC endpoint.                                                                                   |
 | `NEXT_PUBLIC_HORIZON_URL`          | No        | Network-specific Horizon URL                | Override the Horizon endpoint used for transaction account loading.                                                  |
 
-`NEXT_PUBLIC_DEMO_MODE=true` forces fixtures even when `NEXT_PUBLIC_API_URL` is
-set. The remaining variables (CSP mode, telemetry sink, auth URL, release tag,
+The app uses demo fixtures when no backend URL or API key is configured. The
+remaining variables (CSP mode, telemetry sink, auth URL, release tag,
 source maps, dev routes) are documented inline in `.env.example` and
 [SECURITY.md](SECURITY.md). For backend configuration, see the backend
 repository's `.env.example`.
