@@ -34,8 +34,8 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function headersOf(call: unknown[]): Record<string, string> {
-  return ((call[1] as RequestInit | undefined)?.headers ?? {}) as Record<string, string>
+function headersOf(call: unknown[]): Headers {
+  return new Headers((call[1] as RequestInit | undefined)?.headers)
 }
 
 beforeEach(() => {
@@ -64,8 +64,8 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     const headers = headersOf(vi.mocked(fetch).mock.calls[0])
-    expect(headers['X-API-Key']).toBeUndefined()
-    expect(JSON.stringify(headers)).not.toContain(KEY)
+    expect(headers.has('X-API-Key')).toBe(false)
+    expect(JSON.stringify([...headers])).not.toContain(KEY)
   })
 
   it('calls the backend directly on the server and sends the key', async () => {
@@ -73,7 +73,7 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     expect(fetch).toHaveBeenCalledWith(`${API}/v1/projects?cursor=0&limit=50`, expect.anything())
-    expect(headersOf(vi.mocked(fetch).mock.calls[0])['X-API-Key']).toBe(KEY)
+    expect(headersOf(vi.mocked(fetch).mock.calls[0]).get('X-API-Key')).toBe(KEY)
   })
 
   it('strips a trailing slash from the configured origin', async () => {

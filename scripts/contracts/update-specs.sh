@@ -98,6 +98,10 @@ log "Publishing fixtures"
 BACKUP_DIR="$STAGE_DIR/backup"
 mkdir -p "$BACKUP_DIR"
 for f in "${FIXTURES[@]}"; do
+  if [ -d "$OUT_DIR/$f" ]; then
+    echo "Error: fixture destination is a directory: $OUT_DIR/$f" >&2
+    exit 1
+  fi
   if [ -f "$OUT_DIR/$f" ]; then cp -p "$OUT_DIR/$f" "$BACKUP_DIR/$f"; fi
 done
 

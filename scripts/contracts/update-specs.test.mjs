@@ -97,6 +97,19 @@ describe.skipIf(!hasBash)('update-specs.sh staging (#1038)', () => {
     expect(listing()).toEqual(Object.keys(OLD).sort())
   })
 
+  it('refuses to publish if a destination is a directory', () => {
+    const destination = path.join(outDir, 'project_registry.spec.json')
+    fs.rmSync(destination)
+    fs.mkdirSync(destination)
+
+    const result = run()
+
+    expect(result.status).not.toBe(0)
+    expect(fs.readdirSync(destination)).toEqual([])
+    expect(read('investment_vault.spec.json')).toBe(OLD['investment_vault.spec.json'])
+    expect(read('COMMIT_SHA')).toBe(OLD.COMMIT_SHA)
+  })
+
   it('preserves both fixtures and the revision file when the second export fails', () => {
     const result = run({ FAIL_ON: 'project_registry' })
 
