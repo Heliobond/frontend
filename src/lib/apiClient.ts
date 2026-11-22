@@ -63,6 +63,26 @@ function authHeaders(): Record<string, string> {
 }
 
 /**
+ * Normalise a `HeadersInit` value into a plain `Record<string, string>`.
+ *
+ * `RequestInit.headers` is typed as `HeadersInit`, which is one of:
+ *   - `Headers` instance — spread (`{ ...headersInstance }`) produces `{}` because
+ *     `Headers` has no enumerable own properties.
+ *   - `[string, string][]` — spread produces `{ 0: ['k','v'], 1: … }` (numeric indices),
+ *     not the key/value pairs the caller intended.
+ *   - `Record<string, string>` — spread works correctly.
+ *
+ * The `Headers` constructor accepts all three forms, so round-tripping through it
+ * normalises every variant into an iterable that `Object.fromEntries` can consume.
+ * Header names are lowercased by the `Headers` API, which also makes caller
+ * overrides for `accept` / `Accept` / `ACCEPT` all shadow the same default key.
+ */
+function normalizeHeaders(init?: HeadersInit): Record<string, string> {
+  if (!init) return {}
+  return Object.fromEntries(new Headers(init).entries())
+}
+
+/**
  * Performs a `GET` against a versioned endpoint and parses the JSON body.
  *
  * Rejects with an `ApiError` on a non-2xx status, a timeout, a network error or
@@ -73,9 +93,18 @@ export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS)
   try {
     const isServer = typeof window === 'undefined'
+    // Merge headers in priority order: defaults < auth < caller overrides.
+    // normalizeHeaders converts any HeadersInit form (Headers instance,
+    // [string,string][], or plain object) into a plain record so the spread
+    // works correctly for all three.
+    const mergedHeaders: Record<string, string> = {
+      accept: 'application/json',
+      ...normalizeHeaders(authHeaders()),
+      ...normalizeHeaders(init?.headers),
+    }
     const response = await fetch(buildApiUrl(path), {
       ...init,
-      headers: { Accept: 'application/json', ...authHeaders(), ...init?.headers },
+      headers: mergedHeaders,
       signal: controller.signal,
       ...(isServer ? { next: { revalidate: 60 } } : {}),
     })
