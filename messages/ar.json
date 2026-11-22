@@ -750,6 +750,8 @@
   "YieldAlert": {
     "modalTitle": "تعيين تنبيه العائد",
     "editTitle": "تعديل تنبيه العائد",
+    "selectAlertLabel": "اختر تنبيهًا",
+    "newAlert": "تنبيه جديد",
     "conditionLabel": "نبّهني عندما يتجاوز العائد",
     "thresholdLabel": "الحد",
     "operatorAbove": "أعلى من",

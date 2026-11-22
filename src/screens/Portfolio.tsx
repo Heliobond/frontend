@@ -2,7 +2,15 @@
 
 import { TransactionPendingError } from '../wallet/transactions'
 
-import { memo, useState, useEffect, useCallback, type CSSProperties, type ReactNode } from 'react'
+import {
+  memo,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import Link from 'next/link'
 import { useLocale, useTranslations } from 'next-intl'
 import { Button, StatBlock, LiquidityMeter, Card, AddressChip, useToast } from '../components'
@@ -68,6 +76,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>([])
   const [claiming, setClaiming] = useState(false)
   const [activityScrollTop, setActivityScrollTop] = useState(0)
+  const activityScrollRef = useRef<HTMLDivElement>(null)
   const activityRange = getVirtualRange(
     activity.length,
     activityScrollTop,
@@ -75,6 +84,20 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
     ACTIVITY_ROW_HEIGHT,
     ACTIVITY_OVERSCAN,
   )
+
+  // A wallet switch or a refresh can shrink the feed while the scroll offset
+  // still points into the old, longer one. Pull both the DOM and the state that
+  // drives the virtual window back into the current list's range.
+  useEffect(() => {
+    const maxScrollTop = Math.max(
+      0,
+      activity.length * ACTIVITY_ROW_HEIGHT - ACTIVITY_VIEWPORT_HEIGHT,
+    )
+    if (activityScrollTop <= maxScrollTop) return
+    const container = activityScrollRef.current
+    if (container && container.scrollTop > maxScrollTop) container.scrollTop = maxScrollTop
+    setActivityScrollTop(maxScrollTop)
+  }, [activity.length, activityScrollTop])
 
   const refreshClaims = useCallback(() => {
     setPendingClaims(getPendingClaims(address ?? undefined))
@@ -529,6 +552,7 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
             </span>
           </div>
           <div
+            ref={activityScrollRef}
             role="region"
             aria-label={t('activityRegion', { count: activity.length })}
             tabIndex={0}

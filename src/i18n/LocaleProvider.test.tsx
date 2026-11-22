@@ -98,6 +98,8 @@ describe('LocaleProvider', () => {
       await act(async () => french.resolve({ default: fr }))
 
       expect(screen.getByTestId('locale')).toHaveTextContent('ar')
+      expect(document.documentElement.dir).toBe('rtl')
+      expect(document.documentElement.lang).toBe('ar')
       expect(document.cookie).toContain('NEXT_LOCALE=ar')
       expect(mockRefresh).toHaveBeenCalledTimes(1)
     } finally {

@@ -743,6 +743,8 @@
   "YieldAlert": {
     "modalTitle": "Configurer une alerte de rendement",
     "editTitle": "Modifier l’alerte de rendement",
+    "selectAlertLabel": "Choisir une alerte",
+    "newAlert": "Nouvelle alerte",
     "conditionLabel": "Alerter quand le rendement va",
     "thresholdLabel": "Seuil",
     "operatorAbove": "au-dessus de",
