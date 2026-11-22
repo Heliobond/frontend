@@ -270,4 +270,68 @@ describe('Explore — pagination', () => {
       screen.queryByRole('button', { name: 'Search remaining projects' }),
     ).not.toBeInTheDocument()
   })
+
+  it('displays recoverable feedback on pagination failure and retries successfully (#1004)', async () => {
+    const user = userEvent.setup()
+    const allProjects = makeProjects(60)
+
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      if (page === 2) {
+        return Promise.reject(new Error('network error'))
+      }
+      const start = (page - 1) * pageSize
+      const slice = allProjects.slice(start, start + pageSize)
+      return Promise.resolve({
+        projects: slice,
+        total: allProjects.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < allProjects.length,
+      })
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(screen.getByText('60 projects')).toBeInTheDocument())
+    expect(cards().length).toBe(12)
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(24))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(36))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(48))
+
+    // This click requires page 2 fetch, which rejects!
+    await user.click(loadMoreButton(12))
+
+    // Already loaded cards must be preserved!
+    await waitFor(() =>
+      expect(screen.getByText('Failed to load more projects')).toBeInTheDocument(),
+    )
+    expect(cards().length).toBe(48)
+    const retryBtn = screen.getByRole('button', { name: /retry/i })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Now make page 2 succeed on retry
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      const start = (page - 1) * pageSize
+      const slice = allProjects.slice(start, start + pageSize)
+      return Promise.resolve({
+        projects: slice,
+        total: allProjects.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < allProjects.length,
+      })
+    })
+
+    await user.click(retryBtn)
+
+    await waitFor(() => expect(cards().length).toBe(60))
+    expect(cards()[59]).toHaveTextContent('Project 60')
+    expect(screen.queryByText('Failed to load more projects')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
+  })
 })
