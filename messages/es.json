@@ -649,7 +649,13 @@
     "yieldHistory": "Historial del rendimiento",
     "yieldLabel": "Rendimiento",
     "yieldHelpLabel": "Acerca del rendimiento del bono",
-    "yieldHelp": "Este es el rendimiento indicativo actual del bono. Toca para obtener más información; no es un rendimiento garantizado."
+    "yieldHelp": "Este es el rendimiento indicativo actual del bono. Toca para obtener más información; no es un rendimiento garantizado.",
+    "missingInfoNotice": "Algunos detalles de este proyecto no están disponibles en el registro. Solo se muestran las puntuaciones verificadas en cadena.",
+    "creatorUnavailable": "Información del creador no disponible",
+    "storyUnavailable": "No hay una descripción disponible del proyecto.",
+    "scoreHistoryUnavailable": "Todavía no hay historial de puntuaciones en cadena para este proyecto.",
+    "fundingUnavailable": "Información de financiación no disponible.",
+    "priceHistoryUnavailable": "No hay observaciones de precio o rendimiento disponibles para este proyecto."
   },
   "PriceHistory": {
     "title": "Precio del bono",

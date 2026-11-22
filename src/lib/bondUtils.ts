@@ -194,6 +194,8 @@ export function setYieldRange(range: [number, number]): void {
 
 export function getPersistedSortOrder(): SortDirection {
   if (typeof window === 'undefined') return SORT_DEFAULT
+  // The URL is the authoritative, shareable source. Read it before touching
+  // localStorage so a storage failure cannot hide a value already in the URL.
   try {
     const url = new URL(window.location.href)
     const fromUrl =
@@ -202,6 +204,8 @@ export function getPersistedSortOrder(): SortDirection {
       url.searchParams.get('sort') ||
       url.searchParams.get('direction')
     if (fromUrl === 'asc' || fromUrl === 'desc') return fromUrl
+  } catch {}
+  try {
     const stored = localStorage.getItem(SORT_ORDER_KEY)
     if (stored === 'asc' || stored === 'desc') return stored
   } catch {}
@@ -210,8 +214,13 @@ export function getPersistedSortOrder(): SortDirection {
 
 export function persistSortOrder(direction: SortDirection): void {
   if (typeof window === 'undefined') return
+  // Storage and URL persistence are independent: a blocked/full localStorage
+  // must not stop the URL from being updated (and vice versa). `set` on the
+  // existing URL's search params preserves every unrelated query parameter.
   try {
     localStorage.setItem(SORT_ORDER_KEY, direction)
+  } catch {}
+  try {
     const url = new URL(window.location.href)
     url.searchParams.set('sortOrder', direction)
     window.history.replaceState(window.history.state, '', url.toString())

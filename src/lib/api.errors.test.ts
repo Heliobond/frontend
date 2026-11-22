@@ -281,6 +281,32 @@ describe('getProject', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({}, 404))
     await expect(api.getProject(99999)).resolves.toBeNull()
   })
+
+  it('returns a complete detail record for a backend-only project', async () => {
+    const api = await loadApi()
+    const backendOnlyId = 99999
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse(
+        projectList([{ id: backendOnlyId, credit_quality: 77, green_impact: 88 }]).projects[0],
+      ),
+    )
+    const result = await api.getProject(backendOnlyId)
+    expect(result?.project).toMatchObject({
+      id: backendOnlyId,
+      credit: 77,
+      green: 88,
+      name: `Bond Project #${backendOnlyId}`,
+    })
+    expect(result?.detail).toMatchObject({
+      scoreHistory: { credit: [], green: [] },
+      fundingTimeline: [],
+      priceHistory: [],
+      creator: { name: '', verified: false, since: '' },
+    })
+    expect(result?.detail.missingSections).toEqual(
+      expect.arrayContaining(['creator', 'scoreHistory', 'story']),
+    )
+  })
 })
 
 describe('investment creation', () => {
@@ -302,27 +328,27 @@ describe('investment creation', () => {
   })
 })
 
-describe('getPriceHistory', () => {
+describe('getScoreHistory', () => {
   it.each(failures)('surfaces production errors on $name', async ({ mock }) => {
     const api = await loadApi()
     mock()
-    await expect(api.getPriceHistory(1)).rejects.toThrow()
+    await expect(api.getScoreHistory(1)).rejects.toThrow()
     expect(fetch).toHaveBeenCalledWith(proxyUrl('/v1/projects/1/history'), expect.anything())
     expect(warn).not.toHaveBeenCalled()
   })
 
   it('surfaces request timeouts', async () => {
     const api = await loadApi()
-    await expect(withTimeout(api, () => api.getPriceHistory(1))).rejects.toThrow()
+    await expect(withTimeout(api, () => api.getScoreHistory(1))).rejects.toThrow()
   })
 
   it('rejects when the payload has no entries array', async () => {
     const api = await loadApi()
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ project_id: 1, count: 0 }))
-    await expect(api.getPriceHistory(1)).rejects.toThrow()
+    await expect(api.getScoreHistory(1)).rejects.toThrow()
   })
 
-  it('maps history entries into chronologically ordered chart points', async () => {
+  it('maps history entries into chronologically ordered score observations', async () => {
     const api = await loadApi()
     vi.mocked(fetch).mockResolvedValue(
       jsonResponse({
@@ -334,16 +360,38 @@ describe('getPriceHistory', () => {
         ],
       }),
     )
-    const points = await api.getPriceHistory(1)
-    expect(points.map((p) => p.date)).toEqual(['2026-03-01', '2026-03-02'])
-    expect(points[1].yield).toBeGreaterThan(points[0].yield ?? 0)
+    const points = await api.getScoreHistory(1)
+    expect(points).toEqual([
+      { date: '2026-03-01', credit: 70, green: 60 },
+      { date: '2026-03-02', credit: 80, green: 90 },
+    ])
+    for (const point of points) {
+      expect(point).not.toHaveProperty('price')
+      expect(point).not.toHaveProperty('yield')
+    }
   })
 
-  it('generates ascending mock history without an API', async () => {
+  it('generates ascending mock scores without an API', async () => {
     const api = await loadApi(null)
-    const points = await api.getPriceHistory(2)
+    const points = await api.getScoreHistory(2)
     expect(points).toHaveLength(30)
     expect(points[0].date < points[29].date).toBe(true)
+    expect(points[0]).not.toHaveProperty('price')
+    expect(points[0]).not.toHaveProperty('yield')
+  })
+
+  it('keeps the legacy alias score-only as well', async () => {
+    const api = await loadApi()
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({
+        project_id: 1,
+        count: 1,
+        entries: [
+          { timestamp: Date.parse('2026-03-01T00:00:00Z'), credit_quality: 70, green_impact: 60 },
+        ],
+      }),
+    )
+    expect(await api.getPriceHistory(1)).toEqual([{ date: '2026-03-01', credit: 70, green: 60 }])
   })
 })
 
