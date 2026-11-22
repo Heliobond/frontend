@@ -25,12 +25,14 @@ import {
   fetchBackendPortfolio,
   fetchBackendProject,
   fetchBackendProjects,
-  historyToPricePoints,
+  historyToScorePoints,
   isBackendConfigured,
   type BackendProject,
+  type ScoreObservation,
 } from './apiClient'
 
 export { API_TIMEOUT_MS }
+export type { ScoreObservation }
 
 export interface Investment {
   id: number
@@ -94,6 +96,30 @@ export function mapBackendProject(raw: BackendProject, fallback?: Project): Proj
     id: raw.id,
     credit: Number.isFinite(credit) ? credit : fallback.credit,
     green: Number.isFinite(green) ? green : fallback.green,
+  }
+}
+
+/**
+ * Builds a detail record for a project that exists in the backend but has no
+ * bundled fixture. Every required field is present so consumers never crash on
+ * a missing nested object, and the absent sections are named explicitly so the
+ * UI can show an honest "information unavailable" state rather than inventing
+ * a creator, story, or history. The backend scores live on `project` and are
+ * rendered independently of this record.
+ */
+export function createBackendProjectDetail(project: Project): ProjectDetail {
+  return {
+    name: project.name,
+    location: project.location,
+    story: '',
+    creator: { name: '', verified: false, since: '' },
+    scoreHistory: { credit: [], green: [] },
+    fundingTimeline: [],
+    fundedAmount: project.fundedAmount,
+    fundingGoal: project.fundingGoal,
+    priceHistory: [],
+    heroGradient: 'linear-gradient(135deg, var(--ink-12), var(--ink-06))',
+    missingSections: ['story', 'creator', 'scoreHistory', 'fundingTimeline', 'priceHistory'],
   }
 }
 
@@ -206,9 +232,10 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
   try {
     const raw = await fetchBackendProject(id)
     if (!raw) return null
+    const project = mapBackendProject(raw, mockProject)
     return {
-      project: mapBackendProject(raw, mockProject),
-      detail: mockDetail ?? ({ id } as unknown as ProjectDetail),
+      project,
+      detail: mockDetail ?? createBackendProjectDetail(project),
       verifiedMetadata: 'unverified',
       source: 'backend',
     }
@@ -238,31 +265,26 @@ export async function biometricLogin(username: string = ''): Promise<boolean> {
   }
 }
 
-export interface PricePoint {
-  date: string
-  price: number
-  yield?: number
-}
-
 /**
- * Chart points for a project.
+ * Dated impact-score observations for a project, oldest first.
  *
  * Sourced from `GET /v1/projects/:id/history`, which reports impact-score
- * snapshots. This replaces the mocked `/price-history` endpoint the backend
- * never implemented (#588). Demo mode still synthesises points so the chart has
- * something to draw without a backend.
+ * snapshots (credit quality and green impact). It carries no trade prices or
+ * yield observations, so those fields are deliberately absent from the result.
+ * Demo mode synthesises score points so a chart has something to draw without
+ * a backend.
  */
-export async function getPriceHistory(projectId: number): Promise<PricePoint[]> {
-  const makeMock = (): PricePoint[] => {
-    const basePrice = 95 + projectId * 5
+export async function getScoreHistory(projectId: number): Promise<ScoreObservation[]> {
+  const makeMock = (): ScoreObservation[] => {
     const today = new Date()
     const points = Array.from({ length: 30 }, (_, i) => {
       const d = new Date(today)
       d.setDate(d.getDate() - i)
-      const date = d.toISOString().split('T')[0]
-      const price = basePrice + Math.sin((30 - i) / 3 + projectId) * 3 + (30 - i) * 0.1
-      const yieldValue = 5 + Math.cos((30 - i) / 2 + projectId) * 0.5
-      return { date, price: Number(price.toFixed(2)), yield: Number(yieldValue.toFixed(2)) }
+      return {
+        date: d.toISOString().split('T')[0],
+        credit: Math.round(50 + ((i * 7 + projectId * 11) % 40)),
+        green: Math.round(55 + ((i * 5 + projectId * 13) % 40)),
+      }
     })
     return points.reverse() // ascending chronological order
   }
@@ -270,15 +292,22 @@ export async function getPriceHistory(projectId: number): Promise<PricePoint[]> 
   if (isDemoMode()) return makeMock()
   try {
     const history = await fetchBackendHistory(projectId)
-    return historyToPricePoints(history.entries)
+    return historyToScorePoints(history.entries)
   } catch (error) {
     if (error instanceof ApiError) throw error
     throw new ApiError({
       cause: error,
-      message: `Failed to fetch price history for project ${projectId}`,
+      message: `Failed to fetch score history for project ${projectId}`,
     })
   }
 }
+
+/**
+ * @deprecated The history endpoint returns scores, not prices. This alias only
+ * exists for older callers and now yields score observations with no price or
+ * yield. Use `getScoreHistory` instead.
+ */
+export const getPriceHistory = getScoreHistory
 
 /**
  * On-chain vault position for an address, from `GET /v1/portfolio/:address`.

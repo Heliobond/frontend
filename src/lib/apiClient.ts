@@ -232,25 +232,39 @@ export async function fetchBackendPortfolio(address: string): Promise<BackendPor
   return apiGet<BackendPortfolio>(`/portfolio/${encodeURIComponent(address)}`)
 }
 
+/** One dated impact-score observation from `GET /v1/projects/:id/history`. */
+export interface ScoreObservation {
+  /** ISO calendar date (YYYY-MM-DD) of the observation. */
+  date: string
+  /** Credit Quality score reported by the oracle (0–100). */
+  credit: number
+  /** Green Impact score reported by the oracle (0–100). */
+  green: number
+}
+
 /**
  * Impact-score history rendered as chart points.
  *
- * The backend reports scores, not share prices, so the share price is derived
- * from the green-impact score and scaled the same way the demo fixtures do. This
- * replaces the previously mocked `/price-history` endpoint, which the backend
- * never implemented.
+ * The score endpoint reports dated credit-quality and green-impact snapshots,
+ * not share prices or yield observations. No price or yield is synthesised:
+ * those fields are reserved for data that actually measures them.
  *
  * Output is sorted oldest first so a chart never draws a time line backwards,
  * regardless of the order the caller supplies.
  */
-export function historyToPricePoints(
-  entries: BackendHistoryEntry[],
-): Array<{ date: string; price: number; yield: number }> {
+export function historyToScorePoints(entries: BackendHistoryEntry[]): ScoreObservation[] {
   return [...entries]
     .sort((a, b) => a.timestamp - b.timestamp)
     .map((entry) => ({
       date: new Date(entry.timestamp).toISOString().split('T')[0],
-      price: Number((95 + (entry.green_impact / 100) * 5).toFixed(2)),
-      yield: Number((entry.green_impact / 2).toFixed(2)),
+      credit: Number(entry.credit_quality),
+      green: Number(entry.green_impact),
     }))
 }
+
+/**
+ * @deprecated The history endpoint returns scores, not prices. This alias only
+ * exists for older callers; it returns score observations with no price/yield.
+ * Use `historyToScorePoints` instead.
+ */
+export const historyToPricePoints = historyToScorePoints

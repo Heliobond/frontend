@@ -648,7 +648,13 @@
     "yieldHistory": "Yield history",
     "yieldLabel": "Yield",
     "yieldHelpLabel": "About bond yield",
-    "yieldHelp": "This is the bond's current indicated yield. Tap to learn more; it is not a guaranteed return."
+    "yieldHelp": "This is the bond's current indicated yield. Tap to learn more; it is not a guaranteed return.",
+    "missingInfoNotice": "Some details for this project are not available from the registry. Only verified on-chain scores are shown.",
+    "creatorUnavailable": "Creator information unavailable",
+    "storyUnavailable": "No project story is available.",
+    "scoreHistoryUnavailable": "No on-chain score history is available for this project yet.",
+    "fundingUnavailable": "Funding information unavailable.",
+    "priceHistoryUnavailable": "No price or yield observations are available for this project."
   },
   "PriceHistory": {
     "title": "Bond pricing",

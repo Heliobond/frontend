@@ -641,7 +641,13 @@
     "yieldHistory": "Histórico de rendimento",
     "yieldLabel": "Rendimento",
     "yieldHelpLabel": "Sobre o rendimento do título",
-    "yieldHelp": "Este é o rendimento indicativo atual do título. Toque para saber mais; não é um retorno garantido."
+    "yieldHelp": "Este é o rendimento indicativo atual do título. Toque para saber mais; não é um retorno garantido.",
+    "missingInfoNotice": "Alguns detalhes deste projeto não estão disponíveis no registro. Apenas as pontuações verificadas na cadeia são exibidas.",
+    "creatorUnavailable": "Informações do criador indisponíveis",
+    "storyUnavailable": "Não há uma descrição disponível para o projeto.",
+    "scoreHistoryUnavailable": "Ainda não há histórico de pontuações na cadeia para este projeto.",
+    "fundingUnavailable": "Informações de financiamento indisponíveis.",
+    "priceHistoryUnavailable": "Não há observações de preço ou rendimento disponíveis para este projeto."
   },
   "PriceHistory": {
     "title": "Preço do título",

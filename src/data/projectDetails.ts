@@ -11,6 +11,13 @@ export interface FundingEvent {
   hash: string
 }
 
+/**
+ * Detail sections a data source could not supply. A backend-only project, for
+ * example, has scores but no bundled story, creator, or history fixture.
+ */
+export type MissingDetailSection =
+  'story' | 'creator' | 'scoreHistory' | 'fundingTimeline' | 'priceHistory'
+
 export interface ProjectDetail {
   /** 2–3 plain sentences in the brand voice. */
   story: string
@@ -18,8 +25,8 @@ export interface ProjectDetail {
   location: string
   creator: {
     name: string
-    verified: true
-    since: '2025'
+    verified: boolean
+    since: string
   }
   /** Oracle update histories, trending toward the project's current scores. */
   scoreHistory: {
@@ -36,6 +43,12 @@ export interface ProjectDetail {
   priceHistory: PricePoint[]
   /** A tasteful CSS gradient for the hero photo placeholder. */
   heroGradient: string
+  /**
+   * Sections the source could not provide. When present, the detail surface
+   * shows an explicit "information unavailable" state instead of inventing
+   * content. Absent for the complete bundled/on-chain fixtures.
+   */
+  missingSections?: MissingDetailSection[]
 }
 /** A single oracle score update, anchored by its on-chain tx hash. */
 export interface ScorePoint {

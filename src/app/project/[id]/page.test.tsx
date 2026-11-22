@@ -77,6 +77,13 @@ describe('ProjectDetailPage & generateMetadata', () => {
     expect(mockGetProject).toHaveBeenCalledWith(999)
   })
 
+  it('routes a transient lookup failure to the error boundary instead of notFound()', async () => {
+    const failure = new Error('Registry unavailable')
+    mockGetProject.mockRejectedValue(failure)
+    await expect(ProjectDetailPage({ params: Promise.resolve({ id: '1' }) })).rejects.toBe(failure)
+    expect(mockNotFound).not.toHaveBeenCalled()
+  })
+
   it('calls notFound() for malformed id "abc" without querying registry', async () => {
     await expect(ProjectDetailPage({ params: Promise.resolve({ id: 'abc' }) })).rejects.toThrow(
       'NEXT_NOT_FOUND',
@@ -168,6 +175,13 @@ describe('ProjectDetailPage & generateMetadata', () => {
     })
     expect(meta.description).toBe(en.Metadata.projectNotFound.description)
     expect(meta.robots).toEqual({ index: false, follow: false })
+  })
+
+  it('does not generate missing-project metadata when the lookup fails', async () => {
+    mockGetProject.mockRejectedValue(new Error('Backend temporarily unavailable'))
+    await expect(generateMetadata({ params: Promise.resolve({ id: '1' }) })).rejects.toThrow(
+      'Backend temporarily unavailable',
+    )
   })
 
   it('noindexes a non-numeric project id', async () => {

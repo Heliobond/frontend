@@ -277,19 +277,33 @@ describe('apiGet header normalisation (#1019)', () => {
   })
 })
 
-describe('historyToPricePoints', () => {
-  it('renders entries as dated, ascending price and yield points', async () => {
+describe('historyToScorePoints', () => {
+  it('returns dated, ascending score observations without inventing price or yield', async () => {
     const client = await loadClient()
-    const points = client.historyToPricePoints([
+    const points = client.historyToScorePoints([
       { timestamp: Date.parse('2026-02-01T00:00:00Z'), credit_quality: 50, green_impact: 60 },
       { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
     ])
-    expect(points.map((p) => p.date)).toEqual(['2026-01-01', '2026-02-01'])
-    expect(points[1].price).toBeGreaterThan(points[0].price)
-    expect(points[1].yield).toBeGreaterThan(points[0].yield ?? 0)
+    expect(points).toEqual([
+      { date: '2026-01-01', credit: 40, green: 40 },
+      { date: '2026-02-01', credit: 50, green: 60 },
+    ])
+    for (const point of points) {
+      expect(point).not.toHaveProperty('price')
+      expect(point).not.toHaveProperty('yield')
+    }
   })
 
   it('returns an empty list for no entries', async () => {
-    expect((await loadClient()).historyToPricePoints([])).toEqual([])
+    expect((await loadClient()).historyToScorePoints([])).toEqual([])
+  })
+
+  it('keeps the legacy alias score-only as well', async () => {
+    const client = await loadClient()
+    expect(
+      client.historyToPricePoints([
+        { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
+      ]),
+    ).toEqual([{ date: '2026-01-01', credit: 40, green: 40 }])
   })
 })

@@ -323,3 +323,58 @@ describe('ProjectDetail StrictMode mount flag (#1011)', () => {
     }
   })
 })
+
+describe('ProjectDetail with backend-only data', () => {
+  const backendDetail: ProjectDetailData = {
+    ...mockDetail,
+    name: 'Bond Project #42',
+    story: '',
+    creator: { name: '', verified: false, since: '' },
+    scoreHistory: { credit: [], green: [] },
+    fundingTimeline: [],
+    priceHistory: [],
+    missingSections: ['story', 'creator', 'scoreHistory', 'fundingTimeline', 'priceHistory'],
+  }
+
+  it('renders the id and returned scores with explicit missing-information states', () => {
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={{ ...mockProject, id: 42, name: 'Bond Project #42', credit: 77, green: 88 }}
+          detail={backendDetail}
+          onInvest={vi.fn()}
+        />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Bond Project #42' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Credit quality: 77 out of 100' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Green impact: 88 out of 100' })).toBeInTheDocument()
+    expect(screen.getByText('Creator information unavailable')).toBeInTheDocument()
+    expect(screen.getByText('No project story is available.')).toBeInTheDocument()
+    expect(
+      screen.getByText('No on-chain score history is available for this project yet.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Verified creator/)).not.toBeInTheDocument()
+  })
+
+  it('does not crash when a caller passes a partial detail record', () => {
+    const partialDetail = {
+      ...backendDetail,
+      creator: undefined,
+      scoreHistory: undefined,
+    } as unknown as ProjectDetailData
+
+    expect(() =>
+      render(
+        <YieldAlertProvider>
+          <ProjectDetail
+            project={{ ...mockProject, id: 42 }}
+            detail={partialDetail}
+            onInvest={vi.fn()}
+          />
+        </YieldAlertProvider>,
+      ),
+    ).not.toThrow()
+  })
+})

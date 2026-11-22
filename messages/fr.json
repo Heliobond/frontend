@@ -641,7 +641,13 @@
     "yieldHistory": "Historique des rendements",
     "yieldLabel": "Rendement",
     "yieldHelpLabel": "À propos du rendement de l’obligation",
-    "yieldHelp": "Il s’agit du rendement indicatif actuel de l’obligation. Touchez pour en savoir plus ; ce rendement n’est pas garanti."
+    "yieldHelp": "Il s’agit du rendement indicatif actuel de l’obligation. Touchez pour en savoir plus ; ce rendement n’est pas garanti.",
+    "missingInfoNotice": "Certains détails de ce projet ne sont pas disponibles dans le registre. Seuls les scores vérifiés sur la chaîne sont affichés.",
+    "creatorUnavailable": "Informations sur le créateur indisponibles",
+    "storyUnavailable": "Aucune description du projet n'est disponible.",
+    "scoreHistoryUnavailable": "Aucun historique de scores sur la chaîne n'est encore disponible pour ce projet.",
+    "fundingUnavailable": "Informations de financement indisponibles.",
+    "priceHistoryUnavailable": "Aucune observation de prix ou de rendement n'est disponible pour ce projet."
   },
   "PriceHistory": {
     "title": "Cours de l'obligation",
