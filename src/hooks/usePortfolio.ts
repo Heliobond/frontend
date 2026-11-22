@@ -21,6 +21,7 @@ export interface VaultLiquidity {
 export interface UsePortfolioResult {
   portfolio: OnChainPortfolio | null
   claimableYield: number
+  positionUnavailable: boolean
   you: YouSummary
   activity: Activity[]
   loading: boolean
@@ -33,6 +34,7 @@ interface ChainState {
   address: string
   portfolio: OnChainPortfolio | null
   claimableYield: number | null
+  positionUnavailable: boolean
   vaultLiquidity: VaultLiquidity | null
   error: string | null
 }
@@ -88,7 +90,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
   const loadData = useCallback(
     async (isCancelled: () => boolean) => {
-      if (!enabled || !address) {
+      if (!enabled || !address || isCancelled()) {
         return
       }
 
@@ -136,6 +138,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
           // A failed refetch keeps the last good position, but only for this address.
           portfolio: portfolioValue ?? (prev?.address === address ? prev.portfolio : null),
           claimableYield: claimable,
+          positionUnavailable: portResult.status === 'rejected',
           vaultLiquidity: liquidity ?? (prev?.address === address ? prev.vaultLiquidity : null),
           error,
         }))
@@ -145,6 +148,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
             address,
             portfolio: prev?.address === address ? prev.portfolio : null,
             claimableYield: prev?.address === address ? prev.claimableYield : null,
+            positionUnavailable: true,
             vaultLiquidity: prev?.address === address ? prev.vaultLiquidity : null,
             // Error code, not user-facing copy — the component translates (#900).
             error: 'portfolioFailed',
@@ -232,6 +236,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
   return {
     portfolio: enabled ? portfolio : null,
     claimableYield: enabled ? claimableYield : 0,
+    positionUnavailable: enabled && (current?.positionUnavailable ?? false),
     you: enabled && portfolio ? derivedYou : demoYou,
     activity: finalActivity,
     loading: enabled ? loading : false,

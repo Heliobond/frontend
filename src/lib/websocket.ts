@@ -15,10 +15,15 @@ interface EventPage {
   events?: Array<Omit<VaultEvent, 'type'> & { topic: string[] }>
 }
 
+const INITIAL_RECONNECT_DELAY = 1000
+const MAX_RECONNECT_DELAY = 30000
+
 export class VaultEventStream {
   private listeners = new Set<VaultEventListener>()
   private ws: WebSocket | null = null
-  private timer: ReturnType<typeof setInterval> | null = null
+  private pollTimer: ReturnType<typeof setInterval> | null = null
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private reconnectDelay = INITIAL_RECONNECT_DELAY
   private request: AbortController | null = null
   private cursor: string | null = null
   private source = ''
@@ -49,13 +54,18 @@ export class VaultEventStream {
 
   public start(): void {
     if (typeof document === 'undefined' || document.hidden || !this.listeners.size) return
-    if (this.ws || this.timer) return
+    if (this.ws || this.reconnectTimer !== null) return
     if (!process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID) return
     const url = process.env.NEXT_PUBLIC_WS_URL
     if (!url) return this.startRpcPolling()
     try {
       const ws = new WebSocket(url)
       this.ws = ws
+      ws.onopen = () => {
+        if (this.ws !== ws) return
+        this.reconnectDelay = INITIAL_RECONNECT_DELAY
+        this.stopRpcPolling()
+      }
       ws.onmessage = ({ data }) => {
         if (this.ws !== ws) return
         try {
@@ -68,20 +78,30 @@ export class VaultEventStream {
       const fallback = () => {
         if (this.ws !== ws) return
         this.closeSocket()
-        this.startRpcPolling()
+        this.fallBackToRpc()
       }
       ws.onerror = fallback
       ws.onclose = fallback
     } catch {
-      this.startRpcPolling()
+      this.fallBackToRpc()
     }
+  }
+
+  private fallBackToRpc(): void {
+    this.startRpcPolling()
+    if (this.reconnectTimer !== null || !this.listeners.size || document.hidden) return
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      this.start()
+    }, this.reconnectDelay)
+    this.reconnectDelay = Math.min(this.reconnectDelay * 2, MAX_RECONNECT_DELAY)
   }
 
   private closeSocket(): void {
     const ws = this.ws
     this.ws = null
     if (!ws) return
-    ws.onmessage = ws.onerror = ws.onclose = null
+    ws.onopen = ws.onmessage = ws.onerror = ws.onclose = null
     try {
       ws.close()
     } catch {
@@ -91,16 +111,23 @@ export class VaultEventStream {
 
   public stop(): void {
     this.closeSocket()
-    if (this.timer) clearInterval(this.timer)
-    this.timer = null
+    if (this.reconnectTimer !== null) clearTimeout(this.reconnectTimer)
+    this.reconnectTimer = null
+    this.reconnectDelay = INITIAL_RECONNECT_DELAY
+    this.stopRpcPolling()
+  }
+
+  private stopRpcPolling(): void {
+    if (this.pollTimer !== null) clearInterval(this.pollTimer)
+    this.pollTimer = null
     this.request?.abort()
     this.request = null
   }
 
   private startRpcPolling(): void {
-    if (this.timer || !this.listeners.size || document.hidden) return
+    if (this.pollTimer !== null || !this.listeners.size || document.hidden) return
     void this.pollEvents()
-    this.timer = setInterval(() => void this.pollEvents(), 10000)
+    this.pollTimer = setInterval(() => void this.pollEvents(), 10000)
   }
 
   public async pollEvents(): Promise<VaultEvent[]> {
