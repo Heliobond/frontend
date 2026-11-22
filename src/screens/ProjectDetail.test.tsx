@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { StrictMode } from 'react'
 import { render } from '@/test/render'
 import { screen, fireEvent, waitFor, act } from '@testing-library/react'
@@ -95,6 +95,53 @@ describe('ProjectDetail metadata verification badge', () => {
     expect(screen.getByText('Unverified metadata')).toBeInTheDocument()
     expect(screen.queryByText('Verified metadata')).not.toBeInTheDocument()
     expect(screen.queryByText('Metadata mismatch')).not.toBeInTheDocument()
+  })
+})
+
+describe('ProjectDetail score observation dates', () => {
+  it('shows unknown dates and the observed month in the active locale', () => {
+    const observedAt = Date.UTC(2024, 0, 1)
+    const detail: ProjectDetailData = {
+      ...mockDetail,
+      scoreHistory: {
+        credit: [
+          { observedAt: null, value: 74, hash: 'credit-1' },
+          { observedAt, value: 76, hash: 'credit-2' },
+        ],
+        green: [{ observedAt: null, value: 84, hash: 'green-1' }],
+      },
+    }
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={detail} source="registry" onInvest={vi.fn()} />
+      </YieldAlertProvider>,
+      { locale: 'fr' },
+    )
+
+    const dated = screen.getByText('Dernière observation : janv. 2024')
+    expect(dated).toBeVisible()
+    expect(screen.getByText('Dernière observation : Date inconnue')).toBeVisible()
+    fireEvent.click(dated)
+    expect(screen.getByText('Date inconnue · 74')).toBeVisible()
+    expect(screen.getByText('janv. 2024 · 76')).toBeVisible()
+    expect(screen.queryByText(/vérifié il y a 2h/i)).not.toBeInTheDocument()
+  })
+
+  it('does not present testnet fallback fixtures as timed registry observations', () => {
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={mockProject}
+          detail={PROJECT_DETAILS[1]}
+          source="registry"
+          onInvest={vi.fn()}
+        />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.getAllByText('Last observation: Unknown date')).toHaveLength(2)
+    expect(screen.queryByText(/Jun 2026 ·/)).not.toBeInTheDocument()
   })
 })
 
@@ -376,5 +423,44 @@ describe('ProjectDetail with backend-only data', () => {
         </YieldAlertProvider>,
       ),
     ).not.toThrow()
+describe('ProjectDetail price movement and creator attribution', () => {
+  function renderWith(detail: Partial<ProjectDetailData>) {
+    return render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={mockProject}
+          detail={{ ...mockDetail, ...detail }}
+          onInvest={vi.fn().mockResolvedValue('/connect')}
+        />
+      </YieldAlertProvider>,
+    )
+  }
+  const point = (date: string, price: number) => ({ date, price, yield: 6, hash: '0x1' })
+
+  it('shows a fractional price move and the last observation at two decimals (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.1), point('2025-02-01', 99.35)] })
+    expect(screen.getByText('99.35% of par')).toBeInTheDocument()
+    expect(screen.getByText('+0.25')).toBeInTheDocument()
+  })
+
+  it('shows a negative fractional move with a minus sign (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.35), point('2025-02-01', 99.1)] })
+    expect(screen.getByText('−0.25')).toBeInTheDocument()
+  })
+
+  it('renders no price figure when there is no history (#1070)', () => {
+    renderWith({ priceHistory: [] })
+    expect(screen.queryByText(/% of par/)).not.toBeInTheDocument()
+  })
+
+  it('does not invent a membership year when the creator has none (#1071)', () => {
+    renderWith({ creator: { name: 'GABC…WXYZ', verified: true } })
+    expect(screen.getByText('Verified creator')).toBeInTheDocument()
+    expect(screen.queryByText(/since 2025/)).not.toBeInTheDocument()
+  })
+
+  it('renders a supplied creator tenure from its own source (#1071)', () => {
+    renderWith({ creator: { name: 'Helio Energy', verified: true, since: '2023' } })
+    expect(screen.getByText('Verified creator · since 2023')).toBeInTheDocument()
   })
 })

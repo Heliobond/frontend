@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 
 const mockPush = vi.fn()
 const mockNotFound = vi.fn(() => {
@@ -19,6 +18,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api', () => ({
   getProject: vi.fn(),
+  shouldShowDemoBadge: () => false,
 }))
 
 vi.mock('@/screens/ProjectDetail', () => ({
@@ -27,10 +27,12 @@ vi.mock('@/screens/ProjectDetail', () => ({
   ),
 }))
 
-import { getProject } from '@/lib/api'
+const { render, screen, waitFor } = await import('@/test/render')
+const { getProject } = await import('@/lib/api')
+const { default: ProjectDetailPage, generateMetadata, parseProjectId } = await import('./page')
+const { ProjectDetailClient } = await import('./ProjectDetailClient')
+
 import en from '../../../../messages/en.json'
-import ProjectDetailPage, { generateMetadata, parseProjectId } from './page'
-import { ProjectDetailClient } from './ProjectDetailClient'
 
 const mockGetProject = vi.mocked(getProject)
 

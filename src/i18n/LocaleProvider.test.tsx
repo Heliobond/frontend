@@ -1,12 +1,15 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 import { render, screen, act, waitFor } from '@testing-library/react'
-import { LocaleProvider, useLocaleSwitcher, type Messages } from './LocaleProvider'
+import type { Messages } from './LocaleProvider'
 import fr from '../../messages/fr.json'
 
 const mockRefresh = vi.fn()
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: mockRefresh }),
 }))
+
+const { LocaleProvider, useLocaleSwitcher } = await import('./LocaleProvider')
+const catalog = await import('./loadMessages')
 
 const EMPTY_MESSAGES = {} as Messages
 
@@ -76,9 +79,11 @@ describe('LocaleProvider', () => {
   })
 
   it('ignores an older catalog that resolves after the latest language choice', async () => {
-    const french = Promise.withResolvers<{ default: Messages }>()
+    const french = Promise.withResolvers<Messages>()
     const started = Promise.withResolvers<void>()
-    vi.doMock('../../messages/fr.json', () => {
+    const loadMessages = catalog.loadMessages
+    const load = vi.spyOn(catalog, 'loadMessages').mockImplementation((locale) => {
+      if (locale !== 'fr') return loadMessages(locale)
       started.resolve()
       return french.promise
     })
@@ -95,13 +100,13 @@ describe('LocaleProvider', () => {
       expect(document.cookie).toContain('NEXT_LOCALE=en')
       screen.getByText('switch-to-ar').click()
       await waitFor(() => expect(screen.getByTestId('locale')).toHaveTextContent('ar'))
-      await act(async () => french.resolve({ default: fr }))
+      await act(async () => french.resolve(fr))
 
       expect(screen.getByTestId('locale')).toHaveTextContent('ar')
       expect(document.cookie).toContain('NEXT_LOCALE=ar')
       expect(mockRefresh).toHaveBeenCalledTimes(1)
     } finally {
-      vi.doUnmock('../../messages/fr.json')
+      load.mockRestore()
     }
   })
 

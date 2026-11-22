@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, vi, afterEach } from '@/test/bun'
 import en from '../../messages/en.json'
 import { getMessageFallback, mergeCatalogs, withEnglishFallback } from './fallback'
 

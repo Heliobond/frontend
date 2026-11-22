@@ -27,6 +27,9 @@ export interface ProjectDetail {
     name: string
     verified: boolean
     since: string
+    verified: true
+    /** Year the creator joined, only when a source supplies it. */
+    since?: string
   }
   /** Oracle update histories, trending toward the project's current scores. */
   scoreHistory: {
@@ -51,11 +54,10 @@ export interface ProjectDetail {
   missingSections?: MissingDetailSection[]
 }
 /** A single oracle score update, anchored by its on-chain tx hash. */
-export interface ScorePoint {
-  date: string
+export type ScorePoint = {
   value: number
   hash: string
-}
+} & ({ observedAt: number | null; date?: never } | { observedAt?: never; date: string })
 /** A bond price/yield observation, anchored by an oracle update. */
 export interface PricePoint {
   date: string

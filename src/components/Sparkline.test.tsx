@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { Sparkline } from './Sparkline'
 import { render } from '@testing-library/react'
 

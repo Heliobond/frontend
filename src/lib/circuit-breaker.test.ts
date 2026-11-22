@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { CircuitBreaker, CircuitOpenError } from './circuit-breaker'
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))

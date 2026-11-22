@@ -1,5 +1,5 @@
 // Locale negotiation helpers shared by the request proxy and unit tests.
-// Kept free of Next.js imports so it can run in plain Vitest.
+// Keep this independent of Next.js so it can run in unit tests and middleware.
 import { DEFAULT_LOCALE, LOCALES, type Locale } from './config'
 
 /**

@@ -6,13 +6,8 @@ import {
   cleanup,
   act,
 } from '@testing-library/react'
-import { describe, expect, test, vi, beforeEach } from 'vitest'
-import { LocaleProvider } from '@/i18n/LocaleProvider'
-import { ThemeProvider } from '@/theme/ThemeProvider'
+import { describe, expect, test, vi, beforeEach } from '@/test/bun'
 import en from '../../messages/en.json'
-import { clearPendingClaims, getPendingClaims } from '../wallet/pendingClaims'
-import { submitWithdraw } from '../wallet/vault'
-import { Withdraw } from './Withdraw'
 import type { ReactNode } from 'react'
 
 const FULL_TX_HASH = 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
@@ -85,7 +80,7 @@ vi.mock('../hooks/usePortfolio', () => ({
   usePortfolio: () => mockPortfolioState,
 }))
 
-vi.mock('../wallet/vault', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('../wallet/vault'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('../wallet/vault')>()
   return {
     ...actual,
@@ -98,7 +93,7 @@ vi.mock('../components/Toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }))
 
-vi.mock('../components', async () => {
+await vi.mockModule(import.meta.resolve('../components'), async () => {
   const React = await import('react')
   const { AddressChip } = await import('../components/AddressChip')
   return {
@@ -168,6 +163,12 @@ vi.mock('../components', async () => {
     useToast: () => ({ toast: vi.fn() }),
   }
 })
+
+const { LocaleProvider } = await import('@/i18n/LocaleProvider')
+const { ThemeProvider } = await import('@/theme/ThemeProvider')
+const { clearPendingClaims, getPendingClaims } = await import('../wallet/pendingClaims')
+const { submitWithdraw } = await import('../wallet/vault')
+const { Withdraw } = await import('./Withdraw')
 
 function render(ui: ReactNode) {
   return rtlRender(

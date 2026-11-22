@@ -82,6 +82,43 @@ export function persistYieldRange(range: [number, number]): void {
   } catch {}
 }
 
+interface BrowserStoreHooks {
+  /** Re-reads the persisted value into the store's snapshot. */
+  refresh: () => void
+  /** Attaches the shared storage / navigation / visibility listeners. */
+  attach: () => void
+  /** Removes the listeners `attach` added. */
+  detach: () => void
+}
+
+/**
+ * Registers `listener` on a store whose browser listeners are shared by every
+ * consumer. The shared listeners are attached when the first consumer
+ * subscribes and removed only when the last one unsubscribes (#1040), so an
+ * unmounting consumer cannot cut off the others from external updates.
+ *
+ * The snapshot is refreshed on the first subscription so a later mount, after
+ * every consumer has gone, reads current state. Each subscription is wrapped
+ * so the same function can subscribe twice, and a repeated unsubscribe is a
+ * no-op.
+ */
+function subscribeToBrowserStore(
+  listeners: Set<() => void>,
+  hooks: BrowserStoreHooks,
+  listener: () => void,
+): () => void {
+  const entry = () => listener()
+  if (listeners.size === 0) {
+    hooks.refresh()
+    hooks.attach()
+  }
+  listeners.add(entry)
+  return () => {
+    if (!listeners.delete(entry)) return
+    if (listeners.size === 0) hooks.detach()
+  }
+}
+
 let yieldRangeSnapshot: [number, number] = YIELD_DEFAULT
 const yieldRangeListeners = new Set<() => void>()
 
@@ -95,23 +132,27 @@ const yieldRangeListeners = new Set<() => void>()
  * external change, which keeps it referentially stable between renders.
  */
 export function subscribeYieldRange(listener: () => void): () => void {
-  if (!yieldRangeListeners.size) yieldRangeSnapshot = getPersistedYieldRange()
-  yieldRangeListeners.add(listener)
-  if (typeof window !== 'undefined') {
+  return subscribeToBrowserStore(yieldRangeListeners, yieldRangeHooks, listener)
+}
+
+const yieldRangeHooks: BrowserStoreHooks = {
+  refresh: () => {
+    yieldRangeSnapshot = getPersistedYieldRange()
+  },
+  attach: () => {
+    if (typeof window === 'undefined') return
     window.addEventListener('storage', onYieldRangeStorage)
     window.addEventListener('popstate', republishYieldRange)
     window.addEventListener('pageshow', republishYieldRange)
     document.addEventListener('visibilitychange', onYieldRangeVisible)
-  }
-  return () => {
-    yieldRangeListeners.delete(listener)
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('storage', onYieldRangeStorage)
-      window.removeEventListener('popstate', republishYieldRange)
-      window.removeEventListener('pageshow', republishYieldRange)
-      document.removeEventListener('visibilitychange', onYieldRangeVisible)
-    }
-  }
+  },
+  detach: () => {
+    if (typeof window === 'undefined') return
+    window.removeEventListener('storage', onYieldRangeStorage)
+    window.removeEventListener('popstate', republishYieldRange)
+    window.removeEventListener('pageshow', republishYieldRange)
+    document.removeEventListener('visibilitychange', onYieldRangeVisible)
+  },
 }
 
 function republishYieldRange(): void {
@@ -138,8 +179,14 @@ export function getServerYieldRange(): [number, number] {
   return YIELD_DEFAULT
 }
 
-/** Saves a new range and notifies subscribers. */
+/**
+ * Saves a new range and notifies subscribers. An invalid range (negative,
+ * reversed or non-finite) is rejected at this boundary, before the in-memory
+ * snapshot or storage change, so subscribers can never see a range that a
+ * reload would not restore (#1041).
+ */
 export function setYieldRange(range: [number, number]): void {
+  if (!Array.isArray(range) || range.length !== 2 || !isValidYieldRange(range[0], range[1])) return
   yieldRangeSnapshot = range
   persistYieldRange(range)
   yieldRangeListeners.forEach((listener) => listener())
@@ -192,23 +239,27 @@ const sortOrderListeners = new Set<() => void>()
  * the yield range so `useBondFilters` never copies storage into state (#598).
  */
 export function subscribeSortOrder(listener: () => void): () => void {
-  if (!sortOrderListeners.size) sortOrderSnapshot = getPersistedSortOrder()
-  sortOrderListeners.add(listener)
-  if (typeof window !== 'undefined') {
+  return subscribeToBrowserStore(sortOrderListeners, sortOrderHooks, listener)
+}
+
+const sortOrderHooks: BrowserStoreHooks = {
+  refresh: () => {
+    sortOrderSnapshot = getPersistedSortOrder()
+  },
+  attach: () => {
+    if (typeof window === 'undefined') return
     window.addEventListener('storage', onSortOrderStorage)
     window.addEventListener('popstate', republishSortOrder)
     window.addEventListener('pageshow', republishSortOrder)
     document.addEventListener('visibilitychange', onSortOrderVisible)
-  }
-  return () => {
-    sortOrderListeners.delete(listener)
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('storage', onSortOrderStorage)
-      window.removeEventListener('popstate', republishSortOrder)
-      window.removeEventListener('pageshow', republishSortOrder)
-      document.removeEventListener('visibilitychange', onSortOrderVisible)
-    }
-  }
+  },
+  detach: () => {
+    if (typeof window === 'undefined') return
+    window.removeEventListener('storage', onSortOrderStorage)
+    window.removeEventListener('popstate', republishSortOrder)
+    window.removeEventListener('pageshow', republishSortOrder)
+    document.removeEventListener('visibilitychange', onSortOrderVisible)
+  },
 }
 
 function republishSortOrder(): void {

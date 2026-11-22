@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import {
   FAST_INTERVAL_MS,
   horizonHealthPoller,
@@ -19,17 +19,18 @@ const setNavigatorOnline = (online: boolean) => {
 }
 
 describe('useHorizonHealth', () => {
-  let mockFetch: ReturnType<typeof vi.fn>
+  type HealthFetch = (url: string, init?: RequestInit) => Promise<{ ok: boolean; status: number }>
+  let mockFetch: ReturnType<typeof vi.fn<HealthFetch>>
 
   beforeEach(() => {
     vi.useFakeTimers()
     setVisibility(false)
     setNavigatorOnline(true)
-    mockFetch = vi.fn().mockResolvedValue({
+    mockFetch = vi.fn<HealthFetch>().mockResolvedValue({
       ok: true,
       status: 200,
     })
-    globalThis.fetch = mockFetch as unknown as typeof fetch
+    vi.stubGlobal('fetch', mockFetch)
     horizonHealthPoller.resetForTesting()
   })
 
