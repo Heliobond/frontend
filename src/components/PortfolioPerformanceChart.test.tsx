@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@/test/render'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from '@/test/bun'
 import { PortfolioPerformanceChart } from './PortfolioPerformanceChart'
 
 describe('PortfolioPerformanceChart', () => {

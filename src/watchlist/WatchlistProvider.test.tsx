@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, createContext, type ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from '@/test/bun'
 import { WatchlistProvider, useWatchlist } from './WatchlistProvider'
 import { WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
 

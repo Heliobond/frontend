@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from '@/test/bun'
 import { renderHook, act } from '@testing-library/react'
 import { useDepositGuard } from './useDepositGuard'
 

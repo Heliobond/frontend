@@ -1,8 +1,4 @@
-import { act, render, screen, waitFor } from '@/test/render'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Portfolio } from './Portfolio'
-import * as vault from '../wallet/vault'
-import { addPendingClaim, clearPendingClaims } from '../wallet/pendingClaims'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const mockWallet = {
   address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
@@ -16,7 +12,7 @@ vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
 
-vi.mock('../wallet/vault', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('../wallet/vault'), async (importOriginal) => {
   const actual = await importOriginal<typeof vault>()
   return {
     ...actual,
@@ -25,8 +21,15 @@ vi.mock('../wallet/vault', async (importOriginal) => {
     fetchTotalAssets: vi.fn(),
     fetchUtilizationBps: vi.fn(),
     submitClaim: vi.fn(),
+    submitClaimYield: vi.fn(),
   }
 })
+
+const { act, fireEvent, render, screen, waitFor } = await import('@/test/render')
+const { Portfolio } = await import('./Portfolio')
+const vault = await import('../wallet/vault')
+const { notifyTransactionConfirmed } = await import('../wallet/vaultEvents')
+const { addPendingClaim, clearPendingClaims } = await import('../wallet/pendingClaims')
 
 describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
   beforeEach(() => {
@@ -144,6 +147,39 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
       expect(screen.getByTestId('portfolio-shares')).toHaveTextContent('2,500.5000')
       expect(screen.getByTestId('portfolio-poolshare')).toHaveTextContent('4.50%')
     })
+  })
+
+  it('reads one shared position on mount and after a confirmed yield claim', async () => {
+    const before = {
+      shares: 100,
+      usdcValue: 110,
+      claimableYield: 4,
+      shareOfPoolBps: 100,
+      totalDeposited: 100,
+    }
+    vi.mocked(vault.fetchPortfolio)
+      .mockResolvedValueOnce(before)
+      .mockResolvedValue({ ...before, shares: 102, usdcValue: 112 })
+    vi.mocked(vault.fetchClaimableYield).mockResolvedValueOnce(4).mockResolvedValue(0)
+    vi.mocked(vault.submitClaimYield).mockImplementationOnce(async () => {
+      notifyTransactionConfirmed('yield-claim', 'claim_yield')
+      return 'yield-claim'
+    })
+
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+    const claim = await screen.findByRole('button', { name: /claim yield/i })
+    expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$110')
+    expect(screen.getByTestId('onchain-shares')).toHaveTextContent('100.00')
+    expect(vault.fetchPortfolio).toHaveBeenCalledExactlyOnceWith(mockWallet.address)
+
+    fireEvent.click(claim)
+    await waitFor(() => {
+      expect(screen.getByTestId('portfolio-value')).toHaveTextContent('$112')
+      expect(screen.getByTestId('onchain-shares')).toHaveTextContent('102.00')
+      expect(screen.getByTestId('onchain-claimable-yield')).toHaveTextContent('$0.00')
+    })
+    await act(async () => notifyTransactionConfirmed('yield-claim', 'claim_yield'))
+    expect(vault.fetchPortfolio).toHaveBeenCalledTimes(2)
   })
 
   it('displays loading state banner while reading on-chain portfolio', async () => {
