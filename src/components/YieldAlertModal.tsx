@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from './Button'
 import { CloseIcon } from './icons'
-import { type AlertOperator } from '../lib/yieldAlerts'
+import { type AlertOperator, type YieldAlert } from '../lib/yieldAlerts'
 import { formatDecimal } from '../lib/format'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 
@@ -22,6 +22,11 @@ export interface YieldAlertModalProps {
   /** Pre-filled values when editing an existing alert. */
   initialThreshold?: number
   initialOperator?: AlertOperator
+  /** All saved alerts for this bond, so one of several can be picked. */
+  alerts?: YieldAlert[]
+  /** Id of the alert being edited; null when creating a new one. */
+  selectedAlertId?: string | null
+  onSelectAlert?: (id: string | null) => void
   /** Whether we are editing (shows delete button). */
   editing?: boolean
   onSave: (threshold: number, operator: AlertOperator) => void
@@ -35,6 +40,9 @@ export function YieldAlertModal({
   currentYield,
   initialThreshold = 5,
   initialOperator = 'above',
+  alerts = [],
+  selectedAlertId = null,
+  onSelectAlert,
   editing = false,
   onSave,
   onDelete,
@@ -50,17 +58,24 @@ export function YieldAlertModal({
   // Reseed the form when the modal opens with new values. Adjusting during
   // render is React's sanctioned way to reset state for a changed prop, and
   // avoids a wasted render pass (#598).
-  const [seed, setSeed] = useState<{ open: boolean; threshold: number; operator: AlertOperator }>({
+  const [seed, setSeed] = useState<{
+    open: boolean
+    threshold: number
+    operator: AlertOperator
+    selectedAlertId: string | null
+  }>({
     open,
     threshold: initialThreshold,
     operator: initialOperator,
+    selectedAlertId,
   })
   if (
     seed.open !== open ||
     seed.threshold !== initialThreshold ||
-    seed.operator !== initialOperator
+    seed.operator !== initialOperator ||
+    seed.selectedAlertId !== selectedAlertId
   ) {
-    setSeed({ open, threshold: initialThreshold, operator: initialOperator })
+    setSeed({ open, threshold: initialThreshold, operator: initialOperator, selectedAlertId })
     if (open) {
       setThreshold(String(initialThreshold))
       setOperator(initialOperator)
@@ -163,6 +178,102 @@ export function YieldAlertModal({
             </button>
           </div>
 
+          {/* Pick which saved threshold to inspect, edit or delete */}
+          {alerts.length > 1 && onSelectAlert && (
+            <div style={{ marginBottom: 20 }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--type-eyebrow)',
+                  fontWeight: 600,
+                  color: 'var(--ink-60)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  marginBottom: 8,
+                }}
+              >
+                {t('selectAlertLabel')}
+              </span>
+              <div
+                role="group"
+                aria-label={t('selectAlertLabel')}
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+              >
+                {alerts.map((alert) => (
+                  <button
+                    key={alert.id}
+                    type="button"
+                    aria-pressed={alert.id === selectedAlertId}
+                    onClick={() => onSelectAlert(alert.id)}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-input)',
+                      border: '1px solid var(--ink-12)',
+                      cursor: 'pointer',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--type-small)',
+                      fontWeight: 600,
+                      background: alert.id === selectedAlertId ? 'var(--solar)' : 'var(--surface)',
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {alert.operator === 'above' ? t('operatorAbove') : t('operatorBelow')}{' '}
+                    {formatDecimal(alert.threshold, 1)}%
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  aria-pressed={selectedAlertId === null}
+                  onClick={() => onSelectAlert(null)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-input)',
+                    border: '1px dashed var(--ink-12)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--type-small)',
+                    fontWeight: 600,
+                    background: selectedAlertId === null ? 'var(--solar)' : 'var(--surface)',
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {t('newAlert')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Operator toggle */}
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-eyebrow)',
+              fontWeight: 600,
+              color: 'var(--ink-60)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              marginBottom: 8,
+            }}
+          >
+            {t('conditionLabel')}
+          </label>
+          <div
+            style={{
+              display: 'flex',
+              gap: 0,
+              marginBottom: 16,
+              borderRadius: 'var(--radius-input)',
+              border: '1px solid var(--ink-12)',
+              overflow: 'hidden',
+            }}
+          >
+            {(['above', 'below'] as AlertOperator[]).map((op) => (
+              <button
+                key={op}
+                type="button"
+                onClick={() => setOperator(op)}
           {/* Body */}
           <div style={{ padding: '16px 24px 24px' }}>
             {/* Bond name + current yield */}

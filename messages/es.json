@@ -757,6 +757,8 @@
   "YieldAlert": {
     "modalTitle": "Configurar alerta de rentabilidad",
     "editTitle": "Editar alerta de rentabilidad",
+    "selectAlertLabel": "Elige una alerta",
+    "newAlert": "Nueva alerta",
     "conditionLabel": "Avisar cuando la rentabilidad vaya",
     "thresholdLabel": "Umbral",
     "operatorAbove": "por encima de",

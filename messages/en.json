@@ -764,6 +764,8 @@
   "YieldAlert": {
     "modalTitle": "Set yield alert",
     "editTitle": "Edit yield alert",
+    "selectAlertLabel": "Choose an alert",
+    "newAlert": "New alert",
     "conditionLabel": "Alert when yield goes",
     "thresholdLabel": "Threshold",
     "operatorAbove": "Above",

@@ -757,6 +757,8 @@
   "YieldAlert": {
     "modalTitle": "Configurar alerta de rendimento",
     "editTitle": "Editar alerta de rendimento",
+    "selectAlertLabel": "Escolher um alerta",
+    "newAlert": "Novo alerta",
     "conditionLabel": "Alertar quando o rendimento for",
     "thresholdLabel": "Limite",
     "operatorAbove": "acima de",
