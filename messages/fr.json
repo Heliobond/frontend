@@ -22,6 +22,7 @@
     },
     "preferences": "Préférences",
     "language": "Langue",
+    "languageLoadFailed": "Impossible de charger cette langue. Réessayez.",
     "account": "Compte",
     "watchlist": "Liste de suivi",
     "copyAddress": "Copier l'adresse",

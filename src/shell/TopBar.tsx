@@ -423,6 +423,7 @@ function preferenceItemStyle(selected: boolean): CSSProperties {
 function PreferencesDropdown() {
   const t = useTranslations('Nav')
   const { locale, switchLocale } = useLocaleSwitcher()
+  const { toast } = useToast()
   const { preference, setTheme } = useTheme()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -544,8 +545,12 @@ function PreferencesDropdown() {
                 tabIndex={-1}
                 type="button"
                 onClick={() => {
-                  switchLocale(code)
-                  setOpen(false)
+                  void switchLocale(code).then((result) => {
+                    if (result === 'applied') setOpen(false)
+                    if (result === 'failed') {
+                      toast({ tone: 'error', title: t('languageLoadFailed') })
+                    }
+                  })
                 }}
                 style={preferenceItemStyle(code === locale)}
               >

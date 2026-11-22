@@ -47,6 +47,11 @@ describe('negotiateLocale (#895)', () => {
     expect(negotiateLocale('*,en;q=0.1')).toBe('en')
   })
 
+  it('uses the wildcard only for supported languages without explicit zero weight', () => {
+    expect(negotiateLocale('*,en;q=0')).toBe('fr')
+    expect(negotiateLocale('en;q=0,fr;q=0,*;q=0.5')).toBe('es')
+  })
+
   it('skips zero-quality tags', () => {
     expect(negotiateLocale('fr;q=0,es;q=0.5')).toBe('es')
   })
