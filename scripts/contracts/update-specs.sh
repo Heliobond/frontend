@@ -61,10 +61,58 @@ for wasm in investment_vault project_registry; do
   fi
 done
 
-log "Extracting contract specifications via stellar CLI"
-stellar contract info interface --wasm "$WASM_DIR/investment_vault.wasm" --output json-formatted > "$OUT_DIR/investment_vault.spec.json"
-stellar contract info interface --wasm "$WASM_DIR/project_registry.wasm" --output json-formatted > "$OUT_DIR/project_registry.spec.json"
+# Stage every file in a temporary directory first and publish the finished set
+# together (#1038). Redirecting straight into the final paths would truncate a
+# checked-in fixture if an export failed, or leave the vault and registry specs
+# from different exports next to the old COMMIT_SHA.
+# The staging directory lives inside OUT_DIR so publishing is a same-filesystem
+# rename, not a copy.
+FIXTURES=(investment_vault.spec.json project_registry.spec.json COMMIT_SHA)
+STAGE_DIR="$(mktemp -d "$OUT_DIR/.stage.XXXXXX")"
+trap 'rm -rf "$STAGE_DIR"' EXIT
 
-printf '%s\n' "$COMMIT_SHA" > "$OUT_DIR/COMMIT_SHA"
+log "Extracting contract specifications via stellar CLI"
+stellar contract info interface --wasm "$WASM_DIR/investment_vault.wasm" --output json-formatted > "$STAGE_DIR/investment_vault.spec.json"
+stellar contract info interface --wasm "$WASM_DIR/project_registry.wasm" --output json-formatted > "$STAGE_DIR/project_registry.spec.json"
+printf '%s
+' "$COMMIT_SHA" > "$STAGE_DIR/COMMIT_SHA"
+
+log "Validating staged fixtures"
+for spec in investment_vault project_registry; do
+  staged="$STAGE_DIR/$spec.spec.json"
+  if [ ! -s "$staged" ]; then
+    echo "Error: $spec export is empty; leaving existing fixtures untouched" >&2
+    exit 1
+  fi
+  if ! node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' "$staged"; then
+    echo "Error: $spec export is not valid JSON; leaving existing fixtures untouched" >&2
+    exit 1
+  fi
+done
+if [ ! -s "$STAGE_DIR/COMMIT_SHA" ]; then
+  echo "Error: COMMIT_SHA is empty; leaving existing fixtures untouched" >&2
+  exit 1
+fi
+
+log "Publishing fixtures"
+BACKUP_DIR="$STAGE_DIR/backup"
+mkdir -p "$BACKUP_DIR"
+for f in "${FIXTURES[@]}"; do
+  if [ -f "$OUT_DIR/$f" ]; then cp -p "$OUT_DIR/$f" "$BACKUP_DIR/$f"; fi
+done
+
+rollback() {
+  echo "Error: publishing failed; restoring previous fixtures" >&2
+  for f in "${FIXTURES[@]}"; do
+    if [ -f "$BACKUP_DIR/$f" ]; then mv -f "$BACKUP_DIR/$f" "$OUT_DIR/$f"; else rm -f "$OUT_DIR/$f"; fi
+  done
+}
+
+for f in "${FIXTURES[@]}"; do
+  if ! mv -f "$STAGE_DIR/$f" "$OUT_DIR/$f"; then
+    rollback
+    exit 1
+  fi
+done
 
 log "Successfully updated contract-spec fixtures in $OUT_DIR (commit $COMMIT_SHA)"
