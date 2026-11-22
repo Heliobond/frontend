@@ -14,6 +14,7 @@ import type { PricePoint } from '../data/projectDetails'
  */
 export interface PriceHistoryChartProps {
   projectId: number
+  priceHistory?: PricePoint[]
 }
 
 const cardStyle: React.CSSProperties = {
@@ -60,10 +61,10 @@ function delta(first: number, last: number): string {
   return `${sign}${formatDecimal(Math.abs(diff), 2)}`
 }
 
-export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ projectId, priceHistory }: PriceHistoryChartProps) {
   const t = useTranslations('PriceHistory')
-  // Flat selector — one call, no nested-state drilling.
-  const history: PricePoint[] = selectPriceHistory(projectId)
+  // Use passed priceHistory if available, otherwise fall back to fixture store selector
+  const history: PricePoint[] = priceHistory ?? selectPriceHistory(projectId)
   if (history.length === 0) return null
 
   const last = history[history.length - 1]
