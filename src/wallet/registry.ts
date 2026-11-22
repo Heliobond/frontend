@@ -7,7 +7,6 @@
 
 import { AppError } from '../lib/appError'
 import { type Project, type ProjectType } from '../data'
-import { getLocaleCode } from '../lib/format'
 import { type ProjectDetail, type ScorePoint } from '../data/projectDetails'
 import {
   selectProjects,
@@ -326,7 +325,7 @@ export type OnChainProjectTuple = [number | bigint, OnChainProjectRaw]
 
 /** A single `ScoreHistoryEntry` from `get_score_history`. */
 export interface OnChainScoreHistoryEntryRaw {
-  timestamp: number | bigint
+  timestamp?: number | bigint
   credit_quality: number | bigint
   green_impact: number | bigint
 }
@@ -480,16 +479,16 @@ export function mapOnChainProject(
   }
 }
 
-/** Render a score-history unix timestamp (seconds) as a short date label. */
-function formatScoreDate(timestamp: number | bigint | undefined, index: number): string {
+/** Decode a positive ledger timestamp into Unix milliseconds for locale-independent caching. */
+function scoreObservedAt(timestamp: OnChainScoreHistoryEntryRaw['timestamp']): number | null {
+  if (typeof timestamp !== 'number' && typeof timestamp !== 'bigint') return null
   const seconds = Number(timestamp)
-  if (Number.isFinite(seconds) && seconds > 0) {
-    return new Date(seconds * 1000).toLocaleDateString(getLocaleCode(), {
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-  return `${index + 1}mo ago`
+  const milliseconds = seconds * 1000
+  return Number.isSafeInteger(seconds) &&
+    seconds > 0 &&
+    Number.isFinite(new Date(milliseconds).getTime())
+    ? milliseconds
+    : null
 }
 
 /** Read total projects count from ProjectRegistry */
@@ -773,16 +772,14 @@ export async function fetchScoreHistory(
     )) as OnChainScoreHistoryEntryRaw[]
 
     if (Array.isArray(raw) && raw.length > 0) {
-      const credit: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
-        value: Number(r.credit_quality),
-        hash: `0xscore${id}${i}`,
-      }))
-      const green: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
-        value: Number(r.green_impact),
-        hash: `0xscore${id}${i}`,
-      }))
+      const credit: ScorePoint[] = []
+      const green: ScorePoint[] = []
+      for (const [i, entry] of raw.entries()) {
+        const observedAt = scoreObservedAt(entry.timestamp)
+        const hash = `0xscore${id}${i}`
+        credit.push({ observedAt, value: Number(entry.credit_quality), hash })
+        green.push({ observedAt, value: Number(entry.green_impact), hash })
+      }
       const history = { credit, green }
       setInCache(cacheKey, history)
       return history

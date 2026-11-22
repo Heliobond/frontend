@@ -50,11 +50,16 @@ export function MemoInput({
   const inputId = `memo-input-${generatedId}`
   const errorId = `memo-error-${generatedId}`
   const counterId = `memo-counter-${generatedId}`
+  const hintId = `memo-hint-${generatedId}`
 
   const inputRef = useRef<HTMLInputElement>(null)
   const byteLength = getMemoByteLength(value)
   const validation = validateMemoLength(value, maxBytes)
   const isOverLimit = !validation.valid
+  const showHint = Boolean(hint) && !isOverLimit
+  const description = [isOverLimit ? errorId : undefined, counterId, showHint ? hintId : undefined]
+    .filter(Boolean)
+    .join(' ')
 
   const isMissing = !optional && value.trim() === ''
   const limitMessage = `Memo cannot exceed ${maxBytes} bytes (currently ${byteLength} bytes).`
@@ -131,7 +136,7 @@ export function MemoInput({
         disabled={disabled}
         required={!optional}
         aria-invalid={!isValid}
-        aria-describedby={isOverLimit ? `${errorId} ${counterId}` : counterId}
+        aria-describedby={description}
         style={{
           width: '100%',
           minHeight: 44,
@@ -164,8 +169,9 @@ export function MemoInput({
         </div>
       )}
 
-      {hint && !isOverLimit && (
+      {showHint && (
         <div
+          id={hintId}
           style={{
             marginTop: 4,
             fontFamily: 'var(--font-body)',

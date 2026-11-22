@@ -70,7 +70,12 @@
       "returns": "Rendements",
       "yield": "Rendement",
       "historyChartLabel": "Historique : {label}",
-      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures."
+      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures.",
+      "failed": "Impossible de charger les performances historiques. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
+      "showDataTable": "Voir le tableau de données",
+      "hideDataTable": "Masquer le tableau de données",
+      "dateColumn": "Date"
     },
     "TransactionsDrawer": {
       "title": "Activité des transactions",
@@ -628,7 +633,8 @@
     "greenHistory": "Score vert au fil du temps",
     "scoreGaugeAria": "{label} : {value} sur {max}",
     "onChainNote": "chaque mise à jour oracle est sur la chaîne ↗",
-    "verifiedAgo": "vérifié il y a 2h ↗",
+    "lastScoreObservation": "Dernière observation : {date}",
+    "scoreDateUnknown": "Date inconnue",
     "fundingTitle": "Chronologie de financement",
     "fundingGoalLabel": "{raised} collectés sur un objectif de {goal}",
     "contributionTitle": "Contribution de ce projet",

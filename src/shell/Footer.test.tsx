@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from '@/test/bun'
 import { render, screen } from '@/test/render'
 import userEvent from '@testing-library/user-event'
 import { Footer, getSupportHref } from './Footer'

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from '@/test/bun'
 import { render, screen } from '@/test/render'
 import { Landing } from './Landing'
 

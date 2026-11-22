@@ -39,11 +39,10 @@ export interface ProjectDetail {
   heroGradient: string
 }
 /** A single oracle score update, anchored by its on-chain tx hash. */
-export interface ScorePoint {
-  date: string
+export type ScorePoint = {
   value: number
   hash: string
-}
+} & ({ observedAt: number | null; date?: never } | { observedAt?: never; date: string })
 /** A bond price/yield observation, anchored by an oracle update. */
 export interface PricePoint {
   date: string

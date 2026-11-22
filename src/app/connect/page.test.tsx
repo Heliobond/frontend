@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, act } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 
 const mockReplace = vi.fn()
 let mockSearch = ''
@@ -35,7 +34,8 @@ vi.mock('../../screens/Connect', () => ({
   ),
 }))
 
-import ConnectPage from './page'
+const { render, screen, waitFor, act } = await import('@/test/render')
+const { default: ConnectPage } = await import('./page')
 
 describe('ConnectPage', () => {
   beforeEach(() => {

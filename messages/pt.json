@@ -70,7 +70,12 @@
       "returns": "Retornos",
       "yield": "Rendimento",
       "historyChartLabel": "Histórico de {label}",
-      "snapshotsNote": "Registros indexados, {start} – {end}. Retornos e rendimentos históricos não garantem o desempenho futuro."
+      "snapshotsNote": "Registros indexados, {start} – {end}. Retornos e rendimentos históricos não garantem o desempenho futuro.",
+      "failed": "Não foi possível carregar o desempenho histórico. Verifique sua conexão e tente novamente.",
+      "retry": "Tentar novamente",
+      "showDataTable": "Ver tabela de dados",
+      "hideDataTable": "Ocultar tabela de dados",
+      "dateColumn": "Data"
     },
     "TransactionsDrawer": {
       "title": "Atividade de transações",
@@ -628,7 +633,8 @@
     "greenHistory": "Nota verde ao longo do tempo",
     "scoreGaugeAria": "{label}: {value} de {max}",
     "onChainNote": "cada atualização do oráculo é on-chain ↗",
-    "verifiedAgo": "verificado há 2h ↗",
+    "lastScoreObservation": "Última observação: {date}",
+    "scoreDateUnknown": "Data desconhecida",
     "fundingTitle": "Linha do tempo do financiamento",
     "fundingGoalLabel": "{raised} arrecadados da meta de {goal}",
     "contributionTitle": "A contribuição deste projeto",

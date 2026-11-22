@@ -23,7 +23,7 @@
 /scripts/               @dadadave80
 /eslint.config.mjs      @dadadave80
 /next.config.ts         @dadadave80
-/vitest.config.mts      @dadadave80
+/src/test/bun.ts        @dadadave80
 /playwright.config.ts   @dadadave80
 /playwright.chain.config.ts @dadadave80
 /tsconfig.json          @dadadave80

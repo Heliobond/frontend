@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 
 const mockReplace = vi.fn()
 let mockPathname = '/portfolio'
@@ -17,7 +16,8 @@ vi.mock('./WalletProvider', () => ({
   useWallet: () => walletState,
 }))
 
-import { RequireWallet } from './RequireWallet'
+const { render, screen } = await import('@/test/render')
+const { RequireWallet } = await import('./RequireWallet')
 
 const Protected = () => <div data-testid="protected">balances</div>
 

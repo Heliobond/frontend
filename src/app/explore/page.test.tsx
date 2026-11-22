@@ -1,8 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@/test/render'
+import { describe, it, expect, vi } from '@/test/bun'
 import en from '../../../messages/en.json'
-import { getProjectsPaginated } from '../../lib/api'
-import ExplorePage, { generateMetadata } from './page'
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
@@ -32,6 +29,10 @@ vi.mock('../../lib/api', () => ({
   }),
   shouldShowDemoBadge: () => false,
 }))
+
+const { render, screen } = await import('@/test/render')
+const { getProjectsPaginated } = await import('../../lib/api')
+const { default: ExplorePage, generateMetadata } = await import('./page')
 
 describe('ExplorePage (Server Component)', () => {
   it('generates a localized title and description for SEO', async () => {

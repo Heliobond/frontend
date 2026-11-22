@@ -4,15 +4,10 @@
  * transactions (#692). These render the real component with the chain modules mocked.
  */
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { render } from '@/test/render'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AdminConsole } from './AdminConsole'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 import type { PauseState } from '@/wallet/admin'
-import { fetchProjectsPage, isRegistryConfigured } from '@/wallet/registry'
-import { REGISTRY } from '@/data/admin'
-import { fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
 
-const mocks = vi.hoisted(() => ({
+const mocks = {
   address: 'GOWNER' as string | null,
   sign: vi.fn(),
   submitFundProject: vi.fn(),
@@ -22,14 +17,14 @@ const mocks = vi.hoisted(() => ({
   getPauseState: vi.fn(),
   getAdminRoles: vi.fn(),
   isMultisigDeployment: vi.fn(),
-}))
+}
 
-vi.mock('@/wallet/WalletProvider', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/WalletProvider'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/WalletProvider')>()),
   useWallet: () => ({ address: mocks.address, sign: mocks.sign }),
 }))
 
-vi.mock('@/wallet/admin', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/admin'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/admin')>()),
   submitFundProject: mocks.submitFundProject,
   submitUpdateScores: mocks.submitUpdateScores,
@@ -41,18 +36,24 @@ vi.mock('@/wallet/admin', async (importOriginal) => ({
 }))
 
 // No contract is configured in tests, so the console keeps its local figures.
-vi.mock('@/wallet/registry', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/registry'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/registry')>()),
   fetchProjectsPage: vi.fn().mockResolvedValue({ projects: [] }),
   clearRegistryCache: vi.fn(),
   isRegistryConfigured: vi.fn(() => false),
 }))
 
-vi.mock('@/wallet/vault', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/vault'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/vault')>()),
   fetchTotalAssets: vi.fn().mockRejectedValue(new Error('not configured')),
   fetchUtilizationBps: vi.fn().mockRejectedValue(new Error('not configured')),
 }))
+
+const { render } = await import('@/test/render')
+const { AdminConsole } = await import('./AdminConsole')
+const { fetchProjectsPage, isRegistryConfigured } = await import('@/wallet/registry')
+const { REGISTRY } = await import('@/data/admin')
+const { fetchTotalAssets, fetchUtilizationBps } = await import('@/wallet/vault')
 
 const ownerRoles = {
   isVaultOwner: true,

@@ -1,8 +1,7 @@
 import { act, render, waitFor } from '@testing-library/react'
 import { Account, Asset, Operation, TransactionBuilder } from '@stellar/stellar-sdk'
 import { useEffect, useSyncExternalStore } from 'react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { NETWORK_PASSPHRASE } from '../config/network'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const WALLET_ADDRESS = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
 const MESSAGE_CHALLENGE = `Sign in to Heliobond\n${WALLET_ADDRESS}`
@@ -46,7 +45,10 @@ vi.mock('../wallet/WalletProvider', () => ({
   },
 }))
 
-import { SessionProvider, useSession, type SessionContextValue } from './SessionProvider'
+const { NETWORK_PASSPHRASE } = await import('../config/network')
+const { SessionProvider, useSession } = await import('./SessionProvider')
+
+import type { SessionContextValue } from './SessionProvider'
 
 /**
  * Latest context value observed by the probe. Assigned in an effect rather than
@@ -582,9 +584,9 @@ describe('SessionProvider', () => {
     act(() => walletMock.setAddress(null))
     await waitFor(() => expect(session.isAuthenticated).toBe(false))
 
-    await expect(act(() => session.authedFetch<number[]>('/me/watchlist'))).rejects.toThrow(
-      'Not signed in',
-    )
+    await act(async () => {
+      await expect(session.authedFetch<number[]>('/me/watchlist')).rejects.toThrow('Not signed in')
+    })
   })
 
   /** A sequence-0 transaction that is a payment, not a SEP-10 manageData op. */
