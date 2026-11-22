@@ -39,7 +39,7 @@ export interface ProjectDetail {
 }
 /** A single oracle score update, anchored by its on-chain tx hash. */
 export interface ScorePoint {
-  date: string
+  date: string | null
   value: number
   hash: string
 }

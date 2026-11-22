@@ -481,7 +481,7 @@ export function mapOnChainProject(
 }
 
 /** Render a score-history unix timestamp (seconds) as a short date label. */
-function formatScoreDate(timestamp: number | bigint | undefined, index: number): string {
+function formatScoreDate(timestamp: number | bigint | undefined): string | null {
   const seconds = Number(timestamp)
   if (Number.isFinite(seconds) && seconds > 0) {
     return new Date(seconds * 1000).toLocaleDateString(getLocaleCode(), {
@@ -489,7 +489,7 @@ function formatScoreDate(timestamp: number | bigint | undefined, index: number):
       year: 'numeric',
     })
   }
-  return `${index + 1}mo ago`
+  return null
 }
 
 /** Read total projects count from ProjectRegistry */
@@ -774,12 +774,12 @@ export async function fetchScoreHistory(
 
     if (Array.isArray(raw) && raw.length > 0) {
       const credit: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
+        date: formatScoreDate(r.timestamp),
         value: Number(r.credit_quality),
         hash: `0xscore${id}${i}`,
       }))
       const green: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
+        date: formatScoreDate(r.timestamp),
         value: Number(r.green_impact),
         hash: `0xscore${id}${i}`,
       }))

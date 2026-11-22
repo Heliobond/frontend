@@ -73,9 +73,9 @@ function projectTuple(id: number, data: xdr.ScVal): xdr.ScVal {
 }
 
 /** A ScoreHistoryEntry struct from get_score_history. */
-function scoreEntry(timestamp: number, credit: number, green: number): xdr.ScVal {
+function scoreEntry(timestamp: number | null, credit: number, green: number): xdr.ScVal {
   return xdr.ScVal.scvMap([
-    new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('timestamp'), val: u64(timestamp) }),
+    new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('timestamp'), val: u64(timestamp ?? 0) }),
     new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('credit_quality'), val: u32(credit) }),
     new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('green_impact'), val: u32(green) }),
   ])
@@ -255,7 +255,23 @@ describe('registry client', () => {
     expect(scores.green.map((p) => p.value)).toEqual([84, 86])
     expect(scores.credit.every((p) => Number.isFinite(p.value))).toBe(true)
     expect(scores.credit.map((p) => p.date)).toEqual(['Jan 2024', 'Feb 2024'])
-    expect(scores.credit.every((p) => !p.date.includes('mo ago'))).toBe(true)
+    expect(scores.credit.every((p) => p.date !== null && !p.date.includes('mo ago'))).toBe(true)
+  })
+
+  it('marks score entries with missing/invalid timestamps as having unknown dates', async () => {
+    const registry = await loadRegistry()
+    mockContract({
+      get_score_history: () =>
+        xdr.ScVal.scvVec([
+          scoreEntry(0, 74, 84), // Invalid timestamp (0)
+          scoreEntry(null, 76, 86), // Missing timestamp
+          scoreEntry(1_704_110_400, 78, 88), // Valid timestamp
+        ]),
+    })
+
+    const scores = await registry.fetchScoreHistory(1, SOURCE)
+    expect(scores.credit.map((p) => p.date)).toEqual([null, null, 'Jan 2024'])
+    expect(scores.green.map((p) => p.date)).toEqual([null, null, 'Jan 2024'])
   })
 
   it('falls back gracefully to fixtures when registry contract is unset', async () => {
