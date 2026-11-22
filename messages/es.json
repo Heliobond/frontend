@@ -70,7 +70,12 @@
       "returns": "Retornos",
       "yield": "Rendimiento",
       "historyChartLabel": "Historial de {label}",
-      "snapshotsNote": "Instantáneas indexadas, {start} – {end}. Los retornos y rendimientos históricos no garantizan el rendimiento futuro."
+      "snapshotsNote": "Instantáneas indexadas, {start} – {end}. Los retornos y rendimientos históricos no garantizan el rendimiento futuro.",
+      "failed": "No se pudo cargar el rendimiento histórico. Verifica tu conexión e inténtalo de nuevo.",
+      "retry": "Reintentar",
+      "showDataTable": "Ver tabla de datos",
+      "hideDataTable": "Ocultar tabla de datos",
+      "dateColumn": "Fecha"
     },
     "TransactionsDrawer": {
       "title": "Actividad de transacciones",
