@@ -19,7 +19,8 @@ export interface ProjectDetail {
   creator: {
     name: string
     verified: true
-    since: '2025'
+    /** Year the creator joined, only when a source supplies it. */
+    since?: string
   }
   /** Oracle update histories, trending toward the project's current scores. */
   scoreHistory: {

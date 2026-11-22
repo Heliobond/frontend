@@ -91,6 +91,50 @@ describe('RequireWallet', () => {
     )
   })
 
+  it('carries the fragment through the detour, after the query string (#1058)', () => {
+    mockPathname = '/portfolio'
+    mockSearch = 'tab=history'
+    window.history.replaceState(null, '', '/portfolio?tab=history#recent-activity')
+    try {
+      render(
+        <RequireWallet>
+          <Protected />
+        </RequireWallet>,
+      )
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/connect?next=${encodeURIComponent('/portfolio?tab=history#recent-activity')}`,
+      )
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
+  it('carries a fragment on a path with no query string (#1058)', () => {
+    window.history.replaceState(null, '', '/portfolio#holdings')
+    try {
+      render(
+        <RequireWallet>
+          <Protected />
+        </RequireWallet>,
+      )
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/connect?next=${encodeURIComponent('/portfolio#holdings')}`,
+      )
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
+  it('leaves an ordinary gated path unchanged when there is no fragment (#1058)', () => {
+    window.history.replaceState(null, '', '/portfolio')
+    render(
+      <RequireWallet>
+        <Protected />
+      </RequireWallet>,
+    )
+    expect(mockReplace).toHaveBeenCalledWith('/connect?next=%2Fportfolio')
+  })
+
   it('honours a custom redirect target', () => {
     render(
       <RequireWallet redirectTo="/">

@@ -143,6 +143,6 @@ describe('project-detail selectors (the former 5-level drills)', () => {
     expect(selectGreenHistory(4242)).toEqual([])
     expect(selectFundingTimeline(4242)).toEqual([])
     expect(selectPriceHistory(4242)).toEqual([])
-    expect(selectCreator(4242)).toEqual({ name: 'Unknown creator', verified: false, since: '' })
+    expect(selectCreator(4242)).toEqual({ name: 'Unknown creator', verified: false })
   })
 })

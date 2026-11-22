@@ -370,3 +370,45 @@ describe('ProjectDetail StrictMode mount flag (#1011)', () => {
     }
   })
 })
+
+describe('ProjectDetail price movement and creator attribution', () => {
+  function renderWith(detail: Partial<ProjectDetailData>) {
+    return render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={mockProject}
+          detail={{ ...mockDetail, ...detail }}
+          onInvest={vi.fn().mockResolvedValue('/connect')}
+        />
+      </YieldAlertProvider>,
+    )
+  }
+  const point = (date: string, price: number) => ({ date, price, yield: 6, hash: '0x1' })
+
+  it('shows a fractional price move and the last observation at two decimals (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.1), point('2025-02-01', 99.35)] })
+    expect(screen.getByText('99.35% of par')).toBeInTheDocument()
+    expect(screen.getByText('+0.25')).toBeInTheDocument()
+  })
+
+  it('shows a negative fractional move with a minus sign (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.35), point('2025-02-01', 99.1)] })
+    expect(screen.getByText('−0.25')).toBeInTheDocument()
+  })
+
+  it('renders no price figure when there is no history (#1070)', () => {
+    renderWith({ priceHistory: [] })
+    expect(screen.queryByText(/% of par/)).not.toBeInTheDocument()
+  })
+
+  it('does not invent a membership year when the creator has none (#1071)', () => {
+    renderWith({ creator: { name: 'GABC…WXYZ', verified: true } })
+    expect(screen.getByText('Verified creator')).toBeInTheDocument()
+    expect(screen.queryByText(/since 2025/)).not.toBeInTheDocument()
+  })
+
+  it('renders a supplied creator tenure from its own source (#1071)', () => {
+    renderWith({ creator: { name: 'Helio Energy', verified: true, since: '2023' } })
+    expect(screen.getByText('Verified creator · since 2023')).toBeInTheDocument()
+  })
+})
