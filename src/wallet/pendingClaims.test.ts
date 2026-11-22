@@ -98,4 +98,28 @@ describe('pendingClaims storage', () => {
     removePendingClaim('claim-1')
     expect(getPendingClaims()).toHaveLength(0)
   })
-})
+
+  it('filters out malformed records while keeping valid ones', () => {
+    // Directly inject malformed records into storage to test validation
+    const validClaim = {
+      id: 'claim-valid',
+      hash: '0xabc123',
+      amount: 100,
+      timestamp: 1700000000000,
+    }
+    
+    const malformed = [
+      validClaim,
+      null, // null record
+      { id: 'claim-no-timestamp', hash: '0xdef456' }, // missing timestamp
+      { hash: '0xghi789', timestamp: 1700000000000 }, // missing id
+      { id: '', hash: '0xjkl012', timestamp: 1700000000000 }, // empty id
+      { id: 'claim-bad-ts', hash: '0xmno345', timestamp: 0 }, // invalid timestamp
+    ]
+    
+    window.localStorage.setItem('hb-pending-claims', JSON.stringify(malformed))
+    
+    const claims = getPendingClaims()
+    expect(claims).toHaveLength(1)
+    expect(claims[0].id).toBe('claim-valid')
+  })

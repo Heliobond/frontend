@@ -27,10 +27,21 @@ export function getPendingClaims(address?: string): PendingClaim[] {
     if (!raw) return []
     const parsed = JSON.parse(raw) as PendingClaim[]
     if (!Array.isArray(parsed)) return []
+
+    // Validate each record: keep only well-formed entries
+    const valid = parsed.filter((c) => {
+      // Must have id, hash, and timestamp
+      if (!c || typeof c !== 'object') return false
+      if (typeof c.id !== 'string' || !c.id) return false
+      if (typeof c.hash !== 'string' || !c.hash) return false
+      if (typeof c.timestamp !== 'number' || c.timestamp <= 0) return false
+      return true
+    })
+
     if (address) {
-      return parsed.filter((c) => c.address === address)
+      return valid.filter((c) => c.address === address)
     }
-    return parsed
+    return valid
   } catch {
     return []
   }
