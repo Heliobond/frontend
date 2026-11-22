@@ -5,7 +5,7 @@
  * asked for the API key (it goes through the same-origin proxy instead), and the
  * server must call the backend with the key attached.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 type Client = typeof import('./apiClient')
 

@@ -1,8 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@/test/render'
-import { NetworkPill, TopBar } from './TopBar'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 
-const wallet = vi.hoisted(() => ({
+const wallet = {
   connected: true,
   address: 'GCKFBEIYTKP5RDBQMTVVALONAOPBXICILMAFKKNOT6QZ4ZIUXM6RLJ5V',
   connecting: false,
@@ -11,7 +9,7 @@ const wallet = vi.hoisted(() => ({
   networkMismatch: false,
   walletNetworkPassphrase: null as string | null,
   checkWalletNetwork: vi.fn(),
-}))
+}
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/explore',
@@ -22,6 +20,9 @@ vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => wallet,
   shortAddress: (address: string) => address,
 }))
+
+const { fireEvent, render, screen } = await import('@/test/render')
+const { NetworkPill, TopBar } = await import('./TopBar')
 
 Object.defineProperty(window, 'IntersectionObserver', {
   writable: true,

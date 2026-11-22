@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import { Keypair, StrKey, Transaction, nativeToScVal, xdr } from '@stellar/stellar-sdk'
 import { createHash } from 'node:crypto'
 
@@ -8,11 +8,13 @@ import { createHash } from 'node:crypto'
 // contract-shaped ScVal fixture, so these assertions see exactly the values
 // `get_projects_page`, `get_project` and `get_score_history` return on-chain.
 
-const rpcMock = vi.hoisted(() => ({
+const rpcMock = {
   simulateTransaction: vi.fn(),
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
   class Server {
     constructor() {}

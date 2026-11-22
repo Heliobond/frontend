@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { render, fireEvent, screen } from '@testing-library/react'
 import { MemoInput } from './MemoInput'
 

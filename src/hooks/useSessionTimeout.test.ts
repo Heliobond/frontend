@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/test/bun'
 import { renderHook, act } from '@testing-library/react'
 import { useSessionTimeout } from './useSessionTimeout'
 

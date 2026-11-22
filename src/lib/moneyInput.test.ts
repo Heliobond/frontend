@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { parseMoneyInput } from './moneyInput'
 
 describe('parseMoneyInput (#869)', () => {

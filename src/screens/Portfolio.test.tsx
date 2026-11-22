@@ -1,9 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@/test/render'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Portfolio } from './Portfolio'
-import * as vault from '../wallet/vault'
-import { notifyTransactionConfirmed } from '../wallet/vaultEvents'
-import { addPendingClaim, clearPendingClaims } from '../wallet/pendingClaims'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const mockWallet = {
   address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
@@ -17,7 +12,7 @@ vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
 
-vi.mock('../wallet/vault', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('../wallet/vault'), async (importOriginal) => {
   const actual = await importOriginal<typeof vault>()
   return {
     ...actual,
@@ -29,6 +24,12 @@ vi.mock('../wallet/vault', async (importOriginal) => {
     submitClaimYield: vi.fn(),
   }
 })
+
+const { act, fireEvent, render, screen, waitFor } = await import('@/test/render')
+const { Portfolio } = await import('./Portfolio')
+const vault = await import('../wallet/vault')
+const { notifyTransactionConfirmed } = await import('../wallet/vaultEvents')
+const { addPendingClaim, clearPendingClaims } = await import('../wallet/pendingClaims')
 
 describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
   beforeEach(() => {

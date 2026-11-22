@@ -35,6 +35,7 @@ const WATCHED_PATTERNS = [
   /^eslint\.config\.(c|m)?[jt]s$/,
   /^next\.config\.[jt]s$/,
   /^vitest\.(config|setup)\.[cm]?[jt]s$/,
+  /^src\/test\/bun\.ts$/,
   /^playwright[^/]*\.config\.[cm]?[jt]s$/,
   /^(postcss|tailwind)\.config\.[cm]?[jt]s$/,
   /^scripts\//,

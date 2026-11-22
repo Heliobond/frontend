@@ -1,19 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { useEffect } from 'react'
 import { act, render, screen, waitFor } from '@testing-library/react'
-import { WalletProvider, useWallet } from './WalletProvider'
-import {
-  NetworkMismatchError,
-  isNetworkMismatch,
-  isNetworkMismatchError,
-  networkMismatchMessage,
-} from './networkGuard'
 
 const TESTNET = 'Test SDF Network ; September 2015'
 const PUBLIC = 'Public Global Stellar Network ; September 2015'
 const ADDRESS = 'GCKFBEIYTKP5RDBQMTVVALONAOPBXICILMAFKKNOT6QZ4ZIUXM6RLJ5V'
 
-const kit = vi.hoisted(() => ({
+const kit = {
   init: vi.fn(),
   authModal: vi.fn(),
   getNetwork: vi.fn(),
@@ -21,7 +14,7 @@ const kit = vi.hoisted(() => ({
   setWallet: vi.fn(),
   disconnect: vi.fn(),
   selectedModule: { productId: 'freighter' },
-}))
+}
 
 vi.mock('@creit.tech/stellar-wallets-kit', () => ({
   StellarWalletsKit: kit,
@@ -31,6 +24,10 @@ vi.mock('@creit.tech/stellar-wallets-kit', () => ({
   },
 }))
 vi.mock('@creit.tech/stellar-wallets-kit/modules/utils', () => ({ defaultModules: () => [] }))
+
+const { WalletProvider, useWallet } = await import('./WalletProvider')
+const { NetworkMismatchError, isNetworkMismatch, isNetworkMismatchError, networkMismatchMessage } =
+  await import('./networkGuard')
 
 describe('networkGuard helpers', () => {
   it('flags a known, different wallet network as a mismatch', () => {

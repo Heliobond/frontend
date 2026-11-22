@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from '@/test/bun'
 import { notifyTransactionConfirmed, subscribeTransactionConfirmed } from './vaultEvents'
 
 describe('vault transaction events', () => {

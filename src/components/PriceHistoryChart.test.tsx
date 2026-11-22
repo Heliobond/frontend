@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { render, screen } from '../test/render'
 import PriceHistoryChart from './PriceHistoryChart'
 import { selectPriceHistory } from '../state/selectors'

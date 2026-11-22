@@ -1,8 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { selectProjectById, selectProjects } from '../state/selectors'
-import { PROXY_BASE } from './apiClient'
 
 // Error and fallback branches of every exported api.ts function (#608).
 // API_URL is read at module load, so each test stubs the env and re-imports.
@@ -12,6 +10,9 @@ vi.mock('../wallet/registry', () => ({
   fetchProjectsPage: vi.fn(),
   fetchProjectWithDetails: vi.fn(),
 }))
+
+const { selectProjectById, selectProjects } = await import('../state/selectors')
+const { PROXY_BASE } = await import('./apiClient')
 
 const API = 'https://api.example.test'
 
@@ -167,16 +168,13 @@ describe('getProjects', () => {
   it('request helper throws typed ApiError with status, code, and message', async () => {
     const api = await loadApi()
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ error: 'server error' }, 503))
-    try {
-      await api.request('/test-endpoint')
-      expect.fail('should have thrown')
-    } catch (err: unknown) {
-      expect(err).toBeInstanceOf(api.ApiError)
-      const apiErr = err as InstanceType<typeof api.ApiError>
-      expect(apiErr.status).toBe(503)
-      expect(apiErr.code).toBe('HTTP_503')
-      expect(apiErr.message).toBe('HTTP 503')
-    }
+    const request = api.request('/test-endpoint')
+    await expect(request).rejects.toBeInstanceOf(api.ApiError)
+    await expect(request).rejects.toMatchObject({
+      status: 503,
+      code: 'HTTP_503',
+      message: 'HTTP 503',
+    })
   })
 
   it('returns the mapped payload on success', async () => {
