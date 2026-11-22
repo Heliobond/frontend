@@ -15,6 +15,7 @@
     "creator": "Criador",
     "preferences": "Preferências",
     "language": "Idioma",
+    "languageLoadFailed": "Não foi possível carregar esse idioma. Tente novamente.",
     "how": "Como funciona",
     "testnet": "Testnet (ativo)",
     "networkStatus": "Rede: Testnet ativa",

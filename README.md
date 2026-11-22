@@ -95,8 +95,8 @@ only the values needed for the mode you are testing.
 | `NEXT_PUBLIC_SOROBAN_RPC_URL`      | No        | Network-specific Stellar RPC URL            | Override the Soroban RPC endpoint.                                                                                   |
 | `NEXT_PUBLIC_HORIZON_URL`          | No        | Network-specific Horizon URL                | Override the Horizon endpoint used for transaction account loading.                                                  |
 
-`NEXT_PUBLIC_DEMO_MODE=true` forces fixtures even when `NEXT_PUBLIC_API_URL` is
-set. The remaining variables (CSP mode, telemetry sink, auth URL, release tag,
+The app uses demo fixtures when no backend URL or API key is configured. The
+remaining variables (CSP mode, telemetry sink, auth URL, release tag,
 source maps, dev routes) are documented inline in `.env.example` and
 [SECURITY.md](SECURITY.md). For backend configuration, see the backend
 repository's `.env.example`.
@@ -166,8 +166,10 @@ what each surface reads and writes.
 - **i18n (5 locales)** — `src/i18n/` + `messages/{ar,en,es,fr,pt}.json`, kept in
   leaf-key parity by `src/__tests__/catalog-parity.test.ts`. The shell, the
   investor screens, the creator space and the route metadata are translated;
-  the language switcher sets a cookie and refreshes. Design-system primitives and
-  the tax-report screen still ship English (i18n-ready).
+  the language switcher sets a cookie and refreshes. See
+  [Adding a locale](CONTRIBUTING.md#adding-a-locale) before contributing a new
+  catalog. Design-system primitives and the tax-report screen still ship
+  English (i18n-ready).
 - **Project detail** (`/project/[id]`) — hero, verified-creator badge, two large
   sun-arc scores with on-chain score-history sparklines, funding timeline, the
   expandable return formula, and honest pooled-model framing.

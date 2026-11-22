@@ -30,6 +30,7 @@
     },
     "preferences": "التفضيلات",
     "language": "اللغة",
+    "languageLoadFailed": "تعذّر تحميل هذه اللغة. يُرجى المحاولة مرة أخرى.",
     "account": "الحساب",
     "copyAddress": "نسخ العنوان",
     "copied": "تم النسخ",

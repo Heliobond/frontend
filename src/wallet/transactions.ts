@@ -88,7 +88,7 @@ export function recordTransaction(
     ...old,
     ...tx,
   }
-  items = [next, ...items.filter((item) => item.hash !== tx.hash)]
+  items = old ? items.map((item) => (item.hash === tx.hash ? next : item)) : [next, ...items]
   if (next.kind === 'deposit' && !isPending(next)) {
     try {
       const guard = JSON.parse(sessionStorage.getItem('hb_pending_deposit') ?? 'null')

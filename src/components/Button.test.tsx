@@ -88,4 +88,74 @@ describe('Button', () => {
     render(<Button>Default type</Button>)
     expect(screen.getByRole('button')).toHaveAttribute('type', 'button')
   })
+
+  describe('disabled explanation (#1073)', () => {
+    it('exposes the reason as the accessible description, not only a title', () => {
+      render(
+        <Button disabled reason="Minimum deposit is $1">
+          Invest
+        </Button>,
+      )
+      const btn = screen.getByRole('button', { name: 'Invest' })
+      expect(btn).toBeDisabled()
+      expect(btn).toHaveAccessibleDescription('Minimum deposit is $1')
+      expect(screen.getByText('Minimum deposit is $1')).toBeInTheDocument()
+    })
+
+    it('keeps ordinary disabled semantics when there is no reason', () => {
+      const { container } = render(<Button disabled>Invest</Button>)
+      expect(screen.getByRole('button')).not.toHaveAttribute('aria-describedby')
+      expect(container.querySelectorAll('span[id]')).toHaveLength(0)
+    })
+
+    it('does not describe an enabled button with its reason', () => {
+      render(<Button reason="Not needed">Invest</Button>)
+      expect(screen.getByRole('button')).not.toHaveAttribute('aria-describedby')
+      expect(screen.queryByText('Not needed')).not.toBeInTheDocument()
+    })
+
+    it('gives each control a unique explanation id', () => {
+      render(
+        <>
+          <Button disabled reason="First reason">
+            One
+          </Button>
+          <Button disabled reason="Second reason">
+            Two
+          </Button>
+        </>,
+      )
+      const one = screen.getByRole('button', { name: 'One' })
+      const two = screen.getByRole('button', { name: 'Two' })
+      expect(one.getAttribute('aria-describedby')).not.toBe(two.getAttribute('aria-describedby'))
+      expect(one).toHaveAccessibleDescription('First reason')
+      expect(two).toHaveAccessibleDescription('Second reason')
+    })
+
+    it('preserves a caller-supplied aria-describedby alongside the reason', () => {
+      render(
+        <>
+          <span id="hint">Extra hint</span>
+          <Button disabled reason="Because" aria-describedby="hint">
+            Go
+          </Button>
+        </>,
+      )
+      expect(screen.getByRole('button', { name: 'Go' })).toHaveAccessibleDescription(
+        'Extra hint Because',
+      )
+    })
+
+    it('still never fires onClick while disabled', () => {
+      const onClick = vi.fn()
+      render(
+        <Button disabled reason="Nope" onClick={onClick}>
+          Go
+        </Button>,
+      )
+      fireEvent.click(screen.getByText('Nope'))
+      fireEvent.click(screen.getByRole('button'))
+      expect(onClick).not.toHaveBeenCalled()
+    })
+  })
 })

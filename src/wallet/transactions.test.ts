@@ -48,6 +48,22 @@ describe('transactions store', () => {
     expect(getTransactions()[0].status).toBe('confirmed')
   })
 
+  it('keeps existing rows in submission order and puts new submissions first', () => {
+    recordTransaction({ ...pending('older'), submittedAt: 100 })
+    recordTransaction({ ...pending('newer'), submittedAt: 200 })
+    updateTransaction('older', 'pending')
+    updateTransaction('older', 'confirmed')
+
+    expect(
+      getTransactions().map(({ hash, status, submittedAt }) => [hash, status, submittedAt]),
+    ).toEqual([
+      ['newer', 'pending', 200],
+      ['older', 'confirmed', 100],
+    ])
+    recordTransaction({ ...pending('latest'), submittedAt: 300 })
+    expect(getTransactions().map(({ hash }) => hash)).toEqual(['latest', 'newer', 'older'])
+  })
+
   it('keeps timeout-pending items active and clears completed items', () => {
     recordTransaction(pending('timeout'))
     updateTransaction('timeout', 'timeout_pending')

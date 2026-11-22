@@ -24,6 +24,7 @@
     },
     "preferences": "Preferences",
     "language": "Language",
+    "languageLoadFailed": "Could not load that language. Please try again.",
     "account": "Account",
     "watchlist": "Watchlist",
     "copyAddress": "Copy address",

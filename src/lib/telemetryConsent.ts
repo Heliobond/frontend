@@ -2,14 +2,24 @@ export const TELEMETRY_CONSENT_KEY = 'hb-telemetry-consent'
 
 export type TelemetryConsent = 'granted' | 'denied'
 
+/**
+ * A decline for this visit that could not be persisted (storage blocked or
+ * full). Only ever `'denied'`: consent to collect data must be durable to count,
+ * so an unsaved grant is not honoured, but an unsaved decline is, which
+ * keeps telemetry off and lets the banner dismiss. Only set while a write has
+ * failed, so it never shadows real storage.
+ */
+let unsavedConsent: 'denied' | null = null
+
 /** The visitor's recorded choice, or `null` when they haven't chosen yet. */
 export function readTelemetryConsent(): TelemetryConsent | null {
   try {
     const value = localStorage.getItem(TELEMETRY_CONSENT_KEY)
-    return value === 'granted' || value === 'denied' ? value : null
+    if (value === 'granted' || value === 'denied') return value
   } catch {
-    return null
+    /* storage unavailable — fall through to the in-memory choice */
   }
+  return unsavedConsent
 }
 
 /**
@@ -20,8 +30,11 @@ export function setTelemetryConsent(consent: TelemetryConsent | null): void {
   try {
     if (consent === null) localStorage.removeItem(TELEMETRY_CONSENT_KEY)
     else localStorage.setItem(TELEMETRY_CONSENT_KEY, consent)
+    unsavedConsent = null
   } catch {
-    /* storage unavailable — the choice just won't persist */
+    // Storage unavailable: remember a decline for this visit (it won't survive
+    // a reload). Anything else is dropped, as before.
+    unsavedConsent = consent === 'denied' ? consent : null
   }
   if (typeof window !== 'undefined') window.dispatchEvent(new Event(TELEMETRY_CONSENT_EVENT))
 }
