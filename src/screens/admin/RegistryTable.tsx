@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Button } from '@/components'
 import { type RegistryEntry } from '@/data/admin'
 import { parseFundedNum, isSafeScore, getScoreError } from './utils'
+import { formatScore } from '@/lib/score'
 
 /**
  * RegistryTable — the dense project registry. A real <table> with a tinted,
@@ -53,8 +54,14 @@ export function RegistryTable({ rows, onSave, updateDisabledReason }: RegistryTa
         case 'funded':
           cmp = parseFundedNum(a.funded) - parseFundedNum(b.funded)
           break
-        default:
-          cmp = (a[sortKey] as number) - (b[sortKey] as number)
+        default: {
+          // Unknown scores sort last regardless of direction.
+          const left = a[sortKey]
+          const right = b[sortKey]
+          if (left === undefined) return right === undefined ? a.id - b.id : 1
+          if (right === undefined) return -1
+          cmp = left - right
+        }
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
@@ -228,8 +235,8 @@ function Row({
   cancelLabel: string
   saveLabel: string
 }) {
-  const [credit, setCredit] = useState(String(row.credit))
-  const [green, setGreen] = useState(String(row.green))
+  const [credit, setCredit] = useState(formatScore(row.credit))
+  const [green, setGreen] = useState(formatScore(row.green))
   const [saving, setSaving] = useState(false)
   const creditInputRef = useRef<HTMLInputElement | null>(null)
   const updateBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -247,8 +254,8 @@ function Row({
 
   // Reset draft to current values each time the editor opens.
   const open = () => {
-    setCredit(String(row.credit))
-    setGreen(String(row.green))
+    setCredit(formatScore(row.credit))
+    setGreen(formatScore(row.green))
     onEdit()
   }
 
@@ -256,7 +263,11 @@ function Row({
   const greenValid = isSafeScore(green)
   const creditError = getScoreError(credit)
   const greenError = getScoreError(green)
-  const isChanged = Number(credit) !== row.credit || Number(green) !== row.green
+  const isChanged =
+    row.credit === undefined ||
+    row.green === undefined ||
+    Number(credit) !== row.credit ||
+    Number(green) !== row.green
   const canSave = creditValid && greenValid && isChanged
 
   const save = async () => {
@@ -279,8 +290,8 @@ function Row({
         <td style={tdStyle}>
           <span style={typePill}>{row.type}</span>
         </td>
-        <td style={tdNumStyle}>{row.credit}</td>
-        <td style={tdNumStyle}>{row.green}</td>
+        <td style={tdNumStyle}>{formatScore(row.credit)}</td>
+        <td style={tdNumStyle}>{formatScore(row.green)}</td>
         <td style={tdNumStyle}>{row.funded}</td>
         <td style={tdLastVerifiedStyle}>{row.lastVerified}</td>
         <td style={tdActionsStyle}>

@@ -1,4 +1,4 @@
-import { afterEach, describe, it, expect, vi } from 'vitest'
+import { afterEach, describe, it, expect, vi } from '@/test/bun'
 import * as api from '../lib/api'
 import { selectProjects } from '../state/selectors'
 import robots from './robots'
@@ -89,7 +89,7 @@ describe('sitemap (#657)', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
 
     const urls = (await sitemap()).map((entry) => new URL(entry.url).pathname)
-    expect(urls).toEqual(PUBLIC_ROUTES)
+    expect(urls).toEqual([...PUBLIC_ROUTES])
   })
 
   it('lists the public content pages, including /risk, /verify and /learn', async () => {

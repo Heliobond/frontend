@@ -1,5 +1,5 @@
 // src/lib/tax-report.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
@@ -72,7 +72,9 @@ describe('computeQuarterlyTaxReport', () => {
   })
 
   it('returns an empty array for no events', () => {
-    expect(computeQuarterlyTaxReport([])).toEqual([])
+    const report = computeQuarterlyTaxReport([])
+    expect(report).toHaveLength(0)
+    expect(report.skippedCount).toBe(0)
   })
 
   it('sorts multi-year results chronologically', () => {

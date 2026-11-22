@@ -16,6 +16,8 @@ const useProductionServer = process.env.E2E_PRODUCTION_SERVER === 'true'
 const productionPort = Number(process.env.E2E_PRODUCTION_PORT) || 3200
 const port = isProductionCSP ? productionPort : useProductionServer ? 3001 : 3000
 const baseURL = `http://localhost:${port}`
+/** The dedicated production header checks; excluded from the general project. */
+const SECURITY_HEADERS_SPEC = /security-headers\.spec\.ts$/
 const runner =
   process.env.npm_execpath && process.env.npm_execpath.includes('bun') ? 'bun run' : 'npm run'
 
@@ -32,13 +34,19 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
   },
+  // Both projects use Desktop Chrome against the same baseURL, so each spec must
+  // belong to exactly one of them or a plain `playwright test` runs it twice
+  // (#1039): `chromium` runs the general journeys, `production` only the
+  // dedicated security-header checks (`test:e2e:production` selects it).
   projects: [
     {
       name: 'chromium',
+      testIgnore: [SECURITY_HEADERS_SPEC, /[\\/]chain[\\/]/],
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'production',
+      testMatch: SECURITY_HEADERS_SPEC,
       use: { ...devices['Desktop Chrome'] },
     },
   ],

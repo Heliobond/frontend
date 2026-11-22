@@ -2,7 +2,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import {
   MAX_DIFF_CHARS,
   REVIEW_LABEL,
@@ -15,7 +15,6 @@ import {
   watchedFiles,
 } from './check-supply-chain-changes.mjs'
 
-// Vitest runs from the repo root; import.meta.url is not a file URL under jsdom.
 const SCRIPT = path.resolve(process.cwd(), 'scripts/check-supply-chain-changes.mjs')
 
 describe('isWatched and watchedFiles', () => {
@@ -29,6 +28,7 @@ describe('isWatched and watchedFiles', () => {
       'next.config.ts',
       'vitest.config.mts',
       'vitest.setup.ts',
+      'src/test/bun.ts',
       'playwright.chain.config.ts',
       'postcss.config.mjs',
       'scripts/check-type-coverage.mjs',

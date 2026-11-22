@@ -61,6 +61,10 @@ once it cuts its first tagged release (it currently ships continuously from
 
 ### Fixed
 
+- Fixed a link to a section of a gated page (`/portfolio#section`) returning to the top of the page after connecting a wallet; the fragment is now carried through the connect detour (#1058).
+- Fixed the landing verification panel showing placeholder strings as the registry and vault addresses; it now shows the configured contract IDs in full, or says the deployment isn't configured (#1069).
+- Fixed small price moves on the project detail screen showing as `+0`/`-0`; the latest price and change now use the same two-decimal precision and unit as the price chart (#1070).
+- Fixed live projects all showing "Verified creator · since 2025"; a creator tenure is only shown when a source supplies it (#1071).
 - Telemetry prompt: choosing Decline now dismisses the banner for the visit and keeps telemetry off even when `localStorage` writes are blocked (#1072).
 - Disabled buttons with a `reason` now expose it as the accessible description instead of only a hover `title` (#1073).
 - Mobile site menu is now a navigation disclosure (ordinary links, Tab order) rather than a `menu`, and Escape in the nested preferences popup closes only the popup (#1074).

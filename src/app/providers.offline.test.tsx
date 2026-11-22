@@ -6,25 +6,25 @@
  * that `disconnect()` never cleared, so the flag stayed true forever and the
  * banner appeared on every load after a manual disconnect.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 import type { DisconnectReason } from '@/wallet/WalletProvider'
 
 let walletState = { connected: false, lastDisconnectReason: null as DisconnectReason | null }
 /** Reachability comes from the shared Horizon poller, mocked below. */
 let horizonState = { isOnline: true }
 
-vi.mock('@/hooks/useHorizonHealth', () => ({
+await vi.mockModule(import.meta.resolve('@/hooks/useHorizonHealth'), async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/hooks/useHorizonHealth')>()),
   useHorizonHealth: () => horizonState,
 }))
 
-vi.mock('@/wallet/WalletProvider', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/wallet/WalletProvider')>('@/wallet/WalletProvider')
+await vi.mockModule(import.meta.resolve('@/wallet/WalletProvider'), async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/wallet/WalletProvider')>()
   return { ...actual, useWallet: () => walletState }
 })
 
-import { OfflineBanner } from './providers'
+const { render, screen } = await import('@/test/render')
+const { OfflineBanner } = await import('./providers')
 
 const banner = () => screen.queryByText(/offline/i)
 

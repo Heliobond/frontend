@@ -20,8 +20,21 @@ export function getVirtualRange(
     throw new RangeError('virtual list dimensions are outside their valid range')
   }
 
-  const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan)
-  const end = Math.min(itemCount, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan)
+  // A scroll offset kept from a longer feed (or restored after a refresh) can
+  // point past the end of a shortened list. Clamp it to what can actually be
+  // scrolled so the window lands on real rows instead of blank top padding.
+  const maxScrollTop = Math.max(0, itemCount * rowHeight - viewportHeight)
+  const boundedScrollTop = Math.min(scrollTop, maxScrollTop)
+
+  // Keep the window inside the current rows even for a zero-height viewport.
+  const start = Math.min(
+    itemCount,
+    Math.max(0, Math.floor(boundedScrollTop / rowHeight) - overscan),
+  )
+  const end = Math.min(
+    itemCount,
+    Math.max(start, Math.ceil((boundedScrollTop + viewportHeight) / rowHeight) + overscan),
+  )
   return {
     start,
     end,

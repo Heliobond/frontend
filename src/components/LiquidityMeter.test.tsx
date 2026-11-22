@@ -1,5 +1,5 @@
 import { render, screen } from '@/test/render'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { LiquidityMeter } from './LiquidityMeter'
 
 describe('LiquidityMeter percentage and formatting', () => {

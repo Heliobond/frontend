@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { AmountInput } from './AmountInput'
 import { render as rtlRender, fireEvent } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'

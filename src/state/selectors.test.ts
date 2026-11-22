@@ -4,7 +4,7 @@
 //   2. every summary result is FLAT — no nested object values, so consumers
 //      never drill more than one level past a selector call.
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { HB_DATA } from '../data'
 import { PROJECT_DETAILS } from '../data/projectDetails'
 import {
@@ -143,6 +143,6 @@ describe('project-detail selectors (the former 5-level drills)', () => {
     expect(selectGreenHistory(4242)).toEqual([])
     expect(selectFundingTimeline(4242)).toEqual([])
     expect(selectPriceHistory(4242)).toEqual([])
-    expect(selectCreator(4242)).toEqual({ name: 'Unknown creator', verified: false, since: '' })
+    expect(selectCreator(4242)).toEqual({ name: 'Unknown creator', verified: false })
   })
 })

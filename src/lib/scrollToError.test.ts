@@ -1,6 +1,6 @@
 // Unit tests for scrollToError module
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from '@/test/bun'
 import { scrollToFirstError, scrollToField } from './scrollToError'
 
 describe('scrollToError', () => {

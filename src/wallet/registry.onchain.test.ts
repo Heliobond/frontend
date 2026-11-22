@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import { StrKey, nativeToScVal, xdr } from '@stellar/stellar-sdk'
 
 // Verifies the on-chain registry read path (#625): a valid simulation source,
@@ -8,13 +8,15 @@ import { StrKey, nativeToScVal, xdr } from '@stellar/stellar-sdk'
 // builds and encodes every transaction, so these assertions see exactly the
 // InvokeContract call the app would simulate.
 
-const rpcMock = vi.hoisted(() => ({
+const rpcMock = {
   simulateTransaction: vi.fn(),
   serverUrls: [] as string[],
   serverOptions: [] as unknown[],
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
   class Server {
     constructor(url: string, opts?: unknown) {

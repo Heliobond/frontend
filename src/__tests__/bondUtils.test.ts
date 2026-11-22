@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import {
   searchBondsByName,
   sortBondsByYield,
@@ -66,6 +67,47 @@ describe('bondUtils', () => {
     persistSortOrder('asc')
     expect(window.location.search).toContain('sortOrder=asc')
     expect(getPersistedSortOrder()).toBe('asc')
+  })
+
+  it('updates the URL even when storage throws, and restores from that URL', () => {
+    localStorage.clear()
+    window.history.replaceState(null, '', 'http://localhost:3000/portfolio')
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    try {
+      persistSortOrder('desc')
+      expect(window.location.search).toContain('sortOrder=desc')
+      expect(localStorage.getItem('bond_sort_order')).toBeNull()
+
+      // Simulate a reload with unusable storage: the URL is enough on its own.
+      const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('storage unavailable')
+      })
+      try {
+        expect(getPersistedSortOrder()).toBe('desc')
+      } finally {
+        getItem.mockRestore()
+      }
+    } finally {
+      setItem.mockRestore()
+    }
+  })
+
+  it('preserves unrelated query parameters when persisting sort order', () => {
+    localStorage.clear()
+    window.history.replaceState(
+      null,
+      '',
+      'http://localhost:3000/portfolio?q=solar&page=2&sortOrder=asc',
+    )
+
+    persistSortOrder('desc')
+
+    const params = new URL(window.location.href).searchParams
+    expect(params.get('q')).toBe('solar')
+    expect(params.get('page')).toBe('2')
+    expect(params.get('sortOrder')).toBe('desc')
   })
 
   it('persists and restores yield range from URL', () => {

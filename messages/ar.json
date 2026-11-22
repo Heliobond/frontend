@@ -77,7 +77,12 @@
       "returns": "العوائد",
       "yield": "الإيراد",
       "historyChartLabel": "السجل: {label}",
-      "snapshotsNote": "اللقطات المفهرسة، {start} – {end}. العوائد التاريخية لا تضمن الأداء المستقبلي."
+      "snapshotsNote": "اللقطات المفهرسة، {start} – {end}. العوائد التاريخية لا تضمن الأداء المستقبلي.",
+      "failed": "تعذر تحميل الأداء التاريخي. تحقق من اتصالك وحاول مرة أخرى.",
+      "retry": "إعادة المحاولة",
+      "showDataTable": "عرض جدول البيانات",
+      "hideDataTable": "إخفاء جدول البيانات",
+      "dateColumn": "التاريخ"
     },
     "TransactionsDrawer": {
       "title": "نشاط المعاملات",
@@ -159,6 +164,7 @@
     "formula": "العائد المتوقع = الاستثمار × (الائتمان + الأخضر) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "غير مهيأ لهذا النشر",
     "rowCadence": "تكرار تحديثات Oracle",
     "rowCadenceValue": "يومي",
     "rowAudit": "تدقيق مستقل",
@@ -622,6 +628,7 @@
     "backAriaHidden": "←",
     "backLabel": "رجوع إلى المشاريع",
     "verifiedSince": "مبدع موثق · منذ {since}",
+    "verifiedCreator": "مبدع موثق",
     "verifiedMetadata": "بيانات وصفية موثقة",
     "metadataMismatch": "عدم تطابق البيانات الوصفية",
     "unverifiedMetadata": "بيانات وصفية غير موثقة",
@@ -633,7 +640,8 @@
     "greenHistory": "درجة الأخضر عبر الزمن",
     "scoreGaugeAria": "{label}: {value} من {max}",
     "onChainNote": "كل تحديث Oracle على السلسلة ↗",
-    "verifiedAgo": "تحقق قبل 2 ساعة ↗",
+    "lastScoreObservation": "آخر رصد: {date}",
+    "scoreDateUnknown": "تاريخ غير معروف",
     "fundingTitle": "جدول التمويل",
     "fundingGoalLabel": "{raised} م collects من هدف {goal}",
     "contributionTitle": "مساهمة هذا المشروع",
@@ -648,7 +656,13 @@
     "yieldHistory": "سجل العائد",
     "yieldLabel": "العائد",
     "yieldHelpLabel": "حول عائد السند",
-    "yieldHelp": "هذا هو العائد الإرشادي الحالي للسند. اضغط لمعرفة المزيد؛ فهو ليس عائداً مضموناً."
+    "yieldHelp": "هذا هو العائد الإرشادي الحالي للسند. اضغط لمعرفة المزيد؛ فهو ليس عائداً مضموناً.",
+    "missingInfoNotice": "بعض تفاصيل هذا المشروع غير متوفرة في السجل. يتم عرض الدرجات الموثقة على السلسلة فقط.",
+    "creatorUnavailable": "معلومات المنشئ غير متوفرة",
+    "storyUnavailable": "لا توجد قصة متاحة لهذا المشروع.",
+    "scoreHistoryUnavailable": "لا يوجد سجل درجات على السلسلة لهذا المشروع حتى الآن.",
+    "fundingUnavailable": "معلومات التمويل غير متوفرة.",
+    "priceHistoryUnavailable": "لا توجد ملاحظات عن السعر أو العائد متاحة لهذا المشروع."
   },
   "PriceHistory": {
     "title": "تسعير السند",
@@ -750,6 +764,8 @@
   "YieldAlert": {
     "modalTitle": "تعيين تنبيه العائد",
     "editTitle": "تعديل تنبيه العائد",
+    "selectAlertLabel": "اختر تنبيهًا",
+    "newAlert": "تنبيه جديد",
     "conditionLabel": "نبّهني عندما يتجاوز العائد",
     "thresholdLabel": "الحد",
     "operatorAbove": "أعلى من",

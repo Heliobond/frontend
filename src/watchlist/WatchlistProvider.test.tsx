@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, createContext, type ReactNode } from 'react'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from '@/test/bun'
 import { WatchlistProvider, useWatchlist } from './WatchlistProvider'
 import { WATCHLIST_STORAGE_KEY } from '../lib/watchlist'
 
@@ -43,6 +43,19 @@ describe('WatchlistProvider', () => {
     expect(await screen.findByText('1,3')).toBeInTheDocument()
     expect(screen.getByLabelText('has-3')).toHaveTextContent('true')
     expect(screen.getByLabelText('count')).toHaveTextContent('2')
+  })
+
+  it('filters invalid and duplicate IDs when hydrating from storage', async () => {
+    // Mixed legacy data with negatives, fractionals, duplicates, and valid IDs
+    localStorage.setItem(
+      WATCHLIST_STORAGE_KEY,
+      JSON.stringify([-1, 1, 1.5, 2, 0, 2, 3, -5, 3, 0xffffffff]),
+    )
+    renderProbe()
+
+    // Only valid, deduplicated IDs should appear
+    expect(await screen.findByText('1,2,3,4294967295')).toBeInTheDocument()
+    expect(screen.getByLabelText('count')).toHaveTextContent('4')
   })
 
   it('toggles a bond on and off and writes through to storage', async () => {

@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 import userEvent from '@testing-library/user-event'
 
 const mockReplace = vi.fn()
@@ -12,8 +11,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api', () => ({ getProjectsPaginated: vi.fn(), shouldShowDemoBadge: () => false }))
 
-vi.mock('../components', async () => {
-  const actual = await vi.importActual<typeof import('../components')>('../components')
+await vi.mockModule(import.meta.resolve('../components'), async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../components')>()
   return {
     ...actual,
     ProjectCard: ({ name, verifiedLabel }: { name: string; verifiedLabel?: string }) => (
@@ -25,8 +24,10 @@ vi.mock('../components', async () => {
   }
 })
 
-import { getProjectsPaginated } from '@/lib/api'
-import { Explore } from './Explore'
+const { render, screen, waitFor } = await import('@/test/render')
+const { getProjectsPaginated } = await import('@/lib/api')
+const { Explore } = await import('./Explore')
+
 import type { Project, ProjectType } from '../data'
 
 const mockGetProjectsPaginated = vi.mocked(getProjectsPaginated)
