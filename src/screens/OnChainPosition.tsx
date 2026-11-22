@@ -2,50 +2,34 @@
 
 import { TransactionPendingError } from '../wallet/transactions'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
-import { useVaultRefresh } from '../wallet/useVaultRefresh'
 import { useWallet } from '../wallet/WalletProvider'
-import { fetchPortfolio, submitClaimYield, type OnChainPortfolio } from '../wallet/vault'
+import { submitClaimYield } from '../wallet/vault'
+import type { UsePortfolioResult } from '../hooks/usePortfolio'
 
 /**
  * The connected wallet's live vault position (get_portfolio) with a Claim yield
  * action (claim_yield). Renders only when a vault contract is configured and a
  * real wallet is connected; demo sessions keep the fixture dashboard.
  */
-export function OnChainPosition() {
+export function OnChainPosition({
+  portfolio,
+  claimableYield,
+  positionUnavailable,
+}: Pick<UsePortfolioResult, 'portfolio' | 'claimableYield' | 'positionUnavailable'>) {
   const t = useTranslations('Portfolio')
   const tErrors = useTranslations('Errors')
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
-  const [portfolio, setPortfolio] = useState<OnChainPortfolio | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [claimedPosition, setClaimedPosition] = useState<typeof portfolio>(null)
   const [claiming, setClaiming] = useState(false)
   const enabled = Boolean(process.env.NEXT_PUBLIC_VAULT_CONTRACT_ID) && !isDemo && !!address
-
-  const { tick: reloads, refresh: refreshBalances } = useVaultRefresh(enabled)
-
-  useEffect(() => {
-    if (!enabled || !address || document.hidden) return
-    let cancelled = false
-    fetchPortfolio(address).then(
-      (next) => {
-        if (cancelled) return
-        setPortfolio(next)
-        setError(null)
-      },
-      () => {
-        if (!cancelled) setError('onchainReadError')
-      },
-    )
-    return () => {
-      cancelled = true
-    }
-  }, [enabled, address, reloads])
+  const availableYield = portfolio === claimedPosition ? 0 : claimableYield
 
   if (!enabled) return null
 
@@ -54,8 +38,8 @@ export function OnChainPosition() {
     setClaiming(true)
     try {
       const hash = await submitClaimYield(address, sign)
-      // Displayed value drops to 0 immediately upon success (#590)
-      setPortfolio((prev) => (prev ? { ...prev, claimableYield: 0 } : null))
+      // Keep the confirmed claim cleared until the dashboard's shared read settles.
+      setClaimedPosition(portfolio)
       const explorerUrl = getExplorerTxUrl(hash)
       toast({
         tone: 'success',
@@ -64,8 +48,6 @@ export function OnChainPosition() {
         href: explorerUrl,
         action: explorerLink(explorerUrl, t('onchainViewExplorer')),
       })
-      // Refresh balances after confirmation (#590)
-      refreshBalances()
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
       const errorMessage = isPending
@@ -108,9 +90,9 @@ export function OnChainPosition() {
   return (
     <Card data-testid="onchain-position" style={{ padding: 22, marginBottom: 28 }}>
       <h3 style={titleStyle}>{t('onchainTitle')}</h3>
-      {error ? (
+      {positionUnavailable ? (
         <p role="alert" style={noteStyle}>
-          {t(error as 'onchainReadError')}
+          {t('onchainReadError')}
         </p>
       ) : !portfolio ? (
         <p style={noteStyle}>{t('onchainReading')}</p>
@@ -131,11 +113,11 @@ export function OnChainPosition() {
           <div data-testid="onchain-claimable-yield">
             <StatBlock
               label={t('onchainClaimable')}
-              value={`$${formatDecimal(portfolio.claimableYield, 2)}`}
+              value={`$${formatDecimal(availableYield, 2)}`}
               size="md"
             />
           </div>
-          {portfolio.claimableYield > 0 && (
+          {availableYield > 0 && (
             <Button
               variant="primary"
               loading={claiming}

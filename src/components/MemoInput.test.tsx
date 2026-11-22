@@ -38,6 +38,24 @@ describe('MemoInput', () => {
     expect(screen.getByText('0 / 28 bytes')).toBeInTheDocument()
   })
 
+  it('describes the input with the visible hint or error alongside the counter', () => {
+    const hint = 'Use the invoice reference from your receiving service.'
+    const props = { onChange: vi.fn(), hint, maxBytes: 4 }
+    const { rerender } = render(<MemoInput value="123" {...props} />)
+    const input = screen.getByRole('textbox')
+
+    expect(input).toHaveAccessibleDescription(`3 / 4 bytes ${hint}`)
+
+    rerender(<MemoInput value="12345" {...props} />)
+    expect(screen.queryByText(hint)).not.toBeInTheDocument()
+    expect(input).toHaveAccessibleDescription(
+      'Memo cannot exceed 4 bytes (currently 5 bytes). 5 / 4 bytes',
+    )
+    for (const id of input.getAttribute('aria-describedby')!.split(' ')) {
+      expect(document.getElementById(id)).toBeInTheDocument()
+    }
+  })
+
   it('updates live byte counter as text is typed', () => {
     const { rerender } = render(<MemoInput value="hello" onChange={vi.fn()} />)
     expect(screen.getByText('5 / 28 bytes')).toBeInTheDocument()

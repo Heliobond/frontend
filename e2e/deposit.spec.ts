@@ -11,26 +11,23 @@ test.describe('Deposit flow — demo mode smoke test', () => {
       page.getByRole('heading', { name: 'How much would you like to invest?' }),
     ).toBeVisible()
 
-    // Clear the default amount and type a new one.
-    const amountInput = page
-      .locator('input[type="text"], input:not([type="number"])')
-      .or(page.locator('input'))
-      .first()
-    await amountInput.fill('50')
+    await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('150')
 
     // Click the invest CTA.
-    await page.getByRole('button', { name: /invest 50 usdc/i }).click()
+    await page.getByRole('button', { name: /invest 150 usdc/i }).click()
 
     // ── Step 2: Review ────────────────────────────────────────────────────
-    await expect(page.getByRole('heading', { name: /investing 50 usdc/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /investing 150 usdc/i })).toBeVisible()
     await expect(page.getByText('You pay')).toBeVisible()
-    await expect(page.getByText('50.00 USDC')).toBeVisible()
+    await expect(page.getByText('150.00 USDC', { exact: true })).toBeVisible()
 
     // Confirm the deposit.
     // Use Promise.all to avoid a race condition where the 2s demo delay
     // resolves before Playwright can assert the pending step.
     await Promise.all([
-      expect(page.getByRole('heading', { name: 'Confirming your deposit' })).toBeVisible(),
+      expect(
+        page.getByRole('main').getByRole('status').filter({ hasText: 'Confirming your deposit' }),
+      ).toBeVisible(),
       page.getByRole('button', { name: /confirm in wallet/i }).click(),
     ])
 
@@ -39,8 +36,8 @@ test.describe('Deposit flow — demo mode smoke test', () => {
     await expect(page.getByRole('heading', { name: 'Welcome to the pool' })).toBeVisible({
       timeout: 15_000,
     })
-    await expect(page.getByRole('link', { name: 'View on Stellar Expert' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Go to portfolio' })).toBeVisible()
+    await page.getByRole('button', { name: 'Go to portfolio' }).click()
+    await expect(page).toHaveURL(/\/portfolio$/)
   })
 
   test('back button returns from review to amount', async ({ page }) => {
@@ -51,37 +48,38 @@ test.describe('Deposit flow — demo mode smoke test', () => {
       page.getByRole('heading', { name: 'How much would you like to invest?' }),
     ).toBeVisible()
 
-    const input = page.locator('input').first()
-    await input.fill('25')
-    await page.getByRole('button', { name: /invest 25 usdc/i }).click()
+    const input = page.getByRole('textbox', { name: 'Amount', exact: true })
+    await input.fill('125')
+    await page.getByRole('button', { name: 'Invest 125 USDC', exact: true }).click()
 
-    await expect(page.getByRole('heading', { name: /investing 25 usdc/i })).toBeVisible()
-    await page.getByRole('button', { name: /back/i }).click()
+    await expect(page.getByRole('heading', { name: /investing 125 usdc/i })).toBeVisible()
+    await page.getByRole('button', { name: 'Back', exact: true }).click()
 
     await expect(
       page.getByRole('heading', { name: 'How much would you like to invest?' }),
     ).toBeVisible()
   })
 
-  test('invest button is disabled when amount is below 1 USDC', async ({ page }) => {
+  test('invest button is disabled when the amount is below the 100 USDC minimum', async ({
+    page,
+  }) => {
     await seedDemoWallet(page)
     await page.goto('/deposit')
 
-    const input = page.locator('input').first()
-    await input.fill('0')
-
-    const investBtn = page.getByRole('button', { name: /invest/i }).first()
-    await expect(investBtn).toBeDisabled()
+    await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('99')
+    await expect(page.getByRole('button', { name: 'Invest', exact: true })).toBeDisabled()
   })
 
   test('quick-select chip sets the amount', async ({ page }) => {
     await seedDemoWallet(page)
     await page.goto('/deposit')
 
-    // Click the 100 chip.
-    await page.getByRole('button', { name: '100' }).click()
+    const input = page.getByRole('textbox', { name: 'Amount', exact: true })
+    await input.fill('150')
+    await page.getByRole('button', { name: '100', exact: true }).click()
 
-    await expect(page.getByRole('button', { name: /invest 100 usdc/i })).toBeVisible()
+    await expect(input).toHaveValue('100')
+    await expect(page.getByRole('button', { name: 'Invest 100 USDC', exact: true })).toBeEnabled()
   })
 
   test('validates memo length and blocks 100-character memo before sending', async ({ page }) => {
@@ -98,7 +96,7 @@ test.describe('Deposit flow — demo mode smoke test', () => {
     await expect(page.getByText('Memo cannot exceed 28 bytes (currently 100 bytes).')).toBeVisible()
 
     // Invest button should be disabled with reason
-    const investBtn = page.getByRole('button', { name: /invest/i }).first()
+    const investBtn = page.getByRole('button', { name: 'Invest 100 USDC', exact: true })
     await expect(investBtn).toBeDisabled()
 
     // Now enter a valid memo <= 28 bytes
