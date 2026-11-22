@@ -164,7 +164,7 @@ export const ProjectDetail = memo(function ProjectDetail({
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <Badge tone="growth" icon={<ShieldCheckIcon />}>
-              {t('verifiedSince', { since: creatorSince })}
+              {creatorSince ? t('verifiedSince', { since: creatorSince }) : t('verifiedCreator')}
             </Badge>
             {verifiedMetadata === 'verified' && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>

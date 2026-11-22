@@ -623,6 +623,7 @@
     "backAriaHidden": "←",
     "backLabel": "Back to projects",
     "verifiedSince": "Verified creator · since {since}",
+    "verifiedCreator": "Verified creator",
     "verifiedMetadata": "Verified metadata",
     "metadataMismatch": "Metadata mismatch",
     "unverifiedMetadata": "Unverified metadata",

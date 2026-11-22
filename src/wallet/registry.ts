@@ -715,7 +715,7 @@ export async function fetchProjectWithDetails(
       creator: {
         name: raw.owner ? `${raw.owner.slice(0, 4)}…${raw.owner.slice(-4)}` : 'Creator',
         verified: true,
-        since: '2025',
+        // The registry holds no creator-tenure data, so none is shown.
       },
       scoreHistory: scoreHistory ?? { credit: [], green: [] },
       priceHistory: project.priceHistory.map((p) => ({

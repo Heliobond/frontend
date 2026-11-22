@@ -238,6 +238,9 @@ describe('registry client', () => {
     expect(detail?.project.credit).toBe(80)
     expect(detail?.project.green).toBe(90)
     expect(detail?.project.status).toBe('open')
+    // the registry supplies an owner but no membership year, so none is invented (#1071)
+    expect(detail?.detail.creator.since).toBeUndefined()
+    expect(detail?.detail.creator.name).not.toBe('Creator')
   })
 
   it('decodes ScoreHistoryEntry timestamps and score fields', async () => {

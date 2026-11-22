@@ -353,4 +353,15 @@ describe('ProjectDetail price movement and creator attribution', () => {
     renderWith({ priceHistory: [] })
     expect(screen.queryByText(/% of par/)).not.toBeInTheDocument()
   })
+
+  it('does not invent a membership year when the creator has none (#1071)', () => {
+    renderWith({ creator: { name: 'GABC…WXYZ', verified: true } })
+    expect(screen.getByText('Verified creator')).toBeInTheDocument()
+    expect(screen.queryByText(/since 2025/)).not.toBeInTheDocument()
+  })
+
+  it('renders a supplied creator tenure from its own source (#1071)', () => {
+    renderWith({ creator: { name: 'Helio Energy', verified: true, since: '2023' } })
+    expect(screen.getByText('Verified creator · since 2023')).toBeInTheDocument()
+  })
 })

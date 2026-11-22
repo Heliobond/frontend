@@ -616,6 +616,7 @@
     "backAriaHidden": "←",
     "backLabel": "Retour aux projets",
     "verifiedSince": "Créateur vérifié · depuis {since}",
+    "verifiedCreator": "Créateur vérifié",
     "verifiedMetadata": "Métadonnées vérifiées",
     "metadataMismatch": "Discordance des métadonnées",
     "unverifiedMetadata": "Métadonnées non vérifiées",
