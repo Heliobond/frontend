@@ -81,12 +81,26 @@ describe('passwordResetTemplate', () => {
   })
 
   describe('formatUtcTime', () => {
-    it('formats UTC hours and minutes with leading zeroes', () => {
+    it('formats the UTC calendar date and 24-hour time with leading zeroes', () => {
       const fixedDate = new Date(Date.UTC(2026, 7, 28, 9, 5, 0))
-      expect(formatUtcTime(fixedDate)).toBe('09:05 UTC')
+      expect(formatUtcTime(fixedDate)).toBe('August 28, 2026 at 09:05 UTC')
 
       const afternoonDate = new Date(Date.UTC(2026, 7, 28, 14, 45, 0))
-      expect(formatUtcTime(afternoonDate)).toBe('14:45 UTC')
+      expect(formatUtcTime(afternoonDate)).toBe('August 28, 2026 at 14:45 UTC')
+    })
+
+    it('localizes the deadline to the recipient language', () => {
+      const date = new Date(Date.UTC(2026, 7, 29, 0, 10, 0))
+      expect(formatUtcTime(date, 'en')).toBe('August 29, 2026 at 00:10 UTC')
+      expect(formatUtcTime(date, 'fr')).toBe('29 août 2026 à 00:10 UTC')
+    })
+
+    it('identifies the next UTC day when a deadline crosses midnight', () => {
+      const expiresAt = new Date(Date.UTC(2026, 7, 29, 0, 10, 0))
+      const formatted = formatUtcTime(expiresAt)
+      expect(formatted).toContain('29')
+      expect(formatted).toContain('2026')
+      expect(formatted).toContain('00:10 UTC')
     })
   })
 
@@ -106,11 +120,15 @@ describe('passwordResetTemplate', () => {
 
       expect(email.subject).toBe('Reset your Heliobond password')
       expect(email.expiresAt).toEqual(new Date(fixedNow + 15 * 60 * 1000))
-      expect(email.expirationNotice).toBe('This link expires in 15 minutes (14:15 UTC).')
+      expect(email.expirationNotice).toBe(
+        'This link expires in 15 minutes (August 28, 2026 at 14:15 UTC).',
+      )
 
       // Plaintext checks
       expect(email.text).toContain('Hello Alex Doe,')
-      expect(email.text).toContain('This link expires in 15 minutes (14:15 UTC).')
+      expect(email.text).toContain(
+        'This link expires in 15 minutes (August 28, 2026 at 14:15 UTC).',
+      )
       expect(email.text).toContain('TOKEN EXPIRATION & SECURITY NOTICE')
       expect(email.text).toContain(
         'If this link has expired by the time you open it, please visit the sign-in page to request a new link.',
@@ -123,7 +141,7 @@ describe('passwordResetTemplate', () => {
       expect(email.html).toContain('<!DOCTYPE html>')
       expect(email.html).toContain('Hello Alex Doe,')
       expect(email.html).toContain('15 minutes')
-      expect(email.html).toContain('14:15 UTC')
+      expect(email.html).toContain('August 28, 2026 at 14:15 UTC')
       expect(email.html).toContain('Token Expiration &amp; Security Notice')
       expect(email.html).toContain(sampleUrl)
       expect(email.html).toContain('Reset your password')
@@ -140,9 +158,9 @@ describe('passwordResetTemplate', () => {
       })
 
       expect(email.subject).toBe('Réinitialisez votre mot de passe Heliobond')
-      expect(email.expirationNotice).toBe('Ce lien expire dans 1 heure (15:00 UTC).')
+      expect(email.expirationNotice).toBe('Ce lien expire dans 1 heure (28 août 2026 à 15:00 UTC).')
       expect(email.text).toContain('Bonjour Claire,')
-      expect(email.text).toContain('Ce lien expire dans 1 heure (15:00 UTC).')
+      expect(email.text).toContain('Ce lien expire dans 1 heure (28 août 2026 à 15:00 UTC).')
       expect(email.text).toContain('EXPIRATION DU LIEN ET SÉCURITÉ')
       expect(email.text).toContain(
         'Si ce lien a expiré au moment où vous l’ouvrez, veuillez vous rendre sur la page de connexion pour demander un nouveau lien.',
@@ -151,7 +169,32 @@ describe('passwordResetTemplate', () => {
       expect(email.text).toContain('https://heliobond.vercel.app/support')
       expect(email.html).toContain('Réinitialiser le mot de passe')
       expect(email.html).toContain('1 heure')
-      expect(email.html).toContain('15:00 UTC')
+      expect(email.html).toContain('28 août 2026 à 15:00 UTC')
+    })
+
+    it('names the next day in both formats for a link issued at 23:55 UTC', () => {
+      const requestTimestamp = new Date(Date.UTC(2026, 7, 28, 23, 55, 0))
+      const expectedExpiresAt = new Date(Date.UTC(2026, 7, 29, 0, 10, 0))
+
+      for (const locale of ['en', 'fr'] as const) {
+        const email = generatePasswordResetEmail({
+          resetUrl: sampleUrl,
+          expiresInMinutes: 15,
+          requestTimestamp,
+          locale,
+        })
+        const deadline = formatUtcTime(email.expiresAt, locale)
+
+        expect(email.expiresAt).toEqual(expectedExpiresAt)
+        // Both representations must describe exactly the returned expiresAt.
+        expect(email.text).toContain(deadline)
+        expect(email.html).toContain(deadline)
+        expect(email.expirationNotice).toContain(deadline)
+        // ...and the next calendar day is unambiguous in each language.
+        expect(deadline).toContain(locale === 'fr' ? 'août 2026' : 'August 29, 2026')
+        expect(email.text).toContain('00:10 UTC')
+        expect(email.html).toContain('00:10 UTC')
+      }
     })
 
     it('escapes malicious recipient names to prevent HTML injection', () => {

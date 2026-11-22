@@ -36,6 +36,23 @@ describe('SocialAccountConflictWarning', () => {
     expect(onContinue).toHaveBeenCalledWith('google')
   })
 
+  it('hides the provider button when no redirect handler is available', () => {
+    const onProceed = vi.fn()
+    render(
+      <SocialAccountConflictWarning
+        provider="google"
+        email="alex.doe@gmail.com"
+        onProceedWithEmail={onProceed}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Sign in with Google' })).not.toBeInTheDocument()
+
+    const emailAction = screen.getByRole('button', { name: 'Link this email to my account' })
+    fireEvent.click(emailAction)
+    expect(onProceed).toHaveBeenCalledTimes(1)
+  })
+
   it('renders optional link anyway secondary action when provided', () => {
     const onProceed = vi.fn()
     render(
