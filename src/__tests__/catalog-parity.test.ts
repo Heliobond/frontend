@@ -166,6 +166,7 @@ const IDENTICAL_ALLOWLIST = new Set<string>([
   'Components.Toast.toneNeutral',
   'Components.Toast.toneError',
   'Components.Toast.statusLabel',
+  'Components.PortfolioPerformanceChart.dateColumn',
   'Creator.typeSolar',
   'Deposit.maxChip',
   'Withdraw.maxChip',

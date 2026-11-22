@@ -167,7 +167,10 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
       expect(errorCard).toHaveTextContent('Failed to fetch vault portfolio data')
     })
 
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    const { within } = await import('@testing-library/react')
+    expect(
+      within(screen.getByTestId('portfolio-error')).getByRole('button', { name: /retry/i }),
+    ).toBeInTheDocument()
   })
 
   it('surfaces claimable yield read failures while retaining portfolio yield', async () => {
