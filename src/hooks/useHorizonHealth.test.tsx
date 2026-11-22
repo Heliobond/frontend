@@ -210,6 +210,66 @@ describe('useHorizonHealth', () => {
     unmount()
   })
 
+  it('starts a fresh network request after a rapid hide and show', async () => {
+    let rejectPending!: (error: Error) => void
+    mockFetch.mockImplementationOnce(() => new Promise((_, reject) => (rejectPending = reject)))
+
+    const { unmount } = renderHook(() => useHorizonHealth())
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    // Hide while the first probe is still pending, then immediately return.
+    act(() => {
+      setVisibility(true)
+    })
+    await act(async () => {
+      setVisibility(false)
+      await Promise.resolve()
+    })
+
+    // The aborted probe is not reused: a brand new request was issued.
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      rejectPending(new Error('The operation was aborted'))
+      await Promise.resolve()
+    })
+    unmount()
+  })
+
+  it('a canceled probe cannot publish offline status over a successful replacement', async () => {
+    let rejectCanceled!: (error: Error) => void
+    mockFetch.mockImplementationOnce(() => new Promise((_, reject) => (rejectCanceled = reject)))
+
+    const { result, unmount } = renderHook(() => useHorizonHealth())
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      setVisibility(true)
+    })
+    await act(async () => {
+      setVisibility(false)
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(result.current.isOnline).toBe(true)
+
+    // The canceled probe settles late as a failure. It must not overwrite the
+    // online status reported by the successful replacement.
+    await act(async () => {
+      rejectCanceled(new Error('The operation was aborted'))
+      await Promise.resolve()
+    })
+    expect(result.current.isOnline).toBe(true)
+
+    unmount()
+  })
+
   it('handles window offline and online events immediately', async () => {
     const { result, unmount } = renderHook(() => useHorizonHealth())
 

@@ -19,10 +19,18 @@ export interface EmailAuthModalProps {
   /** Callback to close the modal. */
   onClose: () => void
   /**
-   * Callback fired when email submission is successful. Must resolve only
-   * after the magic link has actually been requested.
+   * Requests a magic sign-in link for an email submission. Must resolve only
+   * after the link has actually been requested. This is intentionally never
+   * called by the biometric flows, which complete authentication without
+   * sending an email.
    */
   onSuccess?: (email: string) => Promise<void>
+  /**
+   * Called once after a successful biometric login or registration. Kept
+   * separate from `onSuccess` so that a completed biometric interaction can
+   * never be mistaken for a request to send another email link.
+   */
+  onBiometricComplete?: (email: string) => void | Promise<void>
   /** Callback fired when user redirects to a social provider. */
   onSocialLogin?: (provider: AuthProviderType) => void
 }
@@ -35,9 +43,16 @@ export function EmailAuthModal(props: EmailAuthModalProps) {
   return props.open ? <EmailAuthForm {...props} /> : null
 }
 
-function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthModalProps) {
+function EmailAuthForm({
+  open,
+  onClose,
+  onSuccess,
+  onBiometricComplete,
+  onSocialLogin,
+}: EmailAuthModalProps) {
   const t = useTranslations('AccountConflict')
   const [email, setEmail] = useState('')
+  const [submittedEmail, setSubmittedEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -55,13 +70,18 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
     e.preventDefault()
     if (!email || showConflict || submitting) return
 
+    // Capture the address that was actually submitted. The input stays
+    // editable so a failed send can be corrected and retried; the confirmation
+    // must still name the address the link was sent to.
+    const address = email
     setSubmitError(null)
     setSubmitting(true)
     try {
       if (!onSuccess) {
         throw new Error('Email link sending is not configured')
       }
-      await onSuccess(email)
+      await onSuccess(address)
+      setSubmittedEmail(address)
       setSubmitted(true)
     } catch {
       setSubmitError(t('sendError'))
@@ -83,8 +103,9 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
     setBioError(null)
     try {
       await loginBiometric(email)
-      // On success, notify parent and close the modal
-      if (onSuccess) await onSuccess(email)
+      // Biometric login is already complete - report completion to the parent
+      // without requesting an email link.
+      if (onBiometricComplete) await onBiometricComplete(email)
       onClose()
     } catch {
       setBioError(t('biometricLoginError'))
@@ -101,7 +122,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
       await registerBiometric(email)
       // Establish a verified login session after enrolling the credential.
       await loginBiometric(email)
-      if (onSuccess) await onSuccess(email)
+      if (onBiometricComplete) await onBiometricComplete(email)
       onClose()
     } catch {
       setBioError(t('biometricRegisterError'))
@@ -189,7 +210,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
                 color: 'var(--ink)',
               }}
             >
-              {t('linkSentMessage', { email })}
+              {t('linkSentMessage', { email: submittedEmail })}
             </p>
             <Button variant="secondary" size="md" onClick={onClose} style={{ marginTop: 16 }}>
               {t('close')}

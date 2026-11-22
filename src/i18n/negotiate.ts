@@ -4,7 +4,9 @@ import { DEFAULT_LOCALE, LOCALES, type Locale } from './config'
 
 /**
  * Parses an `Accept-Language` header into ordered `{ lang, quality }` pairs.
- * Tags without an explicit `q` default to `1`. Invalid entries are dropped.
+ * Tags without an explicit `q` default to `1`. An entry whose `q` parameter is
+ * malformed, empty, or outside [0, 1] is dropped entirely rather than falling
+ * back to the default weight.
  */
 export function parseAcceptLanguage(header: string): { lang: string; quality: number }[] {
   return header
@@ -15,11 +17,15 @@ export function parseAcceptLanguage(header: string): { lang: string; quality: nu
       if (!lang) return null
       let quality = 1
       for (const param of params) {
-        const [key, value] = param.trim().split('=')
-        if (key.trim().toLowerCase() === 'q') {
-          const parsed = Number.parseFloat(value)
-          if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) quality = parsed
-        }
+        const [key, value, ...extra] = param.trim().split('=')
+        if (key.trim().toLowerCase() !== 'q') continue
+        // Parse the whole token: parseFloat would happily read "0.9junk" as
+        // 0.9, letting a malformed entry outrank a valid preference.
+        const token = value?.trim() ?? ''
+        const parsed =
+          extra.length === 0 && /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(token) ? Number(token) : NaN
+        if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) return null
+        quality = parsed
       }
       return { lang, quality }
     })
