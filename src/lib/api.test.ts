@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { getProjects, getProject, shouldShowDemoBadge } from './api'
 import * as registry from '../wallet/registry'
 

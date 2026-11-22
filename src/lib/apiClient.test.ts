@@ -5,7 +5,7 @@
  * asked for the API key (it goes through the same-origin proxy instead), and the
  * server must call the backend with the key attached.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 type Client = typeof import('./apiClient')
 
@@ -34,8 +34,8 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function headersOf(call: unknown[]): Record<string, string> {
-  return ((call[1] as RequestInit | undefined)?.headers ?? {}) as Record<string, string>
+function headersOf(call: Parameters<typeof fetch>): Headers {
+  return new Headers(call[1]?.headers)
 }
 
 beforeEach(() => {
@@ -64,8 +64,8 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     const headers = headersOf(vi.mocked(fetch).mock.calls[0])
-    expect(headers['X-API-Key']).toBeUndefined()
-    expect(JSON.stringify(headers)).not.toContain(KEY)
+    expect(headers.has('X-API-Key')).toBe(false)
+    expect(JSON.stringify([...headers])).not.toContain(KEY)
   })
 
   it('calls the backend directly on the server and sends the key', async () => {
@@ -73,7 +73,7 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     expect(fetch).toHaveBeenCalledWith(`${API}/v1/projects?cursor=0&limit=50`, expect.anything())
-    expect(headersOf(vi.mocked(fetch).mock.calls[0])['X-API-Key']).toBe(KEY)
+    expect(headersOf(vi.mocked(fetch).mock.calls[0]).get('X-API-Key')).toBe(KEY)
   })
 
   it('strips a trailing slash from the configured origin', async () => {
@@ -277,19 +277,33 @@ describe('apiGet header normalisation (#1019)', () => {
   })
 })
 
-describe('historyToPricePoints', () => {
-  it('renders entries as dated, ascending price and yield points', async () => {
+describe('historyToScorePoints', () => {
+  it('returns dated, ascending score observations without inventing price or yield', async () => {
     const client = await loadClient()
-    const points = client.historyToPricePoints([
+    const points = client.historyToScorePoints([
       { timestamp: Date.parse('2026-02-01T00:00:00Z'), credit_quality: 50, green_impact: 60 },
       { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
     ])
-    expect(points.map((p) => p.date)).toEqual(['2026-01-01', '2026-02-01'])
-    expect(points[1].price).toBeGreaterThan(points[0].price)
-    expect(points[1].yield).toBeGreaterThan(points[0].yield ?? 0)
+    expect(points).toEqual([
+      { date: '2026-01-01', credit: 40, green: 40 },
+      { date: '2026-02-01', credit: 50, green: 60 },
+    ])
+    for (const point of points) {
+      expect(point).not.toHaveProperty('price')
+      expect(point).not.toHaveProperty('yield')
+    }
   })
 
   it('returns an empty list for no entries', async () => {
-    expect((await loadClient()).historyToPricePoints([])).toEqual([])
+    expect((await loadClient()).historyToScorePoints([])).toEqual([])
+  })
+
+  it('keeps the legacy alias score-only as well', async () => {
+    const client = await loadClient()
+    expect(
+      client.historyToPricePoints([
+        { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
+      ]),
+    ).toEqual([{ date: '2026-01-01', credit: 40, green: 40 }])
   })
 })

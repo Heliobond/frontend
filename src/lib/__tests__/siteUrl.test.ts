@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from '@/test/bun'
 import { getSiteUrl } from '../siteUrl'
 
 describe('getSiteUrl', () => {

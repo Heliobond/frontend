@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { TransactionsProvider, useTransactions } from './TransactionsProvider'
 import { TRANSACTIONS_KEY, recordTransaction } from './transactions'
 import { STELLAR_NETWORK } from '../config/network'

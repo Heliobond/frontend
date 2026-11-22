@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import {
   formatDate,
   formatDateTime,
@@ -7,6 +7,7 @@ import {
   formatNumber,
   formatMoney,
   formatRelativeAge,
+  formatSignedChange,
 } from './format'
 
 describe('formatSharePrice', () => {
@@ -109,5 +110,20 @@ describe('formatRelativeAge (#1005)', () => {
   it('handles unix timestamps in seconds as well as milliseconds', () => {
     const nowSec = 1700000000
     expect(formatRelativeAge(nowSec - 7200, nowSec * 1000)).toBe('2h')
+  })
+})
+
+describe('formatSignedChange (#1070)', () => {
+  it('keeps fractional moves instead of rounding them to zero', () => {
+    expect(formatSignedChange(99.1, 99.35)).toBe('+0.25')
+    expect(formatSignedChange(99.35, 99.1)).toBe('−0.25')
+  })
+
+  it('shows an unchanged price as a non-negative zero move', () => {
+    expect(formatSignedChange(100, 100)).toBe('+0.00')
+  })
+
+  it('accepts a different precision', () => {
+    expect(formatSignedChange(1, 1.5, 1)).toBe('+0.5')
   })
 })

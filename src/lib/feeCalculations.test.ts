@@ -13,7 +13,7 @@
  *   • Edge cases: zero amount, minimum deposit, large amounts, floating-point traps
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { roundToCents, formatDecimal, roundToDecimals } from '../lib/format'
 import { projectedReturn } from '../lib/bondUtils'
 

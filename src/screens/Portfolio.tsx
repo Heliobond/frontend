@@ -69,7 +69,17 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
   const { toast } = useToast()
 
   // Drive portfolio metrics dynamically from the connected wallet
-  const { portfolio, you, activity, loading, error, refresh, vaultLiquidity } = usePortfolio()
+  const {
+    portfolio,
+    claimableYield,
+    positionUnavailable,
+    you,
+    activity,
+    loading,
+    error,
+    refresh,
+    vaultLiquidity,
+  } = usePortfolio()
 
   const referralLink = you.referralLink
 
@@ -321,7 +331,12 @@ export const Portfolio = memo(function Portfolio({ onWithdraw, onDeposit }: Port
         )}
       </div>
 
-      <OnChainPosition />
+      <OnChainPosition
+        key={address}
+        portfolio={portfolio}
+        claimableYield={claimableYield}
+        positionUnavailable={positionUnavailable}
+      />
       {address && <PortfolioPerformanceChart address={address} />}
 
       {/* Pending queued withdrawals */}

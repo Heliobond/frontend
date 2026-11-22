@@ -5,6 +5,7 @@ import { Button, StatBlock } from '../components'
 import { formatCurrency, formatNumber } from '../data'
 import { selectPoolSummary } from '../state/selectors'
 import { LiveHelio } from '../brand/LiveHelio'
+import { getConfiguredContracts } from '../config/contracts'
 
 /**
  * Landing — public hero. The live Helio dominates; three counters deep-link to
@@ -19,6 +20,7 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
   const t = useTranslations('Landing')
   const locale = useLocale()
   const pool = selectPoolSummary()
+  const contracts = getConfiguredContracts()
   const steps = [1, 2, 3, 4] as const
   const intensity = Math.min(1, pool.totalAssets / 6_000_000)
 
@@ -251,11 +253,11 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
           }}
         >
           {[
-            [t('rowRegistry'), 'C…7K4Z'],
-            [t('rowVault'), 'C…9QWJ'],
-            [t('rowCadence'), t('rowCadenceValue')],
-            [t('rowAudit'), t('rowAuditValue')],
-          ].map(([k, v]) => (
+            [t('rowRegistry'), contracts.registry, 'contract'],
+            [t('rowVault'), contracts.vault, 'contract'],
+            [t('rowCadence'), t('rowCadenceValue'), 'text'],
+            [t('rowAudit'), t('rowAuditValue'), 'text'],
+          ].map(([k, value, kind]) => (
             <div
               key={k}
               style={{
@@ -275,15 +277,35 @@ export function Landing({ onConnect, onExplore }: LandingProps) {
               >
                 {k}
               </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-small)',
-                  color: 'var(--ink)',
-                }}
-              >
-                {v}
-              </span>
+              {kind === 'contract' && !value ? (
+                <span
+                  data-testid="contract-unconfigured"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--type-small)',
+                    color: 'var(--ink-60)',
+                  }}
+                >
+                  {t('contractNotConfigured')}
+                </span>
+              ) : (
+                <span
+                  data-testid={kind === 'contract' ? 'contract-id' : undefined}
+                  title={kind === 'contract' ? (value ?? undefined) : undefined}
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-small)',
+                    color: 'var(--ink)',
+                    // Full IDs are 56 characters: wrap rather than overflow, and
+                    // select in one click so they can be copied to an explorer.
+                    overflowWrap: 'anywhere',
+                    textAlign: 'end',
+                    userSelect: kind === 'contract' ? 'all' : undefined,
+                  }}
+                >
+                  {value}
+                </span>
+              )}
             </div>
           ))}
         </div>

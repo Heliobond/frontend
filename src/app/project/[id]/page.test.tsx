@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 
 const mockPush = vi.fn()
 const mockNotFound = vi.fn(() => {
@@ -19,6 +18,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/api', () => ({
   getProject: vi.fn(),
+  shouldShowDemoBadge: () => false,
 }))
 
 vi.mock('@/screens/ProjectDetail', () => ({
@@ -27,10 +27,12 @@ vi.mock('@/screens/ProjectDetail', () => ({
   ),
 }))
 
-import { getProject } from '@/lib/api'
+const { render, screen, waitFor } = await import('@/test/render')
+const { getProject } = await import('@/lib/api')
+const { default: ProjectDetailPage, generateMetadata, parseProjectId } = await import('./page')
+const { ProjectDetailClient } = await import('./ProjectDetailClient')
+
 import en from '../../../../messages/en.json'
-import ProjectDetailPage, { generateMetadata, parseProjectId } from './page'
-import { ProjectDetailClient } from './ProjectDetailClient'
 
 const mockGetProject = vi.mocked(getProject)
 
@@ -75,6 +77,13 @@ describe('ProjectDetailPage & generateMetadata', () => {
     )
     expect(mockNotFound).toHaveBeenCalled()
     expect(mockGetProject).toHaveBeenCalledWith(999)
+  })
+
+  it('routes a transient lookup failure to the error boundary instead of notFound()', async () => {
+    const failure = new Error('Registry unavailable')
+    mockGetProject.mockRejectedValue(failure)
+    await expect(ProjectDetailPage({ params: Promise.resolve({ id: '1' }) })).rejects.toBe(failure)
+    expect(mockNotFound).not.toHaveBeenCalled()
   })
 
   it('calls notFound() for malformed id "abc" without querying registry', async () => {
@@ -168,6 +177,13 @@ describe('ProjectDetailPage & generateMetadata', () => {
     })
     expect(meta.description).toBe(en.Metadata.projectNotFound.description)
     expect(meta.robots).toEqual({ index: false, follow: false })
+  })
+
+  it('does not generate missing-project metadata when the lookup fails', async () => {
+    mockGetProject.mockRejectedValue(new Error('Backend temporarily unavailable'))
+    await expect(generateMetadata({ params: Promise.resolve({ id: '1' }) })).rejects.toThrow(
+      'Backend temporarily unavailable',
+    )
   })
 
   it('noindexes a non-numeric project id', async () => {

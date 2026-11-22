@@ -1,12 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useRemoteSync } from './useRemoteSync'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 let mockSession: unknown = null
 
 vi.mock('./SessionProvider', () => ({
   useOptionalSession: () => mockSession,
 }))
+
+const { useRemoteSync } = await import('./useRemoteSync')
 
 beforeEach(() => {
   mockSession = null
@@ -125,7 +126,7 @@ describe('useRemoteSync', () => {
   it('lands two quick edits in order, so the last edit wins', async () => {
     vi.useFakeTimers()
     const resolvers: Array<() => void> = []
-    const authedFetch = vi.fn((_path: string, init?: { method: string }) => {
+    const authedFetch = vi.fn((_path: string, init?: { method: string; body?: string[] }) => {
       if (init?.method !== 'PUT') return Promise.resolve(['start'])
       return new Promise<void>((resolve) => resolvers.push(resolve))
     })
