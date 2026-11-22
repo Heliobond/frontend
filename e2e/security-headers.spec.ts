@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /** A single `securitypolicyviolation` entry captured inside the page. */
 interface CapturedViolation {
@@ -20,6 +20,31 @@ declare global {
 const ROUTES = ['/', '/explore', '/connect', '/deposit', '/withdraw']
 const SMOKE_ROUTES = ['/', '/explore']
 const isProductionCSP = process.env.E2E_PRODUCTION === 'true'
+
+async function collectCspViolations(page: Page) {
+  await page.addInitScript(() => {
+    document.addEventListener('securitypolicyviolation', (event) => {
+      window.__cspViolations ??= []
+      window.__cspViolations.push({
+        directive: event.violatedDirective,
+        blockedURI: event.blockedURI,
+        originalPolicy: event.originalPolicy,
+      })
+    })
+  })
+}
+
+async function expectPageReady(page: Page) {
+  // A hydrated preferences menu verifies client scripts ran even while background requests continue.
+  await expect(page.locator('html')).toHaveAttribute('data-theme', /^(light|dark)$/)
+  const preferences = page.getByRole('button', { name: 'Preferences' })
+  await expect(async () => {
+    if ((await preferences.getAttribute('aria-expanded')) !== 'true') {
+      await preferences.click({ timeout: 1000 })
+    }
+    await expect(page.getByRole('menuitemradio', { name: 'English' })).toBeVisible({ timeout: 500 })
+  }).toPass({ timeout: 10000 })
+}
 
 test.describe('Security headers (#601)', () => {
   for (const route of ROUTES) {
@@ -56,9 +81,11 @@ test.describe('Security headers (#601)', () => {
     page.on('console', (m) => {
       if (/content security policy/i.test(m.text())) violations.push(m.text())
     })
+    await collectCspViolations(page)
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await expectPageReady(page)
     expect(violations).toEqual([])
+    expect(await page.evaluate(() => window.__cspViolations ?? [])).toEqual([])
   })
 })
 
@@ -84,32 +111,11 @@ test.describe('Production CSP enforcement (#663)', () => {
 
   for (const route of SMOKE_ROUTES) {
     test(`${route} loads with no CSP violations in production`, async ({ page }) => {
-      const violations: Array<{ directive: string; blockedURI: string }> = []
-
-      // Listen for securitypolicyviolation events
-      await page.addInitScript(() => {
-        document.addEventListener('securitypolicyviolation', (e) => {
-          window.__cspViolations = window.__cspViolations || []
-          window.__cspViolations.push({
-            directive: e.violatedDirective,
-            blockedURI: e.blockedURI,
-            originalPolicy: e.originalPolicy,
-          })
-        })
-      })
-
+      await collectCspViolations(page)
       await page.goto(route)
-      await page.waitForLoadState('networkidle')
+      await expectPageReady(page)
 
-      // Check for violations
-      const capturedViolations = await page.evaluate<CapturedViolation[]>(
-        () => window.__cspViolations || [],
-      )
-      violations.push(...capturedViolations)
-
-      if (violations.length > 0) {
-        console.error('CSP violations detected:', violations)
-      }
+      const violations = await page.evaluate(() => window.__cspViolations ?? [])
       expect(violations).toEqual([])
     })
   }

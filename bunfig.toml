@@ -9,3 +9,7 @@ minimumReleaseAge = 259200
 # Packages that must install the same day they are published. None today.
 # Add a name here only with a maintainer's sign-off.
 minimumReleaseAgeExcludes = []
+
+[test]
+preload = ["./scripts/bun-test-setup.ts"]
+pathIgnorePatterns = ["e2e/**", ".next/**"]

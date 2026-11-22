@@ -122,12 +122,25 @@ export function formatTtlDuration(minutes: number, locale: SupportedLocale = 'en
 }
 
 /**
- * Formats an ISO UTC timestamp for clear global deadline referencing (e.g. "14:30 UTC").
+ * Formats an absolute UTC deadline — calendar date *and* 24-hour time — in the
+ * recipient's supported language (e.g. "August 29, 2026 at 00:10 UTC" for `en`,
+ * "29 août 2026 à 00:10 UTC" for `fr`).
+ *
+ * Rendering the date alongside the time matters for links issued just before
+ * midnight or valid for several days: a bare "00:10 UTC" would not say which
+ * day the token actually expires.
  */
-export function formatUtcTime(date: Date): string {
-  const hours = date.getUTCHours().toString().padStart(2, '0')
-  const mins = date.getUTCMinutes().toString().padStart(2, '0')
-  return `${hours}:${mins} UTC`
+export function formatUtcTime(date: Date, locale: SupportedLocale = 'en'): string {
+  const dateTime = new Intl.DateTimeFormat(locale, {
+    timeZone: 'UTC',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date)
+  return `${dateTime} UTC`
 }
 
 /**
@@ -153,7 +166,7 @@ export function generatePasswordResetEmail(options: PasswordResetEmailOptions): 
     typeof requestTimestamp === 'number' ? requestTimestamp : requestTimestamp.getTime()
   const expiresAt = new Date(baseTime + Math.max(1, expiresInMinutes) * 60 * 1000)
   const formattedTtl = formatTtlDuration(expiresInMinutes, locale)
-  const formattedUtc = formatUtcTime(expiresAt)
+  const formattedUtc = formatUtcTime(expiresAt, locale)
 
   // Localized copy dictionaries
   const copy = {

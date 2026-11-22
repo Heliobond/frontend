@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 import { rpc, nativeToScVal, Address, type Transaction, type xdr } from '@stellar/stellar-sdk'
 import { checkIsAdmin, getAdminRoles, type AdminRoles } from './admin'
 

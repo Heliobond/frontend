@@ -5,7 +5,7 @@ import {
   TimeoutInfinite,
   TransactionBuilder,
 } from '@stellar/stellar-sdk'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { NETWORK_PASSPHRASE } from '../config/network'
 import {
   assertValidMessageChallenge,

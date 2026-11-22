@@ -1,8 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { usePortfolio } from './usePortfolio'
-import * as vault from '../wallet/vault'
-import { apiFetch } from '../lib/api'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const A = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 const B = 'GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -21,6 +18,10 @@ vi.mock('../wallet/vault', () => ({
   fetchVaultLiquidUsdc: vi.fn(),
 }))
 vi.mock('../lib/api', () => ({ apiFetch: vi.fn() }))
+
+const { usePortfolio } = await import('./usePortfolio')
+const vault = await import('../wallet/vault')
+const { apiFetch } = await import('../lib/api')
 
 function position(usdcValue: number) {
   return {

@@ -10,6 +10,9 @@ import { useYieldAlerts } from '../alerts/YieldAlertProvider'
 import { type AlertOperator } from '../lib/yieldAlerts'
 import { formatDecimal } from '../lib/format'
 
+/** Sentinel used when the editor is creating a new threshold. */
+const NEW_ALERT = '__new__'
+
 /**
  * Bell toggle that opens the yield alert modal for a specific bond.
  * Shows BellActiveIcon if an alert exists. Safe to drop inside a clickable
@@ -36,19 +39,23 @@ export function YieldAlertButton({
   const { hasAlertForBond, getAlertsForBond, add, update, remove } = useYieldAlerts()
   const { toast } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
+  const [selectedAlertId, setSelectedAlertId] = useState<string>(NEW_ALERT)
   const hasAlert = hasAlertForBond(bondId)
   const existing = getAlertsForBond(bondId)
-  const firstAlert = existing[0]
+  // Resolve against the live list so a removed alert cannot leave a dangling
+  // selection that would make save/delete target the wrong id.
+  const selectedAlert = existing.find((alert) => alert.id === selectedAlertId) ?? null
 
   const onClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
     e.preventDefault()
+    setSelectedAlertId(existing[0]?.id ?? NEW_ALERT)
     setModalOpen(true)
   }
 
   const handleSave = (threshold: number, operator: AlertOperator) => {
-    if (firstAlert) {
-      update(firstAlert.id, threshold, operator)
+    if (selectedAlert) {
+      update(selectedAlert.id, threshold, operator)
       toast({
         tone: 'success',
         title: t('updatedToastTitle'),
@@ -72,8 +79,8 @@ export function YieldAlertButton({
   }
 
   const handleDelete = () => {
-    if (firstAlert) {
-      remove(firstAlert.id)
+    if (selectedAlert) {
+      remove(selectedAlert.id)
       toast({
         tone: 'neutral',
         title: t('deletedToastTitle'),
@@ -103,9 +110,12 @@ export function YieldAlertButton({
         open={modalOpen}
         bondName={bondName}
         currentYield={currentYield}
-        initialThreshold={firstAlert?.threshold ?? 5}
-        initialOperator={firstAlert?.operator ?? 'above'}
-        editing={Boolean(firstAlert)}
+        alerts={existing}
+        selectedAlertId={selectedAlert?.id ?? null}
+        onSelectAlert={(id) => setSelectedAlertId(id ?? NEW_ALERT)}
+        initialThreshold={selectedAlert?.threshold ?? 5}
+        initialOperator={selectedAlert?.operator ?? 'above'}
+        editing={Boolean(selectedAlert)}
         onSave={handleSave}
         onDelete={handleDelete}
         onClose={() => setModalOpen(false)}

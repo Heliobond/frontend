@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 import {
   TELEMETRY_CONSENT_EVENT,
@@ -234,8 +234,8 @@ describe('installGlobalErrorHandlers (#658)', () => {
     const spy = vi.spyOn(window, 'dispatchEvent')
 
     const detach = installGlobalErrorHandlers()
-    window.dispatchEvent(new ErrorEvent('error', { error: new Error('render blew up') }))
-    window.dispatchEvent(new Event('unhandledrejection'))
+    window.dispatchEvent(new window.ErrorEvent('error', { error: new Error('render blew up') }))
+    window.dispatchEvent(new window.Event('unhandledrejection'))
     expect(spy).toHaveBeenCalled()
     detach()
 
@@ -254,7 +254,7 @@ describe('installGlobalErrorHandlers (#658)', () => {
     second()
     const error = new Error('still wired')
     const spy = vi.spyOn(window, 'dispatchEvent')
-    window.dispatchEvent(new ErrorEvent('error', { error }))
+    window.dispatchEvent(new window.ErrorEvent('error', { error }))
     expect(spy).toHaveBeenCalled()
     detach()
   })

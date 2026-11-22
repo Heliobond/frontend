@@ -78,6 +78,9 @@ export function useSessionTimeout({
   const isWarningOpenRef = useRef(false)
   const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Guards against a delayed (e.g. post-suspend) warning reporting the same
+  // expiry twice. Re-armed whenever a new activity window starts.
+  const expiredRef = useRef(false)
 
   const onTimeoutRef = useRef(onTimeout)
   const onWarningRef = useRef(onWarning)
@@ -108,6 +111,8 @@ export function useSessionTimeout({
   const expireNow = useCallback(() => {
     clearTimers()
     setIsWarningOpen(false)
+    if (expiredRef.current) return
+    expiredRef.current = true
     if (onTimeoutRef.current) {
       onTimeoutRef.current()
     }
@@ -122,6 +127,8 @@ export function useSessionTimeout({
 
     const expiryTime = lastActivityRef.current + timeoutMs
 
+    // Returns whether positive time is left, so an overdue warning expires the
+    // session once instead of arming an interval that would fire again.
     const updateCountdown = () => {
       const remainingMs = expiryTime - Date.now()
       const secs = Math.max(0, Math.ceil(remainingMs / 1000))
@@ -129,16 +136,25 @@ export function useSessionTimeout({
 
       if (secs <= 0) {
         expireNow()
+        return false
       }
+      return true
     }
 
-    updateCountdown()
-    countdownIntervalRef.current = setInterval(updateCountdown, 1000)
+    if (updateCountdown()) {
+      countdownIntervalRef.current = setInterval(() => {
+        if (!updateCountdown() && countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+        }
+      }, 1000)
+    }
   }, [clearTimers, expireNow, timeoutMs])
 
   /** Arms the warning timer without touching state, so effects can call it. */
   const armWarningTimer = useCallback(() => {
     clearTimers()
+    expiredRef.current = false
     lastActivityRef.current = Date.now()
 
     const warningDelay = Math.max(0, timeoutMs - warningMs)

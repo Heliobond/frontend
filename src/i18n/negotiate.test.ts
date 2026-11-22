@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { isSupportedLocale, negotiateLocale, parseAcceptLanguage } from './negotiate'
 
 describe('parseAcceptLanguage', () => {

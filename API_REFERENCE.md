@@ -93,6 +93,9 @@ rating, funded status, and pool-related fields.
 
 Defined in `src/data/projectDetails.ts`. Extended record with oracle score
 history, funding timeline, price/yield history, and creator attribution.
+`missingSections?` names sections the source could not supply (for example a
+backend-only project); the detail screen renders an explicit
+"information unavailable" state for those instead of inventing content.
 
 ### `ProjectWithDetail`
 
@@ -250,9 +253,15 @@ Fetches a single project with its full detail record.
 | `id`  | `number` | Must be a positive integer (`id >= 1`). Non-integer, negative, zero, or `NaN` ids return `null` immediately without a network call. |
 
 **Returns:** `ProjectWithDetail`, or `null` when the backend has no such project
-(a `404` resolves to `null` rather than raising).
+(a `404` resolves to `null` rather than raising). For a backend-only ID with no
+bundled fixture, `createBackendProjectDetail()` supplies a complete detail
+record with empty collections and `missingSections`; the detail screen shows an
+explicit missing-information state instead of crashing on `detail.creator` or
+`detail.scoreHistory`.
 
 **Throws:** `ApiError` on network failures, HTTP errors, or timeouts (after 8 seconds).
+Only a confirmed miss is `null` — a transient failure rejects so the page can
+route to its error/retry UI instead of a not-found page.
 
 **Demo fallback:** Looks up `selectProjectById(id)` and `selectProjectDetail(id)`
 from fixture data. Returns `null` if either is missing. **On-chain priority:**
@@ -303,21 +312,22 @@ on-chain.
 
 ---
 
-### `getPriceHistory`
+### `getScoreHistory`
 
 ```ts
-async function getPriceHistory(projectId: number): Promise<PricePoint[]>
+async function getScoreHistory(projectId: number): Promise<ScoreObservation[]>
 ```
 
-Fetches a project's history as chart points.
+Fetches a project's score history as dated observations, oldest first.
 
 **Backend endpoint:** `GET /v1/projects/:projectId/history`
 
-The backend reports impact-score snapshots, not share prices, so
-[`historyToPricePoints`](src/lib/apiClient.ts) derives both the price and the
-yield from the green-impact score. This replaces the mocked
-`/price-history` endpoint the backend never implemented. Combine it with
-on-chain share-price snapshots when exact pricing is needed.
+The backend reports dated credit-quality and green-impact snapshots, not share
+prices or yield observations. [`historyToScorePoints`](src/lib/apiClient.ts)
+maps those snapshots to `{ date, credit, green }`; no price or yield is
+synthesised. Those fields are reserved for data that actually measures them.
+`getPriceHistory` / `historyToPricePoints` remain as deprecated aliases that
+return the same score-only series.
 
 **Parameters:**
 
@@ -325,29 +335,27 @@ on-chain share-price snapshots when exact pricing is needed.
 | ----------- | -------- | ----------- |
 | `projectId` | `number` | Project ID  |
 
-**Returns:** Array of `PricePoint` objects sorted in ascending chronological
-order (oldest first).
+**Returns:** Array of `ScoreObservation` objects sorted in ascending
+chronological order (oldest first), so a consumer can plot green impact over
+time.
 
 **Throws:** `ApiError` on network failures, HTTP errors, or timeouts (after 8 seconds).
 
-**Demo fallback:** Generates a deterministic 30-day mock series using
+**Demo fallback:** Generates a deterministic 30-day mock score series using
 `projectId` as a seed so the sparkline shape is consistent per project across
 renders.
 
 **Example:**
 
 ```ts
-import { getPriceHistory } from '@/lib/api'
+import { getScoreHistory } from '@/lib/api'
 
-const history = await getPriceHistory(2)
+const history = await getScoreHistory(2)
 // [
-//   { date: '2025-08-06', price: 103.42, yield: 5.12 },
-//   { date: '2025-08-07', price: 103.61, yield: 5.09 },
+//   { date: '2025-08-06', credit: 74, green: 88 },
+//   { date: '2025-08-07', credit: 76, green: 89 },
 //   ...
 // ]
-
-// Feed directly into PriceHistoryChart:
-<PriceHistoryChart data={history} />
 ```
 
 ---

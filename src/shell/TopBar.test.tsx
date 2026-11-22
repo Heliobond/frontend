@@ -1,6 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@/test/render'
-import { TopBar } from './TopBar'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const refresh = vi.fn()
 vi.mock('next/navigation', () => ({
@@ -18,6 +16,10 @@ vi.mock('../wallet/WalletProvider', () => ({
   }),
   shortAddress: (address: string) => address,
 }))
+
+const { fireEvent, render, screen, waitFor, within } = await import('@/test/render')
+const catalog = await import('../i18n/loadMessages')
+const { TopBar } = await import('./TopBar')
 
 class MockIntersectionObserver {
   observe() {}
@@ -65,7 +67,9 @@ describe('TopBar preferences menu', () => {
   })
 
   it('keeps the last working language selected after a load failure and lets users retry', async () => {
-    vi.doMock('../../messages/fr.json', () => Promise.reject(new Error('Chunk unavailable')))
+    const load = vi
+      .spyOn(catalog, 'loadMessages')
+      .mockRejectedValueOnce(new Error('Chunk unavailable'))
 
     try {
       render(<TopBar />)
@@ -81,14 +85,13 @@ describe('TopBar preferences menu', () => {
       expect(document.cookie).toContain('NEXT_LOCALE=en')
       expect(refresh).not.toHaveBeenCalled()
 
-      vi.doUnmock('../../messages/fr.json')
       fireEvent.click(french)
       await waitFor(() => expect(document.documentElement.lang).toBe('fr'))
       expect(document.cookie).toContain('NEXT_LOCALE=fr')
       expect(refresh).toHaveBeenCalledTimes(1)
       expect(screen.queryByRole('menu')).toBeNull()
     } finally {
-      vi.doUnmock('../../messages/fr.json')
+      load.mockRestore()
     }
   })
 

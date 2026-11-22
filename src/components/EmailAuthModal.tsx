@@ -239,7 +239,7 @@ function EmailAuthForm({ open, onClose, onSuccess, onSocialLogin }: EmailAuthMod
               <SocialAccountConflictWarning
                 provider={detection.existingProvider}
                 email={email}
-                onContinueWithProvider={handleSocialSelect}
+                onContinueWithProvider={onSocialLogin ? handleSocialSelect : undefined}
                 onProceedWithEmail={() => setBypassWarning(true)}
               />
             )}

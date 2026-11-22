@@ -103,6 +103,7 @@ function CreatorPageInner() {
             onClick={() => setTab(tb.id)}
             role="tab"
             aria-selected={tab === tb.id}
+            aria-pressed={undefined}
           >
             {tb.label}
           </Tag>

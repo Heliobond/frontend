@@ -13,7 +13,17 @@ export function useVaultRefresh(enabled: boolean) {
 
   useEffect(() => {
     if (!enabled) return
-    const unsubscribeTransaction = subscribeTransactionConfirmed(refresh)
+    // The foreground submission and background poller can confirm the same hash.
+    const confirmedHashes = new Set<string>()
+    const unsubscribeTransaction = subscribeTransactionConfirmed((hash) => {
+      if (hash) {
+        if (confirmedHashes.has(hash)) return
+        confirmedHashes.add(hash)
+        if (confirmedHashes.size > 64)
+          confirmedHashes.delete(confirmedHashes.values().next().value!)
+      }
+      refresh()
+    })
     const unsubscribeEvents = subscribeVaultEvents((event) => {
       if (['Deposit', 'Withdraw', 'YieldReceived'].includes(event.type)) refresh()
     })
