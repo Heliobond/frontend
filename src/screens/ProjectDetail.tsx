@@ -14,7 +14,7 @@ import {
 } from '../components'
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
-import { formatDecimal, formatMoney } from '../lib/format'
+import { formatDecimal, formatMoney, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
 import { translateContractError } from '../lib/contractErrors'
 import { getExplorerUrl } from '../config/network'
@@ -52,6 +52,7 @@ export const ProjectDetail = memo(function ProjectDetail({
 }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
   const tc = useTranslations('Common')
+  const tPrice = useTranslations('PriceHistory')
   const tErr = useTranslations('ContractErrors')
   const tErrors = useTranslations('Errors')
   const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
@@ -310,7 +311,10 @@ export const ProjectDetail = memo(function ProjectDetail({
                 }}
               >
                 {detail.priceHistory.length > 0
-                  ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price)
+                  ? `${formatDecimal(
+                      detail.priceHistory[detail.priceHistory.length - 1].price,
+                      PRICE_DECIMALS,
+                    )}${tPrice('priceUnit')}`
                   : '—'}
               </span>
               {detail.priceHistory.length > 1 && (
@@ -321,15 +325,9 @@ export const ProjectDetail = memo(function ProjectDetail({
                     color: 'var(--ink-40)',
                   }}
                 >
-                  {detail.priceHistory[detail.priceHistory.length - 1].price >=
-                  detail.priceHistory[0].price
-                    ? '+'
-                    : '-'}
-                  {formatMoney(
-                    Math.abs(
-                      detail.priceHistory[detail.priceHistory.length - 1].price -
-                        detail.priceHistory[0].price,
-                    ),
+                  {formatSignedChange(
+                    detail.priceHistory[0].price,
+                    detail.priceHistory[detail.priceHistory.length - 1].price,
                   )}
                 </span>
               )}

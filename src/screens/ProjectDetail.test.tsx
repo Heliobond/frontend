@@ -323,3 +323,34 @@ describe('ProjectDetail StrictMode mount flag (#1011)', () => {
     }
   })
 })
+
+describe('ProjectDetail price movement and creator attribution', () => {
+  function renderWith(detail: Partial<ProjectDetailData>) {
+    return render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={mockProject}
+          detail={{ ...mockDetail, ...detail }}
+          onInvest={vi.fn().mockResolvedValue('/connect')}
+        />
+      </YieldAlertProvider>,
+    )
+  }
+  const point = (date: string, price: number) => ({ date, price, yield: 6, hash: '0x1' })
+
+  it('shows a fractional price move and the last observation at two decimals (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.1), point('2025-02-01', 99.35)] })
+    expect(screen.getByText('99.35% of par')).toBeInTheDocument()
+    expect(screen.getByText('+0.25')).toBeInTheDocument()
+  })
+
+  it('shows a negative fractional move with a minus sign (#1070)', () => {
+    renderWith({ priceHistory: [point('2025-01-01', 99.35), point('2025-02-01', 99.1)] })
+    expect(screen.getByText('−0.25')).toBeInTheDocument()
+  })
+
+  it('renders no price figure when there is no history (#1070)', () => {
+    renderWith({ priceHistory: [] })
+    expect(screen.queryByText(/% of par/)).not.toBeInTheDocument()
+  })
+})
