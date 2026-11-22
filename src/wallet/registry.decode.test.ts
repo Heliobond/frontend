@@ -148,6 +148,33 @@ describe('registry client', () => {
     ).toBeUndefined()
   })
 
+  it('keeps an unknown credit score unknown without touching a valid green score', async () => {
+    const registry = await loadRegistry()
+    const raw = {
+      owner: 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUV',
+      uri: 'https://metadata.example/102.json',
+      green_impact: 91,
+      maturity_date: 1_800_000_000,
+      certification_status: 0,
+      last_update_timestamp: 1_700_000_000,
+      status: 1,
+      created_at: 1_600_000_000,
+      metadata_hash: 'abc',
+    }
+
+    const mapped = registry.mapOnChainProject(raw, 102)
+    expect(mapped.credit).toBeUndefined()
+    expect(mapped.green).toBe(91)
+
+    const nonFinite = registry.mapOnChainProject({ ...raw, credit_quality: Number.NaN }, 103)
+    expect(nonFinite.credit).toBeUndefined()
+    expect(nonFinite.green).toBe(91)
+
+    // An assigned 80 is a real rating and must survive unchanged.
+    const assigned = registry.mapOnChainProject({ ...raw, credit_quality: 80 }, 104)
+    expect(assigned.credit).toBe(80)
+  })
+
   it('maps every ProjectStatus number to a valid UI status', async () => {
     const { mapProjectStatus } = await loadRegistry()
     expect(mapProjectStatus(0)).toBe('upcoming') // Pending

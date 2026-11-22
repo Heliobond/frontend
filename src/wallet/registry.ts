@@ -309,8 +309,10 @@ export function normalizeHash(
 export interface OnChainProjectRaw {
   owner: string
   uri: string
-  credit_quality: number | bigint
-  green_impact: number | bigint
+  /** May be absent on a project the oracle has not scored yet. */
+  credit_quality?: number | bigint | null
+  /** May be absent on a project the oracle has not scored yet. */
+  green_impact?: number | bigint | null
   maturity_date: number | bigint
   certification_status: number | bigint
   last_update_timestamp: number | bigint
@@ -448,14 +450,25 @@ export function mapProjectStatus(
   }
 }
 
+/**
+ * Read an on-chain score without inventing one. A missing value and a value
+ * that cannot be converted to a finite number both stay `undefined`, so an
+ * unscored project is never mistaken for a project assigned a score of 80.
+ */
+function toScore(raw: number | bigint | null | undefined): number | undefined {
+  if (raw === null || raw === undefined) return undefined
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
 /** Map on-chain ProjectData plus its id and optional metadata to a UI Project without merging fixtures. */
 export function mapOnChainProject(
   raw: OnChainProjectRaw,
   id: number,
   metadata?: OffChainMetadata,
 ): Project {
-  const credit = Number(raw.credit_quality ?? 80)
-  const green = Number(raw.green_impact ?? 80)
+  const credit = toScore(raw.credit_quality)
+  const green = toScore(raw.green_impact)
   const lastVerifiedAt = Number(raw.last_update_timestamp) * 1000
 
   const fundingGoal = metadata?.fundingGoal ?? 1000000
@@ -465,8 +478,8 @@ export function mapOnChainProject(
     name: metadata?.name || `Bond Project #${id}`,
     location: metadata?.location || 'Stellar Network',
     type: metadata?.type || 'Solar',
-    credit: Number.isFinite(credit) ? credit : 80,
-    green: Number.isFinite(green) ? green : 80,
+    credit,
+    green,
     lastVerifiedAt:
       lastVerifiedAt > 0 && Number.isFinite(new Date(lastVerifiedAt).getTime())
         ? lastVerifiedAt

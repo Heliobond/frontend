@@ -76,4 +76,16 @@ describe('ScoreGauge arc geometry and clamping', () => {
     expect(svg).toHaveAttribute('width', '200')
     expect(svg).toHaveAttribute('height', '200')
   })
+
+  it('shows an explicit fallback for an unassigned score', () => {
+    render(<ScoreGauge label="Credit" />)
+    expect(screen.getByText('Unavailable')).toBeInTheDocument()
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', 'Credit: Unavailable')
+  })
+
+  it('keeps an assigned score of 80 visible', () => {
+    render(<ScoreGauge value={80} label="Credit" />)
+    expect(screen.getByText('80')).toBeInTheDocument()
+    expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
+  })
 })

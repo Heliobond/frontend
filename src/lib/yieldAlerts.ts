@@ -5,6 +5,7 @@
 // `YieldAlertProvider`.
 
 import { type Project } from '../data'
+import { knownScores } from './score'
 
 export const YIELD_ALERTS_STORAGE_KEY = 'hb-yield-alerts'
 
@@ -172,7 +173,8 @@ export function mergeAlerts(local: YieldAlert[], remote: YieldAlert[]): YieldAle
  * distinct trackable value.
  */
 export function getEffectiveYield(project: Pick<Project, 'credit' | 'green'>): number {
-  return (project.credit + project.green) / 2
+  const scores = knownScores(project.credit, project.green)
+  return scores.length === 0 ? 0 : scores.reduce((sum, score) => sum + score, 0) / scores.length
 }
 
 /**

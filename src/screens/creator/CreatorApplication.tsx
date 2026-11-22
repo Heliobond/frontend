@@ -7,6 +7,8 @@ import { cardTitle, subtle } from '@/theme'
 import {
   PROJECT_TYPES,
   WHITELIST_CRITERIA,
+  INITIAL_APPLICATION_DRAFT,
+  type ApplicationDraft,
   type ApplicationStage,
   type ProjectType,
 } from '@/data/creator'
@@ -29,6 +31,13 @@ export interface CreatorApplicationProps {
   onSubmit?: (values: ApplicationFormValues) => void
   /** Rejection reason, shown when stage is 'rejected'. */
   rejectionReason?: string
+  /**
+   * Draft owned by the creator workspace. When supplied the form is controlled,
+   * so its fields survive leaving the Apply tab. Standalone use keeps a local
+   * draft.
+   */
+  draft?: ApplicationDraft
+  onDraftChange?: (draft: ApplicationDraft) => void
 }
 
 export interface ApplicationFormValues {
@@ -42,12 +51,17 @@ export function CreatorApplication({
   stage = 'submitted',
   onSubmit,
   rejectionReason,
+  draft,
+  onDraftChange,
 }: CreatorApplicationProps) {
   const t = useTranslations('Creator')
-  const [orgName, setOrgName] = useState('')
-  const [projectType, setProjectType] = useState<ProjectType>(PROJECT_TYPES[0])
-  const [location, setLocation] = useState('')
-  const [links, setLinks] = useState('')
+  const [localDraft, setLocalDraft] = useState<ApplicationDraft>(INITIAL_APPLICATION_DRAFT)
+  const draftValue = draft ?? localDraft
+  const patchDraft = (patch: Partial<ApplicationDraft>) => {
+    if (onDraftChange) onDraftChange({ ...draftValue, ...patch })
+    else setLocalDraft((prev) => ({ ...prev, ...patch }))
+  }
+  const { orgName, projectType, location, links } = draftValue
   const [submitted, setSubmitted] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
 
@@ -130,7 +144,7 @@ export function CreatorApplication({
             id="hb-org"
             type="text"
             value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
+            onChange={(e) => patchDraft({ orgName: e.target.value })}
             maxLength={CREATOR_APPLICATION_LIMITS.orgName}
           />
         </FormField>
@@ -139,7 +153,11 @@ export function CreatorApplication({
           <Label htmlFor="">{t('fieldProjectType')}</Label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {PROJECT_TYPES.map((t) => (
-              <Tag key={t} selected={projectType === t} onClick={() => setProjectType(t)}>
+              <Tag
+                key={t}
+                selected={projectType === t}
+                onClick={() => patchDraft({ projectType: t })}
+              >
                 {t}
               </Tag>
             ))}
@@ -151,7 +169,7 @@ export function CreatorApplication({
             id="hb-loc"
             type="text"
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(e) => patchDraft({ location: e.target.value })}
             maxLength={CREATOR_APPLICATION_LIMITS.location}
           />
         </FormField>
@@ -163,7 +181,7 @@ export function CreatorApplication({
             inputMode="url"
             value={links}
             onChange={(e) => {
-              setLinks(e.target.value)
+              patchDraft({ links: e.target.value })
               if (linkError) setLinkError(null)
             }}
             maxLength={CREATOR_APPLICATION_LIMITS.links}
