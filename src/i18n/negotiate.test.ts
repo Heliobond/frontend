@@ -14,10 +14,21 @@ describe('parseAcceptLanguage', () => {
     expect(parseAcceptLanguage('FR-ca')).toEqual([{ lang: 'fr-ca', quality: 1 }])
   })
 
-  it('drops malformed entries', () => {
-    expect(parseAcceptLanguage('en;q=abc,fr')).toEqual([
-      { lang: 'en', quality: 1 },
+  it('drops entries with a malformed q value', () => {
+    expect(parseAcceptLanguage('en;q=abc,fr')).toEqual([{ lang: 'fr', quality: 1 }])
+  })
+
+  it('rejects trailing junk, out-of-range and empty q values', () => {
+    expect(parseAcceptLanguage('en;q=0.9junk,fr;q=0.5,es;q=1.5,de;q=,it;q=0.25')).toEqual([
+      { lang: 'fr', quality: 0.5 },
+      { lang: 'it', quality: 0.25 },
+    ])
+  })
+
+  it('keeps the default weight when q is absent', () => {
+    expect(parseAcceptLanguage('en;q=0.8,fr')).toEqual([
       { lang: 'fr', quality: 1 },
+      { lang: 'en', quality: 0.8 },
     ])
   })
 })
@@ -34,6 +45,11 @@ describe('negotiateLocale (#895)', () => {
   it('honours q-values when choosing between candidates', () => {
     expect(negotiateLocale('fr;q=0.4,es;q=0.9')).toBe('es')
     expect(negotiateLocale('fr;q=0.9,es;q=0.4')).toBe('fr')
+  })
+
+  it('ignores entries with an invalid q value when choosing a locale', () => {
+    expect(negotiateLocale('en;q=0.9junk,fr;q=0.5')).toBe('fr')
+    expect(negotiateLocale('en;q=1.5,fr;q=0.5')).toBe('fr')
   })
 
   it('falls back to the default for unknown languages', () => {
