@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -33,7 +34,7 @@ function onClientMessageError(error: unknown): void {
 interface LocaleSwitcherValue {
   locale: Locale
   dir: 'ltr' | 'rtl'
-  switchLocale: (target: Locale) => void
+  switchLocale: (target: Locale) => Promise<'applied' | 'failed' | 'superseded'>
 }
 
 const LocaleSwitcherContext = createContext<LocaleSwitcherValue | null>(null)
@@ -54,23 +55,31 @@ export function LocaleProvider({
   const router = useRouter()
   const [locale, setLocale] = useState(initialLocale)
   const [messages, setMessages] = useState(() => withEnglishFallback(initialMessages))
+  const latestRequest = useRef(0)
 
   useEffect(() => {
     document.documentElement.lang = locale
     document.documentElement.dir = getDir(locale)
   }, [locale])
 
-  const switchLocale = useCallback(
-    (target: Locale) => {
-      document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000;samesite=lax`
+  const switchLocale: LocaleSwitcherValue['switchLocale'] = useCallback(
+    async (target) => {
+      const request = ++latestRequest.current
+      let catalog: Messages
+      try {
+        catalog = withEnglishFallback((await import(`../../messages/${target}.json`)).default)
+      } catch {
+        return request === latestRequest.current ? 'failed' : 'superseded'
+      }
+      if (request !== latestRequest.current) return 'superseded'
 
-      import(`../../messages/${target}.json`).then((mod) => {
-        startTransition(() => {
-          setLocale(target)
-          setMessages(mod.default)
-          router.refresh()
-        })
+      document.cookie = `NEXT_LOCALE=${target};path=/;max-age=31536000;samesite=lax`
+      startTransition(() => {
+        setLocale(target)
+        setMessages(catalog)
+        router.refresh()
       })
+      return 'applied'
     },
     [router],
   )

@@ -30,6 +30,7 @@
     },
     "preferences": "التفضيلات",
     "language": "اللغة",
+    "languageLoadFailed": "تعذّر تحميل هذه اللغة. يُرجى المحاولة مرة أخرى.",
     "account": "الحساب",
     "copyAddress": "نسخ العنوان",
     "copied": "تم النسخ",
@@ -202,6 +203,7 @@
     "emptyTitle": "لم يتم العثور على مشاريع",
     "emptySub": "لا توجد مشاريع تطابق فئة \"{filter}\" في المجمع حالياً.",
     "loadMore": "عرض {count} المزيد",
+    "searchMore": "ابحث في المشاريع المتبقية",
     "showingCount": "عرض {shown} من {total} مشاريع",
     "filterLoadedNotice": "تغطي المشاريع {loaded} التي تم تحميلها حتى الآن"
   },
@@ -556,6 +558,7 @@
     "fieldMediaDocs": "الوسائط والمستندات",
     "dropCover": "صورة الغلاف",
     "dropCoverHint": "PNG أو JPG، تظهر على بطاقتك",
+    "coverUnsupported": "اختر صورة PNG أو JPG للغلاف.",
     "dropDocs": "مستندات التحقق",
     "dropDocsHint": "التراخيص، اتفاقيات الشراء، خطة القياس",
     "previewLabel": "معاينة مباشرة",

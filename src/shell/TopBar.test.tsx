@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@/test/render'
 import { TopBar } from './TopBar'
 
+const refresh = vi.fn()
 vi.mock('next/navigation', () => ({
   usePathname: () => '/explore',
-  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), prefetch: vi.fn(), refresh }),
 }))
 
 vi.mock('../wallet/WalletProvider', () => ({
@@ -29,7 +30,11 @@ Object.defineProperty(window, 'IntersectionObserver', {
 })
 
 describe('TopBar preferences menu', () => {
-  beforeEach(() => localStorage.removeItem('hb-theme'))
+  beforeEach(() => {
+    localStorage.removeItem('hb-theme')
+    document.cookie = 'NEXT_LOCALE=en;path=/'
+    refresh.mockClear()
+  })
 
   const openMenu = async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preferences' }))
@@ -59,6 +64,34 @@ describe('TopBar preferences menu', () => {
     expect(localStorage.getItem('hb-theme')).toBe('light')
   })
 
+  it('keeps the last working language selected after a load failure and lets users retry', async () => {
+    vi.doMock('../../messages/fr.json', () => Promise.reject(new Error('Chunk unavailable')))
+
+    try {
+      render(<TopBar />)
+      const menu = await openMenu()
+      const french = within(menu).getByRole('menuitemradio', { name: 'Français' })
+      const english = within(menu).getByRole('menuitemradio', { name: 'English' })
+
+      fireEvent.click(french)
+      expect(
+        await screen.findByText('Could not load that language. Please try again.'),
+      ).toBeInTheDocument()
+      expect(english).toHaveAttribute('aria-checked', 'true')
+      expect(document.cookie).toContain('NEXT_LOCALE=en')
+      expect(refresh).not.toHaveBeenCalled()
+
+      vi.doUnmock('../../messages/fr.json')
+      fireEvent.click(french)
+      await waitFor(() => expect(document.documentElement.lang).toBe('fr'))
+      expect(document.cookie).toContain('NEXT_LOCALE=fr')
+      expect(refresh).toHaveBeenCalledTimes(1)
+      expect(screen.queryByRole('menu')).toBeNull()
+    } finally {
+      vi.doUnmock('../../messages/fr.json')
+    }
+  })
+
   it('moves focus with the arrow keys and closes on Escape', async () => {
     render(<TopBar />)
     const menu = await openMenu()
@@ -75,19 +108,42 @@ describe('TopBar preferences menu', () => {
   })
 })
 
-describe('TopBar mobile navigation (#714)', () => {
-  it('opens the mobile menu with all primary destinations and closes on Escape', () => {
+describe('TopBar mobile navigation (#714, #1074)', () => {
+  it('opens the mobile navigation disclosure with all primary destinations and closes on Escape', () => {
     render(<TopBar />)
-    const menu = screen.getByRole('button', { name: 'Open site menu' })
-    fireEvent.click(menu)
+    const toggle = screen.getByRole('button', { name: 'Open site menu' })
+    fireEvent.click(toggle)
 
-    expect(screen.getByRole('menu')).toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Open site menu' })
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    // Ordinary links in Tab order, not a menu that would owe arrow-key handling.
+    expect(screen.queryByRole('menuitem')).not.toBeInTheDocument()
     for (const label of ['explore', 'how', 'learn', 'creator']) {
-      expect(screen.getByRole('menuitem', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+      expect(within(nav).getByRole('link', { name: new RegExp(label, 'i') })).toBeInTheDocument()
     }
 
     fireEvent.keyDown(document, { key: 'Escape' })
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument()
-    expect(menu).toHaveFocus()
+    expect(screen.queryByRole('navigation', { name: 'Open site menu' })).not.toBeInTheDocument()
+    expect(toggle).toHaveFocus()
+  })
+
+  it('closes the preferences popup on Escape first and keeps the site navigation open', () => {
+    render(<TopBar />)
+    const toggle = screen.getByRole('button', { name: 'Open site menu' })
+    fireEvent.click(toggle)
+    const nav = screen.getByRole('navigation', { name: 'Open site menu' })
+
+    fireEvent.click(within(nav).getByRole('button', { name: 'Preferences' }))
+    const popup = within(nav).getByRole('menu')
+    fireEvent.keyDown(popup, { key: 'Escape' })
+
+    expect(within(nav).queryByRole('menu')).not.toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Open site menu' })).toBeInTheDocument()
+    expect(within(nav).getByRole('button', { name: 'Preferences' })).toHaveFocus()
+
+    // A second Escape, with no popup open, then dismisses the navigation.
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('navigation', { name: 'Open site menu' })).not.toBeInTheDocument()
+    expect(toggle).toHaveFocus()
   })
 })

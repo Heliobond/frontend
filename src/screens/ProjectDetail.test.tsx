@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
+import { StrictMode } from 'react'
 import { render } from '@/test/render'
-import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { YieldAlertProvider } from '../alerts/YieldAlertProvider'
 import { ProjectDetail } from './ProjectDetail'
 import { type Project } from '../data'
@@ -76,6 +77,16 @@ describe('ProjectDetail metadata verification badge', () => {
     expect(screen.getByText('Unverified metadata')).toBeInTheDocument()
     expect(screen.queryByText('Verified metadata')).not.toBeInTheDocument()
     expect(screen.queryByText('Metadata mismatch')).not.toBeInTheDocument()
+  })
+
+  it('renders "Demo data" badge when source is "demo"', () => {
+    renderDetail({ source: 'demo' })
+    expect(screen.getByText('Demo data')).toBeInTheDocument()
+  })
+
+  it('hides "Demo data" badge when source is "registry" (live on-chain data)', () => {
+    renderDetail({ source: 'registry' })
+    expect(screen.queryByText('Demo data')).not.toBeInTheDocument()
   })
 
   it('defaults to "unverified" when verifiedMetadata prop is omitted (fail closed)', () => {
@@ -227,5 +238,88 @@ describe('ProjectDetail invest button pending state and error handling (#808)', 
       expect(button).not.toBeDisabled()
       expect(button).not.toHaveAttribute('aria-busy', 'true')
     })
+  })
+})
+
+describe('ProjectDetail StrictMode mount flag (#1011)', () => {
+  function renderStrict(onInvest: () => Promise<string>) {
+    return render(
+      <StrictMode>
+        <YieldAlertProvider>
+          <ProjectDetail project={mockProject} detail={mockDetail} onInvest={onInvest} />
+        </YieldAlertProvider>
+      </StrictMode>,
+    )
+  }
+
+  it('clears pending state after a completed action under StrictMode', async () => {
+    let resolveInvest: (url: string) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveInvest = resolve
+        }),
+    )
+
+    renderStrict(onInvest)
+    const button = screen.getByRole('button', { name: /invest in the pool/i })
+    fireEvent.click(button)
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-busy', 'true')
+
+    resolveInvest('/connect')
+    await waitFor(() => {
+      expect(button).not.toBeDisabled()
+      expect(button).not.toHaveAttribute('aria-busy', 'true')
+    })
+    expect(screen.getAllByRole('link', { name: /view investment/i }).length).toBeGreaterThan(0)
+  })
+
+  it('clears pending state after a failed action under StrictMode', async () => {
+    let rejectInvest: (err: unknown) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((_, reject) => {
+          rejectInvest = reject
+        }),
+    )
+
+    renderStrict(onInvest)
+    const button = screen.getByRole('button', { name: /invest in the pool/i })
+    fireEvent.click(button)
+    expect(button).toBeDisabled()
+
+    rejectInvest(new Error('Network error'))
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
+      expect(button).not.toBeDisabled()
+      expect(button).not.toHaveAttribute('aria-busy', 'true')
+    })
+  })
+
+  it('ignores a late result after a genuine unmount', async () => {
+    let resolveInvest: (url: string) => void = () => {}
+    const onInvest = vi.fn().mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveInvest = resolve
+        }),
+    )
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const { unmount } = renderStrict(onInvest)
+      fireEvent.click(screen.getByRole('button', { name: /invest in the pool/i }))
+      unmount()
+
+      resolveInvest('/connect')
+      await act(async () => {
+        await Promise.resolve()
+      })
+
+      expect(errorSpy).not.toHaveBeenCalled()
+    } finally {
+      errorSpy.mockRestore()
+    }
   })
 })

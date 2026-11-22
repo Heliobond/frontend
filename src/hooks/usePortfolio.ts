@@ -123,10 +123,12 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
         let liquidity: VaultLiquidity | null = null
         if (totalAssetsResult.status === 'fulfilled' && totalAssetsResult.value > 0) {
           const total = totalAssetsResult.value
-          const bps = utilBpsResult.status === 'fulfilled' ? utilBpsResult.value : 0
-          const liquid =
-            liquidResult.status === 'fulfilled' ? liquidResult.value : total * (1 - bps / 10000)
-          liquidity = { liquid, total }
+          if (liquidResult.status === 'fulfilled') {
+            liquidity = { liquid: liquidResult.value, total }
+          } else if (utilBpsResult.status === 'fulfilled') {
+            const bps = utilBpsResult.value
+            liquidity = { liquid: total * (1 - bps / 10000), total }
+          }
         }
 
         setChain((prev) => ({
@@ -134,10 +136,10 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
           // A failed refetch keeps the last good position, but only for this address.
           portfolio: portfolioValue ?? (prev?.address === address ? prev.portfolio : null),
           claimableYield: claimable,
-          vaultLiquidity: liquidity,
+          vaultLiquidity: liquidity ?? (prev?.address === address ? prev.vaultLiquidity : null),
           error,
         }))
-      } catch (e) {
+      } catch {
         if (!isCancelled()) {
           setChain((prev) => ({
             address,

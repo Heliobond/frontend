@@ -23,6 +23,7 @@ import { shortAddress } from '../wallet/WalletProvider'
 import { type Project } from '../data'
 import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
 import { type MetadataVerificationStatus } from '../wallet/registry'
+import { type ProjectSource } from '../lib/api'
 
 /**
  * ProjectDetail — the full story of one project the pool funds. Hero, the
@@ -34,6 +35,7 @@ export interface ProjectDetailProps {
   project: Project
   detail: ProjectDetailData
   verifiedMetadata?: MetadataVerificationStatus
+  source?: ProjectSource
   onInvest: () => Promise<string>
   onBack?: () => void
   children?: React.ReactNode
@@ -43,6 +45,7 @@ export const ProjectDetail = memo(function ProjectDetail({
   project,
   detail,
   verifiedMetadata = 'unverified',
+  source,
   onInvest,
   onBack,
   children,
@@ -58,6 +61,7 @@ export const ProjectDetail = memo(function ProjectDetail({
   const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
     return () => {
       mountedRef.current = false
     }
@@ -109,7 +113,7 @@ export const ProjectDetail = memo(function ProjectDetail({
   const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
-      <DemoDataBadge style={{ marginBottom: 16 }} />
+      <DemoDataBadge source={source} style={{ marginBottom: 16 }} />
       {onBack && (
         <button
           type="button"

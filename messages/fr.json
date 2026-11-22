@@ -22,6 +22,7 @@
     },
     "preferences": "Préférences",
     "language": "Langue",
+    "languageLoadFailed": "Impossible de charger cette langue. Réessayez.",
     "account": "Compte",
     "watchlist": "Liste de suivi",
     "copyAddress": "Copier l'adresse",
@@ -195,6 +196,7 @@
     "emptyTitle": "Aucun projet trouvé",
     "emptySub": "Il n'y a aucun projet correspondant à la catégorie \"{filter}\" dans le pool en ce moment.",
     "loadMore": "Afficher {count} de plus",
+    "searchMore": "Rechercher dans les projets restants",
     "showingCount": "{shown} projets sur {total} affichés",
     "filterLoadedNotice": "Couvre les {loaded} projets chargés jusqu'à présent"
   },
@@ -549,6 +551,7 @@
     "fieldMediaDocs": "Médias et documents",
     "dropCover": "Photo de couverture",
     "dropCoverHint": "PNG ou JPG, affiché sur votre carte",
+    "coverUnsupported": "Choisissez une image PNG ou JPG pour la couverture.",
     "dropDocs": "Documents de vérification",
     "dropDocsHint": "Permis, AAP, plan de métrage",
     "previewLabel": "Aperçu en direct",

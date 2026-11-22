@@ -33,16 +33,17 @@ so the app works out of the box without a running backend.
 
 ## Environment configuration
 
-| Variable                | Required | Example                 | Purpose                                                                                                 |
-| ----------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| `HELIOBOND_API_URL`     | No       | `http://localhost:3001` | Backend base URL, read **server-side only**. Falls back to `NEXT_PUBLIC_API_URL` when unset.            |
-| `HELIOBOND_API_KEY`     | No       | `hb_live_…`             | API key sent as `X-API-Key`. **Server-side only** — never expose it through a `NEXT_PUBLIC_*` variable. |
-| `NEXT_PUBLIC_API_URL`   | No       | `http://localhost:3001` | Public base URL, used for the auth endpoints and as a fallback for `HELIOBOND_API_URL`.                 |
-| `NEXT_PUBLIC_DEMO_MODE` | No       | `true`                  | Force demo mode even when a backend is configured.                                                      |
+| Variable              | Required | Example                 | Purpose                                                                                                 |
+| --------------------- | -------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `HELIOBOND_API_URL`   | No       | `http://localhost:3001` | Backend base URL, read **server-side only**. Falls back to `NEXT_PUBLIC_API_URL` when unset.            |
+| `HELIOBOND_API_KEY`   | No       | `hb_live_…`             | API key sent as `X-API-Key`. **Server-side only** — never expose it through a `NEXT_PUBLIC_*` variable. |
+| `NEXT_PUBLIC_API_URL` | No       | `http://localhost:3001` | Public base URL, used for the auth endpoints and as a fallback for `HELIOBOND_API_URL`.                 |
 
 Copy `.env.example` to `.env.local`, then set `HELIOBOND_API_URL` and
 `HELIOBOND_API_KEY` to point at your local or staging backend before running
 `bun run dev`.
+Leaving both API variables unset or empty (and leaving `HELIOBOND_API_KEY` empty)
+uses bundled demo fixtures.
 
 ---
 
@@ -416,12 +417,11 @@ The API client reads project data from three sources in the following priority o
    Stellar ProjectRegistry contract is deployed and configured), project data
    is read directly from the blockchain via Stellar RPC. This is the highest-
    trust path and bypasses HTTP entirely.
-2. **Demo fixtures** — If no backend is configured (or
-   `NEXT_PUBLIC_DEMO_MODE=true` is explicitly enabled), all functions return
-   deterministic mock data from `src/data.ts` and `src/data/projectDetails.ts`.
-   No HTTP requests are made. A "Demo data" badge appears in the UI when
-   `shouldShowDemoBadge()` returns `true`.
-3. **HTTP backend** — If `HELIOBOND_API_URL` is set and demo mode is off,
+2. **Demo fixtures** — If no backend URL or API key is configured, all functions
+   return deterministic mock data from `src/data.ts` and
+   `src/data/projectDetails.ts`. No HTTP requests are made. A "Demo data" badge
+   appears in the UI when `shouldShowDemoBadge()` returns `true`.
+3. **HTTP backend** — If `HELIOBOND_API_URL` or `NEXT_PUBLIC_API_URL` is set,
    the client calls the configured backend. **Failures throw `ApiError`** —
    they are not silently swallowed.
 
@@ -460,18 +460,6 @@ The timeout error is then thrown to the caller.
 const projects = await getProjects()
 ```
 
-### NEXT_PUBLIC_DEMO_MODE
-
-To force demo mode even when a backend is configured (useful for testing
-or staging previews without a live backend), set:
-
-```bash
-NEXT_PUBLIC_DEMO_MODE=true
-```
-
-When enabled, `shouldShowDemoBadge()` returns `true` and a visual indicator
-appears in the UI so users know the data is not real.
-
 ### Usage example with error handling
 
 ```ts
@@ -501,8 +489,8 @@ For mapping backend error codes to user-facing strings, see
 
 ## Demo / fixture fallback
 
-When `HELIOBOND_API_URL` is **not set** (or is empty), the app runs in **demo
-mode**. In this mode:
+When no backend URL or API key is configured, the app runs in **demo mode**.
+In this mode:
 
 - **No HTTP requests are made** — every API function returns deterministic
   fixture data immediately.
@@ -523,15 +511,6 @@ Project Detail, and Deposit screens.
 (timeouts, 5xx errors, network errors) **throw `ApiError`** and do not fall
 back to fixtures. The caller must handle the error and show appropriate UI
 (loading state, retry button, error message).
-
-To force demo mode even when a backend is configured, use:
-
-```bash
-NEXT_PUBLIC_DEMO_MODE=true
-```
-
-This is useful for testing, staging previews, or demos where you want to use
-the production-like URL structure but don't have a live backend.
 
 ---
 

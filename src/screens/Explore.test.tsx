@@ -16,7 +16,12 @@ vi.mock('../components', async () => {
   const actual = await vi.importActual<typeof import('../components')>('../components')
   return {
     ...actual,
-    ProjectCard: ({ name }: { name: string }) => <article data-testid="card">{name}</article>,
+    ProjectCard: ({ name, verifiedLabel }: { name: string; verifiedLabel?: string }) => (
+      <article data-testid="card">
+        <span>{name}</span>
+        {verifiedLabel && <span data-testid="verified-label">{verifiedLabel}</span>}
+      </article>
+    ),
   }
 })
 
@@ -203,5 +208,179 @@ describe('Explore — pagination', () => {
     expect(mockGetProjectsPaginated).toHaveBeenCalledWith(2, 50)
     expect(cards()[59]).toHaveTextContent('Project 60')
     expect(screen.queryByRole('button', { name: /more/i })).not.toBeInTheDocument()
+  })
+
+  it('preserves unrelated query parameters when selecting a type (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?yieldRange=4-8&campaign=fall'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'Wind' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore?yieldRange=4-8&campaign=fall&type=Wind', {
+      scroll: false,
+    })
+  })
+
+  it('removes type while preserving unrelated parameters when selecting All (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?type=Wind&campaign=fall&yieldRange=4-8'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore?campaign=fall&yieldRange=4-8', {
+      scroll: false,
+    })
+  })
+
+  it('routes to /explore with no query string when selecting All if type was the only parameter (#1057)', async () => {
+    const user = userEvent.setup()
+    mockSearch = '?type=Wind'
+    render(<Explore onOpen={vi.fn()} initialProjects={makeProjects(5)} />)
+
+    await user.click(screen.getByRole('button', { name: 'All' }))
+    expect(mockReplace).toHaveBeenCalledWith('/explore', {
+      scroll: false,
+    })
+  })
+
+  it('reaches a matching project on page two from a zero-match first page (#1003)', async () => {
+    const user = userEvent.setup()
+    const firstPage = makeProjects(50)
+    const target = { ...makeProjects(1, 'Solar', 50)[0], name: 'Hidden Gem' }
+    mockPaginated([...firstPage, target])
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(cards().length).toBe(12))
+
+    await user.type(screen.getByRole('searchbox'), 'Hidden Gem')
+    expect(await screen.findByText('No projects found')).toBeInTheDocument()
+    const searchMore = screen.getByRole('button', { name: 'Search remaining projects' })
+
+    await user.click(searchMore)
+    await waitFor(() => expect(cards().length).toBe(1))
+    expect(cards()[0]).toHaveTextContent('Hidden Gem')
+    expect(screen.queryByText('No projects found')).not.toBeInTheDocument()
+  })
+
+  it('keeps the empty state when the search is genuinely exhausted (#1003)', async () => {
+    const user = userEvent.setup()
+    mockPaginated(makeProjects(5))
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(cards().length).toBe(5))
+
+    await user.type(screen.getByRole('searchbox'), 'nothing matches')
+    expect(await screen.findByText('No projects found')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Search remaining projects' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('displays actual verification age on project cards and omits label when timestamp is missing (#1005)', async () => {
+    const now = Date.now()
+    const projectsWithAges: Project[] = [
+      {
+        ...makeProjects(1)[0],
+        id: 1,
+        name: 'Project 2h Ago',
+        lastVerifiedAt: now - 2 * 60 * 60 * 1000,
+      },
+      {
+        ...makeProjects(1)[0],
+        id: 2,
+        name: 'Project 5d Ago',
+        lastVerifiedAt: now - 5 * 24 * 60 * 60 * 1000,
+      },
+      {
+        ...makeProjects(1)[0],
+        id: 3,
+        name: 'Project No Timestamp',
+        lastVerifiedAt: undefined,
+      },
+    ]
+
+    mockGetProjectsPaginated.mockResolvedValueOnce({
+      projects: projectsWithAges,
+      total: 3,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+
+    await waitFor(() => expect(screen.getByText('Project 2h Ago')).toBeInTheDocument())
+
+    const verifiedLabels = screen.queryAllByTestId('verified-label')
+    expect(verifiedLabels).toHaveLength(2)
+    expect(verifiedLabels[0]).toHaveTextContent('verified 2h ago')
+    expect(verifiedLabels[1]).toHaveTextContent('verified 5d ago')
+
+    const noTimestampCard = screen.getByText('Project No Timestamp').closest('article')
+    expect(noTimestampCard?.querySelector('[data-testid="verified-label"]')).toBeNull()
+  })
+
+  it('displays recoverable feedback on pagination failure and retries successfully (#1004)', async () => {
+    const user = userEvent.setup()
+    const allProjects = makeProjects(60)
+
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      if (page === 2) {
+        return Promise.reject(new Error('network error'))
+      }
+      const start = (page - 1) * pageSize
+      const slice = allProjects.slice(start, start + pageSize)
+      return Promise.resolve({
+        projects: slice,
+        total: allProjects.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < allProjects.length,
+      })
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+    await waitFor(() => expect(screen.getByText('60 projects')).toBeInTheDocument())
+    expect(cards().length).toBe(12)
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(24))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(36))
+
+    await user.click(loadMoreButton(12))
+    await waitFor(() => expect(cards().length).toBe(48))
+
+    // This click requires page 2 fetch, which rejects!
+    await user.click(loadMoreButton(12))
+
+    // Already loaded cards must be preserved!
+    await waitFor(() =>
+      expect(screen.getByText('Failed to load more projects')).toBeInTheDocument(),
+    )
+    expect(cards().length).toBe(48)
+    const retryBtn = screen.getByRole('button', { name: /retry/i })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Now make page 2 succeed on retry
+    mockGetProjectsPaginated.mockImplementation((page = 1, pageSize = 50) => {
+      const start = (page - 1) * pageSize
+      const slice = allProjects.slice(start, start + pageSize)
+      return Promise.resolve({
+        projects: slice,
+        total: allProjects.length,
+        page,
+        pageSize,
+        hasMore: start + pageSize < allProjects.length,
+      })
+    })
+
+    await user.click(retryBtn)
+
+    await waitFor(() => expect(cards().length).toBe(60))
+    expect(cards()[59]).toHaveTextContent('Project 60')
+    expect(screen.queryByText('Failed to load more projects')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /retry/i })).not.toBeInTheDocument()
   })
 })

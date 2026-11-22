@@ -38,7 +38,8 @@ export function InfoTooltip({ label, content }: InfoTooltipProps) {
         type="button"
         aria-label={label}
         aria-expanded={open}
-        aria-controls={id}
+        aria-controls={open ? id : undefined}
+        aria-describedby={open ? id : undefined}
         onClick={() => setOpen((value) => !value)}
         style={{
           width: 20,

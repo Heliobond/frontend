@@ -200,3 +200,36 @@ describe('ProjectBuilder publish', () => {
     expect(submitCreateProject).not.toHaveBeenCalled()
   })
 })
+
+describe('ProjectBuilder cover formats (#1013)', () => {
+  const coverInput = () => screen.getByLabelText(en.Creator.dropCover)
+
+  it.each([
+    ['solar-cover.png', 'image/png'],
+    ['wind-cover.jpeg', 'image/jpeg'],
+  ])('shows the filename of an accepted %s cover', (name, type) => {
+    render(<ProjectBuilder />)
+    expect(coverInput()).toHaveAttribute('accept', 'image/png,image/jpeg,.jpg,.jpeg')
+
+    fireEvent.change(coverInput(), { target: { files: [new File(['img'], name, { type })] } })
+
+    expect(screen.getByText(name)).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('rejects an unsupported cover with an accessible error', () => {
+    render(<ProjectBuilder />)
+    const input = coverInput()
+
+    fireEvent.change(input, {
+      target: { files: [new File(['pdf'], 'brochure.pdf', { type: 'application/pdf' })] },
+    })
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent(en.Creator.coverUnsupported)
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(input).toHaveAttribute('aria-describedby', expect.stringContaining(alert.id))
+    expect(screen.queryByText('brochure.pdf')).not.toBeInTheDocument()
+    expect(input).toHaveValue('')
+  })
+})

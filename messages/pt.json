@@ -15,6 +15,7 @@
     "creator": "Criador",
     "preferences": "Preferências",
     "language": "Idioma",
+    "languageLoadFailed": "Não foi possível carregar esse idioma. Tente novamente.",
     "how": "Como funciona",
     "testnet": "Testnet (ativo)",
     "networkStatus": "Rede: Testnet ativa",
@@ -195,6 +196,7 @@
     "emptyTitle": "Nenhum projeto encontrado",
     "emptySub": "Não há projetos correspondentes à categoria \"{filter}\" no pool agora.",
     "loadMore": "Mostrar mais {count}",
+    "searchMore": "Buscar nos projetos restantes",
     "showingCount": "Mostrando {shown} de {total} projetos",
     "filterLoadedNotice": "Cobrindo os {loaded} projetos carregados até agora"
   },
@@ -549,6 +551,7 @@
     "fieldMediaDocs": "Mídia e documentos",
     "dropCover": "Foto de capa",
     "dropCoverHint": "PNG ou JPG, exibida no seu cartão",
+    "coverUnsupported": "Escolha uma imagem PNG ou JPG para a capa.",
     "dropDocs": "Documentos de verificação",
     "dropDocsHint": "Licenças, PPAs, plano de medição",
     "previewLabel": "Pré-visualização ao vivo",

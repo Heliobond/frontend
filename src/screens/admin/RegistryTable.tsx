@@ -142,7 +142,7 @@ export function RegistryTable({ rows, onSave, updateDisabledReason }: RegistryTa
               onCancel={() => setEditing(null)}
               onSave={async (credit, green) => {
                 const ok = await onSave(r.id, credit, green)
-                if (ok) setEditing(null)
+                if (ok) setEditing((curr) => (curr === r.id ? null : curr))
                 return ok
               }}
               updateDisabledReason={updateDisabledReason}

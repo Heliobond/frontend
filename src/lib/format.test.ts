@@ -6,6 +6,7 @@ import {
   formatSharePrice,
   formatNumber,
   formatMoney,
+  formatRelativeAge,
 } from './format'
 
 describe('formatSharePrice', () => {
@@ -82,5 +83,31 @@ describe('locale-aware number separators (#903)', () => {
 
   it('falls back to en-US when no locale is supplied', () => {
     expect(formatNumber(amount)).toBe('1,234,567.89')
+  })
+})
+
+describe('formatRelativeAge (#1005)', () => {
+  const now = 1700000000000
+
+  it('returns empty string for invalid, zero, or missing timestamps', () => {
+    expect(formatRelativeAge(undefined, now)).toBe('')
+    expect(formatRelativeAge(null, now)).toBe('')
+    expect(formatRelativeAge(0, now)).toBe('')
+    expect(formatRelativeAge(-1000, now)).toBe('')
+    expect(formatRelativeAge(NaN, now)).toBe('')
+  })
+
+  it('formats relative ages into compact strings', () => {
+    expect(formatRelativeAge(now - 30 * 1000, now)).toBe('1m')
+    expect(formatRelativeAge(now - 45 * 60 * 1000, now)).toBe('45m')
+    expect(formatRelativeAge(now - 2 * 60 * 60 * 1000, now)).toBe('2h')
+    expect(formatRelativeAge(now - 5 * 24 * 60 * 60 * 1000, now)).toBe('5d')
+    expect(formatRelativeAge(now - 60 * 24 * 60 * 60 * 1000, now)).toBe('2mo')
+    expect(formatRelativeAge(now - 400 * 24 * 60 * 60 * 1000, now)).toBe('1y')
+  })
+
+  it('handles unix timestamps in seconds as well as milliseconds', () => {
+    const nowSec = 1700000000
+    expect(formatRelativeAge(nowSec - 7200, nowSec * 1000)).toBe('2h')
   })
 })

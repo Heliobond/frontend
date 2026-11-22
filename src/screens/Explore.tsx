@@ -8,6 +8,7 @@ import { type Project, type ProjectType } from '../data'
 import { selectProjects } from '../state/selectors'
 import { getProjectsPaginated } from '../lib/api'
 import { searchBondsByName } from '../lib/bondUtils'
+import { formatRelativeAge } from '../lib/format'
 
 /**
  * Explore — a living atlas, not a shop. Grid of all registered projects with
@@ -46,6 +47,7 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(initialProjects === undefined)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadMoreError, setLoadMoreError] = useState(false)
   const [apiError, setApiError] = useState(false)
   // The URL is the source of truth so back/forward and shared links update
   // the selected chip and visible project set together.
@@ -73,11 +75,15 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
 
   const setFilterAndUrl = (next: ProjectType | 'All') => {
     setVisibleCount(PAGE_SIZE)
+    setLoadMoreError(false)
+    const params = new URLSearchParams(searchParams?.toString() ?? '')
     if (next === 'All') {
-      router.replace('/explore', { scroll: false })
+      params.delete('type')
     } else {
-      router.replace(`/explore?type=${next}`, { scroll: false })
+      params.set('type', next)
     }
+    const queryStr = params.toString()
+    router.replace(queryStr ? `/explore?${queryStr}` : '/explore', { scroll: false })
   }
 
   const query = searchTerm.trim().toLowerCase()
@@ -102,11 +108,13 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
 
   const handleLoadMore = async () => {
     const shouldFetch =
-      (visibleCount + PAGE_SIZE > projects.length ||
+      (loadMoreError ||
+        visibleCount + PAGE_SIZE > projects.length ||
         (!isDefaultView && visibleCount >= shown.length)) &&
       hasMore
     if (shouldFetch && !loadingMore) {
       setLoadingMore(true)
+      setLoadMoreError(false)
       try {
         const nextPage = page + 1
         const res = await getProjectsPaginated(nextPage, 50)
@@ -120,7 +128,7 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
         setTotal(res.total)
         setVisibleCount((v) => v + PAGE_SIZE)
       } catch {
-        // preserve current state on error
+        setLoadMoreError(true)
       } finally {
         setLoadingMore(false)
       }
@@ -202,7 +210,10 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
           <input
             type="search"
             value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
+            onChange={(event) => {
+              setSearchTerm(event.target.value)
+              setLoadMoreError(false)
+            }}
             placeholder={t('searchPlaceholder')}
             aria-label={t('searchLabel')}
             style={{
@@ -286,28 +297,59 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
           >
             {t('emptySub', { filter: filter === 'All' ? t('filterAll') : filter })}
           </p>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              aria-busy={loadingMore}
+              style={{
+                marginTop: 20,
+                height: 44,
+                padding: '0 24px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--ink)',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-small)',
+                fontWeight: 600,
+                cursor: loadingMore ? 'wait' : 'pointer',
+                opacity: loadingMore ? 0.7 : 1,
+              }}
+            >
+              {t('searchMore')}
+            </button>
+          )}
         </div>
       ) : (
         <>
           <div className="hb-projects-grid">
             {loading
               ? Array.from({ length: 6 }, (_, i) => <ProjectCardSkeleton key={i} />)
-              : paged.map((p) => (
-                  <ProjectCard
-                    key={p.id}
-                    name={p.name}
-                    location={p.location}
-                    credit={p.credit}
-                    green={p.green}
-                    funded={p.funded}
-                    fundedLabel={t('cardFundedFromPool')}
-                    verifiedLabel={t('cardVerifiedAgo', { ago: '2h' })}
-                    onOpen={() => onOpen(p)}
-                    fundingGoal={p.fundingGoal}
-                    fundedAmount={p.fundedAmount}
-                    action={<WatchlistButton bondId={p.id} bondName={p.name} />}
-                  />
-                ))}
+              : paged.map((p) => {
+                  const verifiedAge =
+                    typeof p.lastVerifiedAt === 'number' ? formatRelativeAge(p.lastVerifiedAt) : ''
+                  const verifiedLabel = verifiedAge
+                    ? t('cardVerifiedAgo', { ago: verifiedAge })
+                    : undefined
+                  return (
+                    <ProjectCard
+                      key={p.id}
+                      name={p.name}
+                      location={p.location}
+                      credit={p.credit}
+                      green={p.green}
+                      funded={p.funded}
+                      fundedLabel={t('cardFundedFromPool')}
+                      verifiedLabel={verifiedLabel}
+                      onOpen={() => onOpen(p)}
+                      fundingGoal={p.fundingGoal}
+                      fundedAmount={p.fundedAmount}
+                      action={<WatchlistButton bondId={p.id} bondName={p.name} />}
+                    />
+                  )
+                })}
           </div>
           {!loading && shown.length > 0 && (
             <div
@@ -333,7 +375,49 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
                   total: totalCount,
                 })}
               </div>
-              {remaining > 0 && (
+              {loadMoreError ? (
+                <div
+                  role="alert"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--type-small)',
+                      color: 'var(--ink-60)',
+                      margin: 0,
+                    }}
+                  >
+                    Failed to load more projects
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    style={{
+                      height: 44,
+                      padding: '0 24px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: '1px solid var(--ink)',
+                      background: 'var(--surface)',
+                      color: 'var(--ink)',
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--type-small)',
+                      fontWeight: 600,
+                      cursor: loadingMore ? 'wait' : 'pointer',
+                      transition: 'background var(--dur-press) var(--ease-out)',
+                      opacity: loadingMore ? 0.7 : 1,
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : remaining > 0 ? (
                 <button
                   type="button"
                   onClick={handleLoadMore}
@@ -355,7 +439,7 @@ export function Explore({ onOpen, initialProjects, initialTotal }: ExploreProps)
                 >
                   {t('loadMore', { count: nextChunk })}
                 </button>
-              )}
+              ) : null}
             </div>
           )}
         </>
