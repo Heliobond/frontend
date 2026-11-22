@@ -16,7 +16,12 @@ vi.mock('../components', async () => {
   const actual = await vi.importActual<typeof import('../components')>('../components')
   return {
     ...actual,
-    ProjectCard: ({ name }: { name: string }) => <article data-testid="card">{name}</article>,
+    ProjectCard: ({ name, verifiedLabel }: { name: string; verifiedLabel?: string }) => (
+      <article data-testid="card">
+        <span>{name}</span>
+        {verifiedLabel && <span data-testid="verified-label">{verifiedLabel}</span>}
+      </article>
+    ),
   }
 })
 
@@ -269,6 +274,50 @@ describe('Explore — pagination', () => {
     expect(
       screen.queryByRole('button', { name: 'Search remaining projects' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('displays actual verification age on project cards and omits label when timestamp is missing (#1005)', async () => {
+    const now = Date.now()
+    const projectsWithAges: Project[] = [
+      {
+        ...makeProjects(1)[0],
+        id: 1,
+        name: 'Project 2h Ago',
+        lastVerifiedAt: now - 2 * 60 * 60 * 1000,
+      },
+      {
+        ...makeProjects(1)[0],
+        id: 2,
+        name: 'Project 5d Ago',
+        lastVerifiedAt: now - 5 * 24 * 60 * 60 * 1000,
+      },
+      {
+        ...makeProjects(1)[0],
+        id: 3,
+        name: 'Project No Timestamp',
+        lastVerifiedAt: undefined,
+      },
+    ]
+
+    mockGetProjectsPaginated.mockResolvedValueOnce({
+      projects: projectsWithAges,
+      total: 3,
+      page: 1,
+      pageSize: 50,
+      hasMore: false,
+    })
+
+    render(<Explore onOpen={vi.fn()} />)
+
+    await waitFor(() => expect(screen.getByText('Project 2h Ago')).toBeInTheDocument())
+
+    const verifiedLabels = screen.queryAllByTestId('verified-label')
+    expect(verifiedLabels).toHaveLength(2)
+    expect(verifiedLabels[0]).toHaveTextContent('verified 2h ago')
+    expect(verifiedLabels[1]).toHaveTextContent('verified 5d ago')
+
+    const noTimestampCard = screen.getByText('Project No Timestamp').closest('article')
+    expect(noTimestampCard?.querySelector('[data-testid="verified-label"]')).toBeNull()
   })
 
   it('displays recoverable feedback on pagination failure and retries successfully (#1004)', async () => {
