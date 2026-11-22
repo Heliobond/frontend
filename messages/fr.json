@@ -152,6 +152,7 @@
     "formula": "rendement attendu = investissement × (crédit + vert) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "Non configuré pour ce déploiement",
     "rowCadence": "Cadence des mises à jour de l'oracle",
     "rowCadenceValue": "quotidienne",
     "rowAudit": "Audit indépendant",

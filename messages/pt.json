@@ -152,6 +152,7 @@
     "formula": "retorno esperado = investimento × (crédito + verde) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "Não configurado nesta implantação",
     "rowCadence": "Cadência de atualização do oráculo",
     "rowCadenceValue": "diária",
     "rowAudit": "Auditoria independente",

@@ -152,6 +152,7 @@
     "formula": "expected return = investment × (credit + green) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "Not configured for this deployment",
     "rowCadence": "Oracle update cadence",
     "rowCadenceValue": "daily",
     "rowAudit": "Independent audit",

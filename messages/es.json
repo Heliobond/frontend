@@ -152,6 +152,7 @@
     "formula": "rentabilidad esperada = inversión × (crédito + impacto verde) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "No configurado en este despliegue",
     "rowCadence": "Cadencia de actualización del oráculo",
     "rowCadenceValue": "diaria",
     "rowAudit": "Auditoría independiente",

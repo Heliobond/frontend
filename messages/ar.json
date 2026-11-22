@@ -159,6 +159,7 @@
     "formula": "العائد المتوقع = الاستثمار × (الائتمان + الأخضر) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "غير مهيأ لهذا النشر",
     "rowCadence": "تكرار تحديثات Oracle",
     "rowCadenceValue": "يومي",
     "rowAudit": "تدقيق مستقل",
