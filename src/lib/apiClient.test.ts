@@ -200,6 +200,83 @@ describe('typed endpoint helpers', () => {
   })
 })
 
+/**
+ * Regression tests for issue #1019: apiGet must correctly forward caller headers
+ * regardless of which HeadersInit variant the caller uses.
+ *
+ * Before the fix, spreading a `Headers` instance produced `{}` (no enumerable
+ * own properties) and spreading a tuple list produced numeric keys `{ 0: […] }`.
+ */
+describe('apiGet header normalisation (#1019)', () => {
+  it('forwards a plain-object header to the fetch call', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    await client.apiGet('/test', { headers: { 'Accept-Language': 'fr' } }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('fr')
+  })
+
+  it('forwards a Headers-instance header to the fetch call', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const h = new Headers({ 'Accept-Language': 'de' })
+    await client.apiGet('/test', { headers: h }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('de')
+  })
+
+  it('forwards a tuple-list header to the fetch call', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['Accept-Language', 'ja']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('ja')
+  })
+
+  it('caller override replaces the default Accept regardless of casing', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    // Upper-case 'Accept' should shadow the default 'accept: application/json'.
+    await client.apiGet('/test', { headers: { Accept: 'text/plain' } }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('text/plain')
+  })
+
+  it('caller override via Headers instance replaces the default Accept', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    await client.apiGet('/test', { headers: new Headers({ accept: 'text/csv' }) }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('text/csv')
+  })
+
+  it('caller override via tuple list replaces the default Accept', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['accept', 'application/xml']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('application/xml')
+  })
+
+  it('no numeric keys appear in the sent headers when tuples are passed', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['X-Custom', 'val']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sentKeys = Object.keys(init?.headers ?? {})
+    expect(sentKeys.some((k) => /^\d+$/.test(k))).toBe(false)
+  })
+})
+
 describe('historyToPricePoints', () => {
   it('renders entries as dated, ascending price and yield points', async () => {
     const client = await loadClient()
