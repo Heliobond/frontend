@@ -98,6 +98,53 @@ describe('ProjectDetail metadata verification badge', () => {
   })
 })
 
+describe('ProjectDetail score observation dates', () => {
+  it('shows unknown dates and the observed month in the active locale', () => {
+    const observedAt = Date.UTC(2024, 0, 1)
+    const detail: ProjectDetailData = {
+      ...mockDetail,
+      scoreHistory: {
+        credit: [
+          { observedAt: null, value: 74, hash: 'credit-1' },
+          { observedAt, value: 76, hash: 'credit-2' },
+        ],
+        green: [{ observedAt: null, value: 84, hash: 'green-1' }],
+      },
+    }
+
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail project={mockProject} detail={detail} source="registry" onInvest={vi.fn()} />
+      </YieldAlertProvider>,
+      { locale: 'fr' },
+    )
+
+    const dated = screen.getByText('Dernière observation : janv. 2024')
+    expect(dated).toBeVisible()
+    expect(screen.getByText('Dernière observation : Date inconnue')).toBeVisible()
+    fireEvent.click(dated)
+    expect(screen.getByText('Date inconnue · 74')).toBeVisible()
+    expect(screen.getByText('janv. 2024 · 76')).toBeVisible()
+    expect(screen.queryByText(/vérifié il y a 2h/i)).not.toBeInTheDocument()
+  })
+
+  it('does not present testnet fallback fixtures as timed registry observations', () => {
+    render(
+      <YieldAlertProvider>
+        <ProjectDetail
+          project={mockProject}
+          detail={PROJECT_DETAILS[1]}
+          source="registry"
+          onInvest={vi.fn()}
+        />
+      </YieldAlertProvider>,
+    )
+
+    expect(screen.getAllByText('Last observation: Unknown date')).toHaveLength(2)
+    expect(screen.queryByText(/Jun 2026 ·/)).not.toBeInTheDocument()
+  })
+})
+
 describe('ProjectDetail funding timeline explorer links (#703)', () => {
   function renderDetail(detail: ProjectDetailData) {
     return render(

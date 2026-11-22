@@ -9,7 +9,12 @@ test.describe('Withdraw flow — demo mode smoke test', () => {
     await expect(page.getByRole('heading', { name: 'Withdraw from the pool' })).toBeVisible()
     await page.getByRole('textbox', { name: 'Amount' }).fill('150')
     await Promise.all([
-      expect(page.getByRole('heading', { name: 'Processing your withdrawal' })).toBeVisible(),
+      expect(
+        page
+          .getByRole('main')
+          .getByRole('status')
+          .filter({ hasText: 'Processing your withdrawal' }),
+      ).toBeVisible(),
       page.getByRole('button', { name: /withdraw \$150/i }).click(),
     ])
     await expect(page.getByRole('heading', { name: 'Withdrawal settled' })).toBeVisible({
@@ -24,7 +29,8 @@ test.describe('Withdraw flow — demo mode smoke test', () => {
     await page.goto('/withdraw')
 
     await expect(page.getByRole('heading', { name: 'Withdraw from the pool' })).toBeVisible()
-    const withdrawButton = page.getByRole('button', { name: /withdraw/i }).first()
+    await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('150')
+    const withdrawButton = page.getByRole('button', { name: 'Withdraw', exact: true })
     await expect(withdrawButton).toBeDisabled()
     await expect(withdrawButton).toHaveAttribute('title', /withdrawals unlock in/i)
   })

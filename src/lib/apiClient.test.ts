@@ -34,8 +34,8 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function headersOf(call: unknown[]): Headers {
-  return new Headers((call[1] as RequestInit | undefined)?.headers)
+function headersOf(call: Parameters<typeof fetch>): Headers {
+  return new Headers(call[1]?.headers)
 }
 
 beforeEach(() => {

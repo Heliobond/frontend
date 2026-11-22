@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Badge,
   Button,
@@ -21,7 +21,7 @@ import { getExplorerUrl } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
 
 import { type Project } from '../data'
-import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
+import { type ProjectDetail as ProjectDetailData, type ScorePoint } from '../data/projectDetails'
 import { type MetadataVerificationStatus } from '../wallet/registry'
 import { type ProjectSource } from '../lib/api'
 
@@ -109,8 +109,6 @@ export const ProjectDetail = memo(function ProjectDetail({
   // at every use site.
   const { name: creatorName, since: creatorSince } = detail.creator
   const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
-  const creditHistory = useMemo(() => creditPoints.map((p) => p.value), [creditPoints])
-  const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       <DemoDataBadge source={source} style={{ marginBottom: 16 }} />
@@ -267,18 +265,18 @@ export const ProjectDetail = memo(function ProjectDetail({
           <ScoreColumn
             value={project.credit}
             label={t('creditLabel')}
-            history={creditHistory}
+            history={creditPoints}
             sparkLabel={t('creditHistory')}
             onChainNote={t('onChainNote')}
-            verifiedAgo={t('verifiedAgo')}
+            live={source === 'registry'}
           />
           <ScoreColumn
             value={project.green}
             label={t('greenLabel')}
-            history={greenHistory}
+            history={greenPoints}
             sparkLabel={t('greenHistory')}
             onChainNote={t('onChainNote')}
-            verifiedAgo={t('verifiedAgo')}
+            live={source === 'registry'}
           />
         </div>
       </section>
@@ -700,16 +698,29 @@ const ScoreColumn = memo(function ScoreColumn({
   history,
   sparkLabel,
   onChainNote,
-  verifiedAgo,
+  live,
 }: {
   value: number
   label: string
-  history: number[]
+  history: ScorePoint[]
   sparkLabel: string
   onChainNote: string
-  verifiedAgo: string
+  live: boolean
 }) {
   const t = useTranslations('ProjectDetail')
+  const locale = useLocale()
+  const values = useMemo(() => history.map((point) => point.value), [history])
+  const month = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+  const observationDate = (point?: ScorePoint) =>
+    point?.observedAt != null
+      ? month.format(point.observedAt)
+      : ((!live ? point?.date : undefined) ?? t('scoreDateUnknown'))
+  const latest = t('lastScoreObservation', { date: observationDate(history.at(-1)) })
+
   return (
     <div
       style={{
@@ -733,7 +744,7 @@ const ScoreColumn = memo(function ScoreColumn({
         stroke={11}
       />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-        <Sparkline points={history} aria-label={sparkLabel} />
+        <Sparkline points={values} aria-label={sparkLabel} />
         <span
           style={{
             fontFamily: 'var(--font-data)',
@@ -744,17 +755,27 @@ const ScoreColumn = memo(function ScoreColumn({
         >
           {onChainNote}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-data)',
-            fontSize: 'var(--type-fine)',
-            color: 'var(--ink-40)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {verifiedAgo}
-        </span>
+        {history.length > 0 ? (
+          <details style={scoreObservationStyle}>
+            <summary style={{ cursor: 'pointer' }}>{latest}</summary>
+            <ul style={{ margin: '6px 0 0', paddingInlineStart: 18 }}>
+              {history.map((point) => (
+                <li key={point.hash}>
+                  {observationDate(point)} · {point.value}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : (
+          <span style={scoreObservationStyle}>{latest}</span>
+        )}
       </div>
     </div>
   )
 })
+
+const scoreObservationStyle: CSSProperties = {
+  fontFamily: 'var(--font-data)',
+  fontSize: 'var(--type-fine)',
+  color: 'var(--ink-60)',
+}

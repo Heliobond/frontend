@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@/test/render'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { OnChainPosition } from './OnChainPosition'
+import { usePortfolio } from '../hooks/usePortfolio'
 import * as vault from '../wallet/vault'
 import * as toastModule from '../components/Toast'
 import { notifyTransactionConfirmed } from '../wallet/vaultEvents'
@@ -21,6 +22,7 @@ vi.mock('../components/Toast', async (importOriginal) => {
 const mockWallet = {
   address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
   isDemo: false,
+  connected: true,
   sign: vi.fn(async (xdr: string) => xdr),
 }
 
@@ -33,6 +35,10 @@ vi.mock('../wallet/vault', async (importOriginal) => {
   return {
     ...actual,
     fetchPortfolio: vi.fn(),
+    fetchClaimableYield: vi.fn().mockRejectedValue(new Error('Use snapshot yield')),
+    fetchTotalAssets: vi.fn().mockResolvedValue(0),
+    fetchUtilizationBps: vi.fn().mockResolvedValue(0),
+    fetchVaultLiquidUsdc: vi.fn().mockResolvedValue(0),
     submitClaimYield: vi.fn(),
   }
 })
@@ -44,6 +50,11 @@ const portfolio = (shares: number) => ({
   shareOfPoolBps: 100,
   totalDeposited: shares * 2,
 })
+
+function PositionHarness() {
+  const position = usePortfolio()
+  return <OnChainPosition {...position} />
+}
 
 describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () => {
   beforeEach(() => {
@@ -68,7 +79,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
 
   it('renders nothing when vault contract id is not configured', () => {
     vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', '')
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
     expect(screen.queryByTestId('onchain-position')).toBeNull()
   })
 
@@ -81,7 +92,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
       totalDeposited: 100,
     })
 
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
 
     await waitFor(() => {
       expect(screen.getByTestId('onchain-claimable-yield')).toHaveTextContent('$0.00')
@@ -98,7 +109,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
       totalDeposited: 100,
     })
 
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
 
     await waitFor(() => {
       expect(screen.getByTestId('onchain-claimable-yield')).toHaveTextContent('$5.75')
@@ -124,9 +135,12 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
       })
 
     const fakeHash = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
-    vi.mocked(vault.submitClaimYield).mockResolvedValue(fakeHash)
+    vi.mocked(vault.submitClaimYield).mockImplementation(async () => {
+      notifyTransactionConfirmed(fakeHash, 'claim_yield')
+      return fakeHash
+    })
 
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /claim yield/i })).toBeInTheDocument()
@@ -153,14 +167,14 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
     )
 
     // Balances refreshed after confirmation
-    expect(vault.fetchPortfolio).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(vault.fetchPortfolio).toHaveBeenCalledTimes(2))
   })
 
   it('offers an explorer link for a pending yield claim', async () => {
     const hash = 'a'.repeat(64)
     vi.mocked(vault.fetchPortfolio).mockResolvedValue(portfolio(100))
     vi.mocked(vault.submitClaimYield).mockRejectedValue(new TransactionPendingError(hash))
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
 
     fireEvent.click(await screen.findByRole('button', { name: /claim yield/i }))
     await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1))
@@ -185,7 +199,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
     })
     vi.mocked(vault.submitClaimYield).mockRejectedValue(new Error('Network error on chain'))
 
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /claim yield/i })).toBeInTheDocument()
@@ -211,7 +225,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
       .mockResolvedValueOnce(portfolio(1))
       .mockResolvedValueOnce(portfolio(2))
       .mockResolvedValueOnce(portfolio(3))
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
     await waitFor(() => expect(screen.getByTestId('onchain-shares')).toHaveTextContent('1.00'))
     act(() => notifyTransactionConfirmed())
     await waitFor(() => expect(screen.getByTestId('onchain-shares')).toHaveTextContent('2.00'))
@@ -227,7 +241,7 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
   it('defers reads while hidden and refreshes on tab return', async () => {
     Object.defineProperty(document, 'hidden', { configurable: true, value: true })
     vi.mocked(vault.fetchPortfolio).mockResolvedValue(portfolio(4))
-    render(<OnChainPosition />)
+    render(<PositionHarness />)
     act(() => notifyTransactionConfirmed())
     expect(vault.fetchPortfolio).not.toHaveBeenCalled()
     act(() => {

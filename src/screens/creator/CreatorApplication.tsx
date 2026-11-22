@@ -237,17 +237,16 @@ function Stepper({
   })
 
   return (
-    <ol
-      style={{
-        listStyle: 'none',
-        margin: 0,
-        padding: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <ol
+        style={{
+          listStyle: 'none',
+          margin: 0,
+          padding: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+        }}
+      >
         {stepMeta.map((step, i) => {
           const done = i <= activeIndex
           const last = i === stepMeta.length - 1
@@ -303,7 +302,7 @@ function Stepper({
             </li>
           )
         })}
-      </div>
+      </ol>
       {activeStage === 'rejected' && rejectionReason && (
         <div
           style={{
@@ -337,7 +336,7 @@ function Stepper({
           </div>
         </div>
       )}
-    </ol>
+    </div>
   )
 }
 
