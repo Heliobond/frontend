@@ -5,10 +5,9 @@
  * no reporting at all.
  */
 import { Component, type ReactNode } from 'react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@/test/render'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
-const health = vi.hoisted(() => ({ isOnline: true, throwError: false }))
+const health = { isOnline: true, throwError: false }
 
 vi.mock('@/hooks/useHorizonHealth', () => ({
   useHorizonHealth: () => {
@@ -40,9 +39,10 @@ vi.mock('@/wallet/WalletProvider', () => ({
 
 vi.mock('@/lib/errorReporting', () => ({ reportError: vi.fn() }))
 
-import { TopBar } from '@/shell/TopBar'
-import GlobalError from './global-error'
-import { reportError } from '@/lib/errorReporting'
+const { render, screen, waitFor } = await import('@/test/render')
+const { TopBar } = await import('@/shell/TopBar')
+const { default: GlobalError } = await import('./global-error')
+const { reportError } = await import('@/lib/errorReporting')
 
 class MockIntersectionObserver {
   observe() {}

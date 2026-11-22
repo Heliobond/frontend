@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { StrictMode } from 'react'
 import { render } from '@/test/render'
 import { screen, fireEvent, waitFor, act } from '@testing-library/react'

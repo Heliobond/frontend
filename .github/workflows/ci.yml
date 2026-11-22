@@ -250,9 +250,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # Fails when src/lib/api.ts or src/wallet/vault.ts drop below 80% line
-      # coverage, or src/lib / src/wallet regress (#608). See vitest.config.mts.
-      - name: Vitest with coverage thresholds
+      # Global, directory, and critical-file floors are in scripts/test-coverage-config.mjs.
+      - name: Bun tests with coverage thresholds
         run: bun run test:coverage
 
       - name: Upload coverage report

@@ -4,7 +4,7 @@
 //   2. every summary result is FLAT — no nested object values, so consumers
 //      never drill more than one level past a selector call.
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { HB_DATA } from '../data'
 import { PROJECT_DETAILS } from '../data/projectDetails'
 import {

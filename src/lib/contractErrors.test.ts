@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 
 import ar from '../../messages/ar.json'
 import en from '../../messages/en.json'

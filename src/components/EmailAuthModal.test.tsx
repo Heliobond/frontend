@@ -1,5 +1,5 @@
 import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from '@/test/bun'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import en from '../../messages/en.json'

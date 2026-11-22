@@ -5,7 +5,7 @@
  * invariants that matter are a stable snapshot, notification on write, and
  * picking up changes made in another tab.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from '@/test/bun'
 import {
   getServerYieldRange,
   getYieldRange,

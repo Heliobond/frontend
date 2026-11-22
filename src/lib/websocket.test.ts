@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { nativeToScVal } from '@stellar/stellar-sdk'
 import { VaultEventStream } from './websocket'
 

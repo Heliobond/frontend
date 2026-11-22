@@ -63,7 +63,7 @@ For the full token table and rules, see [src/styles/tokens/README.md](src/styles
 
 ## Run
 
-Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 22+ (see `.nvmrc`).
+Prerequisites: [**bun**](https://bun.sh) **1.4.5** (the package manager / runner) and Node 22+ (see `.nvmrc`).
 
 ```bash
 bun install

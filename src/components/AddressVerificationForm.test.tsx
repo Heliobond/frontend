@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { render as rtlRender } from '@testing-library/react'
 import { render, screen, fireEvent } from '@/test/render'
 import userEvent from '@testing-library/user-event'

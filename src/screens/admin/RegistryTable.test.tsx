@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { render, screen, fireEvent, waitFor, within, act } from '@/test/render'
 import { RegistryTable } from './RegistryTable'
 import type { RegistryEntry } from '@/data/admin'
@@ -355,11 +355,10 @@ describe('RegistryTable keyboard focus management (#1020)', () => {
     fireEvent.click(updateBtn)
     fireEvent.change(screen.getByLabelText(/credit quality/i), { target: { value: '95' } })
 
-    fireEvent.click(screen.getByRole('button', { name: /save/i }))
-    await waitFor(() => {
-      const restoredUpdateBtn = screen.getAllByRole('button', { name: /update scores/i })[0]
-      expect(document.activeElement).toBe(restoredUpdateBtn)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /save/i }))
     })
+    expect(screen.getAllByRole('button', { name: /update scores/i })[0]).toHaveFocus()
   })
 
   describe('interleaved row saves (#1009)', () => {

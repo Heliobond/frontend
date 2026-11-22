@@ -1,18 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from '@/test/render'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { OnChainPosition } from './OnChainPosition'
-import { usePortfolio } from '../hooks/usePortfolio'
-import * as vault from '../wallet/vault'
-import * as toastModule from '../components/Toast'
-import { notifyTransactionConfirmed } from '../wallet/vaultEvents'
-import { vaultEventStream } from '../lib/websocket'
-
-import { getExplorerTxUrl } from '../config/network'
-import { TransactionPendingError } from '../wallet/transactions'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const mockToast = vi.fn()
-vi.mock('../components/Toast', async (importOriginal) => {
-  const actual = await importOriginal<typeof toastModule>()
+await vi.mockModule(import.meta.resolve('../components/Toast'), async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../components/Toast')>()
   return {
     ...actual,
     useToast: () => ({ toast: mockToast, dismiss: vi.fn() }),
@@ -30,7 +20,7 @@ vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
 
-vi.mock('../wallet/vault', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('../wallet/vault'), async (importOriginal) => {
   const actual = await importOriginal<typeof vault>()
   return {
     ...actual,
@@ -42,6 +32,15 @@ vi.mock('../wallet/vault', async (importOriginal) => {
     submitClaimYield: vi.fn(),
   }
 })
+
+const { act, fireEvent, render, screen, waitFor } = await import('@/test/render')
+const { OnChainPosition } = await import('./OnChainPosition')
+const { usePortfolio } = await import('../hooks/usePortfolio')
+const vault = await import('../wallet/vault')
+const { notifyTransactionConfirmed } = await import('../wallet/vaultEvents')
+const { vaultEventStream } = await import('../lib/websocket')
+const { getExplorerTxUrl } = await import('../config/network')
+const { TransactionPendingError } = await import('../wallet/transactions')
 
 const portfolio = (shares: number) => ({
   shares,
