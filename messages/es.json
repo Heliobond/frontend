@@ -23,6 +23,7 @@
     },
     "preferences": "Preferencias",
     "language": "Idioma",
+    "languageLoadFailed": "No se pudo cargar ese idioma. Inténtalo de nuevo.",
     "account": "Cuenta",
     "copyAddress": "Copiar dirección",
     "copied": "Copiado",

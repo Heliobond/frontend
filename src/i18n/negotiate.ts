@@ -32,14 +32,20 @@ export function parseAcceptLanguage(header: string): { lang: string; quality: nu
  *
  * Matching order per tag: exact match (`pt-br` never equals `pt`), then the
  * primary subtag (`pt-PT` → `pt`, `fr-CA` → `fr`). Returns the default locale
- * when nothing matches or the header is empty/`*`.
+ * when nothing matches or the header is empty. A wildcard selects a supported
+ * locale that has not been explicitly given zero weight.
  */
 export function negotiateLocale(acceptLanguage: string | null | undefined): Locale {
   if (!acceptLanguage) return DEFAULT_LOCALE
   const tags = parseAcceptLanguage(acceptLanguage)
+
   for (const { lang, quality } of tags) {
     if (quality <= 0) continue
-    if (lang === '*') return DEFAULT_LOCALE
+    if (lang === '*') {
+      const excluded = new Set(tags.filter((tag) => tag.quality === 0).map((tag) => tag.lang))
+      if (!excluded.has(DEFAULT_LOCALE)) return DEFAULT_LOCALE
+      return LOCALES.find((locale) => !excluded.has(locale)) ?? DEFAULT_LOCALE
+    }
     const exact = LOCALES.find((locale) => locale === lang)
     if (exact) return exact
     const primary = lang.split('-')[0]

@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TransactionsProvider, useTransactions } from './TransactionsProvider'
 import { TRANSACTIONS_KEY, recordTransaction } from './transactions'
+import { STELLAR_NETWORK } from '../config/network'
 import { subscribeTransactionConfirmed } from './vaultEvents'
 
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -22,6 +23,7 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(rpc('NOT_FOUND')))
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.useRealTimers()
   vi.unstubAllGlobals()
   sessionStorage.clear()
@@ -124,6 +126,35 @@ describe('TransactionsProvider', () => {
       }
     },
   )
+
+  it.each([
+    { network: STELLAR_NETWORK === 'testnet' ? 'public' : 'testnet' },
+    { rpcUrl: 'https://foreign.example.test' },
+  ])('schedules nothing for ineligible restored entries (%o)', async (scope) => {
+    vi.useFakeTimers()
+    sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([{ ...saved('foreign'), ...scope }]))
+    vi.mocked(fetch).mockResolvedValue(rpc('SUCCESS'))
+    const schedule = vi.spyOn(globalThis, 'setTimeout')
+    const { result } = renderHook(useTransactions, { wrapper })
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(schedule).not.toHaveBeenCalledWith(expect.any(Function), 10000)
+    expect(result.current.pendingCount).toBe(1)
+
+    await act(async () => {
+      recordTransaction(saved('local'))
+    })
+
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      expect.any(String),
+      expect.objectContaining({ body: expect.stringContaining('"hash":"local"') }),
+    )
+    expect(result.current.transactions.map(({ hash, status }) => [hash, status])).toEqual([
+      ['local', 'confirmed'],
+      ['foreign', 'pending'],
+    ])
+    expect(schedule).not.toHaveBeenCalledWith(expect.any(Function), 10000)
+  })
 
   it('pauses polling while hidden and polls immediately when visible', async () => {
     vi.useFakeTimers()
