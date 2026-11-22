@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { getProject } from '../../../lib/api'
 import { ogLocale } from '../../../i18n/config'
 import { absoluteTitle } from '../../../lib/routeMetadata'
+import { formatScore } from '../../../lib/score'
 import { ProjectDetailClient } from './ProjectDetailClient'
 
 type Props = {
@@ -54,8 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     name: project.name,
     type: project.type,
     location: project.location,
-    credit: project.credit,
-    green: project.green,
+    credit: formatScore(project.credit),
+    green: formatScore(project.green),
     funded: project.funded,
   })
 

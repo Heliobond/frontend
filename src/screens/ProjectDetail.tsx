@@ -15,6 +15,8 @@ import {
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
 import { formatDecimal, formatMoney } from '../lib/format'
+import { formatScore } from '../lib/score'
+import { getEffectiveYield } from '../lib/yieldAlerts'
 import { parseErrorCode } from '../lib/errorMessages'
 import { translateContractError } from '../lib/contractErrors'
 import { getExplorerUrl } from '../config/network'
@@ -183,7 +185,7 @@ export const ProjectDetail = memo(function ProjectDetail({
             <YieldAlertButton
               bondId={project.id}
               bondName={project.name}
-              currentYield={(project.credit + project.green) / 2}
+              currentYield={getEffectiveYield(project)}
               size="md"
             />
             <WatchlistButton bondId={project.id} bondName={project.name} size="md" />
@@ -553,8 +555,8 @@ export const ProjectDetail = memo(function ProjectDetail({
           >
             {t.rich('contributionBody', {
               b: (c) => <b style={{ color: 'var(--ink)' }}>{c}</b>,
-              credit: project.credit,
-              green: project.green,
+              credit: formatScore(project.credit),
+              green: formatScore(project.green),
             })}
           </p>
           <details style={{ borderTop: '1px solid var(--ink-12)', paddingTop: 14 }}>
@@ -702,7 +704,7 @@ const ScoreColumn = memo(function ScoreColumn({
   onChainNote,
   verifiedAgo,
 }: {
-  value: number
+  value?: number
   label: string
   history: number[]
   sparkLabel: string
@@ -728,7 +730,7 @@ const ScoreColumn = memo(function ScoreColumn({
       <ScoreGauge
         value={value}
         label={label}
-        ariaValueLabel={t('scoreGaugeAria', { label, value, max: 100 })}
+        ariaValueLabel={t('scoreGaugeAria', { label, value: formatScore(value), max: 100 })}
         size={140}
         stroke={11}
       />

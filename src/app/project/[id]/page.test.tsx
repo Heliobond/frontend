@@ -160,6 +160,38 @@ describe('ProjectDetailPage & generateMetadata', () => {
     expect(meta.description).toContain('Provence, France')
   })
 
+  it('falls back to an explicit label for an unknown score in metadata', async () => {
+    mockGetProject.mockResolvedValue({
+      project: {
+        id: 1,
+        name: 'Unscored Project',
+        location: 'Provence, France',
+        type: 'Solar',
+        credit: undefined,
+        green: 80,
+        funded: '$500,000',
+        fundedAmount: 500000,
+        fundingGoal: 1000000,
+        priceHistory: [],
+      },
+      detail: {
+        name: 'Unscored Project',
+        location: 'Provence, France',
+        heroGradient: '',
+        creator: { name: 'EcoCorp', verified: true, since: '2025' },
+        story: 'Story',
+        scoreHistory: { credit: [], green: [] },
+        fundingTimeline: [],
+        fundedAmount: 500000,
+        fundingGoal: 1000000,
+        priceHistory: [],
+      },
+    })
+    const meta = await generateMetadata({ params: Promise.resolve({ id: '1' }) })
+    expect(meta.description).toContain('Unavailable')
+    expect(meta.description).toContain('80')
+  })
+
   it('noindexes a project that does not exist', async () => {
     mockGetProject.mockResolvedValue(null)
     const meta = await generateMetadata({ params: Promise.resolve({ id: '999' }) })

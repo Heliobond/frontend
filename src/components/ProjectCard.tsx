@@ -17,9 +17,9 @@ export interface ProjectCardProps {
   location: string
   /** Optional URL or path to the project background hero image. */
   image?: string
-  /** Solar credit score rating (0-100) displayed in the credit ScoreGauge. */
+  /** Solar credit score rating (0-100); `undefined` shows as unavailable. */
   credit?: number
-  /** Environmental/green rating (0-100) displayed in the green ScoreGauge. */
+  /** Environmental/green rating (0-100); `undefined` shows as unavailable. */
   green?: number
   /** Human-readable string representing total funded amount (e.g. "$1.2M"). */
   funded?: string
@@ -45,8 +45,8 @@ export function ProjectCard({
   name,
   location,
   image,
-  credit = 0,
-  green = 0,
+  credit,
+  green,
   funded,
   fundedLabel = '',
   verifiedAgo,

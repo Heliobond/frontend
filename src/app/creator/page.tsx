@@ -1,12 +1,18 @@
 'use client'
 
-import { Suspense, useCallback } from 'react'
+import { Suspense, useCallback, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Tag } from '@/components'
 import { CreatorApplication } from '@/screens/creator/CreatorApplication'
 import { ProjectBuilder } from '@/screens/creator/ProjectBuilder'
 import { CreatorDashboard } from '@/screens/creator/CreatorDashboard'
+import {
+  INITIAL_APPLICATION_DRAFT,
+  INITIAL_PROJECT_DRAFT,
+  type ApplicationDraft,
+  type ProjectDraft,
+} from '@/data/creator'
 
 type CreatorTab = 'apply' | 'build' | 'dashboard'
 
@@ -28,6 +34,13 @@ function CreatorPageInner() {
   const searchParams = useSearchParams()
 
   const tab = toTab(searchParams.get('tab'))
+
+  // Drafts belong to the workspace, not to the tab panel that happens to be
+  // mounted. The application and the project keep separate state so work in
+  // one form can never overwrite the other.
+  const [projectDraft, setProjectDraft] = useState<ProjectDraft>(INITIAL_PROJECT_DRAFT)
+  const [applicationDraft, setApplicationDraft] =
+    useState<ApplicationDraft>(INITIAL_APPLICATION_DRAFT)
 
   /**
    * Write the new tab into ?tab= using replace so tab switches don't push
@@ -99,12 +112,20 @@ function CreatorPageInner() {
       {tab === 'apply' && (
         <CreatorApplication
           stage="submitted"
+          draft={applicationDraft}
+          onDraftChange={setApplicationDraft}
           onSubmit={() => {
             // Self-contained demo handler — a real build would POST to the registry API.
           }}
         />
       )}
-      {tab === 'build' && <ProjectBuilder onApply={() => setTab('apply')} />}
+      {tab === 'build' && (
+        <ProjectBuilder
+          draft={projectDraft}
+          onDraftChange={setProjectDraft}
+          onApply={() => setTab('apply')}
+        />
+      )}
       {tab === 'dashboard' && <CreatorDashboard />}
     </main>
   )
