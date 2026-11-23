@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { render, screen, waitFor } from '@/test/render'
 import { MAX_CONCURRENT_PROJECT_LOOKUPS, Watchlist } from './Watchlist'
 import { WATCHLIST_STORAGE_KEY } from '@/lib/watchlist'

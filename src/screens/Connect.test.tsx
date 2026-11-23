@@ -1,6 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen } from '@/test/render'
-import { Connect } from './Connect'
+import { describe, expect, it, vi, beforeEach } from '@/test/bun'
 
 const mockWallet = {
   connectionError: null as string | null,
@@ -12,6 +10,9 @@ const mockWallet = {
 vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
+
+const { render, screen } = await import('@/test/render')
+const { Connect } = await import('./Connect')
 
 describe('Connect screen - Wallet syncing indicator (#473)', () => {
   beforeEach(() => {

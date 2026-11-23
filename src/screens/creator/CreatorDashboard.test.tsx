@@ -1,6 +1,6 @@
 import { render, screen } from '@/test/render'
 import { CREATOR_DASHBOARD } from '@/data/creator'
-import { expect, it } from 'vitest'
+import { expect, it } from '@/test/bun'
 import { CreatorDashboard } from './CreatorDashboard'
 
 it('uses the same localized funding phrase for the caption and progress value', () => {

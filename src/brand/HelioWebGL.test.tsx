@@ -1,12 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, act } from '@/test/render'
-import {
-  HelioWebGL,
-  clearWebGLProbeCache,
-  detectWebGL,
-  isConstrainedCanvas,
-  shouldAnimateHelio,
-} from './HelioWebGL'
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/test/bun'
 
 /**
  * The WebGL canvas is loaded through next/dynamic and pulls in three/R3F, which
@@ -14,9 +6,9 @@ import {
  * can assert on the render-loop flags (notably `animate`) the component
  * computes. `vi.hoisted` keeps the probe alive above the hoisted vi.mock call.
  */
-const canvasProbe = vi.hoisted(() => ({
+const canvasProbe = {
   props: null as Record<string, unknown> | null,
-}))
+}
 
 vi.mock('next/dynamic', () => ({
   default: () => (props: Record<string, unknown>) => {
@@ -24,6 +16,10 @@ vi.mock('next/dynamic', () => ({
     return null
   },
 }))
+
+const { render, act } = await import('@/test/render')
+const { HelioWebGL, clearWebGLProbeCache, detectWebGL, isConstrainedCanvas, shouldAnimateHelio } =
+  await import('./HelioWebGL')
 
 describe('HelioWebGL tab visibility, offscreen & motion behavior', () => {
   let visibilityState = 'visible'

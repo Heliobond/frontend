@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from '@/test/bun'
 import { render, screen, fireEvent } from '@/test/render'
 import { WatchlistButton } from './WatchlistButton'
 import { WATCHLIST_STORAGE_KEY } from '@/lib/watchlist'

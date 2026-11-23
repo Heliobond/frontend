@@ -4,8 +4,7 @@
  * "network mismatch", so unrelated failures were shown as Stellar outages. It
  * now reads real connectivity (Horizon health + `navigator.onLine`).
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@/test/render'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import type { ReactNode } from 'react'
 
 let horizonState = { isOnline: true }
@@ -22,8 +21,9 @@ vi.mock('next/link', () => ({
   ),
 }))
 
-import RouteError from './error'
-import { reportError } from '@/lib/errorReporting'
+const { render, screen } = await import('@/test/render')
+const { default: RouteError } = await import('./error')
+const { reportError } = await import('@/lib/errorReporting')
 
 function setNavigatorOnline(online: boolean) {
   Object.defineProperty(window.navigator, 'onLine', { value: online, configurable: true })

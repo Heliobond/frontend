@@ -22,7 +22,8 @@ import { useWallet } from './WalletProvider'
  *
  *  2. **It preserves intent.** Where the visitor was going is carried to
  *     Connect as `?next=`, so finishing the connection returns them to the page
- *     they asked for instead of the default landing spot.
+ *     they asked for instead of the default landing spot. That includes the
+ *     `#fragment`, so a link to a section of a gated page returns to it.
  *
  * `router.replace` — not `push` — so Back does not bounce the user between the
  * gated route and Connect.
@@ -54,7 +55,12 @@ export function RequireWallet({
 
   useEffect(() => {
     if (!shouldRedirect) return
-    router.replace(`${redirectTo}?next=${encodeURIComponent(intent)}`)
+    // The fragment never reaches the server or `useSearchParams`, so it is read
+    // from the browser here (an effect only runs client-side). Without it a link
+    // to a section of a gated page would land back at the top after connecting.
+    // Connect's `safeNext` still validates the whole target.
+    const fragment = window.location.hash
+    router.replace(`${redirectTo}?next=${encodeURIComponent(`${intent}${fragment}`)}`)
   }, [shouldRedirect, router, redirectTo, intent])
 
   // Hold the gated content while we do not yet know, and while the redirect is

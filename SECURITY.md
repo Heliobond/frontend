@@ -85,7 +85,7 @@ reviewed as code:
   `bun.lock` is the only lockfile that counts; do not add `pnpm-lock.yaml` or
   `yarn.lock` (the stale `package-lock.json` is being removed in #918).
 - **Scripts and hooks:** changes to `package.json` scripts, `.husky/*`,
-  `.github/workflows/*`, `scripts/*` and tool configs (ESLint, Next, Vitest,
+  `.github/workflows/*`, `scripts/*` and tool configs (ESLint, Next, Bun,
   Playwright, PostCSS, Tailwind, `bunfig.toml`, `.npmrc`) need a maintainer's
   review. The `supply-chain review gate` check blocks such a PR until a
   maintainer applies the `supply-chain-reviewed` label, and prints the exact

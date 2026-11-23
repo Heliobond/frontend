@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import en from '../../messages/en.json'
 import { PRIVATE_ROUTES, PUBLIC_ROUTES, ROUTES, TITLE_TEMPLATE } from './routeMetadata'
 import { routeMetadata } from './routeMetadata.server'
@@ -41,7 +41,7 @@ describe('routeMetadata() server helper (#657)', () => {
       const metadata = await routeMetadata(path)
       const title = (metadata.title as { default: string }).default
       expect(metadata.openGraph?.title).toBe(title)
-      expect(metadata.openGraph?.description).toBe(metadata.description)
+      expect<string | null | undefined>(metadata.openGraph?.description).toBe(metadata.description)
     }
   })
 

@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import {
   Account,
   Keypair,
@@ -9,22 +9,23 @@ import {
   scValToNative,
   xdr,
 } from '@stellar/stellar-sdk'
-import { allowHttpFor } from '../config/network'
 
 // Soroban call-shape tests for src/wallet/vault.ts (#608). The real SDK builds
 // and encodes every transaction; only the network edges (rpc.Server,
 // Horizon.Server, assembleTransaction) are replaced, so these assertions see
 // exactly the InvokeContract arguments the app would submit.
 
-const rpcMock = vi.hoisted(() => ({
+const rpcMock = {
   simulateTransaction: vi.fn(),
   sendTransaction: vi.fn(),
   getTransaction: vi.fn(),
   loadAccount: vi.fn(),
   serverOptions: [] as unknown[],
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
   class Server {
     constructor(_url: string, opts?: unknown) {
@@ -49,6 +50,8 @@ vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
     Horizon: { ...actual.Horizon, Server: HorizonServer },
   }
 })
+
+const { allowHttpFor } = await import('../config/network')
 
 const CONTRACT_ID = StrKey.encodeContract(Buffer.alloc(32, 7))
 const USER = Keypair.random().publicKey()

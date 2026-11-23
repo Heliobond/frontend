@@ -5,7 +5,7 @@
  * asked for the API key (it goes through the same-origin proxy instead), and the
  * server must call the backend with the key attached.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 type Client = typeof import('./apiClient')
 
@@ -34,8 +34,8 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function headersOf(call: unknown[]): Record<string, string> {
-  return ((call[1] as RequestInit | undefined)?.headers ?? {}) as Record<string, string>
+function headersOf(call: Parameters<typeof fetch>): Headers {
+  return new Headers(call[1]?.headers)
 }
 
 beforeEach(() => {
@@ -64,8 +64,8 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     const headers = headersOf(vi.mocked(fetch).mock.calls[0])
-    expect(headers['X-API-Key']).toBeUndefined()
-    expect(JSON.stringify(headers)).not.toContain(KEY)
+    expect(headers.has('X-API-Key')).toBe(false)
+    expect(JSON.stringify([...headers])).not.toContain(KEY)
   })
 
   it('calls the backend directly on the server and sends the key', async () => {
@@ -73,7 +73,7 @@ describe('apiClient URL building', () => {
     vi.mocked(fetch).mockResolvedValue(jsonResponse({ projects: [], total: 0, filtered_total: 0 }))
     await client.fetchBackendProjects()
     expect(fetch).toHaveBeenCalledWith(`${API}/v1/projects?cursor=0&limit=50`, expect.anything())
-    expect(headersOf(vi.mocked(fetch).mock.calls[0])['X-API-Key']).toBe(KEY)
+    expect(headersOf(vi.mocked(fetch).mock.calls[0]).get('X-API-Key')).toBe(KEY)
   })
 
   it('strips a trailing slash from the configured origin', async () => {
@@ -200,19 +200,110 @@ describe('typed endpoint helpers', () => {
   })
 })
 
-describe('historyToPricePoints', () => {
-  it('renders entries as dated, ascending price and yield points', async () => {
+/**
+ * Regression tests for issue #1019: apiGet must correctly forward caller headers
+ * regardless of which HeadersInit variant the caller uses.
+ *
+ * Before the fix, spreading a `Headers` instance produced `{}` (no enumerable
+ * own properties) and spreading a tuple list produced numeric keys `{ 0: […] }`.
+ */
+describe('apiGet header normalisation (#1019)', () => {
+  it('forwards a plain-object header to the fetch call', async () => {
     const client = await loadClient()
-    const points = client.historyToPricePoints([
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    await client.apiGet('/test', { headers: { 'Accept-Language': 'fr' } }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('fr')
+  })
+
+  it('forwards a Headers-instance header to the fetch call', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const h = new Headers({ 'Accept-Language': 'de' })
+    await client.apiGet('/test', { headers: h }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('de')
+  })
+
+  it('forwards a tuple-list header to the fetch call', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['Accept-Language', 'ja']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept-language')).toBe('ja')
+  })
+
+  it('caller override replaces the default Accept regardless of casing', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    // Upper-case 'Accept' should shadow the default 'accept: application/json'.
+    await client.apiGet('/test', { headers: { Accept: 'text/plain' } }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('text/plain')
+  })
+
+  it('caller override via Headers instance replaces the default Accept', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    await client.apiGet('/test', { headers: new Headers({ accept: 'text/csv' }) }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('text/csv')
+  })
+
+  it('caller override via tuple list replaces the default Accept', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['accept', 'application/xml']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sent = new Headers(init?.headers)
+    expect(sent.get('accept')).toBe('application/xml')
+  })
+
+  it('no numeric keys appear in the sent headers when tuples are passed', async () => {
+    const client = await loadClient()
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({}))
+    const tuples: [string, string][] = [['X-Custom', 'val']]
+    await client.apiGet('/test', { headers: tuples }).catch(() => {})
+    const init = vi.mocked(fetch).mock.calls[0][1] as RequestInit
+    const sentKeys = Object.keys(init?.headers ?? {})
+    expect(sentKeys.some((k) => /^\d+$/.test(k))).toBe(false)
+  })
+})
+
+describe('historyToScorePoints', () => {
+  it('returns dated, ascending score observations without inventing price or yield', async () => {
+    const client = await loadClient()
+    const points = client.historyToScorePoints([
       { timestamp: Date.parse('2026-02-01T00:00:00Z'), credit_quality: 50, green_impact: 60 },
       { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
     ])
-    expect(points.map((p) => p.date)).toEqual(['2026-01-01', '2026-02-01'])
-    expect(points[1].price).toBeGreaterThan(points[0].price)
-    expect(points[1].yield).toBeGreaterThan(points[0].yield ?? 0)
+    expect(points).toEqual([
+      { date: '2026-01-01', credit: 40, green: 40 },
+      { date: '2026-02-01', credit: 50, green: 60 },
+    ])
+    for (const point of points) {
+      expect(point).not.toHaveProperty('price')
+      expect(point).not.toHaveProperty('yield')
+    }
   })
 
   it('returns an empty list for no entries', async () => {
-    expect((await loadClient()).historyToPricePoints([])).toEqual([])
+    expect((await loadClient()).historyToScorePoints([])).toEqual([])
+  })
+
+  it('keeps the legacy alias score-only as well', async () => {
+    const client = await loadClient()
+    expect(
+      client.historyToPricePoints([
+        { timestamp: Date.parse('2026-01-01T00:00:00Z'), credit_quality: 40, green_impact: 40 },
+      ]),
+    ).toEqual([{ date: '2026-01-01', credit: 40, green: 40 }])
   })
 })
