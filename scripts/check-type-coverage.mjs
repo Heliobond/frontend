@@ -3,24 +3,19 @@
 /**
  * Type coverage checker, enforces zero `any` usage in source files.
  *
- * Scans all .ts and .tsx files under src/ for the `any` type keyword.
- * Skips comments, strings, and the word "any" in prose (e.g. "before any money
- * moves"). Only matches `any` when used as a TypeScript type annotation.
+ * Scans all .ts and .tsx files under src/ for explicit `any` type annotations.
+ * Detection uses the TypeScript parser and looks for AnyKeyword syntax nodes,
+ * so comments, string contents and prose are never mistaken for a type — and a
+ * quoted property such as `"label": any` is caught instead of being skipped.
  *
  * Exits 1 if any `any` types are found.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
+import ts from 'typescript'
 
 const SRC_DIR = path.join(process.cwd(), 'src')
-
-/** Match `any` used as a type (after `:`, `as`, or generic constraints). */
-const TYPE_ANY_RE = /(?:[:<>,\s])\bany\b(?:[^a-zA-Z0-9_$]|$)/g
-
-/** Lines that are pure comments or string content, skip them. */
-const COMMENT_LINE_RE = /^\s*(?:\/\/.*|\/\*.*\*\/|\*|#)/
-const STRING_LINE_RE = /^\s*["'`]/
 
 function walkSync(dir, fileList = []) {
   const entries = fs.readdirSync(dir, { withFileTypes: true })
@@ -40,37 +35,31 @@ function walkSync(dir, fileList = []) {
 function checkFile(filePath) {
   const rel = path.relative(process.cwd(), filePath)
   const content = fs.readFileSync(filePath, 'utf-8')
+  const scriptKind = filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    scriptKind,
+  )
   const lines = content.split('\n')
-  const hits = []
+  const hitsByLine = new Set()
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (COMMENT_LINE_RE.test(line)) continue
-    if (STRING_LINE_RE.test(line)) continue
-
-    // Skip lines that are only i18n message content or JSX text content
-    if (line.includes('"any ') || line.includes("'any ") || line.includes('`any ')) continue
-    // Skip JSX text content (text between > and < or between } and <)
-    if (/[>}]\s*[^<{]*\bany\b[^<{]*</.test(line)) continue
-    // Skip prose like "or any part" or "any other"
-    if (
-      /\b(or|and|of|in|for|with|by|to|from)\s+any\s+(other|part|time|way|file|string|number)\b/i.test(
-        line,
-      )
-    )
-      continue
-
-    const matches = line.matchAll(TYPE_ANY_RE)
-    for (const m of matches) {
-      // Verify it's not inside a comment mid-line
-      const before = line.slice(0, m.index)
-      if (before.includes('//')) continue
-      hits.push({ line: i + 1, text: line.trim() })
-      break // one hit per line is enough
+  function visit(node) {
+    if (node.kind === ts.SyntaxKind.AnyKeyword) {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+      // One hit per line is enough for the report.
+      hitsByLine.add(line)
+      return
     }
+    ts.forEachChild(node, visit)
   }
+  visit(sourceFile)
 
-  return hits.map((h) => `${rel}:${h.line}: ${h.text}`)
+  return [...hitsByLine]
+    .sort((a, b) => a - b)
+    .map((line) => `${rel}:${line + 1}: ${lines[line].trim()}`)
 }
 
 try {

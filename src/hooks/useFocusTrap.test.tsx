@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useRef } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from '@/test/bun'
 import { useFocusTrap } from './useFocusTrap'
 
 function FocusTrapHarness({ open, onEscape }: { open: boolean; onEscape: () => void }) {

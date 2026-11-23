@@ -30,7 +30,6 @@ export const ROOT_SCRIPT_ALLOWLIST = new Set([
   'next.config.ts',
   'playwright.chain.config.ts',
   'playwright.config.ts',
-  'vitest.setup.ts',
 ])
 
 const LOCKFILES = new Set(['bun.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'])

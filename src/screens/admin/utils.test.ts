@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { clampScore, parseFundedNum, validateScores, isValidCreatorAddress } from './utils'
 
 describe('admin utils', () => {

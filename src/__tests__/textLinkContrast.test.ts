@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 
 const root = resolve(process.cwd())
 const colorsPath = resolve(root, 'src/styles/tokens/colors.css')

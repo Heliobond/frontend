@@ -29,6 +29,8 @@ class HorizonHealthPoller {
   private timeoutId: ReturnType<typeof setTimeout> | null = null
   private controller: AbortController | null = null
   private inFlightPromise: Promise<boolean> | null = null
+  /** Bumped whenever the active probe is canceled so its result can be ignored. */
+  private generation = 0
   private running = false
   private snapshot: Snapshot = { isOnline: this.isOnline }
 
@@ -91,7 +93,8 @@ class HorizonHealthPoller {
     }
   }
 
-  private abortInFlight() {
+  /** Abort the active network request without invalidating its generation. */
+  private cancelActiveProbe() {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId)
       this.timeoutId = null
@@ -100,6 +103,17 @@ class HorizonHealthPoller {
       this.controller.abort()
       this.controller = null
     }
+  }
+
+  /**
+   * Cancel the active probe and invalidate its result. `inFlightPromise` is
+   * cleared so a visibility/online handler can start a fresh request instead
+   * of awaiting the aborted one.
+   */
+  private abortInFlight() {
+    this.generation++
+    this.cancelActiveProbe()
+    this.inFlightPromise = null
   }
 
   private updateOnline(online: boolean) {
@@ -154,24 +168,31 @@ class HorizonHealthPoller {
     if (this.inFlightPromise) {
       return this.inFlightPromise
     }
-    this.inFlightPromise = this.executeCheck().finally(() => {
-      this.inFlightPromise = null
+    const generation = this.generation
+    const promise = this.executeCheck(generation).finally(() => {
+      // A canceled probe must not clear the promise of its replacement.
+      if (this.generation === generation && this.inFlightPromise === promise) {
+        this.inFlightPromise = null
+      }
     })
-    return this.inFlightPromise
+    this.inFlightPromise = promise
+    return promise
   }
 
-  private async executeCheck(): Promise<boolean> {
+  private async executeCheck(generation: number): Promise<boolean> {
     if (!this.running) return this.isOnline
     if (typeof document !== 'undefined' && document.hidden) {
       return this.isOnline
     }
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      this.handleOffline()
-      return false
-    }
 
     this.clearTimer()
-    this.abortInFlight()
+    this.cancelActiveProbe()
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.consecutiveSuccesses = 0
+      this.updateOnline(false)
+      return false
+    }
 
     const controller = new AbortController()
     this.controller = controller
@@ -200,6 +221,9 @@ class HorizonHealthPoller {
       }
     }
 
+    // A canceled probe (e.g. the tab was hidden and shown again) must never
+    // publish its result, even if the browser reports its fetch as failed.
+    if (generation !== this.generation) return this.isOnline
     if (!this.running) return this.isOnline
     if (typeof document !== 'undefined' && document.hidden) {
       return this.isOnline

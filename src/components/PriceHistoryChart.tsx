@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Sparkline } from './Sparkline'
-import { formatDecimal } from '../lib/format'
+import { formatDecimal, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
 import { selectPriceHistory } from '../state/selectors'
 import type { PricePoint } from '../data/projectDetails'
 
@@ -99,12 +99,12 @@ export function PriceHistoryChart({ projectId, priceHistory }: PriceHistoryChart
           height={40}
         />
         <span style={seriesValueStyle}>
-          {formatDecimal(last.price, 2)}
+          {formatDecimal(last.price, PRICE_DECIMALS)}
           {t('priceUnit')}
         </span>
         {history.length > 1 && (
           <span style={captionStyle}>
-            {delta(first.price, last.price)} {t('since', { date: first.date })}
+            {formatSignedChange(first.price, last.price)} {t('since', { date: first.date })}
           </span>
         )}
       </div>
@@ -120,7 +120,7 @@ export function PriceHistoryChart({ projectId, priceHistory }: PriceHistoryChart
         <span style={seriesValueStyle}>{formatDecimal(last.yield, 2)}%</span>
         {history.length > 1 && (
           <span style={captionStyle}>
-            {delta(first.yield, last.yield)}pp {t('since', { date: first.date })}
+            {formatSignedChange(first.yield, last.yield)}pp {t('since', { date: first.date })}
           </span>
         )}
       </div>

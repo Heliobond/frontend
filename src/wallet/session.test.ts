@@ -5,7 +5,7 @@
  * are: a stable snapshot for `useSyncExternalStore`, notification on every
  * write, and tolerance for storage being unavailable.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from '@/test/bun'
 import {
   ADDRESS_KEY,
   DEMO_WALLET_ID,

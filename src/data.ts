@@ -24,10 +24,13 @@ export interface Project {
   name: string
   location: string
   type: ProjectType
-  /** Credit Quality, oracle-verified, 0–100. */
-  credit: number
-  /** Green Impact, oracle-verified, 0–100. */
-  green: number
+  /**
+   * Credit Quality, oracle-verified, 0–100. `undefined` until the oracle has
+   * assigned a score — an unscored project must never read as an 80.
+   */
+  credit?: number
+  /** Green Impact, oracle-verified, 0–100. `undefined` until the oracle scores it. */
+  green?: number
   /** Last confirmed oracle score update, in milliseconds since the Unix epoch. */
   lastVerifiedAt?: number
   /** Capital deployed to this project from the pool (display string). */
@@ -238,17 +241,24 @@ function getRiskIndicator(projects: Project[]): {
     return { riskScore: 0, riskLevel: 'conservative' }
   }
 
+  // Unscored projects are excluded from credit-weighted maths: an unknown
+  // score is neither high-grade nor low-grade, and must not count as zero.
+  const scoredProjects = projects.filter(
+    (p): p is Project & { credit: number } => p.credit !== undefined && p.fundedAmount > 0,
+  )
+  const scoredFunded = scoredProjects.reduce((sum, p) => sum + p.fundedAmount, 0)
   const weightedCredit =
-    projects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / totalFunded
+    scoredFunded > 0
+      ? scoredProjects.reduce((sum, p) => sum + p.credit * p.fundedAmount, 0) / scoredFunded
+      : 0
   const riskScore = Math.round((100 - weightedCredit) * 10) / 10
 
   // Determine the mix of holdings by rating class.
   let highGradeShare = 0 // credit >= 80
   let lowGradeShare = 0 // credit < 70
 
-  for (const p of projects) {
-    if (p.fundedAmount <= 0) continue
-    const share = p.fundedAmount / totalFunded
+  for (const p of scoredProjects) {
+    const share = p.fundedAmount / scoredFunded
     if (p.credit >= 80) highGradeShare += share
     else if (p.credit < 70) lowGradeShare += share
   }
