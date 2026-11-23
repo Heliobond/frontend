@@ -200,6 +200,11 @@ export function assertContractCallMatchesSpec(
   ) {
     specMap = registryFunctions
     contractName = 'ProjectRegistry'
+  } else if (targetSpec === 'auto') {
+    // In automatic mode, reject unrecognized contract destinations
+    throw new Error(
+      `Contract destination mismatch: expected ${vaultId} (vault) or ${registryId} (registry), received ${call.contractId}`,
+    )
   } else {
     specMap = vaultFunctions
     contractName = 'InvestmentVault'
@@ -407,6 +412,31 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       const call = mockState.recordedCalls.find((c) => c.method === 'claim_yield')
       expect(call).toBeDefined()
       assertContractCallMatchesSpec(call!, 'investment_vault', VAULT_ID, REGISTRY_ID)
+    })
+
+    it('rejects unknown contract destinations in automatic mode (Issue #1056)', () => {
+      const THIRD_PARTY_ID = sdk.StrKey.encodeContract(Buffer.alloc(32, 99))
+      const fakeCall: RecordedContractCall = {
+        contractId: THIRD_PARTY_ID,
+        method: 'deposit',
+        args: [],
+      }
+
+      expect(() => {
+        assertContractCallMatchesSpec(fakeCall, 'auto', VAULT_ID, REGISTRY_ID)
+      }).toThrow(/Contract destination mismatch/)
+    })
+
+    it('accepts valid vault method sent to the designated vault (Issue #1056)', async () => {
+      const { submitDeposit } = await import('./vault')
+      await submitDeposit(100, TEST_ACCOUNT, mockSign).catch(() => {})
+
+      const call = mockState.recordedCalls.find((c) => c.method === 'deposit')
+      expect(call).toBeDefined()
+      expect(call!.contractId).toBe(VAULT_ID)
+      expect(() => {
+        assertContractCallMatchesSpec(call!, 'auto', VAULT_ID, REGISTRY_ID)
+      }).not.toThrow()
     })
   })
 

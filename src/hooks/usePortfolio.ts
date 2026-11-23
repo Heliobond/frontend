@@ -11,7 +11,7 @@ import {
 } from '../wallet/vault'
 import { selectYou, selectActivity, selectPoolSummary, type YouSummary } from '../state/selectors'
 import { type Activity } from '../data'
-import { apiFetch } from '../lib/api'
+import { fetchBackendPortfolio, type BackendPortfolio } from '../lib/apiClient'
 
 export interface VaultLiquidity {
   liquid: number
@@ -79,9 +79,22 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
   const loadActivity = useCallback(async (addr: string, isCancelled: () => boolean) => {
     if (!process.env.NEXT_PUBLIC_API_URL) return
     try {
-      const remoteActivity = await apiFetch<Activity[]>(`/portfolio/${addr}/activity`)
-      if (!isCancelled() && Array.isArray(remoteActivity)) {
-        setActivityState({ address: addr, feed: remoteActivity })
+      const portfolio = await fetchBackendPortfolio(addr)
+      if (!isCancelled() && portfolio.events) {
+        // Map backend events to Activity format
+        const activities: Activity[] = portfolio.events.map((event) => ({
+          kind:
+            event.type === 'deposit'
+              ? 'Deposit'
+              : event.type === 'withdraw'
+                ? 'Withdrawal'
+                : 'Score update',
+          amount: event.amount.toString(),
+          shares: event.shares.toString(),
+          when: new Date(event.timestamp * 1000).toISOString(),
+          hash: event.txHash,
+        }))
+        setActivityState({ address: addr, feed: activities })
       }
     } catch {
       // Silent fallback to standard demo activity when backend indexer endpoint is unavailable

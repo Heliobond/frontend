@@ -19,7 +19,9 @@ function loadEnv(file: string): Record<string, string> {
 }
 
 const chainEnv = loadEnv(ENV_FILE)
-Object.assign(process.env, { ...chainEnv, ...process.env })
+// Resolve overrides once: existing process.env wins, then pass the effective config to both places
+const effectiveEnv = { ...chainEnv, ...process.env }
+Object.assign(process.env, effectiveEnv)
 
 const PORT = Number(process.env.E2E_CHAIN_PORT ?? 3100)
 
@@ -46,6 +48,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 10 * 60_000,
-    env: chainEnv,
+    env: effectiveEnv,
   },
 })
