@@ -114,6 +114,7 @@ export function OnChainPosition({
             <StatBlock
               label={t('onchainClaimable')}
               value={`$${formatDecimal(availableYield, 2)}`}
+              valueTestId="onchain-claimable-yield-value"
               size="md"
             />
           </div>

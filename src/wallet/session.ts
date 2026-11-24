@@ -55,30 +55,32 @@ function parseNetwork(raw: string | null): AppNetwork | null {
   return raw === 'PUBLIC' || raw === 'TESTNET' ? raw : null
 }
 
-/**
- * Reads storage. Always returns a fresh object, so a caller can tell "read, and
- * there is no session" apart from "not read yet".
- */
-export function readSession(): StoredSession {
+function readStorage(): StoredSession | null {
   const store = storage()
-  if (!store) return memorySession ? { ...memorySession } : { ...UNREAD_SESSION }
+  if (!store) return null
   try {
-    const stored = {
+    return {
       address: store.getItem(ADDRESS_KEY) ?? '',
       walletId: store.getItem(WALLET_KEY),
       network: parseNetwork(store.getItem(NETWORK_KEY)),
     }
-    return !stored.address && memorySession ? { ...memorySession } : stored
   } catch {
-    return memorySession ? { ...memorySession } : { ...UNREAD_SESSION }
+    return null
   }
 }
 
-/**
- * Session held in memory for this page visit when storage cannot be used, so
- * connecting still works. It is lost on reload, which is intended.
- */
-let memorySession: StoredSession | null = null
+// Failed local writes or removals take precedence over stale or partial storage for this visit.
+let memorySession: Pick<StoredSession, 'address' | 'walletId'> | null = null
+
+/** Returns a fresh snapshot, even when storage is unavailable. */
+export function readSession(): StoredSession {
+  const stored = readStorage()
+  return {
+    ...(stored ?? UNREAD_SESSION),
+    ...memorySession,
+    network: stored ? stored.network : snapshot.network,
+  }
+}
 
 /** No session on the server: the first client render must match the server HTML. */
 export function getServerSession(): StoredSession {
@@ -133,33 +135,40 @@ function publish(): void {
  * wallet actions that cannot be signed for.
  */
 export function saveSession(address: string, walletId: string): void {
+  const requested = { address, walletId }
   const store = storage()
-  let persisted = false
-  if (store) {
+  const previous = readStorage()
+  memorySession = requested
+  if (store && previous) {
     try {
       store.setItem(ADDRESS_KEY, address)
-      store.setItem(WALLET_KEY, walletId)
-      persisted = true
+      try {
+        store.setItem(WALLET_KEY, walletId)
+        memorySession = null
+      } catch {
+        // Restore the previous address so a reload cannot pair the new address with the old wallet.
+        if (previous.address) store.setItem(ADDRESS_KEY, previous.address)
+        else store.removeItem(ADDRESS_KEY)
+      }
     } catch {
-      /* Storage may be full or disabled; fall back to memory below. */
+      /* Storage may deny both writing and rollback. Use the in-memory session. */
     }
   }
-  memorySession = persisted ? null : { address, walletId, network: readSession().network }
   publish()
 }
 
 export function clearSession(): void {
-  clearUserData()
-  memorySession = null
   const store = storage()
-  if (store) {
+  for (const key of [ADDRESS_KEY, WALLET_KEY]) {
     try {
-      store.removeItem(ADDRESS_KEY)
-      store.removeItem(WALLET_KEY)
+      store?.removeItem(key)
     } catch {
-      /* ignore */
+      /* Storage may still contain a stale session. */
     }
   }
+  const stored = readStorage()
+  memorySession = stored?.address === '' && stored.walletId === null ? null : UNREAD_SESSION
+  clearUserData()
   publish()
 }
 

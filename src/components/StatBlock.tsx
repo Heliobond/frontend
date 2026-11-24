@@ -13,6 +13,7 @@ export interface StatBlockProps {
   label: string
   /** The primary numeric or text value to display. */
   value: string
+  valueTestId?: string
   /** Fractional tail rendered dimmer than the integer part, e.g. ".55". */
   decimals?: string
   /** Signed change indicator text (e.g. "+$12.50 (+2.4%)"). */
@@ -34,6 +35,7 @@ export interface StatBlockProps {
 export function StatBlock({
   label,
   value,
+  valueTestId,
   decimals,
   delta,
   deltaDirection,
@@ -84,6 +86,7 @@ export function StatBlock({
         style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}
       >
         <span
+          data-testid={valueTestId}
           style={{
             fontFamily: 'var(--font-data)',
             fontWeight: 'var(--font-weight-semibold)',
@@ -136,6 +139,7 @@ export function StatBlock({
 StatBlock.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
+  valueTestId: PropTypes.string,
   decimals: PropTypes.string,
   delta: PropTypes.string,
   deltaDirection: PropTypes.oneOf(['up', 'down']),

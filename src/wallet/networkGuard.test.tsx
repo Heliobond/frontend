@@ -26,6 +26,7 @@ vi.mock('@creit.tech/stellar-wallets-kit', () => ({
 vi.mock('@creit.tech/stellar-wallets-kit/modules/utils', () => ({ defaultModules: () => [] }))
 
 const { WalletProvider, useWallet } = await import('./WalletProvider')
+const { clearSession } = await import('./session')
 const { NetworkMismatchError, isNetworkMismatch, isNetworkMismatchError, networkMismatchMessage } =
   await import('./networkGuard')
 
@@ -70,6 +71,7 @@ function renderProvider() {
 describe('WalletProvider network guard (#611)', () => {
   beforeEach(() => {
     localStorage.clear()
+    clearSession()
     Object.values(kit).forEach(
       (fn) => typeof fn === 'function' && 'mockReset' in fn && fn.mockReset(),
     )
@@ -146,6 +148,156 @@ describe('WalletProvider network guard (#611)', () => {
     })
     expect(ok).toBe(true)
     await waitFor(() => expect(screen.getByTestId('mismatch')).toHaveTextContent('false'))
+  })
+
+  it('keeps both busy flags set while the automatic retry is waiting for the wallet', async () => {
+    vi.useFakeTimers()
+    try {
+      const second = Promise.withResolvers<{ address: string }>()
+      kit.authModal
+        .mockImplementationOnce(() => new Promise(() => {}))
+        .mockReturnValueOnce(second.promise)
+      kit.getNetwork.mockResolvedValue({ networkPassphrase: TESTNET })
+      renderProvider()
+
+      let connecting!: Promise<void>
+      await act(async () => {
+        connecting = wallet.connect()
+        await vi.dynamicImportSettled()
+        await vi.advanceTimersByTimeAsync(16_000)
+      })
+      expect(kit.authModal).toHaveBeenCalledTimes(2)
+      expect(wallet).toMatchObject({ connecting: true, syncing: true, retryCount: 1 })
+
+      await act(async () => {
+        second.resolve({ address: ADDRESS })
+        await connecting
+      })
+      expect(wallet).toMatchObject({
+        address: ADDRESS,
+        connecting: false,
+        syncing: false,
+        retryCount: 0,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps a successful connection usable if the network lookup never answers', async () => {
+    vi.useFakeTimers()
+    try {
+      const lookup = Promise.withResolvers<{ networkPassphrase: string }>()
+      const started = Promise.withResolvers<void>()
+      kit.getNetwork.mockImplementation(() => {
+        started.resolve()
+        return lookup.promise
+      })
+      renderProvider()
+
+      let connecting!: Promise<void>
+      await act(async () => {
+        connecting = wallet.connect()
+        await started.promise
+      })
+      expect(wallet).toMatchObject({ connected: true, connecting: true, syncing: true })
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000)
+        await connecting
+        lookup.resolve({ networkPassphrase: PUBLIC })
+      })
+
+      expect(wallet).toMatchObject({
+        address: ADDRESS,
+        connecting: false,
+        syncing: false,
+        connectionError: null,
+        walletNetworkPassphrase: null,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('clears both busy flags after the last connection attempt times out', async () => {
+    vi.useFakeTimers()
+    try {
+      kit.authModal.mockImplementation(() => new Promise(() => {}))
+      renderProvider()
+
+      await act(async () => {
+        const connecting = wallet.connect()
+        await vi.dynamicImportSettled()
+        await vi.advanceTimersByTimeAsync(48_000)
+        await connecting
+      })
+
+      expect(kit.authModal).toHaveBeenCalledTimes(3)
+      expect(wallet).toMatchObject({ connecting: false, syncing: false })
+      expect(wallet.connectionError).toContain('Connection timed out')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('clears both busy flags if the wallet explicitly cancels', async () => {
+    kit.authModal.mockRejectedValue(new Error('Wallet dismissed'))
+    renderProvider()
+
+    await act(() => wallet.connect())
+
+    expect(kit.authModal).toHaveBeenCalledTimes(1)
+    expect(wallet).toMatchObject({ connecting: false, syncing: false, connectionError: null })
+  })
+
+  it('disconnects during a pending wallet prompt without accepting a late result', async () => {
+    const prompted = Promise.withResolvers<void>()
+    const auth = Promise.withResolvers<{ address: string }>()
+    kit.authModal.mockImplementation(() => {
+      prompted.resolve()
+      return auth.promise
+    })
+    renderProvider()
+
+    let connecting!: Promise<void>
+    await act(async () => {
+      connecting = wallet.connect()
+      await prompted.promise
+    })
+    expect(wallet).toMatchObject({ connecting: true, syncing: true })
+
+    await act(async () => {
+      wallet.disconnect()
+      await connecting
+      auth.resolve({ address: ADDRESS })
+    })
+    expect(wallet).toMatchObject({
+      connected: false,
+      connecting: false,
+      syncing: false,
+      connectionError: null,
+    })
+  })
+
+  it('connects and disconnects a demo wallet even if the storage getter throws', async () => {
+    const access = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Storage blocked', 'SecurityError')
+    })
+    try {
+      renderProvider()
+      act(() => wallet.connectDemo())
+      expect(wallet).toMatchObject({ connected: true, isDemo: true })
+
+      await act(async () => {
+        wallet.disconnect()
+      })
+      expect(wallet).toMatchObject({ connected: false, isDemo: false })
+    } finally {
+      access.mockRestore()
+    }
+    // Restore the persistent-mode snapshot for the next test.
+    act(() => wallet.disconnect())
   })
 
   it('never flags demo sessions', async () => {

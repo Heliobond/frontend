@@ -166,6 +166,48 @@ describe('wallet session store', () => {
 })
 
 describe('in-memory fallback when storage throws', () => {
+  it('keeps the complete demo session when only the address can be written', () => {
+    const write = Storage.prototype.setItem
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key,
+      value,
+    ) {
+      if (key === WALLET_KEY) throw new Error('blocked')
+      return write.call(this, key, value)
+    })
+    try {
+      saveSession(ADDRESS, DEMO_WALLET_ID)
+      expect(localStorage.getItem(ADDRESS_KEY)).toBeNull()
+      expect(localStorage.getItem(WALLET_KEY)).toBeNull()
+      expect(getSession()).toMatchObject({ address: ADDRESS, walletId: DEMO_WALLET_ID })
+    } finally {
+      setItem.mockRestore()
+      clearSession()
+    }
+  })
+
+  it('does not restore a stale persistent session when demo save and clear fail', () => {
+    saveSession(ADDRESS, 'freighter')
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    try {
+      saveSession('GDEMO', DEMO_WALLET_ID)
+      expect(getSession()).toMatchObject({ address: 'GDEMO', walletId: DEMO_WALLET_ID })
+      clearSession()
+      expect(localStorage.getItem(ADDRESS_KEY)).toBe(ADDRESS)
+      expect(getSession()).toMatchObject({ address: '', walletId: null })
+    } finally {
+      setItem.mockRestore()
+      removeItem.mockRestore()
+      clearSession()
+    }
+  })
+
   it('keeps the demo session for this visit and clears it on disconnect', () => {
     const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('blocked')

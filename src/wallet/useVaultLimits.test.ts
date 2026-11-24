@@ -61,6 +61,32 @@ it('exposes the fetched limits', async () => {
   expect(result.current.utilizationBps).toBe(500)
 })
 
+it('uses the on-chain lock for real wallets in E2E builds, even with a demo lock fixture', async () => {
+  vi.stubEnv('NEXT_PUBLIC_E2E_TEST_WALLET', 'true')
+  const key = 'hb-e2e-withdraw-lock-expires-at'
+  localStorage.setItem(key, '1234')
+  try {
+    fetchVaultLimits.mockResolvedValue(LIMITS)
+    const { result } = renderHook(() => useVaultLimits())
+    await waitFor(() => expect(result.current.lockExpiresAt).toBe(LIMITS.lockExpiresAt))
+  } finally {
+    localStorage.removeItem(key)
+  }
+})
+
+it('preserves the lock fixture for the demo wallet', () => {
+  vi.stubEnv('NEXT_PUBLIC_E2E_TEST_WALLET', 'true')
+  wallet.isDemo = true
+  const key = 'hb-e2e-withdraw-lock-expires-at'
+  localStorage.setItem(key, '1234')
+  try {
+    const { result } = renderHook(() => useVaultLimits())
+    expect(result.current.lockExpiresAt).toBe(1234)
+  } finally {
+    localStorage.removeItem(key)
+  }
+})
+
 it('is loading until the request settles, then not', async () => {
   let resolve: (value: typeof LIMITS) => void = () => {}
   fetchVaultLimits.mockReturnValue(
