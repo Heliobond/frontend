@@ -88,4 +88,10 @@ describe('ScoreGauge arc geometry and clamping', () => {
     expect(screen.getByText('80')).toBeInTheDocument()
     expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
   })
+
+  it('displays an assigned zero even when an unrated label is provided', () => {
+    render(<ScoreGauge value={0} label="Credit" unratedLabel="pending" />)
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Credit: 0/100' })).toBeInTheDocument()
+  })
 })

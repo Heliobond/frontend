@@ -434,8 +434,7 @@ export function ProjectBuilder({ onApply, draft, onDraftChange }: ProjectBuilder
           <ProjectCard
             name={debouncedName || 'Your project name'}
             location={debouncedLocation || 'Add a location'}
-            credit={undefined}
-            green={undefined}
+            unratedScoreLabel={t('pendingVerified')}
             funded={debouncedGoalLabel}
             fundedLabel={t('dashFunding')}
             verifiedLabel={t('pendingVerified')}

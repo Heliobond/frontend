@@ -30,6 +30,12 @@ describe('ProjectBuilder', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
+  it('labels both unrated preview metrics as pending', () => {
+    render(<ProjectBuilder />)
+    expect(screen.getByRole('img', { name: 'Credit: pending' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Green: pending' })).toBeInTheDocument()
+  })
+
   it('previews the draft goal without an error', () => {
     render(<ProjectBuilder />)
     expect(screen.getByText('$0 of $250,000')).toBeInTheDocument()
