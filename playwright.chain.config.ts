@@ -19,8 +19,9 @@ function loadEnv(file: string): Record<string, string> {
 }
 
 const chainEnv = loadEnv(ENV_FILE)
-// Resolve overrides once: existing process.env wins, then pass the effective config to both places
-const effectiveEnv = { ...chainEnv, ...process.env }
+const effectiveEnv = Object.fromEntries(
+  Object.entries(chainEnv).map(([key, value]) => [key, process.env[key] ?? value]),
+)
 Object.assign(process.env, effectiveEnv)
 
 const PORT = Number(process.env.E2E_CHAIN_PORT ?? 3100)

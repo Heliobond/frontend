@@ -235,7 +235,13 @@ export async function getProject(id: number): Promise<ProjectWithDetail | null> 
     const project = mapBackendProject(raw, mockProject)
     return {
       project,
-      detail: mockDetail ?? createBackendProjectDetail(project),
+      detail: mockDetail
+        ? {
+            ...mockDetail,
+            priceHistory: [],
+            missingSections: [...(mockDetail.missingSections ?? []), 'priceHistory'],
+          }
+        : createBackendProjectDetail(project),
       verifiedMetadata: 'unverified',
       source: 'backend',
     }

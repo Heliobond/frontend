@@ -123,6 +123,20 @@ describe('wallet session store', () => {
     unsubscribe()
   })
 
+  it('refreshes the cached network before notifying about a cross-tab write', () => {
+    const listener = vi.fn(() => getSession().network)
+    const unsubscribe = subscribeSession(listener)
+    try {
+      localStorage.setItem(NETWORK_KEY, 'TESTNET')
+      window.dispatchEvent(new StorageEvent('storage', { key: 'hb-theme' }))
+      expect(listener).not.toHaveBeenCalled()
+      window.dispatchEvent(new StorageEvent('storage', { key: NETWORK_KEY, newValue: 'TESTNET' }))
+      expect(listener).toHaveReturnedWith('TESTNET')
+    } finally {
+      unsubscribe()
+    }
+  })
+
   it('has no session on the server, so hydration matches', () => {
     expect(getServerSession()).toEqual({ address: '', walletId: null, network: null })
   })

@@ -423,6 +423,9 @@ describe('ProjectDetail with backend-only data', () => {
         </YieldAlertProvider>,
       ),
     ).not.toThrow()
+  })
+})
+
 describe('ProjectDetail price movement and creator attribution', () => {
   function renderWith(detail: Partial<ProjectDetailData>) {
     return render(

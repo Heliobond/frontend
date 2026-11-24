@@ -63,7 +63,6 @@ describe('security validation edge cases', () => {
     ).toEqual({
       street: 'streetRequired',
       city: 'cityRequired',
-      state: 'stateRequired',
       zip: 'zipRequired',
       country: 'countryRequired',
     })
@@ -108,6 +107,22 @@ describe('security validation edge cases', () => {
       ['FR', '75008', 'Île-de-France'],
     ])('accepts %s ZIP %j with state %j', (country, zip, state) => {
       expect(validateAddress(address(country, zip, state))).toEqual({})
+    })
+
+    it.each([
+      ['US', '62701'],
+      ['CA', 'K1A 0B1'],
+    ])('requires an administrative region in %s', (country, zip) => {
+      expect(validateAddress(address(country, zip, ''))).toEqual({ state: 'stateRequired' })
+    })
+
+    it.each([
+      ['GB', 'SW1A 1AA'],
+      ['DE', '01067'],
+      ['FR', '75008'],
+    ])('accepts an empty region in %s and validates a supplied region', (country, zip) => {
+      expect(validateAddress(address(country, zip, ''))).toEqual({})
+      expect(validateAddress(address(country, zip, '<b>'))).toEqual({ state: 'stateInvalid' })
     })
 
     it.each([

@@ -1,6 +1,5 @@
 import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { describe, expect, test, vi } from '@/test/bun'
+import { beforeEach, describe, expect, test, vi } from '@/test/bun'
 import { LocaleProvider } from '@/i18n/LocaleProvider'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 import en from '../../messages/en.json'
@@ -136,6 +135,10 @@ describe('EmailAuthModal biometric completion', () => {
     expect(onSuccess).not.toHaveBeenCalled()
     expect(registerBiometric).toHaveBeenCalledWith('register@example.com')
     expect(loginBiometric).toHaveBeenCalledWith('register@example.com')
+  })
+})
+
+describe('EmailAuthModal social conflict', () => {
   test('without a social redirect handler the conflict offers only the email path', async () => {
     const onSuccess = vi.fn().mockResolvedValue(undefined)
     const onClose = vi.fn()
