@@ -167,3 +167,30 @@ describe('security validation edge cases', () => {
     expect(escapeHtml("'")).toBe('&#39;')
   })
 })
+
+describe('typographic apostrophes in address fields', () => {
+  const validAddress: AddressValues = {
+    street: "Rue de l'Église",
+    city: "L'Haÿ-les-Roses",
+    state: '',
+    zip: '75000',
+    country: 'FR',
+  }
+
+  it('accepts ASCII and typographic apostrophes in street and city names', () => {
+    expect(validateAddress(validAddress)).toEqual({})
+    expect(
+      validateAddress({
+        ...validAddress,
+        street: 'Rue de l\u2019Église',
+        city: 'L\u2019Haÿ-les-Roses',
+      }),
+    ).toEqual({})
+  })
+
+  it('still rejects unrelated typographic quotation marks', () => {
+    expect(validateAddress({ ...validAddress, street: 'Rue \u201cÉglise\u201d' })).toEqual({
+      street: 'streetInvalid',
+    })
+  })
+})
