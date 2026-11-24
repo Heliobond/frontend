@@ -59,7 +59,7 @@ export function escapeHtml(value: string): string {
       case '"':
         return '"'
       case "'":
-        return '''
+        return '&#39;'
       default:
         return c
     }
@@ -180,7 +180,7 @@ const SUBDIVISION_CODES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
 ])
 
 const ADDRESS_MAX_LENGTH = 200
-const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'&-]+$/u
+const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'\u2019&-]+$/u
 
 /** Addresses are validated by shape; database safety belongs to parameterized backend queries. */
 export function hasInvalidAddressCharacters(value: string): boolean {
@@ -224,11 +224,13 @@ export function validateAddress(values: AddressValues): AddressErrors {
 
   const state = values.state?.trim().toUpperCase() ?? ''
   const subdivisions = SUBDIVISION_CODES.get(country)
+  const zip = values.zip.trim().toUpperCase()
   const postalCode = POSTAL_CODE_PATTERNS.get(country)
 
   // Only validate subdivision code when state is present AND country has subdivision rules
   // (i.e., US and CA). For other countries, state is optional and not validated.
-  if (!errors.state && subdivisions && state && !subdivisions.has(state)) errors.state = 'stateFormat'
+  if (!errors.state && subdivisions && state && !subdivisions.has(state))
+    errors.state = 'stateFormat'
   if (!errors.zip && postalCode && !postalCode.test(zip)) errors.zip = 'zipFormat'
 
   return errors
