@@ -84,14 +84,7 @@ export function CreatorApplication({
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gap: 24,
-        gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-        alignItems: 'start',
-      }}
-    >
+    <div className="hb-application-grid">
       {/* Left — criteria + tracker */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card>

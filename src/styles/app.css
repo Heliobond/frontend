@@ -56,11 +56,15 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
-.hb-builder-grid {
+.hb-builder-grid,
+.hb-application-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   align-items: start;
   gap: 24px;
+}
+.hb-application-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .hb-builder-drops {
   display: grid;
@@ -132,6 +136,7 @@
 }
 
 @media (max-width: 767px) {
+  .hb-application-grid,
   .hb-builder-grid,
   .hb-builder-drops {
     grid-template-columns: 1fr;

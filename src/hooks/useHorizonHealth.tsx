@@ -18,8 +18,10 @@ export interface HorizonHealth {
 }
 
 interface Snapshot {
-  isOnline: boolean
+  readonly isOnline: boolean
 }
+
+const ONLINE_SERVER_SNAPSHOT: Snapshot = Object.freeze({ isOnline: true })
 
 class HorizonHealthPoller {
   private subscribers = new Set<() => void>()
@@ -39,7 +41,7 @@ class HorizonHealthPoller {
   }
 
   getServerSnapshot = (): Snapshot => {
-    return { isOnline: true }
+    return ONLINE_SERVER_SNAPSHOT
   }
 
   subscribe = (onStoreChange: () => void): (() => void) => {

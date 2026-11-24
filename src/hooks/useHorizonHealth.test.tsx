@@ -271,6 +271,8 @@ describe('useHorizonHealth', () => {
   })
 
   it('handles window offline and online events immediately', async () => {
+    const serverSnapshot = horizonHealthPoller.getServerSnapshot()
+    expect(horizonHealthPoller.getServerSnapshot()).toBe(serverSnapshot)
     const { result, unmount } = renderHook(() => useHorizonHealth())
 
     await act(async () => {
@@ -284,6 +286,8 @@ describe('useHorizonHealth', () => {
       window.dispatchEvent(new Event('offline'))
     })
     expect(result.current.isOnline).toBe(false)
+    expect(horizonHealthPoller.getServerSnapshot()).toBe(serverSnapshot)
+    expect(serverSnapshot.isOnline).toBe(true)
 
     // While offline, timers should not poll
     await act(async () => {

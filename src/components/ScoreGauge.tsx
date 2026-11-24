@@ -9,6 +9,8 @@ import { formatScore, isKnownScore } from '../lib/score'
 export interface ScoreGaugeProps {
   /** The current numeric score value; `undefined` means "not scored yet". */
   value?: number
+  /** Optional label for an unassigned score. */
+  unratedLabel?: string
   /** The maximum possible score value. Defaults to 100. */
   max?: number
   /** Optional label text displayed below the gauge (e.g. "Credit" or "Green"). */
@@ -33,6 +35,7 @@ export interface ScoreGaugeProps {
 
 export function ScoreGauge({
   value,
+  unratedLabel,
   max = 100,
   label,
   ariaValueLabel,
@@ -58,7 +61,7 @@ export function ScoreGauge({
   const angle = (135 + fraction * 270) * (Math.PI / 180)
   const dotX = cx + r * Math.cos(angle)
   const dotY = cy + r * Math.sin(angle)
-  const shownValue = formatScore(value)
+  const shownValue = known ? formatScore(value) : (unratedLabel ?? formatScore(value))
 
   return (
     <div
