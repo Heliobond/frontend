@@ -6,7 +6,7 @@ Please **do not** open a public issue for security problems.
 
 Report privately through GitHub: go to the repository's **Security** tab → **Report a vulnerability** (this opens a private advisory). If you can't use that, email **daveproxy80@gmail.com**.
 
-Include what you can: affected component, steps to reproduce, and impact. We aim to acknowledge within a few days and will coordinate a fix and disclosure with you.
+Please include as much detail as possible, including the affected component, steps to reproduce the issue, and its potential impact. We aim to acknowledge your report within a few days and work with you to coordinate a fix and responsible disclosure.
 
 ## Scope
 

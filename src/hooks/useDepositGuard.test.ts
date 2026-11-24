@@ -43,10 +43,25 @@ describe('useDepositGuard', () => {
     act(() => {
       result.current.markPending(50, 'GADDRESS789')
     })
-    // Advance past the 5-minute TTL
-    vi.advanceTimersByTime(6 * 60 * 1000)
+    vi.advanceTimersByTime(5 * 60 * 1000)
+    expect(result.current.getPending()).not.toBeNull()
+    vi.advanceTimersByTime(1)
     expect(result.current.getPending()).toBeNull()
     vi.useRealTimers()
+  })
+
+  it.each([
+    '{',
+    'null',
+    '{"amount":100,"address":"GADDRESS"}',
+    '{"amount":100,"address":"GADDRESS","startedAt":"now"}',
+    '{"amount":100,"address":"GADDRESS","startedAt":9999999999999}',
+  ])('removes a malformed pending record (%s)', (raw) => {
+    const key = 'hb_pending_deposit'
+    sessionStorage.setItem(key, raw)
+    const { result } = renderHook(() => useDepositGuard())
+    expect(result.current.getPending()).toBeNull()
+    expect(sessionStorage.getItem(key)).toBeNull()
   })
 
   it('markPending overwrites a previous pending record', () => {

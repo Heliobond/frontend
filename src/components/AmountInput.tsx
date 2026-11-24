@@ -151,9 +151,11 @@ export function AmountInput({
           onFocus={(e) => e.target.select()}
           onPaste={(e) => {
             e.preventDefault()
+            const { value, selectionStart, selectionEnd } = e.currentTarget
+            const start = selectionStart ?? value.length
+            const end = selectionEnd ?? start
             const pastedText = e.clipboardData.getData('text')
-            const sanitized = sanitizeAmount(pastedText)
-            onChange?.(sanitized)
+            onChange?.(sanitizeAmount(value.slice(0, start) + pastedText + value.slice(end)))
           }}
           onChange={(e) => {
             const v = sanitizeAmount(e.target.value)

@@ -203,6 +203,27 @@ describe('TransactionsProvider', () => {
     unmount()
   })
 
+  it('backs off on HTTP-success JSON-RPC errors while leaving the transaction pending', async () => {
+    vi.useFakeTimers()
+    sessionStorage.setItem(TRANSACTIONS_KEY, JSON.stringify([saved()]))
+    const rpcError = {
+      ok: true,
+      json: async () => ({ error: { code: -32603, message: 'Unavailable' } }),
+    } as Response
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(rpcError)
+      .mockResolvedValueOnce(rpcError)
+      .mockResolvedValue(rpc('NOT_FOUND'))
+    const { result } = renderHook(useTransactions, { wrapper })
+
+    await act(async () => vi.advanceTimersByTimeAsync(20000))
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(result.current.transactions[0].status).toBe('pending')
+    await act(async () => vi.advanceTimersByTimeAsync(10000))
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(result.current.pendingCount).toBe(1)
+  })
+
   it('does not downgrade a confirmed item when a foreground timeout arrives late', () => {
     const { result } = renderHook(useTransactions, { wrapper })
     act(() => recordTransaction(saved('race')))
