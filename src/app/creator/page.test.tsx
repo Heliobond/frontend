@@ -1,15 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@/test/render'
+import { describe, expect, it, vi } from '@/test/bun'
 import en from '../../../messages/en.json'
-import CreatorPage from './page'
 
-const nav = vi.hoisted(() => ({
-  tab: 'build' as string,
+const nav = {
+  tab: 'build',
   replace: vi.fn(),
-}))
+}
 
-vi.mock('next/navigation', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('next/navigation')>()),
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     replace: (url: string) => {
       const params = new URL(url, 'http://localhost').searchParams
@@ -23,6 +20,9 @@ vi.mock('next/navigation', async (importOriginal) => ({
 vi.mock('@/wallet/WalletProvider', () => ({
   useWallet: () => ({ address: null, sign: vi.fn() }),
 }))
+
+const { fireEvent, render, screen } = await import('@/test/render')
+const { default: CreatorPage } = await import('./page')
 
 function goTo(tab: string, rerender: (ui: React.ReactNode) => void) {
   fireEvent.click(
