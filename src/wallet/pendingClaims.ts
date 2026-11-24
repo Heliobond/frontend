@@ -34,7 +34,12 @@ export function getPendingClaims(address?: string): PendingClaim[] {
       if (!c || typeof c !== 'object') return false
       if (typeof c.id !== 'string' || !c.id) return false
       if (typeof c.hash !== 'string' || !c.hash) return false
-      if (typeof c.timestamp !== 'number' || c.timestamp <= 0) return false
+      if (
+        typeof c.timestamp !== 'number' ||
+        c.timestamp <= 0 ||
+        !Number.isFinite(new Date(c.timestamp).getTime())
+      )
+        return false
       return true
     })
 

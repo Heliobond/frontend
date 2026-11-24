@@ -4,6 +4,7 @@ import {
   addPendingClaim,
   removePendingClaim,
   clearPendingClaims,
+  PENDING_CLAIMS_STORAGE_KEY,
 } from './pendingClaims'
 
 describe('pendingClaims storage', () => {
@@ -107,7 +108,7 @@ describe('pendingClaims storage', () => {
       amount: 100,
       timestamp: 1700000000000,
     }
-    
+
     const malformed = [
       validClaim,
       null, // null record
@@ -115,11 +116,13 @@ describe('pendingClaims storage', () => {
       { hash: '0xghi789', timestamp: 1700000000000 }, // missing id
       { id: '', hash: '0xjkl012', timestamp: 1700000000000 }, // empty id
       { id: 'claim-bad-ts', hash: '0xmno345', timestamp: 0 }, // invalid timestamp
+      { id: 'claim-out-of-range', hash: '0xpqr678', timestamp: Number.MAX_SAFE_INTEGER },
     ]
-    
-    window.localStorage.setItem('hb-pending-claims', JSON.stringify(malformed))
-    
+
+    window.localStorage.setItem(PENDING_CLAIMS_STORAGE_KEY, JSON.stringify(malformed))
+
     const claims = getPendingClaims()
     expect(claims).toHaveLength(1)
     expect(claims[0].id).toBe('claim-valid')
   })
+})

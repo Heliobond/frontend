@@ -14,7 +14,6 @@ import {
 } from '../components'
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
-import { formatDecimal, formatMoney } from '../lib/format'
 import { formatScore } from '../lib/score'
 import { getEffectiveYield } from '../lib/yieldAlerts'
 import { formatDecimal, formatMoney, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
@@ -27,8 +26,8 @@ import { type Project } from '../data'
 import {
   type MissingDetailSection,
   type ProjectDetail as ProjectDetailData,
+  type ScorePoint,
 } from '../data/projectDetails'
-import { type ProjectDetail as ProjectDetailData, type ScorePoint } from '../data/projectDetails'
 import { type MetadataVerificationStatus } from '../wallet/registry'
 import { type ProjectSource } from '../lib/api'
 
@@ -118,7 +117,11 @@ export const ProjectDetail = memo(function ProjectDetail({
   // fallbacks keep the page renderable even if a caller passes a partial detail.
   const missingSections = detail.missingSections ?? []
   const isMissing = (section: MissingDetailSection): boolean => missingSections.includes(section)
-  const { name: creatorName, since: creatorSince } = detail.creator ?? {
+  const {
+    name: creatorName,
+    since: creatorSince,
+    verified: creatorVerified,
+  } = detail.creator ?? {
     name: '',
     since: '',
   }
@@ -126,11 +129,6 @@ export const ProjectDetail = memo(function ProjectDetail({
     credit: [],
     green: [],
   }
-  const creditHistory = useMemo(() => creditPoints.map((p) => p.value), [creditPoints])
-  const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
-  // at every use site.
-  const { name: creatorName, since: creatorSince } = detail.creator
-  const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       <DemoDataBadge source={source} style={{ marginBottom: 16 }} />
@@ -187,14 +185,11 @@ export const ProjectDetail = memo(function ProjectDetail({
           }}
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {!isMissing('creator') && (
+            {!isMissing('creator') && creatorVerified && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>
-                {t('verifiedSince', { since: creatorSince })}
+                {creatorSince ? t('verifiedSince', { since: creatorSince }) : t('verifiedCreator')}
               </Badge>
             )}
-            <Badge tone="growth" icon={<ShieldCheckIcon />}>
-              {creatorSince ? t('verifiedSince', { since: creatorSince }) : t('verifiedCreator')}
-            </Badge>
             {verifiedMetadata === 'verified' && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>
                 {t('verifiedMetadata')}
@@ -306,8 +301,6 @@ export const ProjectDetail = memo(function ProjectDetail({
             history={creditPoints}
             sparkLabel={t('creditHistory')}
             onChainNote={isMissing('scoreHistory') ? '' : t('onChainNote')}
-            verifiedAgo={isMissing('scoreHistory') ? '' : t('verifiedAgo')}
-            onChainNote={t('onChainNote')}
             live={source === 'registry'}
           />
           <ScoreColumn
@@ -316,8 +309,6 @@ export const ProjectDetail = memo(function ProjectDetail({
             history={greenPoints}
             sparkLabel={t('greenHistory')}
             onChainNote={isMissing('scoreHistory') ? '' : t('onChainNote')}
-            verifiedAgo={isMissing('scoreHistory') ? '' : t('verifiedAgo')}
-            onChainNote={t('onChainNote')}
             live={source === 'registry'}
           />
         </div>
@@ -365,14 +356,6 @@ export const ProjectDetail = memo(function ProjectDetail({
                   points={detail.priceHistory.map((p) => p.price)}
                   aria-label={t('priceHistory')}
                 />
-                {detail.priceHistory.length > 0
-                  ? `${formatDecimal(
-                      detail.priceHistory[detail.priceHistory.length - 1].price,
-                      PRICE_DECIMALS,
-                    )}${tPrice('priceUnit')}`
-                  : '—'}
-              </span>
-              {detail.priceHistory.length > 1 && (
                 <span
                   style={{
                     fontFamily: 'var(--font-data)',
@@ -382,12 +365,11 @@ export const ProjectDetail = memo(function ProjectDetail({
                   }}
                 >
                   {detail.priceHistory.length > 0
-                    ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price)
+                    ? `${formatDecimal(
+                        detail.priceHistory[detail.priceHistory.length - 1].price,
+                        PRICE_DECIMALS,
+                      )}${tPrice('priceUnit')}`
                     : '—'}
-                  {formatSignedChange(
-                    detail.priceHistory[0].price,
-                    detail.priceHistory[detail.priceHistory.length - 1].price,
-                  )}
                 </span>
                 {detail.priceHistory.length > 1 && (
                   <span
@@ -397,15 +379,9 @@ export const ProjectDetail = memo(function ProjectDetail({
                       color: 'var(--ink-40)',
                     }}
                   >
-                    {detail.priceHistory[detail.priceHistory.length - 1].price >=
-                    detail.priceHistory[0].price
-                      ? '+'
-                      : '-'}
-                    {formatMoney(
-                      Math.abs(
-                        detail.priceHistory[detail.priceHistory.length - 1].price -
-                          detail.priceHistory[0].price,
-                      ),
+                    {formatSignedChange(
+                      detail.priceHistory[0].price,
+                      detail.priceHistory[detail.priceHistory.length - 1].price,
                     )}
                   </span>
                 )}
