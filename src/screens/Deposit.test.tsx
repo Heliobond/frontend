@@ -16,6 +16,10 @@ const mockUsdcBalanceState = {
   refresh: vi.fn(),
 }
 
+const mockVaultLimits = { minDeposit: 100, maxTx: 100000, paused: false }
+
+vi.mock('../wallet/useVaultLimits', () => ({ useVaultLimits: () => mockVaultLimits }))
+
 vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
@@ -43,6 +47,7 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     mockUsdcBalanceState.balance = 5000
     mockUsdcBalanceState.loading = false
     mockUsdcBalanceState.error = null
+    mockVaultLimits.maxTx = 100000
   })
 
   it('uses the on-chain USDC balance for the balance line, Max chip, and cap notice', () => {
@@ -70,6 +75,8 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     render(<Deposit onDone={vi.fn()} />)
 
     expect(screen.getByText(/50\.00 USDC/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '100' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Max' })).not.toBeInTheDocument()
 
     // Submit button shows the exceeds balance reason and is disabled
     const submitBtn = screen.getByRole('button', { name: /^invest$/i })
@@ -78,6 +85,23 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     // User cannot continue to review step
     fireEvent.click(submitBtn)
     expect(screen.queryByText(/You're investing/i)).not.toBeInTheDocument()
+  })
+
+  it('caps quick amounts and Max at the transaction limit', () => {
+    mockUsdcBalanceState.balance = 1000
+    mockVaultLimits.maxTx = 200
+    render(<Deposit onDone={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: '250' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '500' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '200' }))
+    expect(screen.getByRole('button', { name: 'Invest 200 USDC' })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: '100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Max' }))
+    expect(screen.getByLabelText(/Amount/i)).toHaveValue('200')
   })
 
   it('shows "Balance unavailable" and does not enforce an artificial cap when balance cannot be read', () => {
