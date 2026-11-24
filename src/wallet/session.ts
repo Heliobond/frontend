@@ -98,6 +98,7 @@ export function subscribeSession(listener: () => void): () => void {
         event.key !== NETWORK_KEY
       )
         return
+      refresh()
       listener()
     }
     window.addEventListener('storage', onStorage)

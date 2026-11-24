@@ -188,22 +188,19 @@ export function assertContractCallMatchesSpec(
   vaultId: string,
   registryId: string,
 ): void {
-  let specMap: Map<string, SCSpecFunctionV0>
-  let contractName: string
-
-  if (targetSpec === 'investment_vault' || (targetSpec === 'auto' && call.contractId === vaultId)) {
-    specMap = vaultFunctions
-    contractName = 'InvestmentVault'
-  } else if (
-    targetSpec === 'project_registry' ||
-    (targetSpec === 'auto' && call.contractId === registryId)
-  ) {
-    specMap = registryFunctions
-    contractName = 'ProjectRegistry'
-  } else {
-    specMap = vaultFunctions
-    contractName = 'InvestmentVault'
+  const allowedIds =
+    targetSpec === 'auto'
+      ? [vaultId, registryId]
+      : [targetSpec === 'investment_vault' ? vaultId : registryId]
+  if (!allowedIds.includes(call.contractId)) {
+    throw new Error(
+      `Contract destination mismatch: expected ${allowedIds.join(' or ')}, received ${call.contractId}`,
+    )
   }
+  const isVault =
+    targetSpec === 'investment_vault' || (targetSpec === 'auto' && call.contractId === vaultId)
+  const specMap = isVault ? vaultFunctions : registryFunctions
+  const contractName = isVault ? 'InvestmentVault' : 'ProjectRegistry'
 
   const specFn = specMap.get(call.method)
   if (!specFn) {
@@ -407,6 +404,25 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       const call = mockState.recordedCalls.find((c) => c.method === 'claim_yield')
       expect(call).toBeDefined()
       assertContractCallMatchesSpec(call!, 'investment_vault', VAULT_ID, REGISTRY_ID)
+    })
+
+    it('accepts a valid deposit only at the designated contract (Issue #1056)', async () => {
+      const { submitDeposit } = await import('./vault')
+      await submitDeposit(100, TEST_ACCOUNT, mockSign).catch(() => {})
+
+      const call = mockState.recordedCalls.find((c) => c.method === 'deposit')
+      expect(call).toBeDefined()
+      expect(call!.contractId).toBe(VAULT_ID)
+      expect(() => {
+        assertContractCallMatchesSpec(call!, 'auto', VAULT_ID, REGISTRY_ID)
+      }).not.toThrow()
+      const wrongCall = { ...call!, contractId: sdk.StrKey.encodeContract(Buffer.alloc(32, 99)) }
+      expect(() => {
+        assertContractCallMatchesSpec(wrongCall, 'auto', VAULT_ID, REGISTRY_ID)
+      }).toThrow(/Contract destination mismatch/)
+      expect(() => {
+        assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+      }).toThrow(/Contract destination mismatch/)
     })
   })
 
