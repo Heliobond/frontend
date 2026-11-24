@@ -142,8 +142,55 @@ describe('TaxReports screen (#787)', () => {
 
     expect(taxReportLib.downloadCsv).toHaveBeenCalledTimes(1)
     expect(taxReportLib.downloadCsv).toHaveBeenCalledWith(
-      expect.stringMatching(/^heliobond-quarterly-tax-report-\d{4}\.csv$/),
+      'heliobond-quarterly-tax-report-2025-Q1-Q4.csv',
       expect.stringContaining('Quarter,Type,Total Deposits (USD)'),
+    )
+  })
+
+  it('names a historical export for the period it covers', () => {
+    mockPortfolio.activity = [
+      {
+        kind: 'Deposit',
+        amount: '$1,000.00',
+        shares: '1,000 HBS',
+        when: '2024-02-10',
+        hash: '0xhistorical',
+      },
+    ]
+
+    render(<TaxReports />)
+    fireEvent.click(screen.getByRole('button', { name: /export csv/i }))
+
+    expect(taxReportLib.downloadCsv).toHaveBeenCalledWith(
+      'heliobond-quarterly-tax-report-2024-Q1.csv',
+      expect.any(String),
+    )
+  })
+
+  it('identifies both years in a multi-year export filename', () => {
+    mockPortfolio.activity = [
+      {
+        kind: 'Deposit',
+        amount: '$500.00',
+        shares: '500 HBS',
+        when: '2024-11-10',
+        hash: '0x2024',
+      },
+      {
+        kind: 'Deposit',
+        amount: '$500.00',
+        shares: '500 HBS',
+        when: '2025-02-10',
+        hash: '0x2025',
+      },
+    ]
+
+    render(<TaxReports />)
+    fireEvent.click(screen.getByRole('button', { name: /export csv/i }))
+
+    expect(taxReportLib.downloadCsv).toHaveBeenCalledWith(
+      'heliobond-quarterly-tax-report-2024-Q4-to-2025-Q1.csv',
+      expect.any(String),
     )
   })
 })

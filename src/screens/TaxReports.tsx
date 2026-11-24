@@ -9,6 +9,7 @@ import { formatDecimal } from '@/lib/format'
 import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
+  quarterlyReportFilename,
   downloadCsv,
   activityToInvestmentEvents,
   type InvestmentEvent,
@@ -65,7 +66,7 @@ export function TaxReports({ events: propEvents }: TaxReportsProps = {}) {
 
   function handleExport() {
     const csv = quarterlyReportToCsv(report)
-    downloadCsv(`heliobond-quarterly-tax-report-${new Date().getFullYear()}.csv`, csv)
+    downloadCsv(quarterlyReportFilename(report), csv)
   }
 
   return (
