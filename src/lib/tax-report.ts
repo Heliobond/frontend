@@ -311,24 +311,7 @@ export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
 }
 
 export function downloadCsv(filename: string, csvContent: string): void {
-  // For large files, use streaming to avoid memory issues (#450)
-  // Split into chunks to prevent browser from hanging with huge datasets
-  const CHUNK_SIZE = 1024 * 1024 // 1MB chunks
-
-  let blob: Blob
-
-  if (csvContent.length > CHUNK_SIZE) {
-    // Stream large files in chunks to prevent memory buildup
-    const chunks: BlobPart[] = []
-    for (let i = 0; i < csvContent.length; i += CHUNK_SIZE) {
-      chunks.push(csvContent.slice(i, i + CHUNK_SIZE))
-    }
-    blob = new Blob(chunks, { type: 'text/csv;charset=utf-8;' })
-  } else {
-    // For smaller files, create blob directly (faster)
-    blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  }
-
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url

@@ -63,20 +63,33 @@ export function useDepositGuard() {
    * Returns `null` if there is no record or it has expired past the TTL.
    */
   const getPending = useCallback((): PendingDeposit | null => {
+    let raw: string | null
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY)
-      if (!raw) return null
-      const record = JSON.parse(raw) as PendingDeposit
-      if (Date.now() - record.startedAt > PENDING_TTL_MS) {
-        // Expired - clean up and treat as no pending record
-        sessionStorage.removeItem(STORAGE_KEY)
-        return null
-      }
-      return record
+      raw = sessionStorage.getItem(STORAGE_KEY)
     } catch {
       return null
     }
-  }, [])
+    if (raw === null) return null
+
+    try {
+      const record = JSON.parse(raw) as PendingDeposit | null
+      if (
+        record &&
+        Number.isFinite(record.amount) &&
+        record.amount > 0 &&
+        typeof record.address === 'string' &&
+        record.address.trim() &&
+        Number.isFinite(record.startedAt)
+      ) {
+        const age = Date.now() - record.startedAt
+        if (age >= 0 && age <= PENDING_TTL_MS) return record
+      }
+    } catch {
+      // Malformed JSON is discarded along with invalid and expired records.
+    }
+    clearPending()
+    return null
+  }, [clearPending])
 
   return { markPending, clearPending, getPending }
 }
