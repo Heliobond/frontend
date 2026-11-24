@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { Badge, Button, AddressChip, useToast } from '@/components'
 import {
@@ -63,12 +63,21 @@ async function loadRegistryRows(
   locale: string,
 ): Promise<RegistryEntry[] | null> {
   if (!isRegistryConfigured()) return null
-  const res = await fetchProjectsPage(0, 50, address ?? undefined)
-  if (res.projects.length === 0) return null
-  return res.projects.map((p) => ({
-    ...p,
-    lastVerified: p.lastVerifiedAt === undefined ? '—' : formatDate(p.lastVerifiedAt, locale),
-  }))
+  const pageSize = 50
+  const rows: RegistryEntry[] = []
+  for (let offset = 0; ; offset += pageSize) {
+    const { projects, hasMore } = await fetchProjectsPage(offset, pageSize, address ?? undefined)
+    for (const project of projects) {
+      rows.push({
+        ...project,
+        lastVerified:
+          project.lastVerifiedAt === undefined ? '—' : formatDate(project.lastVerifiedAt, locale),
+      })
+    }
+    // A page of archived IDs can be empty even when more IDs remain.
+    if (!hasMore) break
+  }
+  return rows.length > 0 ? rows : null
 }
 
 /** Live vault liquid and deployed amounts, or null when they cannot be read. */
@@ -102,6 +111,8 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   const [whitelist, setWhitelist] = useState<Creator[]>(WHITELIST)
   const [newCreatorAddress, setNewCreatorAddress] = useState('')
   const [newCreatorName, setNewCreatorName] = useState('')
+  const [addingCreator, setAddingCreator] = useState(false)
+  const addingCreatorRef = useRef(false)
   const [addressError, setAddressError] = useState<string | null>(null)
   // Vault liquid + deployed shift as the oracle funds projects.
   const [liquid, setLiquid] = useState(VAULT_STATS.liquid)
@@ -290,6 +301,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
   }
 
   const addCreator = async () => {
+    if (addingCreatorRef.current) return
     const trimmed = newCreatorAddress.trim()
     if (!isValidCreatorAddress(trimmed)) {
       setAddressError('Invalid Stellar address')
@@ -302,11 +314,13 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
     setAddressError(null)
     const name = newCreatorName.trim() || trimmed.slice(0, 8) + '…'
     const newCreator: Creator = { name, address: trimmed, status: 'pending', projects: 0 }
-    setWhitelist((list) => [...list, newCreator])
-    setNewCreatorAddress('')
-    setNewCreatorName('')
+    addingCreatorRef.current = true
+    setAddingCreator(true)
     try {
       await submitSetWhitelist(trimmed, false, address ?? '', sign)
+      setWhitelist((list) => [...list, newCreator])
+      setNewCreatorAddress('')
+      setNewCreatorName('')
       toast({
         tone: 'success',
         title: t('toastApprovedTitle'),
@@ -320,6 +334,9 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
         message: tErrors(parseErrorCode(e) as never),
         duration: 5000,
       })
+    } finally {
+      addingCreatorRef.current = false
+      setAddingCreator(false)
     }
   }
 
@@ -599,6 +616,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
               <input
                 type="text"
                 placeholder="G... (Stellar address)"
+                disabled={addingCreator}
                 value={newCreatorAddress}
                 onChange={(e) => {
                   setNewCreatorAddress(e.target.value)
@@ -616,6 +634,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
               <input
                 type="text"
                 placeholder="Display name (optional)"
+                disabled={addingCreator}
                 value={newCreatorName}
                 onChange={(e) => setNewCreatorName(e.target.value)}
                 style={{
@@ -629,7 +648,7 @@ export function AdminConsole({ roles: propRoles }: AdminConsoleProps = {}) {
               <Button
                 size="sm"
                 variant="primary"
-                disabled={!newCreatorAddress.trim() || Boolean(addressError)}
+                disabled={addingCreator || !newCreatorAddress.trim() || Boolean(addressError)}
                 onClick={addCreator}
               >
                 {t('actionAddCreator')}
