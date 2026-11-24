@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { test, expect, type Page } from '@playwright/test'
+import { parseUsdcAmount } from './amount'
 
 /**
  * Full investor journey against real contracts on a local stellar/quickstart
@@ -47,10 +48,9 @@ function adminInvoke(fn: string, args: string[]) {
   ).trim()
 }
 
-/** Read a USDC figure like "$149.25" from a StatBlock. */
-async function amountIn(page: Page, testId: string): Promise<number> {
-  const text = (await page.getByTestId(testId).textContent()) ?? ''
-  return Number(text.replace(/[^0-9.]/g, ''))
+async function claimableYield(page: Page): Promise<number | null> {
+  const [text] = await page.getByTestId('onchain-claimable-yield-value').allTextContents()
+  return parseUsdcAmount(text)
 }
 
 test('connect → explore → project → deposit → portfolio → withdraw → claim yield', async ({
@@ -108,17 +108,12 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     await expect(page.getByTestId('onchain-shares')).toContainText('149.25')
   })
 
-  await test.step('withdraw reaches the contract (deposit lock-up applies)', async () => {
-    // InvestmentVault locks new deposits for MIN_LOCK_PERIOD (24 h), and a
-    // local network can't fast-forward ledger time. Reaching DepositLocked
-    // (#36) proves the withdraw(from, shares_amount, min_usdc_return)
-    // arguments decode: a wrong argument list fails before the lock check.
+  await test.step('withdraw shows the active deposit lock', async () => {
     await page.goto('/withdraw')
-    await page.locator('input').first().fill('100')
-    await page.getByRole('button', { name: /withdraw \$100/i }).click()
-    await expect(page.getByRole('alert').filter({ hasText: 'Error(Contract, #36)' })).toBeVisible({
-      timeout: 60_000,
-    })
+    await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('125')
+    const withdraw = page.getByRole('button', { name: /^Withdraw(?: \$125)?$/ })
+    await expect(withdraw).toHaveAttribute('title', /withdrawals unlock in \d+ h \d+ m/i)
+    await expect(withdraw).toBeDisabled()
   })
 
   await test.step('claim yield', async () => {
@@ -126,10 +121,16 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     adminInvoke('receive_yield', ['--from', env('E2E_ADMIN_ADDRESS'), '--amount', '100000000'])
 
     await page.goto('/portfolio')
-    await expect.poll(() => amountIn(page, 'onchain-claimable-yield')).toBeGreaterThan(9.9)
+    await expect
+      .poll(async () => {
+        const amount = await claimableYield(page)
+        return amount !== null && amount > 9.9
+      })
+      .toBe(true)
     await page.getByRole('button', { name: 'Claim yield' }).click()
     await expect(page.getByText('Yield claimed')).toBeVisible({ timeout: 90_000 })
-    await expect.poll(() => amountIn(page, 'onchain-claimable-yield')).toBe(0)
+    await page.reload()
+    await expect.poll(() => claimableYield(page)).toBe(0)
   })
 })
 
