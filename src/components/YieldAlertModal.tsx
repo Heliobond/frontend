@@ -244,36 +244,6 @@ export function YieldAlertModal({
             </div>
           )}
 
-          {/* Operator toggle */}
-          <label
-            style={{
-              display: 'block',
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--type-eyebrow)',
-              fontWeight: 600,
-              color: 'var(--ink-60)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              marginBottom: 8,
-            }}
-          >
-            {t('conditionLabel')}
-          </label>
-          <div
-            style={{
-              display: 'flex',
-              gap: 0,
-              marginBottom: 16,
-              borderRadius: 'var(--radius-input)',
-              border: '1px solid var(--ink-12)',
-              overflow: 'hidden',
-            }}
-          >
-            {(['above', 'below'] as AlertOperator[]).map((op) => (
-              <button
-                key={op}
-                type="button"
-                onClick={() => setOperator(op)}
           {/* Body */}
           <div style={{ padding: '16px 24px 24px' }}>
             {/* Bond name + current yield */}

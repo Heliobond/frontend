@@ -274,6 +274,8 @@ describe('getProject', () => {
       name: selectProjectById(id)?.name,
     })
     expect(result?.verifiedMetadata).toBe('unverified')
+    expect(result?.detail.priceHistory).toEqual([])
+    expect(result?.detail.missingSections).toContain('priceHistory')
   })
 
   it('returns null when the backend has no such project', async () => {

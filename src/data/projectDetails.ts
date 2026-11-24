@@ -26,8 +26,6 @@ export interface ProjectDetail {
   creator: {
     name: string
     verified: boolean
-    since: string
-    verified: true
     /** Year the creator joined, only when a source supplies it. */
     since?: string
   }

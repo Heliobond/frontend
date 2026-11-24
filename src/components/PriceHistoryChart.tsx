@@ -8,9 +8,8 @@ import type { PricePoint } from '../data/projectDetails'
 /**
  * PriceHistoryChart — the bond's historical pricing (issue #406). Two quiet
  * ink sparklines — price (as % of par) and yield (%) — anchored by the latest
- * observation. Data comes from the flat `selectPriceHistory(id)` selector, so
- * no consumer drills into the nested detail model. SSR-safe: pure math from
- * the store. Renders nothing when a project has no recorded history yet.
+ * observation. Live projects supply their own observations. Demo projects
+ * can use the fixture selector. Renders nothing for an empty series.
  */
 export interface PriceHistoryChartProps {
   projectId: number
@@ -55,15 +54,8 @@ const seriesValueStyle: React.CSSProperties = {
   color: 'var(--ink)',
 }
 
-function delta(first: number, last: number): string {
-  const diff = last - first
-  const sign = diff >= 0 ? '+' : '−'
-  return `${sign}${formatDecimal(Math.abs(diff), 2)}`
-}
-
 export function PriceHistoryChart({ projectId, priceHistory }: PriceHistoryChartProps) {
   const t = useTranslations('PriceHistory')
-  // Use passed priceHistory if available, otherwise fall back to fixture store selector
   const history: PricePoint[] = priceHistory ?? selectPriceHistory(projectId)
   if (history.length === 0) return null
 
