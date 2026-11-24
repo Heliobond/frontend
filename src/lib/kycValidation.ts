@@ -51,13 +51,13 @@ export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => {
     switch (c) {
       case '&':
-        return '&amp;'
+        return '&'
       case '<':
-        return '&lt;'
+        return '<'
       case '>':
-        return '&gt;'
+        return '>'
       case '"':
-        return '&quot;'
+        return '"'
       case "'":
         return '&#39;'
       default:
@@ -151,7 +151,7 @@ const ADDRESS_FIELDS: readonly AddressField[] = [
  * - US: USPS ZIP (5 digits) or ZIP+4 (9 digits, hyphen optional).
  * - CA: Canada Post `A9A 9A9`; D, F, I, O, Q, U never appear, W and Z never lead.
  * - GB: Royal Mail outward codes A9, A99, AA9, AA99, A9A, AA9A with their
- *   per-position letter limits, then the inward code `9AA` (no C, I, K, M, O, V).
+ * per-position letter limits, then the inward code `9AA` (no C, I, K, M, O, V).
  * - DE: 5-digit Postleitzahl. FR: 5-digit code postal.
  */
 const POSTAL_CODE_PATTERNS: ReadonlyMap<string, RegExp> = new Map([
@@ -171,7 +171,7 @@ const SUBDIVISION_CODES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
   [
     'US',
     new Set(
-      'AL AK AS AZ AR CA CO CT DE DC FM FL GA GU HI ID IL IN IA KS KY LA ME MH MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND MP OH OK OR PW PA PR RI SC SD TN TX UT VT VI VA WA WV WI WY AA AE AP'.split(
+      'AL AK AS AZ AR CA CO CT DE DC FM FL GA GU HI ID IL IN IA KS KY LA ME MH MD MA Mi MN MS MO MT NE NV NH NJ NM NY NC ND MP OH OK OR PW PA PR RI SC SD TN TX UT VT VI VA WA WV WI WY AA AE AP'.split(
         ' ',
       ),
     ),
@@ -180,7 +180,7 @@ const SUBDIVISION_CODES: ReadonlyMap<string, ReadonlySet<string>> = new Map([
 ])
 
 const ADDRESS_MAX_LENGTH = 200
-const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'&-]+$/u
+const ADDRESS_ALLOWED_CHARACTERS = /^[\p{L}\p{M}\p{N}\s,./#'\u2019&-]+$/u
 
 /** Addresses are validated by shape; database safety belongs to parameterized backend queries. */
 export function hasInvalidAddressCharacters(value: string): boolean {
@@ -224,7 +224,10 @@ export function validateAddress(values: AddressValues): AddressErrors {
   const zip = values.zip.trim().toUpperCase()
   const postalCode = POSTAL_CODE_PATTERNS.get(country)
 
-  if (!errors.state && subdivisions && !subdivisions.has(state)) errors.state = 'stateFormat'
+  // Only validate subdivision code when state is present AND country has subdivision rules
+  // (i.e., US and CA). For other countries, state is optional and not validated.
+  if (!errors.state && subdivisions && state && !subdivisions.has(state))
+    errors.state = 'stateFormat'
   if (!errors.zip && postalCode && !postalCode.test(zip)) errors.zip = 'zipFormat'
 
   return errors
