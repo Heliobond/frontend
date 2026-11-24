@@ -2,6 +2,7 @@
 import { describe, it, expect, vi } from '@/test/bun'
 import {
   computeQuarterlyTaxReport,
+  quarterlyReportFilename,
   quarterlyReportToCsv,
   downloadCsv,
   getQuarter,
@@ -173,6 +174,48 @@ describe('quarterlyReportToCsv', () => {
     ]
     const csv = quarterlyReportToCsv(computeQuarterlyTaxReport(events))
     expect(csv.split('\n')[1]).toBe('2025-Q1,Quarter Summary,0.00,100.00,0.00,-100.00,,,,,,')
+  })
+})
+
+describe('quarterlyReportFilename (#980)', () => {
+  const deposit = (id: string, date: string): InvestmentEvent => ({
+    id,
+    projectName: 'Solar Farm A',
+    date,
+    type: 'deposit',
+    amountUSD: 100,
+  })
+
+  it('labels an empty report as covering all periods', () => {
+    expect(quarterlyReportFilename(computeQuarterlyTaxReport([]))).toBe(
+      'heliobond-quarterly-tax-report-all-periods.csv',
+    )
+  })
+
+  it('uses the exported quarter year instead of the current year', () => {
+    const report = computeQuarterlyTaxReport([deposit('1', '2024-05-01')])
+
+    expect(quarterlyReportFilename(report)).toBe('heliobond-quarterly-tax-report-2024-Q2.csv')
+  })
+
+  it('identifies the start and end quarters of a same-year export', () => {
+    const report = computeQuarterlyTaxReport([
+      deposit('1', '2025-08-01'),
+      deposit('2', '2025-02-01'),
+    ])
+
+    expect(quarterlyReportFilename(report)).toBe('heliobond-quarterly-tax-report-2025-Q1-Q3.csv')
+  })
+
+  it('identifies both years of a multi-year export', () => {
+    const report = computeQuarterlyTaxReport([
+      deposit('1', '2025-02-01'),
+      deposit('2', '2024-11-01'),
+    ])
+
+    expect(quarterlyReportFilename(report)).toBe(
+      'heliobond-quarterly-tax-report-2024-Q4-to-2025-Q1.csv',
+    )
   })
 })
 

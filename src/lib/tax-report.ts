@@ -244,6 +244,47 @@ function csvRow(fields: string[]): string {
   return fields.map(csvField).join(',')
 }
 
+/**
+ * Builds the export filename from the quarters included in the report.
+ * The label never depends on the current date, so historical exports retain
+ * the year of the activity they contain. Empty reports are labelled as
+ * covering all periods because there is no quarter from which to derive one.
+ */
+export function quarterlyReportFilename(lines: readonly QuarterlyTaxLine[]): string {
+  if (lines.length === 0) {
+    return 'heliobond-quarterly-tax-report-all-periods.csv'
+  }
+
+  let first = lines[0]
+  let last = lines[0]
+
+  for (const line of lines) {
+    if (
+      line.year < first.year ||
+      (line.year === first.year && line.quarterNumber < first.quarterNumber)
+    ) {
+      first = line
+    }
+    if (
+      line.year > last.year ||
+      (line.year === last.year && line.quarterNumber > last.quarterNumber)
+    ) {
+      last = line
+    }
+  }
+
+  const start = `${first.year}-Q${first.quarterNumber}`
+  const end = `${last.year}-Q${last.quarterNumber}`
+  const period =
+    start === end
+      ? start
+      : first.year === last.year
+        ? `${start}-Q${last.quarterNumber}`
+        : `${start}-to-${end}`
+
+  return `heliobond-quarterly-tax-report-${period}.csv`
+}
+
 export function quarterlyReportToCsv(lines: QuarterlyTaxLine[]): string {
   // Generate row-level details for each event within quarters
   // This matches the UI display and provides complete audit trail
