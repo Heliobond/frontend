@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { render as rtlRender } from '@testing-library/react'
 import { render, screen, fireEvent } from '@/test/render'
 import userEvent from '@testing-library/user-event'
@@ -65,6 +65,21 @@ describe('AddressVerificationForm', () => {
     expect(onSubmit).toHaveBeenCalled()
   })
 
+  it('updates the region requirement when switching to the United Kingdom', () => {
+    const onSubmit = vi.fn()
+    render(
+      <AddressVerificationForm
+        onSubmit={onSubmit}
+        initial={{ street: '12 Main Street', city: 'London', zip: 'SW1A 1AA' }}
+      />,
+    )
+    expect(screen.getByLabelText('State / Province *')).toBeRequired()
+    fireEvent.change(screen.getByLabelText('Country *'), { target: { value: 'GB' } })
+    expect(screen.getByLabelText('State / Province')).not.toBeRequired()
+    fireEvent.click(screen.getByRole('button', { name: 'Verify address' }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ country: 'GB', state: '' }))
+  })
+
   // Additional security-focused edge case tests for all fields
   const setField = (label: string, value: string) => {
     fireEvent.change(screen.getByLabelText(label), { target: { value } })
@@ -127,7 +142,6 @@ describe('AddressVerificationForm', () => {
       'Street address *',
       'Apartment, suite (optional)',
       'City *',
-      'State / Province *',
       'ZIP / Postal code *',
       'Country *',
     ]

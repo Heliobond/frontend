@@ -1,9 +1,9 @@
 // src/lib/tax-report.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import {
   computeQuarterlyTaxReport,
   quarterlyReportToCsv,
-  quarterlyReportFilename,
+  downloadCsv,
   getQuarter,
   activityToInvestmentEvents,
   type InvestmentEvent,
@@ -73,7 +73,9 @@ describe('computeQuarterlyTaxReport', () => {
   })
 
   it('returns an empty array for no events', () => {
-    expect(computeQuarterlyTaxReport([])).toEqual([])
+    const report = computeQuarterlyTaxReport([])
+    expect(report).toHaveLength(0)
+    expect(report.skippedCount).toBe(0)
   })
 
   it('sorts multi-year results chronologically', () => {
@@ -313,4 +315,32 @@ describe('activityToInvestmentEvents (#787)', () => {
   it('handles empty activity list', () => {
     expect(activityToInvestmentEvents([])).toEqual([])
   })
+})
+
+describe('downloadCsv', () => {
+  const header = 'Project\n"'
+
+  it.each([0, 1024 * 1024 - header.length - 1])(
+    'preserves the bytes of a quoted Unicode project name (prefix length %d)',
+    async (prefixLength) => {
+      const csv = `${header}${'a'.repeat(prefixLength)}🌞, ""Solar"""\n`
+      const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:csv')
+      const frame = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(1)
+      try {
+        downloadCsv('tax.csv', csv)
+        const blob = createObjectURL.mock.calls[0][0] as Blob
+        const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as ArrayBuffer)
+          reader.onerror = () => reject(reader.error)
+          reader.readAsArrayBuffer(blob)
+        })
+        expect(new Uint8Array(buffer)).toEqual(new TextEncoder().encode(csv))
+      } finally {
+        document.querySelector('a[download="tax.csv"]')?.remove()
+        frame.mockRestore()
+        createObjectURL.mockRestore()
+      }
+    },
+  )
 })

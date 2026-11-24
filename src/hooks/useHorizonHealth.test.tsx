@@ -1,5 +1,5 @@
 import { act, render, renderHook } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import {
   FAST_INTERVAL_MS,
   horizonHealthPoller,
@@ -19,17 +19,18 @@ const setNavigatorOnline = (online: boolean) => {
 }
 
 describe('useHorizonHealth', () => {
-  let mockFetch: ReturnType<typeof vi.fn>
+  type HealthFetch = (url: string, init?: RequestInit) => Promise<{ ok: boolean; status: number }>
+  let mockFetch: ReturnType<typeof vi.fn<HealthFetch>>
 
   beforeEach(() => {
     vi.useFakeTimers()
     setVisibility(false)
     setNavigatorOnline(true)
-    mockFetch = vi.fn().mockResolvedValue({
+    mockFetch = vi.fn<HealthFetch>().mockResolvedValue({
       ok: true,
       status: 200,
     })
-    globalThis.fetch = mockFetch as unknown as typeof fetch
+    vi.stubGlobal('fetch', mockFetch)
     horizonHealthPoller.resetForTesting()
   })
 
@@ -209,7 +210,69 @@ describe('useHorizonHealth', () => {
     unmount()
   })
 
+  it('starts a fresh network request after a rapid hide and show', async () => {
+    let rejectPending!: (error: Error) => void
+    mockFetch.mockImplementationOnce(() => new Promise((_, reject) => (rejectPending = reject)))
+
+    const { unmount } = renderHook(() => useHorizonHealth())
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    // Hide while the first probe is still pending, then immediately return.
+    act(() => {
+      setVisibility(true)
+    })
+    await act(async () => {
+      setVisibility(false)
+      await Promise.resolve()
+    })
+
+    // The aborted probe is not reused: a brand new request was issued.
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+
+    await act(async () => {
+      rejectPending(new Error('The operation was aborted'))
+      await Promise.resolve()
+    })
+    unmount()
+  })
+
+  it('a canceled probe cannot publish offline status over a successful replacement', async () => {
+    let rejectCanceled!: (error: Error) => void
+    mockFetch.mockImplementationOnce(() => new Promise((_, reject) => (rejectCanceled = reject)))
+
+    const { result, unmount } = renderHook(() => useHorizonHealth())
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      setVisibility(true)
+    })
+    await act(async () => {
+      setVisibility(false)
+      await Promise.resolve()
+    })
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(result.current.isOnline).toBe(true)
+
+    // The canceled probe settles late as a failure. It must not overwrite the
+    // online status reported by the successful replacement.
+    await act(async () => {
+      rejectCanceled(new Error('The operation was aborted'))
+      await Promise.resolve()
+    })
+    expect(result.current.isOnline).toBe(true)
+
+    unmount()
+  })
+
   it('handles window offline and online events immediately', async () => {
+    const serverSnapshot = horizonHealthPoller.getServerSnapshot()
+    expect(horizonHealthPoller.getServerSnapshot()).toBe(serverSnapshot)
     const { result, unmount } = renderHook(() => useHorizonHealth())
 
     await act(async () => {
@@ -223,6 +286,8 @@ describe('useHorizonHealth', () => {
       window.dispatchEvent(new Event('offline'))
     })
     expect(result.current.isOnline).toBe(false)
+    expect(horizonHealthPoller.getServerSnapshot()).toBe(serverSnapshot)
+    expect(serverSnapshot.isOnline).toBe(true)
 
     // While offline, timers should not poll
     await act(async () => {

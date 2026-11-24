@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 import type { Metadata } from 'next'
 import en from '../../messages/en.json'
 import fr from '../../messages/fr.json'
 import ar from '../../messages/ar.json'
-import { generateMetadata } from '../lib/routeMetadata.server'
-import manifest from './manifest'
 
 type Catalog = typeof en
 const catalogs: Record<string, Catalog> = {
@@ -22,10 +20,10 @@ function lookup(catalog: Catalog, key: string): string {
 }
 
 /**
- * Overrides the shared `next-intl/server` mock from vitest.setup.ts so these
+ * Overrides the shared `next-intl/server` mock so these
  * cases can flip the active locale and assert cookie-driven copy (#902).
  */
-const localeState = vi.hoisted(() => ({ current: 'en' }))
+const localeState = { current: 'en' }
 
 vi.mock('next-intl/server', () => ({
   getLocale: async () => localeState.current,
@@ -37,6 +35,9 @@ vi.mock('next-intl/server', () => ({
       : (key: string) => lookup(catalog, key)
   },
 }))
+
+const { generateMetadata } = await import('../lib/routeMetadata.server')
+const { default: manifest } = await import('./manifest')
 
 function firstOgImage(meta: Metadata) {
   const images = meta.openGraph?.images

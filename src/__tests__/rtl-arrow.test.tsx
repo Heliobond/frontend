@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { render, screen } from '@/test/render'
 
 function ArrowLabel({ label }: { label: string }) {

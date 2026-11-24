@@ -73,7 +73,10 @@ export function ProjectDetailClient({ id, initialData }: ProjectDetailClientProp
       }}
       onBack={() => router.push('/explore')}
     >
-      <PriceHistoryChart projectId={id} />
+      <PriceHistoryChart
+        projectId={id}
+        priceHistory={data.source === 'demo' ? undefined : data.detail.priceHistory}
+      />
     </ProjectDetail>
   )
 }

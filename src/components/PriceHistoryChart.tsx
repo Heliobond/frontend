@@ -1,19 +1,19 @@
 import { memo } from 'react'
 import { useTranslations } from 'next-intl'
 import { Sparkline } from './Sparkline'
-import { formatDecimal } from '../lib/format'
+import { formatDecimal, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
 import { selectPriceHistory } from '../state/selectors'
 import type { PricePoint } from '../data/projectDetails'
 
 /**
  * PriceHistoryChart — the bond's historical pricing (issue #406). Two quiet
  * ink sparklines — price (as % of par) and yield (%) — anchored by the latest
- * observation. Data comes from the flat `selectPriceHistory(id)` selector, so
- * no consumer drills into the nested detail model. SSR-safe: pure math from
- * the store. Renders nothing when a project has no recorded history yet.
+ * observation. Live projects supply their own observations. Demo projects
+ * can use the fixture selector. Renders nothing for an empty series.
  */
 export interface PriceHistoryChartProps {
   projectId: number
+  priceHistory?: PricePoint[]
 }
 
 const cardStyle: React.CSSProperties = {
@@ -54,16 +54,9 @@ const seriesValueStyle: React.CSSProperties = {
   color: 'var(--ink)',
 }
 
-function delta(first: number, last: number): string {
-  const diff = last - first
-  const sign = diff >= 0 ? '+' : '−'
-  return `${sign}${formatDecimal(Math.abs(diff), 2)}`
-}
-
-export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ projectId, priceHistory }: PriceHistoryChartProps) {
   const t = useTranslations('PriceHistory')
-  // Flat selector — one call, no nested-state drilling.
-  const history: PricePoint[] = selectPriceHistory(projectId)
+  const history: PricePoint[] = priceHistory ?? selectPriceHistory(projectId)
   if (history.length === 0) return null
 
   const last = history[history.length - 1]
@@ -98,12 +91,12 @@ export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
           height={40}
         />
         <span style={seriesValueStyle}>
-          {formatDecimal(last.price, 2)}
+          {formatDecimal(last.price, PRICE_DECIMALS)}
           {t('priceUnit')}
         </span>
         {history.length > 1 && (
           <span style={captionStyle}>
-            {delta(first.price, last.price)} {t('since', { date: first.date })}
+            {formatSignedChange(first.price, last.price)} {t('since', { date: first.date })}
           </span>
         )}
       </div>
@@ -119,7 +112,7 @@ export function PriceHistoryChart({ projectId }: PriceHistoryChartProps) {
         <span style={seriesValueStyle}>{formatDecimal(last.yield, 2)}%</span>
         {history.length > 1 && (
           <span style={captionStyle}>
-            {delta(first.yield, last.yield)}pp {t('since', { date: first.date })}
+            {formatSignedChange(first.yield, last.yield)}pp {t('since', { date: first.date })}
           </span>
         )}
       </div>

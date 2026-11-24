@@ -6,7 +6,7 @@
  * spinner is on until the fetch resolves, and off afterwards.
  */
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from '@/test/bun'
 
 const fetchVaultLimits = vi.fn()
 vi.mock('./vault', () => ({
@@ -22,7 +22,7 @@ vi.mock('./WalletProvider', () => ({ useWallet: () => wallet }))
 
 vi.mock('./useVaultRefresh', () => ({ useVaultRefresh: () => ({ tick: 0 }) }))
 
-import { useVaultLimits } from './useVaultLimits'
+const { useVaultLimits } = await import('./useVaultLimits')
 
 const LIMITS = {
   paused: true,

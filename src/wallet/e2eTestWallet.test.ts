@@ -1,7 +1,9 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from '@/test/bun'
 import { Account, Keypair, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk'
-import { E2ETestWalletModule } from './e2eTestWallet'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
+
+restoreNodeGlobals()
+const { E2ETestWalletModule } = await import('./e2eTestWallet')
 
 const kp = Keypair.random()
 const g = globalThis as unknown as { window?: { __HB_E2E_WALLET__?: unknown } }

@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import {
   Account,
   Keypair,
@@ -8,27 +8,28 @@ import {
   type Transaction,
   type xdr,
 } from '@stellar/stellar-sdk'
-import { allowHttpFor } from '../config/network'
 
 // Verifies that src/wallet/admin.ts correctly supports local stellar/quickstart (#720):
 // - allowHttp enabled for plain-HTTP RPC and Horizon endpoints
 // - custom NETWORK_PASSPHRASE honored when building transactions
 
-const rpcMock = vi.hoisted(() => ({
+const rpcMock = {
   simulateTransaction: vi.fn(),
   sendTransaction: vi.fn(),
   getTransaction: vi.fn(),
   serverUrls: [] as string[],
   serverOptions: [] as unknown[],
-}))
+}
 
-const horizonMock = vi.hoisted(() => ({
+const horizonMock = {
   loadAccount: vi.fn(),
   serverUrls: [] as string[],
   serverOptions: [] as unknown[],
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
   class Server {
     constructor(url: string, opts?: unknown) {
@@ -54,6 +55,8 @@ vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
     Horizon: { ...actual.Horizon, Server: HorizonServer },
   }
 })
+
+const { allowHttpFor } = await import('../config/network')
 
 const VAULT_ID = StrKey.encodeContract(Buffer.alloc(32, 1))
 const REGISTRY_ID = StrKey.encodeContract(Buffer.alloc(32, 2))

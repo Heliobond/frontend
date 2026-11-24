@@ -22,6 +22,7 @@ import {
 import { type RegistryEntry } from '@/data/admin'
 import { clampScore, validateScores, isSafeScore } from './utils'
 import { formatMoney, parseAmount } from '@/lib/format'
+import { formatScore } from '@/lib/score'
 
 export { isSafeScore }
 
@@ -145,20 +146,23 @@ export function OracleForms({
             <NumberInput
               value={credit}
               onChange={setCredit}
-              placeholder={target ? String(target.credit) : '0'}
+              placeholder={target ? formatScore(target.credit) : '0'}
             />
           </Field>
           <Field label={t('fieldGreen')} style={fieldGrowStyle}>
             <NumberInput
               value={green}
               onChange={setGreen}
-              placeholder={target ? String(target.green) : '0'}
+              placeholder={target ? formatScore(target.green) : '0'}
             />
           </Field>
         </div>
         <p style={helpText}>
           {target
-            ? t('scoresHint', { credit: target.credit, green: target.green })
+            ? t('scoresHint', {
+                credit: formatScore(target.credit),
+                green: formatScore(target.green),
+              })
             : t('scoresHintShort')}
         </p>
         {scoresDisabledReason && <BlockedNotice>{scoresDisabledReason}</BlockedNotice>}

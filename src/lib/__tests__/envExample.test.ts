@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { resolve, join } from 'node:path'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 
 const REPO_ROOT = resolve(__dirname, '../../..')
 const ENV_EXAMPLE_PATH = join(REPO_ROOT, '.env.example')

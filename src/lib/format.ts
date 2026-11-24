@@ -23,6 +23,15 @@ export function formatDecimal(value: number, decimals: number): string {
   return roundToDecimals(value, decimals).toFixed(decimals)
 }
 
+/** Decimal places shown for bond prices (% of par), on the detail screen and its chart alike. */
+export const PRICE_DECIMALS = 2
+
+/** Signed change between two observations at the shared price precision, e.g. `+0.25` or `−0.25`. */
+export function formatSignedChange(first: number, last: number, decimals = PRICE_DECIMALS): string {
+  const diff = last - first
+  return `${diff >= 0 ? '+' : '−'}${formatDecimal(Math.abs(diff), decimals)}`
+}
+
 /**
  * Formats the vault share price with the shared precision used everywhere
  * the figure appears (deposit preview, admin stat cell, data source) so the

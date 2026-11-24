@@ -7,7 +7,6 @@
 
 import { AppError } from '../lib/appError'
 import { type Project, type ProjectType } from '../data'
-import { getLocaleCode } from '../lib/format'
 import { type ProjectDetail, type ScorePoint } from '../data/projectDetails'
 import {
   selectProjects,
@@ -310,8 +309,10 @@ export function normalizeHash(
 export interface OnChainProjectRaw {
   owner: string
   uri: string
-  credit_quality: number | bigint
-  green_impact: number | bigint
+  /** May be absent on a project the oracle has not scored yet. */
+  credit_quality?: number | bigint | null
+  /** May be absent on a project the oracle has not scored yet. */
+  green_impact?: number | bigint | null
   maturity_date: number | bigint
   certification_status: number | bigint
   last_update_timestamp: number | bigint
@@ -326,7 +327,7 @@ export type OnChainProjectTuple = [number | bigint, OnChainProjectRaw]
 
 /** A single `ScoreHistoryEntry` from `get_score_history`. */
 export interface OnChainScoreHistoryEntryRaw {
-  timestamp: number | bigint
+  timestamp?: number | bigint
   credit_quality: number | bigint
   green_impact: number | bigint
 }
@@ -449,25 +450,36 @@ export function mapProjectStatus(
   }
 }
 
+/**
+ * Read an on-chain score without inventing one. A missing value and a value
+ * that cannot be converted to a finite number both stay `undefined`, so an
+ * unscored project is never mistaken for a project assigned a score of 80.
+ */
+function toScore(raw: number | bigint | null | undefined): number | undefined {
+  if (raw === null || raw === undefined) return undefined
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
 /** Map on-chain ProjectData plus its id and optional metadata to a UI Project without merging fixtures. */
 export function mapOnChainProject(
   raw: OnChainProjectRaw,
   id: number,
   metadata?: OffChainMetadata,
 ): Project {
-  const credit = Number(raw.credit_quality ?? 80)
-  const green = Number(raw.green_impact ?? 80)
+  const credit = toScore(raw.credit_quality)
+  const green = toScore(raw.green_impact)
   const lastVerifiedAt = Number(raw.last_update_timestamp) * 1000
 
-  const fundingGoal = metadata?.fundingGoal ?? 1000000
+  const fundingGoal = metadata?.fundingGoal ?? 0
 
   return {
     id,
     name: metadata?.name || `Bond Project #${id}`,
     location: metadata?.location || 'Stellar Network',
     type: metadata?.type || 'Solar',
-    credit: Number.isFinite(credit) ? credit : 80,
-    green: Number.isFinite(green) ? green : 80,
+    credit,
+    green,
     lastVerifiedAt:
       lastVerifiedAt > 0 && Number.isFinite(new Date(lastVerifiedAt).getTime())
         ? lastVerifiedAt
@@ -480,16 +492,16 @@ export function mapOnChainProject(
   }
 }
 
-/** Render a score-history unix timestamp (seconds) as a short date label. */
-function formatScoreDate(timestamp: number | bigint | undefined, index: number): string {
+/** Decode a positive ledger timestamp into Unix milliseconds for locale-independent caching. */
+function scoreObservedAt(timestamp: OnChainScoreHistoryEntryRaw['timestamp']): number | null {
+  if (typeof timestamp !== 'number' && typeof timestamp !== 'bigint') return null
   const seconds = Number(timestamp)
-  if (Number.isFinite(seconds) && seconds > 0) {
-    return new Date(seconds * 1000).toLocaleDateString(getLocaleCode(), {
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-  return `${index + 1}mo ago`
+  const milliseconds = seconds * 1000
+  return Number.isSafeInteger(seconds) &&
+    seconds > 0 &&
+    Number.isFinite(new Date(milliseconds).getTime())
+    ? milliseconds
+    : null
 }
 
 /** Read total projects count from ProjectRegistry */
@@ -715,7 +727,7 @@ export async function fetchProjectWithDetails(
       creator: {
         name: raw.owner ? `${raw.owner.slice(0, 4)}…${raw.owner.slice(-4)}` : 'Creator',
         verified: true,
-        since: '2025',
+        // The registry holds no creator-tenure data, so none is shown.
       },
       scoreHistory: scoreHistory ?? { credit: [], green: [] },
       priceHistory: project.priceHistory.map((p) => ({
@@ -773,16 +785,14 @@ export async function fetchScoreHistory(
     )) as OnChainScoreHistoryEntryRaw[]
 
     if (Array.isArray(raw) && raw.length > 0) {
-      const credit: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
-        value: Number(r.credit_quality),
-        hash: `0xscore${id}${i}`,
-      }))
-      const green: ScorePoint[] = raw.map((r, i) => ({
-        date: formatScoreDate(r.timestamp, i),
-        value: Number(r.green_impact),
-        hash: `0xscore${id}${i}`,
-      }))
+      const credit: ScorePoint[] = []
+      const green: ScorePoint[] = []
+      for (const [i, entry] of raw.entries()) {
+        const observedAt = scoreObservedAt(entry.timestamp)
+        const hash = `0xscore${id}${i}`
+        credit.push({ observedAt, value: Number(entry.credit_quality), hash })
+        green.push({ observedAt, value: Number(entry.green_impact), hash })
+      }
       const history = { credit, green }
       setInCache(cacheKey, history)
       return history

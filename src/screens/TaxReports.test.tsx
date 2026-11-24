@@ -1,7 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@/test/render'
-import { TaxReports } from './TaxReports'
-import * as taxReportLib from '@/lib/tax-report'
+import { describe, expect, it, vi, beforeEach } from '@/test/bun'
 import type { Activity } from '@/data'
 
 const mockWallet = {
@@ -22,7 +19,7 @@ vi.mock('@/hooks/usePortfolio', () => ({
   usePortfolio: () => mockPortfolio,
 }))
 
-vi.mock('@/lib/api', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('@/lib/api'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>()
   return {
     ...actual,
@@ -30,13 +27,17 @@ vi.mock('@/lib/api', async (importOriginal) => {
   }
 })
 
-vi.mock('@/lib/tax-report', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('@/lib/tax-report'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/tax-report')>()
   return {
     ...actual,
     downloadCsv: vi.fn(),
   }
 })
+
+const { render, screen, fireEvent } = await import('@/test/render')
+const { TaxReports } = await import('./TaxReports')
+const taxReportLib = await import('@/lib/tax-report')
 
 describe('TaxReports screen (#787)', () => {
   beforeEach(() => {

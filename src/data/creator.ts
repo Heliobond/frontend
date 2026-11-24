@@ -124,6 +124,40 @@ export const DRAFT_PROJECT: DraftProject = {
   fundingGoal: 250000,
 }
 
+/**
+ * The builder form's editable fields. The creator workspace owns one of these
+ * for its whole lifetime, so unmounting the builder on a tab change does not
+ * throw away a typed name, story or funding goal.
+ */
+export interface ProjectDraft extends Omit<DraftProject, 'fundingGoal'> {
+  /** Kept as a string so a partially typed amount survives a tab change too. */
+  fundingGoal: string
+  metadataUri: string
+  maturity: string
+}
+
+export const INITIAL_PROJECT_DRAFT: ProjectDraft = {
+  ...DRAFT_PROJECT,
+  fundingGoal: String(DRAFT_PROJECT.fundingGoal),
+  metadataUri: '',
+  maturity: '',
+}
+
+/** The application form has its own draft, independent of the project builder. */
+export interface ApplicationDraft {
+  orgName: string
+  projectType: ProjectType
+  location: string
+  links: string
+}
+
+export const INITIAL_APPLICATION_DRAFT: ApplicationDraft = {
+  orgName: '',
+  projectType: PROJECT_TYPES[0],
+  location: '',
+  links: '',
+}
+
 export const CREATOR_DASHBOARD: CreatorDashboard = {
   projectName: 'Cauca run-of-river hydro',
   location: 'Cauca, Colombia',

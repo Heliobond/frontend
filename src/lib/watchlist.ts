@@ -7,7 +7,11 @@ import { type BondStatus, type Project } from '../data'
 
 export const WATCHLIST_STORAGE_KEY = 'hb-watchlist'
 
-/** Read the saved bond ids. Returns [] when storage is empty or unreadable. */
+/**
+ * Read the saved bond ids. Returns [] when storage is empty or unreadable.
+ * Applies the registry's ID constraints (integers from 1 to 2^32 - 1) and
+ * deduplicates entries at the storage boundary.
+ */
 export function readWatchlist(): number[] {
   if (typeof window === 'undefined') return []
   try {
@@ -15,7 +19,15 @@ export function readWatchlist(): number[] {
     if (!stored) return []
     const parsed: unknown = JSON.parse(stored)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter((id): id is number => typeof id === 'number' && Number.isFinite(id))
+
+    // Filter to valid project IDs: integers in [1, 2^32 - 1]
+    const valid = parsed.filter(
+      (id): id is number =>
+        typeof id === 'number' && Number.isInteger(id) && id >= 1 && id <= 0xffffffff,
+    )
+
+    // Deduplicate, preserving the first occurrence of each ID
+    return [...new Set(valid)]
   } catch {
     return []
   }

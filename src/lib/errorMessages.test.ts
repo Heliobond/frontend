@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { getErrorCode, parseErrorCode } from './errorMessages'
 import { AppError } from './appError'
 

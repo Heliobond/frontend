@@ -1,9 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react'
-import { render } from '@/test/render'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { TransactionsDrawer } from './TransactionsDrawer'
-import { recordTransaction } from '../wallet/transactions'
-import { TransactionsProvider } from '../wallet/TransactionsProvider'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 // Mock AddressChip to test rendering
 vi.mock('./AddressChip', () => ({
@@ -11,6 +7,11 @@ vi.mock('./AddressChip', () => ({
     <a href={explorerUrl}>{value}</a>
   ),
 }))
+
+const { render } = await import('@/test/render')
+const { TransactionsDrawer } = await import('./TransactionsDrawer')
+const { recordTransaction } = await import('../wallet/transactions')
+const { TransactionsProvider } = await import('../wallet/TransactionsProvider')
 
 beforeEach(() => sessionStorage.clear())
 

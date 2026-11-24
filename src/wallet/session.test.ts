@@ -5,7 +5,7 @@
  * are: a stable snapshot for `useSyncExternalStore`, notification on every
  * write, and tolerance for storage being unavailable.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from '@/test/bun'
 import {
   ADDRESS_KEY,
   DEMO_WALLET_ID,
@@ -121,6 +121,20 @@ describe('wallet session store', () => {
     saveSession(ADDRESS, 'freighter')
     expect(getSession()).not.toBe(before)
     unsubscribe()
+  })
+
+  it('refreshes the cached network before notifying about a cross-tab write', () => {
+    const listener = vi.fn(() => getSession().network)
+    const unsubscribe = subscribeSession(listener)
+    try {
+      localStorage.setItem(NETWORK_KEY, 'TESTNET')
+      window.dispatchEvent(new StorageEvent('storage', { key: 'hb-theme' }))
+      expect(listener).not.toHaveBeenCalled()
+      window.dispatchEvent(new StorageEvent('storage', { key: NETWORK_KEY, newValue: 'TESTNET' }))
+      expect(listener).toHaveReturnedWith('TESTNET')
+    } finally {
+      unsubscribe()
+    }
   })
 
   it('has no session on the server, so hydration matches', () => {

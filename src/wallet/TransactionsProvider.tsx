@@ -107,9 +107,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
             if (requestTimedOut) continue
             const current = getTransactions().find((tx) => tx.hash === item.hash)
             if (!current || !isPending(current)) continue
+            const rpcStatus = data?.result?.status
+            if (
+              data?.error != null ||
+              (rpcStatus !== 'SUCCESS' && rpcStatus !== 'FAILED' && rpcStatus !== 'NOT_FOUND')
+            ) {
+              hadFailure = true
+              continue
+            }
             let status: TransactionStatus = isTimedOut ? 'timeout_pending' : 'pending'
-            if (data.result?.status === 'SUCCESS') status = 'confirmed'
-            if (data.result?.status === 'FAILED') status = 'failed'
+            if (rpcStatus === 'SUCCESS') status = 'confirmed'
+            if (rpcStatus === 'FAILED') status = 'failed'
             hadSuccessfulResponse = true
             if (status === 'timeout_pending') hasTimedOutPending = true
             updateTransaction(item.hash, status, {

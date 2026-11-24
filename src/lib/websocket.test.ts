@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 import { nativeToScVal } from '@stellar/stellar-sdk'
 import { VaultEventStream } from './websocket'
 
@@ -17,6 +17,31 @@ const visible = (hidden: boolean) => {
 }
 let stream: VaultEventStream
 let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>
+
+class Socket {
+  onopen: (() => void) | null = null
+  onmessage: ((event: { data: string }) => void) | null = null
+  onclose: (() => void) | null = null
+  onerror: (() => void) | null = null
+  close = vi.fn()
+}
+
+function mockWebSocket() {
+  const sockets: Socket[] = []
+  const connect = vi.fn()
+  vi.stubGlobal(
+    'WebSocket',
+    class extends Socket {
+      constructor() {
+        connect()
+        super()
+        sockets.push(this)
+      }
+    },
+  )
+  vi.stubEnv('NEXT_PUBLIC_WS_URL', 'wss://example.test/events')
+  return { sockets, connect }
+}
 
 beforeEach(() => {
   vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', contractId)
@@ -100,18 +125,7 @@ describe('vault event stream', () => {
   it.each(['onclose', 'onerror'] as const)(
     'falls back on WebSocket %s, without restarting after cleanup',
     async (handler) => {
-      class Socket {
-        onmessage: ((event: { data: string }) => void) | null = null
-        onclose: (() => void) | null = null
-        onerror: (() => void) | null = null
-        close = vi.fn()
-        constructor() {
-          sockets.push(this)
-        }
-      }
-      const sockets: Socket[] = []
-      vi.stubGlobal('WebSocket', Socket)
-      vi.stubEnv('NEXT_PUBLIC_WS_URL', 'wss://example.test/events')
+      const { sockets } = mockWebSocket()
       const listener = vi.fn()
       const unsubscribe = stream.subscribe(listener)
       sockets[0].onmessage!({ data: JSON.stringify({ type: 'Deposit', contractId: 'other' }) })
@@ -125,6 +139,84 @@ describe('vault event stream', () => {
       staleHandler()
       expect(fetchMock).toHaveBeenCalledTimes(1)
       expect(sockets[0].close).toHaveBeenCalled()
+    },
+  )
+
+  it('keeps fallback polling during reconnects and stops it when a socket opens', async () => {
+    vi.useFakeTimers()
+    const { sockets } = mockWebSocket()
+    fetchMock.mockImplementation(
+      (_url, init) =>
+        new Promise((_, reject) => {
+          init!.signal!.addEventListener('abort', () => reject(new Error('RPC cancelled')))
+        }),
+    )
+    const listener = vi.fn()
+    stream.subscribe(listener)
+
+    sockets[0].onclose!()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1000)
+    sockets[1].onerror!()
+    await vi.advanceTimersByTimeAsync(2000)
+    sockets[2].onclose!()
+    await vi.advanceTimersByTimeAsync(4000)
+    sockets[3].onclose!()
+    await vi.advanceTimersByTimeAsync(8000)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const lastPoll = fetchMock.mock.calls[1][1]!.signal!
+
+    sockets[4].onopen!()
+    expect(lastPoll.aborted).toBe(true)
+    sockets[4].onmessage!({ data: JSON.stringify({ type: 'Deposit', contractId }) })
+    expect(listener).toHaveBeenCalledWith({ type: 'Deposit', contractId })
+    await vi.advanceTimersByTimeAsync(30000)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(sockets).toHaveLength(5)
+
+    sockets[4].onclose!()
+    await vi.advanceTimersByTimeAsync(999)
+    expect(sockets).toHaveLength(5)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(sockets).toHaveLength(6)
+  })
+
+  it('caps reconnect backoff and retries when the socket constructor throws', async () => {
+    vi.useFakeTimers()
+    const { connect } = mockWebSocket()
+    connect.mockImplementation(() => {
+      throw new Error('Socket unavailable')
+    })
+    stream.subscribe(vi.fn())
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    for (const [i, delay] of [1000, 2000, 4000, 8000, 16000, 30000, 30000].entries()) {
+      await vi.advanceTimersByTimeAsync(delay - 1)
+      expect(connect).toHaveBeenCalledTimes(i + 1)
+      await vi.advanceTimersByTimeAsync(1)
+      expect(connect).toHaveBeenCalledTimes(i + 2)
+    }
+  })
+
+  it.each(['hide', 'unsubscribe', 'destroy'] as const)(
+    'cancels reconnect and fallback on %s',
+    async (reason) => {
+      vi.useFakeTimers()
+      const { sockets } = mockWebSocket()
+      const unsubscribe = stream.subscribe(vi.fn())
+      sockets[0].onerror!()
+      const signal = fetchMock.mock.calls[0][1]!.signal!
+
+      if (reason === 'hide') visible(true)
+      else if (reason === 'unsubscribe') unsubscribe()
+      else stream.destroy()
+
+      expect(signal.aborted).toBe(true)
+      await vi.advanceTimersByTimeAsync(30000)
+      expect(sockets).toHaveLength(1)
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      visible(false)
+      expect(sockets).toHaveLength(reason === 'hide' ? 2 : 1)
     },
   )
 })

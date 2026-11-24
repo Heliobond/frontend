@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from '@/test/bun'
 import { renderHook, act } from '@testing-library/react'
 import { useSessionTimeout } from './useSessionTimeout'
 
@@ -196,5 +196,60 @@ describe('useSessionTimeout', () => {
     })
 
     expect(onTimeout).not.toHaveBeenCalled()
+  })
+
+  it('fires onTimeout exactly once when the warning callback resumes after expiry', () => {
+    const onTimeout = vi.fn()
+    renderHook(() =>
+      useSessionTimeout({
+        timeoutMs: 5000,
+        warningMs: 1000,
+        onTimeout,
+      }),
+    )
+
+    // Simulate a suspended page: wall-clock time jumps past the deadline while
+    // the warning timer is still pending, then the callback finally runs.
+    act(() => {
+      vi.setSystemTime(Date.now() + 10_000)
+      vi.advanceTimersByTime(4000)
+    })
+
+    expect(onTimeout).toHaveBeenCalledTimes(1)
+
+    // No countdown interval should remain armed for an expired deadline.
+    act(() => {
+      vi.advanceTimersByTime(20_000)
+    })
+    expect(onTimeout).toHaveBeenCalledTimes(1)
+  })
+
+  it('expires at the configured deadline without a second timeout callback', () => {
+    const onTimeout = vi.fn()
+    const { result } = renderHook(() =>
+      useSessionTimeout({
+        timeoutMs: 5000,
+        warningMs: 2000,
+        onTimeout,
+      }),
+    )
+
+    // Warning fires at 3s with 2s left on the clock.
+    act(() => {
+      vi.advanceTimersByTime(3000)
+    })
+    expect(result.current.isWarningOpen).toBe(true)
+    expect(result.current.remainingSeconds).toBe(2)
+
+    act(() => {
+      vi.advanceTimersByTime(2000)
+    })
+    expect(onTimeout).toHaveBeenCalledTimes(1)
+    expect(result.current.isWarningOpen).toBe(false)
+
+    act(() => {
+      vi.advanceTimersByTime(10_000)
+    })
+    expect(onTimeout).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,9 +1,10 @@
 import { act, renderHook } from '@testing-library/react'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { useVaultRefresh } from './useVaultRefresh'
-import { notifyTransactionConfirmed } from './vaultEvents'
+import { afterEach, beforeEach, expect, it, vi } from '@/test/bun'
 
 vi.mock('../lib/websocket', () => ({ subscribeVaultEvents: () => () => {} }))
+
+const { useVaultRefresh } = await import('./useVaultRefresh')
+const { notifyTransactionConfirmed } = await import('./vaultEvents')
 const visibility = (hidden: boolean) => {
   Object.defineProperty(document, 'hidden', { configurable: true, value: hidden })
   document.dispatchEvent(new Event('visibilitychange'))

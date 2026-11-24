@@ -17,10 +17,12 @@ export interface ProjectCardProps {
   location: string
   /** Optional URL or path to the project background hero image. */
   image?: string
-  /** Solar credit score rating (0-100) displayed in the credit ScoreGauge. */
+  /** Solar credit score rating (0-100); `undefined` shows as unavailable. */
   credit?: number
-  /** Environmental/green rating (0-100) displayed in the green ScoreGauge. */
+  /** Environmental/green rating (0-100); `undefined` shows as unavailable. */
   green?: number
+  /** Optional status shown on either gauge until a score is assigned. */
+  unratedScoreLabel?: string
   /** Human-readable string representing total funded amount (e.g. "$1.2M"). */
   funded?: string
   /** Label for the funding display section (e.g. "Total Funded"). */
@@ -45,8 +47,9 @@ export function ProjectCard({
   name,
   location,
   image,
-  credit = 0,
-  green = 0,
+  credit,
+  green,
+  unratedScoreLabel,
   funded,
   fundedLabel = '',
   verifiedAgo,
@@ -135,8 +138,20 @@ export function ProjectCard({
         </h3>
 
         <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
-          <ScoreGauge value={credit} label="Credit" size={84} stroke={7} />
-          <ScoreGauge value={green} label="Green" size={84} stroke={7} />
+          <ScoreGauge
+            value={credit}
+            unratedLabel={unratedScoreLabel}
+            label="Credit"
+            size={84}
+            stroke={7}
+          />
+          <ScoreGauge
+            value={green}
+            unratedLabel={unratedScoreLabel}
+            label="Green"
+            size={84}
+            stroke={7}
+          />
         </div>
 
         <div
@@ -225,6 +240,7 @@ ProjectCard.propTypes = {
   image: PropTypes.string,
   credit: PropTypes.number,
   green: PropTypes.number,
+  unratedScoreLabel: PropTypes.string,
   funded: PropTypes.string,
   fundedLabel: PropTypes.string,
   verifiedAgo: PropTypes.string,

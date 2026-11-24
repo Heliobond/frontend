@@ -1,17 +1,19 @@
 import { act, render, renderHook } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getAlerts, writeAlerts, type YieldAlert } from '../lib/yieldAlerts'
-import { selectProjects } from '../state/selectors'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import type { YieldAlert } from '../lib/yieldAlerts'
 import en from '../../messages/en.json'
 import fr from '../../messages/fr.json'
-import { YieldAlertProvider, useYieldAlerts } from './YieldAlertProvider'
 
-const { toastMock } = vi.hoisted(() => ({ toastMock: vi.fn() }))
+const { toastMock } = { toastMock: vi.fn() }
 
 vi.mock('../components/Toast', () => ({
   useToast: () => ({ toast: toastMock }),
 }))
+
+const { getAlerts, writeAlerts } = await import('../lib/yieldAlerts')
+const { selectProjects } = await import('../state/selectors')
+const { YieldAlertProvider, useYieldAlerts } = await import('./YieldAlertProvider')
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <NextIntlClientProvider locale="en" messages={en}>

@@ -15,7 +15,7 @@ import {
   warningBoxStyle,
   warningTextStyle,
 } from '@/theme'
-import { PROJECT_TYPES, DRAFT_PROJECT, type ProjectType } from '@/data/creator'
+import { PROJECT_TYPES, INITIAL_PROJECT_DRAFT, type ProjectDraft } from '@/data/creator'
 import { formatMoney } from '@/lib/format'
 import { parseMoneyInput } from '@/lib/moneyInput'
 import { translateContractError } from '@/lib/contractErrors'
@@ -54,6 +54,13 @@ type PublishState =
 export interface ProjectBuilderProps {
   /** Switch the Creator space to the Apply tab (#697). */
   onApply?: () => void
+  /**
+   * Draft owned by the creator workspace. When supplied, the builder is
+   * controlled and its fields survive this component being unmounted on a tab
+   * change. Standalone use falls back to its own draft.
+   */
+  draft?: ProjectDraft
+  onDraftChange?: (draft: ProjectDraft) => void
 }
 
 /**
@@ -67,20 +74,21 @@ export interface ProjectBuilderProps {
  * repeats the contract's URI and maturity rules before any signature is asked
  * for, and a non-whitelisted wallet is sent to the Apply tab instead (#697).
  */
-export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
+export function ProjectBuilder({ onApply, draft, onDraftChange }: ProjectBuilderProps = {}) {
   const t = useTranslations('Creator')
   const tContract = useTranslations('ContractErrors')
   const locale = useLocale()
   const { address, sign } = useWallet()
 
-  const [name, setName] = useState(DRAFT_PROJECT.name)
-  const [location, setLocation] = useState(DRAFT_PROJECT.location)
-  const [type, setType] = useState<ProjectType>(DRAFT_PROJECT.type)
-  const [story, setStory] = useState(DRAFT_PROJECT.story)
-  const [fundingGoal, setFundingGoal] = useState(String(DRAFT_PROJECT.fundingGoal))
-  const [metadataUri, setMetadataUri] = useState('')
+  // The workspace keeps the draft; this component only renders and patches it.
+  const [localDraft, setLocalDraft] = useState<ProjectDraft>(INITIAL_PROJECT_DRAFT)
+  const draftValue = draft ?? localDraft
+  const patchDraft = (patch: Partial<ProjectDraft>) => {
+    if (onDraftChange) onDraftChange({ ...draftValue, ...patch })
+    else setLocalDraft((prev) => ({ ...prev, ...patch }))
+  }
+  const { name, location, type, story, fundingGoal, metadataUri, maturity } = draftValue
   const [uriTouched, setUriTouched] = useState(false)
-  const [maturity, setMaturity] = useState('')
   const [maturityTouched, setMaturityTouched] = useState(false)
   const [metadataHash, setMetadataHash] = useState<{ json: string; hash: Uint8Array } | null>(null)
   const [hashUnavailable, setHashUnavailable] = useState(false)
@@ -254,7 +262,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
               id="hb-name"
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => patchDraft({ name: e.target.value })}
               style={inputStyle}
             />
           </Field>
@@ -264,7 +272,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
               id="hb-bloc"
               type="text"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(e) => patchDraft({ location: e.target.value })}
               style={inputStyle}
             />
           </Field>
@@ -277,7 +285,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
               aria-label={t('fieldProjectType')}
             >
               {PROJECT_TYPES.map((pt) => (
-                <Tag key={pt} selected={type === pt} onClick={() => setType(pt)}>
+                <Tag key={pt} selected={type === pt} onClick={() => patchDraft({ type: pt })}>
                   {t(`type${pt}` as Parameters<typeof t>[0])}
                 </Tag>
               ))}
@@ -288,7 +296,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
             <textarea
               id="hb-story"
               value={story}
-              onChange={(e) => setStory(e.target.value)}
+              onChange={(e) => patchDraft({ story: e.target.value })}
               rows={4}
               style={{
                 ...inputStyle,
@@ -320,7 +328,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
                 type="text"
                 inputMode="decimal"
                 value={fundingGoal}
-                onChange={(e) => setFundingGoal(e.target.value)}
+                onChange={(e) => patchDraft({ fundingGoal: e.target.value })}
                 aria-invalid={goalError != null}
                 aria-describedby={goalError ? goalErrorId : undefined}
                 style={{
@@ -345,7 +353,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
               type="url"
               value={metadataUri}
               placeholder="ipfs://bafy…/project.json"
-              onChange={(e) => setMetadataUri(e.target.value)}
+              onChange={(e) => patchDraft({ metadataUri: e.target.value })}
               onBlur={() => setUriTouched(true)}
               aria-invalid={showUriError}
               aria-describedby={showUriError ? uriErrorId : undefined}
@@ -367,7 +375,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
               id="hb-maturity"
               type="date"
               value={maturity}
-              onChange={(e) => setMaturity(e.target.value)}
+              onChange={(e) => patchDraft({ maturity: e.target.value })}
               onBlur={() => setMaturityTouched(true)}
               aria-invalid={showMaturityError}
               aria-describedby={showMaturityError ? maturityErrorId : undefined}
@@ -426,8 +434,7 @@ export function ProjectBuilder({ onApply }: ProjectBuilderProps = {}) {
           <ProjectCard
             name={debouncedName || 'Your project name'}
             location={debouncedLocation || 'Add a location'}
-            credit={0}
-            green={0}
+            unratedScoreLabel={t('pendingVerified')}
             funded={debouncedGoalLabel}
             fundedLabel={t('dashFunding')}
             verifiedLabel={t('pendingVerified')}

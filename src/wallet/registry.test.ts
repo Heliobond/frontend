@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from '@/test/bun'
 import {
   fetchTotalProjects,
   fetchProjectsPage,
@@ -559,8 +559,8 @@ describe('registry client', () => {
         // Valid fields are retained
         expect(res?.project.name).toBe('Real Solar Farm')
         expect(res?.project.location).toBe('Nevada, USA')
-        // Invalid string fundingGoal was dropped, falling back to typed number default 1000000
-        expect(res?.project.fundingGoal).toBe(1000000)
+        // Invalid metadata must leave the funding goal unknown.
+        expect(res?.project.fundingGoal).toBe(0)
         expect(typeof res?.project.fundingGoal).toBe('number')
         // Invalid non-array priceHistory was dropped to empty array
         expect(res?.project.priceHistory).toEqual([])
@@ -652,7 +652,8 @@ describe('registry client', () => {
         expect(mapped.location).toBe('Stellar Network')
         expect(mapped.fundedAmount).toBe(0)
         expect(mapped.funded).toBe('$0')
-        expect(mapped.fundingGoal).toBe(1000000)
+        expect(mapped.fundingGoal).toBe(0)
+        expect(mapOnChainProject(rawOnChain, 1, { fundingGoal: 1000000 }).fundingGoal).toBe(1000000)
         expect(mapped.priceHistory).toEqual([])
       })
     })
