@@ -35,7 +35,7 @@ We don't merge unsolicited PRs that aren't tied to an accepted issue — it keep
 
 ## Local setup
 
-Prerequisites: [**bun**](https://bun.sh) **1.2.4** (the package manager / runner) and Node 22+.
+Prerequisites: [**bun**](https://bun.sh) **1.4.5** (the package manager / runner) and Node 22+.
 
 ```bash
 git clone https://github.com/Heliobond/frontend.git
@@ -52,8 +52,8 @@ bun run typecheck           # tsc --noEmit
 bun run lint                # ESLint
 bun run format:check        # Prettier — check only
 bun run format              # Prettier — rewrite files in place
-bun run test                # Vitest unit + component test suite
-bun run test:coverage       # Vitest with the coverage thresholds CI enforces
+bun run test                # Bun unit + component test suite
+bun run test:coverage       # Bun with the coverage thresholds CI enforces
 bun run test:e2e            # Playwright end-to-end tests (dev server)
 bun run test:e2e:production # Playwright against a production build with CSP enforced
 bun run test:e2e:chain      # Playwright against a local Stellar network (see below)
@@ -86,15 +86,15 @@ checks you run locally before you open a PR.
 
 ## Testing
 
-### Unit and component tests (Vitest)
+### Unit and component tests
 
-The project uses [Vitest](https://vitest.dev) with a jsdom environment and
+The project uses [Bun’s test runner](https://bun.com/docs/test) with jsdom and
 [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
-for component rendering (config: `vitest.config.mts`, `vitest.setup.ts`).
+for component rendering. Runner setup and discovery are configured in `bunfig.toml`.
 
 ```bash
-bun run test        # run all tests once and exit
-bun run test:ui     # open the Vitest browser UI
+bun run test                            # run the full suite
+bun run test src/wallet/vault.test.ts   # run a single file
 ```
 
 **Structure.** Unit and component tests are co-located with the code they
@@ -102,9 +102,8 @@ cover, as `<Name>.test.ts` / `<Name>.test.tsx` next to `<Name>.ts(x)` — e.g.
 `src/components/Button.test.tsx`, `src/wallet/vault.test.ts`,
 `src/hooks/useSessionTimeout.test.ts`. Tests that cover cross-cutting behaviour
 rather than a single module (i18n catalog parity, shared bond math, contrast
-ratios) live in `src/__tests__/` instead. Vitest picks up anything matching
-`**/*.test.{ts,tsx}`, so a new test file just needs the right name and location
-to be included automatically.
+ratios) live in `src/__tests__/`. Bun discovers tests under `src/` and `scripts/`.
+Import test APIs from `@/test/bun`.
 
 **Helpers.** A shared render helper lives in `src/test/render.tsx`. It wraps
 components in the `LocaleProvider` (i18n) and `ThemeProvider` the app uses at
@@ -123,24 +122,20 @@ test('renders the primary label', () => {
 ```
 
 If a test needs `next-intl` strings, they come from `messages/en.json` via the
-helper's `LocaleProvider` — no extra setup required. Add new unit tests next to
-the code under test using this pattern; there's no separate mocking layer to
-configure beyond what `vitest.setup.ts` already provides.
+helper's `LocaleProvider`. Add new unit tests next to the code under test.
 
 ### Coverage thresholds
 
 ```bash
-bun run test:coverage   # vitest run --coverage, then enforce the thresholds
+bun run test:coverage   # run bun test with Istanbul instrumentation and enforce the thresholds
 ```
 
-`bun run test` reports nothing about coverage; **this is the command CI runs**
-(`.github/workflows/ci.yml`), so an unmet threshold fails your PR even when the
-tests themselves pass.
+CI runs `bun run test:coverage`, so an unmet threshold fails the check even when
+the tests pass.
 
-`vitest.config.mts` is the source of truth for coverage. Every file under `src/`
-is instrumented, and the thresholds below mirror its `thresholds` block. The
-doc test in `src/__tests__/contributingCoverage.test.ts` fails if a threshold key
-is added to the config but not listed here.
+`scripts/test-coverage-config.mjs` defines the source scope, exclusions, and
+thresholds. The report includes eligible files that the tests never import. A
+doc test checks that each configured threshold is listed below.
 
 | Threshold key                     | Minimum                            |
 | --------------------------------- | ---------------------------------- |

@@ -66,15 +66,13 @@ export function Deposit({ onDone }: DepositProps) {
   } = useVault()
   const { minDeposit, paused, maxTx } = useVaultLimits()
   const { balance } = useUsdcBalance()
-  const quickDepositAmounts = Array.from(
-    new Set(
-      [
-        minDeposit,
-        balance !== null ? Math.min(250, balance) : 250,
-        balance !== null ? Math.min(500, balance) : 500,
-      ].filter((preset) => preset >= minDeposit),
-    ),
-  )
+  const depositLimit = Math.min(balance ?? maxTx, maxTx)
+  const canOfferPresets = !paused && depositLimit >= minDeposit
+  const quickDepositAmounts = canOfferPresets
+    ? [...new Set([minDeposit, Math.min(250, depositLimit), Math.min(500, depositLimit)])].filter(
+        (preset) => preset >= minDeposit,
+      )
+    : []
   const [step, setStep] = useState<DepositStep>('amount')
   const [amount, setAmount] = useState(DEFAULT_DEPOSIT_USDC)
   const [memo, setMemo] = useState('')
@@ -292,11 +290,17 @@ export function Deposit({ onDone }: DepositProps) {
                 balance={balance !== null ? formatDecimal(balance, 2) : 'Balance unavailable'}
                 chips={quickDepositAmounts}
                 min={minDeposit}
-                max={balance !== null ? Math.min(balance, maxTx) : maxTx}
-                cap={balance !== null ? balance : undefined}
-                capMessage={balance !== null ? t('capMessage', { cap: balance }) : undefined}
-                maxChipLabel={t('maxChip')}
-                capActionLabel={t('depositMaxAvailable')}
+                max={depositLimit}
+                cap={balance !== null ? depositLimit : undefined}
+                capMessage={
+                  balance !== null
+                    ? balance > maxTx
+                      ? t('amountExceedsPool')
+                      : t('capMessage', { cap: balance })
+                    : undefined
+                }
+                maxChipLabel={canOfferPresets ? t('maxChip') : undefined}
+                capActionLabel={canOfferPresets ? t('depositMaxAvailable') : undefined}
                 preview={
                   vaultLoading ? (
                     <span

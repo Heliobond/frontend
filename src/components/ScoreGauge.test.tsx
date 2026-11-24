@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { ScoreGauge } from './ScoreGauge'
 
 describe('ScoreGauge arc geometry and clamping', () => {
@@ -75,5 +75,23 @@ describe('ScoreGauge arc geometry and clamping', () => {
     const svg = container.querySelector('svg')
     expect(svg).toHaveAttribute('width', '200')
     expect(svg).toHaveAttribute('height', '200')
+  })
+
+  it('shows an explicit fallback for an unassigned score', () => {
+    render(<ScoreGauge label="Credit" />)
+    expect(screen.getByText('Unavailable')).toBeInTheDocument()
+    expect(screen.getByRole('img')).toHaveAttribute('aria-label', 'Credit: Unavailable')
+  })
+
+  it('keeps an assigned score of 80 visible', () => {
+    render(<ScoreGauge value={80} label="Credit" />)
+    expect(screen.getByText('80')).toBeInTheDocument()
+    expect(screen.queryByText('Unavailable')).not.toBeInTheDocument()
+  })
+
+  it('displays an assigned zero even when an unrated label is provided', () => {
+    render(<ScoreGauge value={0} label="Credit" unratedLabel="pending" />)
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Credit: 0/100' })).toBeInTheDocument()
   })
 })

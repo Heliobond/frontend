@@ -6,6 +6,7 @@ import { FormField, FormInput, FormSelect } from './FormField'
 import { Button } from './Button'
 import { scrollToFirstError } from '../lib/scrollToError'
 import {
+  isAddressStateRequired,
   validateAddress,
   type AddressValues,
   type AddressErrors,
@@ -51,6 +52,7 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
     apartment: initial?.apartment ?? '',
   })
   const [errors, setErrors] = useState<AddressErrors>({})
+  const stateRequired = isAddressStateRequired(values.country)
 
   function validate(): boolean {
     const next = validateAddress(values)
@@ -145,14 +147,14 @@ export function AddressVerificationForm({ onSubmit, initial }: Props) {
           {fieldError('city')}
         </div>
         <div data-field-wrapper>
-          <FormField label={`${t('state')} *`} htmlFor="addr-state">
+          <FormField label={`${t('state')}${stateRequired ? ' *' : ''}`} htmlFor="addr-state">
             <FormInput
               id="addr-state"
               autoComplete="address-level1"
               value={values.state}
               onChange={(e) => setValues({ ...values, state: e.target.value })}
               {...errorProps('state')}
-              required
+              required={stateRequired}
             />
           </FormField>
           {fieldError('state')}

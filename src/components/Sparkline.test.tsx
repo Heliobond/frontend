@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { Sparkline } from './Sparkline'
 import { render } from '@testing-library/react'
 
@@ -194,5 +194,32 @@ describe('Sparkline', () => {
       const polyline = container.querySelector('polyline')
       expect(polyline).toBeInTheDocument()
     })
+  })
+})
+
+describe('Sparkline long series', () => {
+  it('bounds rendered points and keeps endpoints and extrema at their original positions', () => {
+    const series = Array<number>(200_000).fill(0)
+    series[0] = 5
+    series[170_000] = 100
+    series[180_000] = -100
+    series[series.length - 1] = -5
+    const { container } = render(<Sparkline points={series} />)
+    const samples = [...container.querySelectorAll('circle[fill="transparent"]')]
+    const findObservation = (value: number) =>
+      samples.find((circle) => circle.textContent === String(value))
+    const vertexCount = container
+      .querySelector('polyline')
+      ?.getAttribute('points')
+      ?.split(' ').length
+
+    expect(samples.length).toBeLessThanOrEqual(120)
+    expect(vertexCount).toBe(samples.length)
+    expect(samples[0]).toHaveTextContent(/^5$/)
+    expect(samples.at(-1)).toHaveTextContent(/^-5$/)
+    expect(Number(findObservation(100)?.getAttribute('cx'))).toBeCloseTo(109.4005)
+    expect(Number(findObservation(-100)?.getAttribute('cx'))).toBeCloseTo(115.6006)
+    expect(findObservation(100)).toHaveAttribute('cy', '4')
+    expect(findObservation(-100)).toHaveAttribute('cy', '32')
   })
 })

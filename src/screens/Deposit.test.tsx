@@ -1,7 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@/test/render'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Deposit } from './Deposit'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const mockWallet = {
   address: 'GBQHWXVZ2K4M6N8P3R5T7W9YA2C4E6G8J3L5Q7S9U2X4Z6B8D1F3H59XQ',
@@ -18,6 +16,10 @@ const mockUsdcBalanceState = {
   refresh: vi.fn(),
 }
 
+const mockVaultLimits = { minDeposit: 100, maxTx: 100000, paused: false }
+
+vi.mock('../wallet/useVaultLimits', () => ({ useVaultLimits: () => mockVaultLimits }))
+
 vi.mock('../wallet/WalletProvider', () => ({
   useWallet: () => mockWallet,
 }))
@@ -26,13 +28,16 @@ vi.mock('../wallet/useUsdcBalance', () => ({
   useUsdcBalance: () => mockUsdcBalanceState,
 }))
 
-vi.mock('../wallet/vault', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('../wallet/vault'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('../wallet/vault')>()
   return {
     ...actual,
     submitDeposit: vi.fn(),
   }
 })
+
+const { render, screen, fireEvent, waitFor } = await import('@/test/render')
+const { Deposit } = await import('./Deposit')
 
 describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
   beforeEach(() => {
@@ -42,6 +47,7 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     mockUsdcBalanceState.balance = 5000
     mockUsdcBalanceState.loading = false
     mockUsdcBalanceState.error = null
+    mockVaultLimits.maxTx = 100000
   })
 
   it('uses the on-chain USDC balance for the balance line, Max chip, and cap notice', () => {
@@ -69,6 +75,8 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     render(<Deposit onDone={vi.fn()} />)
 
     expect(screen.getByText(/50\.00 USDC/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '100' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Max' })).not.toBeInTheDocument()
 
     // Submit button shows the exceeds balance reason and is disabled
     const submitBtn = screen.getByRole('button', { name: /^invest$/i })
@@ -77,6 +85,23 @@ describe('Deposit — Live USDC Balance and Cap Enforcement (#698)', () => {
     // User cannot continue to review step
     fireEvent.click(submitBtn)
     expect(screen.queryByText(/You're investing/i)).not.toBeInTheDocument()
+  })
+
+  it('caps quick amounts and Max at the transaction limit', () => {
+    mockUsdcBalanceState.balance = 1000
+    mockVaultLimits.maxTx = 200
+    render(<Deposit onDone={vi.fn()} />)
+
+    expect(screen.queryByRole('button', { name: '250' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '500' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '200' }))
+    expect(screen.getByRole('button', { name: 'Invest 200 USDC' })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
+    fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: '100' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Max' }))
+    expect(screen.getByLabelText(/Amount/i)).toHaveValue('200')
   })
 
   it('shows "Balance unavailable" and does not enforce an artificial cap when balance cannot be read', () => {

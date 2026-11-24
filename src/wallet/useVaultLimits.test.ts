@@ -6,7 +6,7 @@
  * spinner is on until the fetch resolves, and off afterwards.
  */
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from '@/test/bun'
 
 const fetchVaultLimits = vi.fn()
 vi.mock('./vault', () => ({
@@ -22,7 +22,7 @@ vi.mock('./WalletProvider', () => ({ useWallet: () => wallet }))
 
 vi.mock('./useVaultRefresh', () => ({ useVaultRefresh: () => ({ tick: 0 }) }))
 
-import { useVaultLimits } from './useVaultLimits'
+const { useVaultLimits } = await import('./useVaultLimits')
 
 const LIMITS = {
   paused: true,
@@ -59,6 +59,32 @@ it('exposes the fetched limits', async () => {
   await waitFor(() => expect(result.current.paused).toBe(true))
   expect(result.current.maxTx).toBe(482)
   expect(result.current.utilizationBps).toBe(500)
+})
+
+it('uses the on-chain lock for real wallets in E2E builds, even with a demo lock fixture', async () => {
+  vi.stubEnv('NEXT_PUBLIC_E2E_TEST_WALLET', 'true')
+  const key = 'hb-e2e-withdraw-lock-expires-at'
+  localStorage.setItem(key, '1234')
+  try {
+    fetchVaultLimits.mockResolvedValue(LIMITS)
+    const { result } = renderHook(() => useVaultLimits())
+    await waitFor(() => expect(result.current.lockExpiresAt).toBe(LIMITS.lockExpiresAt))
+  } finally {
+    localStorage.removeItem(key)
+  }
+})
+
+it('preserves the lock fixture for the demo wallet', () => {
+  vi.stubEnv('NEXT_PUBLIC_E2E_TEST_WALLET', 'true')
+  wallet.isDemo = true
+  const key = 'hb-e2e-withdraw-lock-expires-at'
+  localStorage.setItem(key, '1234')
+  try {
+    const { result } = renderHook(() => useVaultLimits())
+    expect(result.current.lockExpiresAt).toBe(1234)
+  } finally {
+    localStorage.removeItem(key)
+  }
 })
 
 it('is loading until the request settles, then not', async () => {

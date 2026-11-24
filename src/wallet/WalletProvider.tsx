@@ -107,6 +107,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [walletNetworkPassphrase, setWalletNetworkPassphrase] = useState<string | null>(null)
   const [lastDisconnectReason, setLastDisconnectReason] = useState<DisconnectReason | null>(null)
   const initedNetworkRef = useRef<AppNetwork | null>(null)
+  const connection = useRef<AbortController | null>(null)
+  const attachedWallet = useRef<{ address: string; id: string; network: AppNetwork } | null>(null)
+
+  useEffect(() => () => connection.current?.abort(), [])
   const appPassphrase = passphraseForNetwork(stored.network ?? getInitialNetwork())
 
   const address = stored.address || null
@@ -152,20 +156,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [network, appPassphrase])
 
   /** Ask the wallet which network it is on. null when the wallet can't say. */
-  const readWalletNetwork = useCallback(async (): Promise<string | null> => {
-    try {
-      await ensureInit()
-      const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
-      const { networkPassphrase } = await StellarWalletsKit.getNetwork()
-      const passphrase = networkPassphrase || null
-      setWalletNetworkPassphrase(passphrase)
-      return passphrase
-    } catch {
-      // Not every wallet exposes its network; don't block on it.
-      setWalletNetworkPassphrase(null)
-      return null
-    }
-  }, [ensureInit])
+  const readWalletNetwork = useCallback(
+    async (signal?: AbortSignal): Promise<string | null> => {
+      try {
+        await ensureInit()
+        const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
+        const { networkPassphrase } = await StellarWalletsKit.getNetwork()
+        const passphrase = networkPassphrase || null
+        if (!signal?.aborted) setWalletNetworkPassphrase(passphrase)
+        return passphrase
+      } catch {
+        // Not every wallet exposes its network; don't block on it.
+        if (!signal?.aborted) setWalletNetworkPassphrase(null)
+        return null
+      }
+    },
+    [ensureInit],
+  )
 
   const checkWalletNetwork = useCallback(async (): Promise<boolean> => {
     if (isDemo || !address) return true
@@ -184,6 +191,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const restoredWallet = stored.walletId
   useEffect(() => {
     if (!address || !restoredWallet || restoredWallet === DEMO_WALLET_ID) return
+    const attached = attachedWallet.current
+    if (
+      attached?.address === address &&
+      attached.id === restoredWallet &&
+      attached.network === network
+    )
+      return
     let cancelled = false
     void (async () => {
       setSyncing(true)
@@ -201,77 +215,92 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [address, restoredWallet, ensureInit, readWalletNetwork])
+  }, [address, restoredWallet, network, ensureInit, readWalletNetwork])
 
-  // Self-reference for the retry loop, held in a ref so `connectWithRetry` does
-  // not have to list itself as a dependency (and cannot read itself mid-declaration).
-  const connectWithRetryRef = useRef<(attempt?: number) => Promise<void>>(async () => {})
+  const connect = useCallback(async (): Promise<void> => {
+    if (connection.current) return
+    const controller = new AbortController()
+    const { signal } = controller
+    connection.current = controller
+    setConnecting(true)
+    setRetryCount(0)
+    setConnectionError(null)
 
-  const connectWithRetry = useCallback(
-    async (attempt = 0): Promise<void> => {
-      setConnecting(true)
-      setSyncing(true)
-      setConnectionError(null)
-      try {
-        await ensureInit()
-        const { StellarWalletsKit } = await import('@creit.tech/stellar-wallets-kit')
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), CONNECT_TIMEOUT_MS),
-        )
-        const authPromise = StellarWalletsKit.authModal() as Promise<{ address: string }>
-        const { address: addr } = await Promise.race([authPromise, timeoutPromise])
+    const cancelled = new Promise<never>((_, reject) => {
+      signal.addEventListener('abort', () => reject(signal.reason), { once: true })
+    })
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      await Promise.race([ensureInit(), cancelled])
+      const { StellarWalletsKit } = await Promise.race([
+        import('@creit.tech/stellar-wallets-kit'),
+        cancelled,
+      ])
+      for (let attempt = 0; attempt <= MAX_AUTO_RETRIES; attempt++) {
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error('timeout')), CONNECT_TIMEOUT_MS)
+        })
+        let addr: string
+        try {
+          const auth = StellarWalletsKit.authModal() as Promise<{ address: string }>
+          const result = await Promise.race([auth, timeout, cancelled])
+          addr = result.address
+        } catch (error) {
+          clearTimeout(timer)
+          if (signal.aborted || !(error instanceof Error && error.message === 'timeout')) {
+            throw error
+          }
+          if (attempt === MAX_AUTO_RETRIES) throw error
+          setRetryCount(attempt + 1)
+          const delay = new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, 1000 * 2 ** attempt)
+          })
+          await Promise.race([delay, cancelled])
+          continue
+        } finally {
+          clearTimeout(timer)
+        }
+
         let walletId = 'wallet'
         try {
-          walletId = StellarWalletsKit.selectedModule?.productId ?? 'wallet'
+          walletId = StellarWalletsKit.selectedModule?.productId ?? walletId
         } catch {
           /* fallback */
         }
         setLastDisconnectReason(null)
         setRetryCount(0)
+        setWalletNetworkPassphrase(null)
+        attachedWallet.current = { address: addr, id: walletId, network }
         persist(addr, walletId)
-        await readWalletNetwork()
-      } catch (e) {
-        const isTimeout = e instanceof Error && e.message === 'timeout'
-        const isCancelled = e instanceof Error && /dismiss|cancel|closed/i.test(e.message)
-        if (isCancelled) {
-          return
-        }
-        if (isTimeout && attempt < MAX_AUTO_RETRIES) {
-          setRetryCount(attempt + 1)
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)))
-          return connectWithRetryRef.current(attempt + 1)
-        }
-        setConnectionError(
-          isTimeout
-            ? 'Connection timed out — please check your network and try again.'
-            : 'Could not connect to wallet — please try again.',
-        )
-      } finally {
-        setConnecting(false)
-        setSyncing(false)
+        // Some wallets never answer getNetwork. An accepted connection can still be used.
+        timer = setTimeout(() => controller.abort(), CONNECT_TIMEOUT_MS)
+        await Promise.race([readWalletNetwork(signal), cancelled])
+        return
       }
-    },
-    [ensureInit, persist, readWalletNetwork],
-  )
-
-  // Publish the latest callback for the retry loop, after commit so the ref is
-  // never written during render.
-  useEffect(() => {
-    connectWithRetryRef.current = connectWithRetry
-  }, [connectWithRetry])
-
-  const connect = useCallback(async () => {
-    setRetryCount(0)
-    await connectWithRetry(0)
-  }, [connectWithRetry])
-
-  const retry = useCallback(async () => {
-    setRetryCount(0)
-    setConnectionError(null)
-    await connectWithRetry(0)
-  }, [connectWithRetry])
+    } catch (error) {
+      if (
+        signal.aborted ||
+        (error instanceof Error && /dismiss|cancel|closed/i.test(error.message))
+      ) {
+        setRetryCount(0)
+        return
+      }
+      setConnectionError(
+        error instanceof Error && error.message === 'timeout'
+          ? 'Connection timed out — please check your network and try again.'
+          : 'Could not connect to wallet — please try again.',
+      )
+    } finally {
+      clearTimeout(timer)
+      connection.current = null
+      setConnecting(false)
+    }
+  }, [ensureInit, network, persist, readWalletNetwork])
 
   const connectDemo = useCallback(() => {
+    connection.current?.abort()
+    attachedWallet.current = null
+    setSyncing(false)
     setLastDisconnectReason(null)
     setConnectionError(null)
     persist(DEMO_ADDRESS, DEMO_WALLET_ID)
@@ -325,6 +354,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
    * uses this to stay quiet for those and warn only for unexpected drops (#595).
    */
   const disconnect = useCallback((reason: DisconnectReason = 'user') => {
+    connection.current?.abort()
+    attachedWallet.current = null
+    setSyncing(false)
     setLastDisconnectReason(reason)
     setConnectionError(null)
     setRetryCount(0)
@@ -343,7 +375,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       address,
       connected: address !== null,
       connecting,
-      syncing,
+      syncing: connecting || syncing,
       isDemo,
       restoring,
       connectionError,
@@ -351,7 +383,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       connect,
       connectDemo,
       disconnect,
-      retry,
+      retry: connect,
       sign,
       signMessage,
       network,
@@ -372,7 +404,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       connect,
       connectDemo,
       disconnect,
-      retry,
       sign,
       signMessage,
       network,

@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import fs from 'node:fs'
 import path from 'node:path'
 import type * as StellarSdkTypes from '@stellar/stellar-sdk'
@@ -14,15 +14,17 @@ export interface RecordedContractCall {
   args: StellarSdkTypes.xdr.ScVal[]
 }
 
-const mockState = vi.hoisted(() => ({
+const mockState = {
   recordedCalls: [] as RecordedContractCall[],
   simulateTransaction: vi.fn(),
   sendTransaction: vi.fn(),
   getTransaction: vi.fn(),
   loadAccount: vi.fn(),
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
 
   // Intercept Contract.prototype.call to record (contractId, method, args)
@@ -64,7 +66,7 @@ vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
   }
 })
 
-import * as sdk from '@stellar/stellar-sdk'
+const sdk = await import('@stellar/stellar-sdk')
 
 // ---------------------------------------------------------------------------
 // Contract Spec Types & Fixture Loader
@@ -134,7 +136,7 @@ export function normalizeSpecType(typeDef: string | Record<string, unknown>): st
   return 'unknown'
 }
 
-export function scValToSpecType(val: sdk.xdr.ScVal): string {
+export function scValToSpecType(val: StellarSdkTypes.xdr.ScVal): string {
   const switchName = val.switch().name
   switch (switchName) {
     case 'scvU32':
@@ -186,22 +188,19 @@ export function assertContractCallMatchesSpec(
   vaultId: string,
   registryId: string,
 ): void {
-  let specMap: Map<string, SCSpecFunctionV0>
-  let contractName: string
-
-  if (targetSpec === 'investment_vault' || (targetSpec === 'auto' && call.contractId === vaultId)) {
-    specMap = vaultFunctions
-    contractName = 'InvestmentVault'
-  } else if (
-    targetSpec === 'project_registry' ||
-    (targetSpec === 'auto' && call.contractId === registryId)
-  ) {
-    specMap = registryFunctions
-    contractName = 'ProjectRegistry'
-  } else {
-    specMap = vaultFunctions
-    contractName = 'InvestmentVault'
+  const allowedIds =
+    targetSpec === 'auto'
+      ? [vaultId, registryId]
+      : [targetSpec === 'investment_vault' ? vaultId : registryId]
+  if (!allowedIds.includes(call.contractId)) {
+    throw new Error(
+      `Contract destination mismatch: expected ${allowedIds.join(' or ')}, received ${call.contractId}`,
+    )
   }
+  const isVault =
+    targetSpec === 'investment_vault' || (targetSpec === 'auto' && call.contractId === vaultId)
+  const specMap = isVault ? vaultFunctions : registryFunctions
+  const contractName = isVault ? 'InvestmentVault' : 'ProjectRegistry'
 
   const specFn = specMap.get(call.method)
   if (!specFn) {
@@ -406,6 +405,25 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       expect(call).toBeDefined()
       assertContractCallMatchesSpec(call!, 'investment_vault', VAULT_ID, REGISTRY_ID)
     })
+
+    it('accepts a valid deposit only at the designated contract (Issue #1056)', async () => {
+      const { submitDeposit } = await import('./vault')
+      await submitDeposit(100, TEST_ACCOUNT, mockSign).catch(() => {})
+
+      const call = mockState.recordedCalls.find((c) => c.method === 'deposit')
+      expect(call).toBeDefined()
+      expect(call!.contractId).toBe(VAULT_ID)
+      expect(() => {
+        assertContractCallMatchesSpec(call!, 'auto', VAULT_ID, REGISTRY_ID)
+      }).not.toThrow()
+      const wrongCall = { ...call!, contractId: sdk.StrKey.encodeContract(Buffer.alloc(32, 99)) }
+      expect(() => {
+        assertContractCallMatchesSpec(wrongCall, 'auto', VAULT_ID, REGISTRY_ID)
+      }).toThrow(/Contract destination mismatch/)
+      expect(() => {
+        assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+      }).toThrow(/Contract destination mismatch/)
+    })
   })
 
   describe('ProjectRegistry (src/wallet/registry.ts)', () => {
@@ -474,7 +492,7 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
       assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
     })
 
-    it.fails(
+    it.failing(
       'getAdminRoles also probes get_owner, which is absent from both contract ABIs',
       async () => {
         const { getAdminRoles } = await import('./admin')
@@ -483,13 +501,22 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
         const call = mockState.recordedCalls.find((c) => c.method === 'get_whitelister')
         expect(call).toBeDefined()
         assertContractCallMatchesSpec(call!, 'project_registry', VAULT_ID, REGISTRY_ID)
+
+        // Bun treats failures in teardown as suite errors, so validate the known mismatch here.
+        const ownerProbes = mockState.recordedCalls.filter((call) => call.method === 'get_owner')
+        mockState.recordedCalls = mockState.recordedCalls.filter(
+          (call) => call.method !== 'get_owner',
+        )
+        for (const probe of ownerProbes) {
+          assertContractCallMatchesSpec(probe, 'auto', VAULT_ID, REGISTRY_ID)
+        }
       },
     )
   })
 
-  describe('Admin ABI mismatches on current main (marked it.fails per acceptance criteria)', () => {
+  describe('Admin ABI mismatches on current main', () => {
     // 1. isMultisigDeployment calls non-existent function 'is_multisig' (Issue #719)
-    it.fails(
+    it.failing(
       'reports mismatch: admin.ts calls non-existent method is_multisig (#719)',
       async () => {
         const { isMultisigDeployment } = await import('./admin')
@@ -503,7 +530,7 @@ describe('Contract Spec Fixture & ABI Matching (Issue #719)', () => {
     )
 
     // 2. submitFundProject with isMultisig: true calls non-existent 'fund_project_approved' (Issue #719)
-    it.fails(
+    it.failing(
       'reports mismatch: admin.ts calls non-existent method fund_project_approved (#719)',
       async () => {
         const { submitFundProject } = await import('./admin')

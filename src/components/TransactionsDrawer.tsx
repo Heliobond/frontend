@@ -245,11 +245,7 @@ function TransactionRow({ item }: { item: TransactionItem }) {
         <AddressChip
           value={item.hash}
           explorerUrl={
-            item.hash.startsWith('demo')
-              ? undefined
-              : item.network
-                ? `https://stellar.expert/explorer/${item.network}/tx/${item.hash}`
-                : getExplorerTxUrl(item.hash)
+            item.hash.startsWith('demo') ? undefined : getExplorerTxUrl(item.hash, item.network)
           }
           label={t('transactionHash')}
         />

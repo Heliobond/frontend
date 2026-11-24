@@ -1,14 +1,15 @@
 import { render as rtlRender, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, expect, test, vi, beforeEach } from 'vitest'
-import { LocaleProvider } from '@/i18n/LocaleProvider'
-import { ThemeProvider } from '@/theme/ThemeProvider'
+import { describe, expect, test, vi, beforeEach } from '@/test/bun'
 import en from '../../messages/en.json'
-import { AddressChip } from './AddressChip'
 import type { ReactNode } from 'react'
 
 vi.mock('./Toast', () => ({
   useToast: () => ({ toast: vi.fn() }),
 }))
+
+const { LocaleProvider } = await import('@/i18n/LocaleProvider')
+const { ThemeProvider } = await import('@/theme/ThemeProvider')
+const { AddressChip } = await import('./AddressChip')
 
 const FULL_TX_HASH = 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
 const EXPLORER_URL = `https://stellar.expert/explorer/testnet/tx/${FULL_TX_HASH}`

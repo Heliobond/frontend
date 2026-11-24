@@ -1,8 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { usePortfolio } from './usePortfolio'
-import * as vault from '../wallet/vault'
-import { apiFetch } from '../lib/api'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 const A = 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 const B = 'GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
@@ -20,7 +17,12 @@ vi.mock('../wallet/vault', () => ({
   fetchUtilizationBps: vi.fn(),
   fetchVaultLiquidUsdc: vi.fn(),
 }))
-vi.mock('../lib/api', () => ({ apiFetch: vi.fn() }))
+vi.mock('../lib/apiClient', () => ({ fetchBackendPortfolio: vi.fn() }))
+
+const { usePortfolio } = await import('./usePortfolio')
+const vault = await import('../wallet/vault')
+const { fetchBackendPortfolio } = await import('../lib/apiClient')
+type BackendPortfolio = Awaited<ReturnType<typeof fetchBackendPortfolio>>
 
 function position(usdcValue: number) {
   return {
@@ -47,7 +49,7 @@ describe('usePortfolio (#821)', () => {
     vi.mocked(vault.fetchTotalAssets).mockResolvedValue(1000)
     vi.mocked(vault.fetchUtilizationBps).mockResolvedValue(0)
     vi.mocked(vault.fetchVaultLiquidUsdc).mockResolvedValue(1000)
-    vi.mocked(apiFetch).mockReset()
+    vi.mocked(fetchBackendPortfolio).mockReset()
   })
 
   afterEach(() => {
@@ -100,7 +102,7 @@ describe('usePortfolio (#821)', () => {
   it('ends loading when on-chain calls finish, without waiting for activity', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test')
     vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(5))
-    vi.mocked(apiFetch).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchBackendPortfolio).mockReturnValue(new Promise(() => {}))
     const { result } = renderHook(() => usePortfolio())
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.portfolio?.usdcValue).toBe(5)
@@ -109,10 +111,55 @@ describe('usePortfolio (#821)', () => {
   it('applies activity once it arrives', async () => {
     vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test')
     vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(5))
-    const feed = [{ id: 'x' }] as never
-    vi.mocked(apiFetch).mockResolvedValue(feed)
+    const events = [
+      {
+        id: 'a',
+        type: 'deposit',
+        amount: 100,
+        shares: 10,
+        timestamp: 1700000000000,
+        txHash: 'tx-a',
+      },
+      {
+        id: 'b',
+        type: 'withdraw',
+        amount: 50,
+        shares: 5,
+        timestamp: 1699999999000,
+        txHash: 'tx-b',
+      },
+    ]
+    vi.mocked(fetchBackendPortfolio).mockResolvedValue({ events } as BackendPortfolio)
     const { result } = renderHook(() => usePortfolio())
-    await waitFor(() => expect(result.current.activity).toBe(feed))
+    await waitFor(() => {
+      expect(result.current.activity).toEqual([
+        {
+          kind: 'Deposit',
+          amount: '100',
+          shares: '10',
+          when: '2023-11-14T22:13:20.000Z',
+          hash: 'tx-a',
+        },
+        {
+          kind: 'Withdrawal',
+          amount: '50',
+          shares: '5',
+          when: '2023-11-14T22:13:19.000Z',
+          hash: 'tx-b',
+        },
+      ])
+    })
+    expect(fetchBackendPortfolio).toHaveBeenCalledWith(A)
+  })
+
+  it('keeps a successfully empty live activity feed empty', async () => {
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.test')
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue(position(5))
+    vi.mocked(fetchBackendPortfolio).mockResolvedValue({
+      events: [],
+    } as unknown as BackendPortfolio)
+    const { result } = renderHook(() => usePortfolio())
+    await waitFor(() => expect(result.current.activity).toEqual([]))
   })
 
   it('loads when a tab hidden at mount becomes visible', async () => {

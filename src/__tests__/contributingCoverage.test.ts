@@ -1,36 +1,29 @@
 /**
  * Doc-drift guard (#877). CONTRIBUTING.md listed only half of the coverage
- * thresholds enforced by vitest.config.mts, so PRs failed on modules the doc never
- * mentioned. Every threshold key in the config must be named in the doc.
+ * thresholds enforced in CI, so PRs failed on modules the doc never mentioned.
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { coverageThresholds } from '../../scripts/test-coverage-config.mjs'
 
 const ROOT = path.resolve(__dirname, '..', '..')
-
-/** Threshold keys are the quoted `src/...` entries inside the `thresholds` block. */
-function thresholdKeys(config: string): string[] {
-  const keys = [...config.matchAll(/^\s*'(src\/[^']+)':/gm)].map((match) => match[1])
-  return [...new Set(keys)]
-}
 
 /** Keys whose backticked form does not appear in the document. */
 function undocumentedKeys(doc: string, keys: string[]): string[] {
   return keys.filter((key) => !doc.includes(`\`${key}\``))
 }
 
-const config = readFileSync(path.join(ROOT, 'vitest.config.mts'), 'utf8')
 const doc = readFileSync(path.join(ROOT, 'CONTRIBUTING.md'), 'utf8')
 
 describe('CONTRIBUTING coverage thresholds (#877)', () => {
-  const keys = thresholdKeys(config)
+  const keys = Object.keys(coverageThresholds).filter((key) => key.startsWith('src/'))
 
-  it('finds the threshold keys in vitest.config.mts', () => {
+  it('finds the scoped thresholds', () => {
     expect(keys.length).toBeGreaterThan(0)
   })
 
-  it('lists every threshold key from vitest.config.mts', () => {
+  it('lists every scoped threshold in CONTRIBUTING', () => {
     expect(undocumentedKeys(doc, keys)).toEqual([])
   })
 

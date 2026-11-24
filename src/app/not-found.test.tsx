@@ -1,5 +1,5 @@
 import { render, screen } from '@/test/render'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import NotFound from './not-found'
 
 describe('NotFound page', () => {

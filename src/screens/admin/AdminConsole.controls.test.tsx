@@ -4,15 +4,10 @@
  * transactions (#692). These render the real component with the chain modules mocked.
  */
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { render } from '@/test/render'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AdminConsole } from './AdminConsole'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 import type { PauseState } from '@/wallet/admin'
-import { fetchProjectsPage, isRegistryConfigured } from '@/wallet/registry'
-import { REGISTRY } from '@/data/admin'
-import { fetchTotalAssets, fetchUtilizationBps } from '@/wallet/vault'
 
-const mocks = vi.hoisted(() => ({
+const mocks = {
   address: 'GOWNER' as string | null,
   sign: vi.fn(),
   submitFundProject: vi.fn(),
@@ -22,14 +17,14 @@ const mocks = vi.hoisted(() => ({
   getPauseState: vi.fn(),
   getAdminRoles: vi.fn(),
   isMultisigDeployment: vi.fn(),
-}))
+}
 
-vi.mock('@/wallet/WalletProvider', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/WalletProvider'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/WalletProvider')>()),
   useWallet: () => ({ address: mocks.address, sign: mocks.sign }),
 }))
 
-vi.mock('@/wallet/admin', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/admin'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/admin')>()),
   submitFundProject: mocks.submitFundProject,
   submitUpdateScores: mocks.submitUpdateScores,
@@ -41,18 +36,24 @@ vi.mock('@/wallet/admin', async (importOriginal) => ({
 }))
 
 // No contract is configured in tests, so the console keeps its local figures.
-vi.mock('@/wallet/registry', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/registry'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/registry')>()),
   fetchProjectsPage: vi.fn().mockResolvedValue({ projects: [] }),
   clearRegistryCache: vi.fn(),
   isRegistryConfigured: vi.fn(() => false),
 }))
 
-vi.mock('@/wallet/vault', async (importOriginal) => ({
+await vi.mockModule(import.meta.resolve('@/wallet/vault'), async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/wallet/vault')>()),
   fetchTotalAssets: vi.fn().mockRejectedValue(new Error('not configured')),
   fetchUtilizationBps: vi.fn().mockRejectedValue(new Error('not configured')),
 }))
+
+const { render } = await import('@/test/render')
+const { AdminConsole } = await import('./AdminConsole')
+const { fetchProjectsPage, isRegistryConfigured } = await import('@/wallet/registry')
+const { REGISTRY } = await import('@/data/admin')
+const { fetchTotalAssets, fetchUtilizationBps } = await import('@/wallet/vault')
 
 const ownerRoles = {
   isVaultOwner: true,
@@ -95,6 +96,7 @@ beforeEach(() => {
   mocks.isMultisigDeployment.mockResolvedValue(false)
   mocks.getPauseState.mockImplementation(pauseStates({}))
   mocks.sign.mockResolvedValue('signed')
+  vi.mocked(isRegistryConfigured).mockReturnValue(false)
   vi.stubGlobal(
     'confirm',
     vi.fn(() => true),
@@ -234,6 +236,45 @@ describe('AdminConsole rollback and pending state (#692)', () => {
 })
 
 describe('AdminConsole reads from chain when a contract is configured', () => {
+  it('lets the table and both project selectors reach a project beyond the first page', async () => {
+    const [first] = REGISTRY
+    const firstPage = Array.from({ length: 50 }, (_, index) => ({
+      ...first,
+      id: index + 100,
+      name: `Project ${index + 100}`,
+    }))
+    const later = { ...first, id: 999, name: 'Later chain project' }
+    // The console uses the registry row shape but the fetch also returns detail fields.
+    type Page = Awaited<ReturnType<typeof fetchProjectsPage>>
+    vi.mocked(isRegistryConfigured).mockReturnValue(true)
+    vi.mocked(fetchProjectsPage).mockImplementation(async (offset) => ({
+      projects: (offset === 0 ? firstPage : offset === 50 ? [] : [later]) as Page['projects'],
+      total: 101,
+      hasMore: offset !== 100,
+    }))
+    mocks.submitFundProject.mockResolvedValue({ hash: '0x1234abcd' })
+    render(<AdminConsole />)
+
+    const table = await screen.findByRole('table')
+    await within(table).findByText(later.name)
+    expect(fetchProjectsPage).toHaveBeenCalledWith(50, 50, 'GOWNER')
+    expect(fetchProjectsPage).toHaveBeenCalledWith(100, 50, 'GOWNER')
+
+    const selectors = screen.getAllByRole('combobox', { name: 'Project' })
+    expect(selectors).toHaveLength(2)
+    for (const selector of selectors) {
+      expect(within(selector).getByRole('option', { name: later.name })).toHaveValue('999')
+      fireEvent.change(selector, { target: { value: '999' } })
+      expect(selector).toHaveValue('999')
+    }
+
+    fireEvent.change(screen.getByPlaceholderText('0.00'), { target: { value: '1000' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Fund from the vault' }))
+    await waitFor(() =>
+      expect(mocks.submitFundProject).toHaveBeenCalledWith(999, 1000, 'GOWNER', mocks.sign, false),
+    )
+  })
+
   it('shows the vault liquid and deployed figures read on mount', async () => {
     vi.mocked(fetchTotalAssets).mockResolvedValueOnce(1_000_000)
     vi.mocked(fetchUtilizationBps).mockResolvedValueOnce(5000)
@@ -270,4 +311,43 @@ describe('AdminConsole reads from chain when a contract is configured', () => {
       false,
     )
   })
+})
+
+it('retains a rejected creator draft and adds one row after retry', async () => {
+  const creatorAddress = 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX'
+  const creatorName = 'New project creator'
+  let rejectTx!: (error: Error) => void
+  mocks.submitSetWhitelist
+    .mockImplementationOnce(() => new Promise((_, reject) => (rejectTx = reject)))
+    .mockResolvedValue({ hash: '0x1234abcd' })
+  render(<AdminConsole />)
+
+  const addressField = screen.getByPlaceholderText('G... (Stellar address)')
+  const nameField = screen.getByPlaceholderText('Display name (optional)')
+  const add = screen.getByRole('button', { name: 'Add creator' })
+  fireEvent.change(addressField, { target: { value: creatorAddress } })
+  fireEvent.change(nameField, { target: { value: creatorName } })
+  fireEvent.click(add)
+  expect(add).toBeDisabled()
+  fireEvent.click(add)
+  expect(mocks.submitSetWhitelist).toHaveBeenCalledTimes(1)
+  expect(screen.queryByText(creatorName)).not.toBeInTheDocument()
+
+  await act(async () => rejectTx(new Error('User declined')))
+  expect(addressField).toHaveValue(creatorAddress)
+  expect(nameField).toHaveValue(creatorName)
+  expect(add).toBeEnabled()
+  expect(screen.queryByText(creatorName)).not.toBeInTheDocument()
+
+  await act(async () => fireEvent.click(add))
+  expect(screen.getAllByText(creatorName)).toHaveLength(1)
+  expect(addressField).toHaveValue('')
+  expect(nameField).toHaveValue('')
+  expect(mocks.submitSetWhitelist).toHaveBeenCalledTimes(2)
+  expect(mocks.submitSetWhitelist).toHaveBeenLastCalledWith(
+    creatorAddress,
+    false,
+    'GOWNER',
+    mocks.sign,
+  )
 })

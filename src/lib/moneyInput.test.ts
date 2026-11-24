@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import { parseMoneyInput } from './moneyInput'
 
 describe('parseMoneyInput (#869)', () => {
@@ -39,5 +39,17 @@ describe('parseMoneyInput (#869)', () => {
     for (const locale of ['en', 'fr', 'es', 'ar', 'pt']) {
       expect(parseMoneyInput(input, locale)).toBeNull()
     }
+  })
+})
+
+describe('parseMoneyInput native digits', () => {
+  it('parses Arabic-Indic digits like the Latin equivalent', () => {
+    expect(parseMoneyInput('١٢٣٤٫٥٠', 'ar')).toBe(parseMoneyInput('1234.50', 'ar'))
+    expect(parseMoneyInput('١٬٢٣٤٫٥', 'ar')).toBe(1234.5)
+  })
+
+  it('still rejects malformed groups and excess precision', () => {
+    expect(parseMoneyInput('١٢٬٣٤٫٥٠', 'ar')).toBeNull()
+    expect(parseMoneyInput('١٫٢٣٤', 'ar')).toBeNull()
   })
 })

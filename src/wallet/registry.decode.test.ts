@@ -1,5 +1,5 @@
-// @vitest-environment node
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import { restoreNodeGlobals } from '../../scripts/bun-test-setup'
 import { Keypair, StrKey, Transaction, nativeToScVal, xdr } from '@stellar/stellar-sdk'
 import { createHash } from 'node:crypto'
 
@@ -8,11 +8,13 @@ import { createHash } from 'node:crypto'
 // contract-shaped ScVal fixture, so these assertions see exactly the values
 // `get_projects_page`, `get_project` and `get_score_history` return on-chain.
 
-const rpcMock = vi.hoisted(() => ({
+const rpcMock = {
   simulateTransaction: vi.fn(),
-}))
+}
 
-vi.mock('@stellar/stellar-sdk', async (importOriginal) => {
+restoreNodeGlobals()
+
+await vi.mockModule(import.meta.resolve('@stellar/stellar-sdk'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@stellar/stellar-sdk')>()
   class Server {
     constructor() {}
@@ -73,12 +75,15 @@ function projectTuple(id: number, data: xdr.ScVal): xdr.ScVal {
 }
 
 /** A ScoreHistoryEntry struct from get_score_history. */
-function scoreEntry(timestamp: number, credit: number, green: number): xdr.ScVal {
-  return xdr.ScVal.scvMap([
-    new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('timestamp'), val: u64(timestamp) }),
+function scoreEntry(timestamp: number | null, credit: number, green: number): xdr.ScVal {
+  const entries = [
     new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('credit_quality'), val: u32(credit) }),
     new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('green_impact'), val: u32(green) }),
-  ])
+  ]
+  if (timestamp !== null) {
+    entries.push(new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol('timestamp'), val: u64(timestamp) }))
+  }
+  return xdr.ScVal.scvMap(entries)
 }
 
 function okSimulation(retval: xdr.ScVal) {
@@ -141,6 +146,33 @@ describe('registry client', () => {
     expect(
       registry.mapOnChainProject({ ...raw, last_update_timestamp: 0 }, 101).lastVerifiedAt,
     ).toBeUndefined()
+  })
+
+  it('keeps an unknown credit score unknown without touching a valid green score', async () => {
+    const registry = await loadRegistry()
+    const raw = {
+      owner: 'GABCDEFGHIJKLMNOPQRSTUVWXYZ234567ABCDEFGHIJKLMNOPQRSTUV',
+      uri: 'https://metadata.example/102.json',
+      green_impact: 91,
+      maturity_date: 1_800_000_000,
+      certification_status: 0,
+      last_update_timestamp: 1_700_000_000,
+      status: 1,
+      created_at: 1_600_000_000,
+      metadata_hash: 'abc',
+    }
+
+    const mapped = registry.mapOnChainProject(raw, 102)
+    expect(mapped.credit).toBeUndefined()
+    expect(mapped.green).toBe(91)
+
+    const nonFinite = registry.mapOnChainProject({ ...raw, credit_quality: Number.NaN }, 103)
+    expect(nonFinite.credit).toBeUndefined()
+    expect(nonFinite.green).toBe(91)
+
+    // An assigned 80 is a real rating and must survive unchanged.
+    const assigned = registry.mapOnChainProject({ ...raw, credit_quality: 80 }, 104)
+    expect(assigned.credit).toBe(80)
   })
 
   it('maps every ProjectStatus number to a valid UI status', async () => {
@@ -238,6 +270,9 @@ describe('registry client', () => {
     expect(detail?.project.credit).toBe(80)
     expect(detail?.project.green).toBe(90)
     expect(detail?.project.status).toBe('open')
+    // the registry supplies an owner but no membership year, so none is invented (#1071)
+    expect(detail?.detail.creator.since).toBeUndefined()
+    expect(detail?.detail.creator.name).not.toBe('Creator')
   })
 
   it('decodes ScoreHistoryEntry timestamps and score fields', async () => {
@@ -254,8 +289,25 @@ describe('registry client', () => {
     expect(scores.credit.map((p) => p.value)).toEqual([74, 76])
     expect(scores.green.map((p) => p.value)).toEqual([84, 86])
     expect(scores.credit.every((p) => Number.isFinite(p.value))).toBe(true)
-    expect(scores.credit.map((p) => p.date)).toEqual(['Jan 2024', 'Feb 2024'])
-    expect(scores.credit.every((p) => !p.date.includes('mo ago'))).toBe(true)
+    expect(scores.credit.map((p) => p.observedAt)).toEqual([1_704_110_400_000, 1_706_792_400_000])
+    expect(scores.green.map((p) => p.observedAt)).toEqual([1_704_110_400_000, 1_706_792_400_000])
+  })
+
+  it('marks score entries with missing/invalid timestamps as having unknown dates', async () => {
+    const registry = await loadRegistry()
+    mockContract({
+      get_score_history: () =>
+        xdr.ScVal.scvVec([
+          scoreEntry(0, 74, 84), // Invalid timestamp (0)
+          scoreEntry(null, 76, 86), // Missing timestamp
+          scoreEntry(8_640_000_000_001, 77, 87), // Outside JavaScript's date range
+          scoreEntry(1_704_110_400, 78, 88), // Valid timestamp
+        ]),
+    })
+
+    const scores = await registry.fetchScoreHistory(1, SOURCE)
+    expect(scores.credit.map((p) => p.observedAt)).toEqual([null, null, null, 1_704_110_400_000])
+    expect(scores.green.map((p) => p.observedAt)).toEqual([null, null, null, 1_704_110_400_000])
   })
 
   it('falls back gracefully to fixtures when registry contract is unset', async () => {

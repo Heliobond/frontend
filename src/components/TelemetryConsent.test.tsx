@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from '@/test/bun'
 import { render, screen, waitFor } from '@/test/render'
 import userEvent from '@testing-library/user-event'
 import { TelemetryConsent, TelemetryPreference } from './TelemetryConsent'

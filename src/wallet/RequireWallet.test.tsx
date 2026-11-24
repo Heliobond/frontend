@@ -1,5 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@/test/render'
+import { describe, it, expect, vi, beforeEach } from '@/test/bun'
 
 const mockReplace = vi.fn()
 let mockPathname = '/portfolio'
@@ -17,7 +16,8 @@ vi.mock('./WalletProvider', () => ({
   useWallet: () => walletState,
 }))
 
-import { RequireWallet } from './RequireWallet'
+const { render, screen } = await import('@/test/render')
+const { RequireWallet } = await import('./RequireWallet')
 
 const Protected = () => <div data-testid="protected">balances</div>
 
@@ -89,6 +89,50 @@ describe('RequireWallet', () => {
     expect(mockReplace).toHaveBeenCalledWith(
       `/connect?next=${encodeURIComponent('/withdraw?amount=250')}`,
     )
+  })
+
+  it('carries the fragment through the detour, after the query string (#1058)', () => {
+    mockPathname = '/portfolio'
+    mockSearch = 'tab=history'
+    window.history.replaceState(null, '', '/portfolio?tab=history#recent-activity')
+    try {
+      render(
+        <RequireWallet>
+          <Protected />
+        </RequireWallet>,
+      )
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/connect?next=${encodeURIComponent('/portfolio?tab=history#recent-activity')}`,
+      )
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
+  it('carries a fragment on a path with no query string (#1058)', () => {
+    window.history.replaceState(null, '', '/portfolio#holdings')
+    try {
+      render(
+        <RequireWallet>
+          <Protected />
+        </RequireWallet>,
+      )
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/connect?next=${encodeURIComponent('/portfolio#holdings')}`,
+      )
+    } finally {
+      window.history.replaceState(null, '', '/')
+    }
+  })
+
+  it('leaves an ordinary gated path unchanged when there is no fragment (#1058)', () => {
+    window.history.replaceState(null, '', '/portfolio')
+    render(
+      <RequireWallet>
+        <Protected />
+      </RequireWallet>,
+    )
+    expect(mockReplace).toHaveBeenCalledWith('/connect?next=%2Fportfolio')
   })
 
   it('honours a custom redirect target', () => {
