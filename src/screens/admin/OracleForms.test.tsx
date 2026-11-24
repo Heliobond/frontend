@@ -1,8 +1,6 @@
-import { screen, fireEvent, waitFor } from '@testing-library/react'
-import { render } from '@/test/render'
-import { describe, it, expect, vi } from 'vitest'
-import { OracleForms } from './OracleForms'
-import { type RegistryEntry } from '@/data/admin'
+import { screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from '@/test/bun'
+import type { RegistryEntry } from '@/data/admin'
 
 const mockProjects: RegistryEntry[] = [
   {
@@ -20,9 +18,7 @@ const mockProjects: RegistryEntry[] = [
   },
 ]
 
-const noop = async () => true
-
-vi.mock('@/components', async (importOriginal) => {
+await vi.mockModule(import.meta.resolve('@/components'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/components')>()
   return {
     ...actual,
@@ -41,6 +37,9 @@ vi.mock('@/components', async (importOriginal) => {
     ),
   }
 })
+
+const { render } = await import('@/test/render')
+const { OracleForms } = await import('./OracleForms')
 
 describe('OracleForms validation', () => {
   it('disables score submission when both fields are empty', () => {

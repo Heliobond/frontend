@@ -11,7 +11,7 @@ import {
 } from '../wallet/vault'
 import { selectYou, selectActivity, selectPoolSummary, type YouSummary } from '../state/selectors'
 import { type Activity } from '../data'
-import { apiFetch } from '../lib/api'
+import { fetchBackendPortfolio } from '../lib/apiClient'
 
 export interface VaultLiquidity {
   liquid: number
@@ -21,6 +21,7 @@ export interface VaultLiquidity {
 export interface UsePortfolioResult {
   portfolio: OnChainPortfolio | null
   claimableYield: number
+  positionUnavailable: boolean
   you: YouSummary
   activity: Activity[]
   loading: boolean
@@ -33,6 +34,7 @@ interface ChainState {
   address: string
   portfolio: OnChainPortfolio | null
   claimableYield: number | null
+  positionUnavailable: boolean
   vaultLiquidity: VaultLiquidity | null
   error: string | null
 }
@@ -77,10 +79,31 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
   const loadActivity = useCallback(async (addr: string, isCancelled: () => boolean) => {
     if (!process.env.NEXT_PUBLIC_API_URL) return
     try {
-      const remoteActivity = await apiFetch<Activity[]>(`/portfolio/${addr}/activity`)
-      if (!isCancelled() && Array.isArray(remoteActivity)) {
-        setActivityState({ address: addr, feed: remoteActivity })
-      }
+      const portfolio = await fetchBackendPortfolio(addr)
+      if (isCancelled() || !Array.isArray(portfolio.events)) return
+      const feed = portfolio.events.flatMap((event): Activity[] => {
+        if (!event || (event.type !== 'deposit' && event.type !== 'withdraw')) return []
+        if (typeof event.timestamp !== 'number') return []
+        const date = new Date(event.timestamp)
+        if (
+          !Number.isFinite(date.getTime()) ||
+          !Number.isFinite(event.amount) ||
+          !Number.isFinite(event.shares) ||
+          typeof event.txHash !== 'string' ||
+          !event.txHash
+        )
+          return []
+        return [
+          {
+            kind: event.type === 'deposit' ? 'Deposit' : 'Withdrawal',
+            amount: String(event.amount),
+            shares: String(event.shares),
+            when: date.toISOString(),
+            hash: event.txHash,
+          },
+        ]
+      })
+      setActivityState({ address: addr, feed })
     } catch {
       // Silent fallback to standard demo activity when backend indexer endpoint is unavailable
     }
@@ -88,7 +111,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
 
   const loadData = useCallback(
     async (isCancelled: () => boolean) => {
-      if (!enabled || !address) {
+      if (!enabled || !address || isCancelled()) {
         return
       }
 
@@ -136,6 +159,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
           // A failed refetch keeps the last good position, but only for this address.
           portfolio: portfolioValue ?? (prev?.address === address ? prev.portfolio : null),
           claimableYield: claimable,
+          positionUnavailable: portResult.status === 'rejected',
           vaultLiquidity: liquidity ?? (prev?.address === address ? prev.vaultLiquidity : null),
           error,
         }))
@@ -145,6 +169,7 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
             address,
             portfolio: prev?.address === address ? prev.portfolio : null,
             claimableYield: prev?.address === address ? prev.claimableYield : null,
+            positionUnavailable: true,
             vaultLiquidity: prev?.address === address ? prev.vaultLiquidity : null,
             // Error code, not user-facing copy — the component translates (#900).
             error: 'portfolioFailed',
@@ -185,7 +210,8 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
   const claimableYield = current?.claimableYield ?? portfolio?.claimableYield ?? 0
   const vaultLiquidity = current?.vaultLiquidity ?? null
   const error = current?.error ?? null
-  const activityFeed = activityState && activityState.address === address ? activityState.feed : []
+  const activityFeed =
+    activityState && activityState.address === address ? activityState.feed : null
 
   // Derive YouSummary structure for UI compatibility
   const demoYou = selectYou()
@@ -227,11 +253,12 @@ export function usePortfolio(customAddress?: string): UsePortfolioResult {
       }
     : demoYou
 
-  const finalActivity = enabled && activityFeed.length > 0 ? activityFeed : demoActivity
+  const finalActivity = enabled && activityFeed ? activityFeed : demoActivity
 
   return {
     portfolio: enabled ? portfolio : null,
     claimableYield: enabled ? claimableYield : 0,
+    positionUnavailable: enabled && (current?.positionUnavailable ?? false),
     you: enabled && portfolio ? derivedYou : demoYou,
     activity: finalActivity,
     loading: enabled ? loading : false,

@@ -13,12 +13,12 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
-import en from '../../messages/en.json'
 import { reportError } from '../lib/errorReporting'
 import { type Locale, RTL_LOCALES } from './config'
 import { getMessageFallback, withEnglishFallback } from './fallback'
+import { loadMessages, type Messages } from './loadMessages'
 
-export type Messages = typeof en
+export type { Messages } from './loadMessages'
 
 function onClientMessageError(error: unknown): void {
   const message = error instanceof Error ? error.message : String(error)
@@ -67,7 +67,7 @@ export function LocaleProvider({
       const request = ++latestRequest.current
       let catalog: Messages
       try {
-        catalog = withEnglishFallback((await import(`../../messages/${target}.json`)).default)
+        catalog = withEnglishFallback(await loadMessages(target))
       } catch {
         return request === latestRequest.current ? 'failed' : 'superseded'
       }

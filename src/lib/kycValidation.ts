@@ -191,6 +191,10 @@ export function hasInvalidAddressCharacters(value: string): boolean {
   )
 }
 
+export function isAddressStateRequired(country: string): boolean {
+  return SUBDIVISION_CODES.has(country.trim().toUpperCase())
+}
+
 /**
  * Validates address fields according to KYC requirements (#414).
  * Single source of truth shared between component and schema.
@@ -202,28 +206,21 @@ export function hasInvalidAddressCharacters(value: string): boolean {
  */
 export function validateAddress(values: AddressValues): AddressErrors {
   const errors: AddressErrors = {}
+  const country = values.country.trim().toUpperCase()
+  const subdivisions = SUBDIVISION_CODES.get(country)
 
   for (const field of ADDRESS_FIELDS) {
     const value = (values[field] ?? '').trim()
-    if (field === 'state') {
-      // state required-ness will be determined country-specifically below
-    } else if (!value) {
-      if (field !== 'apartment') errors[field] = `${field}Required`
+    if (!value) {
+      if (field !== 'apartment' && (field !== 'state' || subdivisions)) {
+        errors[field] = `${field}Required`
+      }
     } else if (hasInvalidAddressCharacters(value)) {
       errors[field] = `${field}Invalid`
     }
   }
 
-  const country = values.country.trim().toUpperCase()
-
-  // State is required only for US and CA; other countries use different address conventions
-  if (country === 'US' || country === 'CA') {
-    const state = values.state.trim().toUpperCase()
-    if (!state) errors.state = 'stateRequired'
-  }
-
-  const state = values.state?.trim().toUpperCase() ?? ''
-  const subdivisions = SUBDIVISION_CODES.get(country)
+  const state = values.state.trim().toUpperCase()
   const zip = values.zip.trim().toUpperCase()
   const postalCode = POSTAL_CODE_PATTERNS.get(country)
 

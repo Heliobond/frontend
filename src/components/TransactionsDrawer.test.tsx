@@ -1,9 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react'
-import { render } from '@/test/render'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { TransactionsDrawer } from './TransactionsDrawer'
-import { recordTransaction } from '../wallet/transactions'
-import { TransactionsProvider } from '../wallet/TransactionsProvider'
+import { beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 // Mock AddressChip to test rendering
 vi.mock('./AddressChip', () => ({
@@ -11,6 +7,12 @@ vi.mock('./AddressChip', () => ({
     <a href={explorerUrl}>{value}</a>
   ),
 }))
+
+const { render } = await import('@/test/render')
+const { TransactionsDrawer } = await import('./TransactionsDrawer')
+const { recordTransaction } = await import('../wallet/transactions')
+const { TransactionsProvider } = await import('../wallet/TransactionsProvider')
+const networkConfig = await import('../config/network')
 
 beforeEach(() => sessionStorage.clear())
 
@@ -47,6 +49,18 @@ describe('TransactionsDrawer', () => {
     expect(
       screen.getByText('Aucune transaction enregistrée dans cette session.'),
     ).toBeInTheDocument()
+  })
+
+  it('does not link a transaction when the configured network has no explorer', () => {
+    vi.spyOn(networkConfig, 'getExplorerTxUrl').mockReturnValue(undefined)
+    render(
+      <TransactionsProvider>
+        <TransactionsDrawer open onClose={() => {}} />
+      </TransactionsProvider>,
+    )
+    const hash = 'f'.repeat(64)
+    act(() => recordTransaction({ hash, kind: 'deposit', status: 'confirmed', network: 'testnet' }))
+    expect(screen.getByText(hash)).not.toHaveAttribute('href')
   })
 
   it('renders statuses, XLM fee components, explorer links, and keyboard dismissal', () => {

@@ -100,8 +100,7 @@ export function evaluateAudit({
   return { ok: failures.length === 0, failures, warnings }
 }
 
-// `bun audit` is missing from bun 1.2.4, the version CI installs from
-// packageManager, so the gate pins its own bun for the audit call.
+// Keep the audit version pinned independently to preserve its output contract.
 export const AUDIT_BUN = 'bun@1.3.14'
 
 function main(root = process.cwd()) {

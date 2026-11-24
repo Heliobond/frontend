@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from '@/test/bun'
 import { AmountInput } from './AmountInput'
 import { render as rtlRender, fireEvent } from '@testing-library/react'
 import { NextIntlClientProvider } from 'next-intl'
@@ -91,6 +91,18 @@ describe('AmountInput', () => {
 
       fireEvent.change(input, { target: { value: '010.25' } })
       expect(onChangeValue).toBe('10.25')
+    })
+
+    it.each([
+      [4, 6, '05', '123.05'],
+      [0, 6, '$008.25', '8.25'],
+    ])('pastes into selection %d–%d', (start, end, pasted, expected) => {
+      const onChange = vi.fn()
+      const { getByRole } = render(<AmountInput value="123.45" onChange={onChange} />)
+      const input = getByRole('textbox') as HTMLInputElement
+      input.setSelectionRange(start, end)
+      fireEvent.paste(input, { clipboardData: { getData: () => pasted } })
+      expect(onChange).toHaveBeenCalledWith(expected)
     })
 
     it('rejects multiple decimal points', () => {

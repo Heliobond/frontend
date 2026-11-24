@@ -35,12 +35,12 @@ function Telemetry() {
   return null
 }
 
-function SessionWatcher() {
+export function SessionWatcher() {
   const t = useTranslations('SessionTimeout')
   const { connected, disconnect } = useWallet()
   const { toast } = useToast()
 
-  const { isWarningOpen, formattedRemaining, extendSession, expireNow } = useSessionTimeout({
+  const { isWarningOpen, formattedRemaining, extendSession } = useSessionTimeout({
     enabled: connected,
     onTimeout: () => {
       disconnect()
@@ -57,7 +57,7 @@ function SessionWatcher() {
       open={isWarningOpen}
       formattedTime={formattedRemaining}
       onExtend={extendSession}
-      onLogout={expireNow}
+      onLogout={() => disconnect()}
     />
   )
 }

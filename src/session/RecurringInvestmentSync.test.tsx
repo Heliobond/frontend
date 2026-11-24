@@ -1,14 +1,12 @@
 import { act, render } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  RECURRING_CHANGED_EVENT,
-  RECURRING_STORAGE_KEY,
-  readRecurringInvestments,
-} from '../lib/recurringInvestments'
-import { RecurringInvestmentSync } from './RecurringInvestmentSync'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
-const mocks = vi.hoisted(() => ({ useRemoteSync: vi.fn() }))
+const mocks = { useRemoteSync: vi.fn() }
 vi.mock('./useRemoteSync', () => ({ useRemoteSync: mocks.useRemoteSync }))
+
+const { RECURRING_CHANGED_EVENT, RECURRING_STORAGE_KEY, readRecurringInvestments } =
+  await import('../lib/recurringInvestments')
+const { RecurringInvestmentSync } = await import('./RecurringInvestmentSync')
 
 const first = {
   bondId: 'bond-a',

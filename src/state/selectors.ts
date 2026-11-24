@@ -64,8 +64,8 @@ export interface YouSummary {
 export interface CreatorSummary {
   name: string
   verified: boolean
-  /** Year the creator was verified, e.g. '2025'. */
-  since: string
+  /** Year the creator was verified, e.g. '2025'. Absent when no source supplies it. */
+  since?: string
 }
 
 /** Flat oracle score history — the `detail.scoreHistory` branch, one level deep. */
@@ -176,6 +176,6 @@ export const selectPriceHistory = (id: number): PricePoint[] =>
 /** Flat creator attribution for a project (neutral fallback for unknown ids). */
 export function selectCreator(id: number): CreatorSummary {
   const creator = PROJECT_DETAILS[id]?.creator
-  if (!creator) return { name: 'Unknown creator', verified: false, since: '' }
+  if (!creator) return { name: 'Unknown creator', verified: false }
   return { name: creator.name, verified: creator.verified, since: creator.since }
 }

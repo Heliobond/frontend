@@ -1,36 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
+import type { Mock } from 'bun:test'
 import { render as rtlRender, waitFor } from '@testing-library/react'
-import { render, screen, fireEvent, act } from '@/test/render'
-import { LocaleProvider } from '@/i18n/LocaleProvider'
 import en from '../../../messages/en.json'
 import fr from '../../../messages/fr.json'
-import { ProjectBuilder } from './ProjectBuilder'
-import {
-  CreateProjectError,
-  simulateCreateProject,
-  submitCreateProject,
-} from '../../wallet/createProject'
 
 const CREATOR = 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX'
 const TX_HASH = 'a'.repeat(64)
 
-const wallet = vi.hoisted(() => ({
+const wallet = {
   address: 'GCOQ4JRRUC7SBUXLKYXFCZPJWTKDFTULI6DOGB75DZNAVGIST3BNC6UX',
   sign: vi.fn(),
-}))
+}
 
 vi.mock('../../wallet/WalletProvider', () => ({
   useWallet: () => wallet,
 }))
 
-vi.mock('../../wallet/createProject', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../wallet/createProject')>()
-  return {
-    ...actual,
-    simulateCreateProject: vi.fn(),
-    submitCreateProject: vi.fn(),
-  }
-})
+const builders = await import('@/wallet/createProject')
+const { CreateProjectError } = builders
+const { render, screen, fireEvent, act } = await import('@/test/render')
+const { LocaleProvider } = await import('@/i18n/LocaleProvider')
+const { ProjectBuilder } = await import('./ProjectBuilder')
 
 const goalInput = () => screen.getByLabelText(en.Creator.fieldGoal)
 const typeGoal = (value: string) => fireEvent.change(goalInput(), { target: { value } })
@@ -39,6 +29,12 @@ const flushPreview = (ms = 250) => act(() => vi.advanceTimersByTime(ms))
 describe('ProjectBuilder', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
+
+  it('labels both unrated preview metrics as pending', () => {
+    render(<ProjectBuilder />)
+    expect(screen.getByRole('img', { name: 'Credit: pending' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Green: pending' })).toBeInTheDocument()
+  })
 
   it('previews the draft goal without an error', () => {
     render(<ProjectBuilder />)
@@ -109,11 +105,14 @@ describe('ProjectBuilder', () => {
 })
 
 describe('ProjectBuilder publish', () => {
+  let simulateCreateProject: Mock<typeof builders.simulateCreateProject>
+  let submitCreateProject: Mock<typeof builders.submitCreateProject>
+
   beforeEach(() => {
-    vi.useRealTimers()
-    vi.clearAllMocks()
-    vi.mocked(simulateCreateProject).mockResolvedValue(42)
-    vi.mocked(submitCreateProject).mockResolvedValue({ projectId: 42, hash: TX_HASH })
+    simulateCreateProject = vi.spyOn(builders, 'simulateCreateProject').mockResolvedValue(42)
+    submitCreateProject = vi
+      .spyOn(builders, 'submitCreateProject')
+      .mockResolvedValue({ projectId: 42, hash: TX_HASH })
   })
 
   afterEach(() => vi.useRealTimers())
@@ -170,7 +169,7 @@ describe('ProjectBuilder publish', () => {
   })
 
   it('sends a non-whitelisted wallet to the Apply tab without signing', async () => {
-    vi.mocked(simulateCreateProject).mockRejectedValueOnce(
+    simulateCreateProject.mockRejectedValueOnce(
       new CreateProjectError('notWhitelisted', 'Error(Contract, #1)', 1),
     )
     const onApply = vi.fn()
@@ -187,7 +186,7 @@ describe('ProjectBuilder publish', () => {
   })
 
   it('keeps a contract rejection inline instead of signing', async () => {
-    vi.mocked(simulateCreateProject).mockRejectedValueOnce(
+    simulateCreateProject.mockRejectedValueOnce(
       new CreateProjectError('uri', 'Error(Contract, #29)', 29),
     )
     render(<ProjectBuilder />)

@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { getProject } from '../../../lib/api'
 import { ogLocale } from '../../../i18n/config'
 import { absoluteTitle } from '../../../lib/routeMetadata'
+import { formatScore } from '../../../lib/score'
 import { ProjectDetailClient } from './ProjectDetailClient'
 
 type Props = {
@@ -45,7 +46,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (id === null) return notFoundMetadata()
 
-  const data = await getProject(id).catch(() => null)
+  // A confirmed miss resolves to `null`; a transient lookup failure rejects.
+  // Let the rejection propagate so Next can show the error UI instead of
+  // permanently noindexing a project that is merely unavailable right now.
+  const data = await getProject(id)
   if (!data) return notFoundMetadata()
 
   const { project } = data
@@ -54,8 +58,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     name: project.name,
     type: project.type,
     location: project.location,
-    credit: project.credit,
-    green: project.green,
+    credit: formatScore(project.credit),
+    green: formatScore(project.green),
     funded: project.funded,
   })
 
@@ -92,7 +96,10 @@ export default async function ProjectDetailPage({ params }: Props) {
     notFound()
   }
 
-  const data = await getProject(id).catch(() => null)
+  // Only malformed IDs (`id === null`) and confirmed misses (`null` result)
+  // are not-found. Let backend/registry failures reject into the error boundary
+  // so the user gets the existing retry UI instead of a permanent 404.
+  const data = await getProject(id)
   if (!data) {
     notFound()
   }

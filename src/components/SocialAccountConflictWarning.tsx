@@ -9,8 +9,12 @@ export interface SocialAccountConflictWarningProps {
   provider: AuthProviderType
   /** The entered email address. */
   email: string
-  /** Callback fired when user chooses to sign in with their existing social provider. */
-  onContinueWithProvider: (provider: AuthProviderType) => void
+  /**
+   * Callback fired when user chooses to sign in with their existing social
+   * provider. Omit when no redirect handler is configured — the provider
+   * button is then hidden and the email action remains available.
+   */
+  onContinueWithProvider?: (provider: AuthProviderType) => void
   /** Optional callback if the user explicitly wants to proceed with email login or account linking. */
   onProceedWithEmail?: () => void
 }
@@ -97,9 +101,11 @@ export function SocialAccountConflictWarning({
           marginTop: 4,
         }}
       >
-        <Button variant="primary" size="sm" onClick={() => onContinueWithProvider(provider)}>
-          {t('continueWithProvider', { provider: providerName })}
-        </Button>
+        {onContinueWithProvider && (
+          <Button variant="primary" size="sm" onClick={() => onContinueWithProvider(provider)}>
+            {t('continueWithProvider', { provider: providerName })}
+          </Button>
+        )}
 
         {onProceedWithEmail && (
           <button

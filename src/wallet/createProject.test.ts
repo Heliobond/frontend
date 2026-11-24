@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { xdr, scValToNative } from '@stellar/stellar-sdk'
 import {
   CreateProjectError,
@@ -203,7 +203,7 @@ describe('classifyCreateProjectError', () => {
     ['Error(Contract, #29)', 'uri'],
     ['Error(Contract, #35)', 'contract'],
     ['failed to fetch', 'contract'],
-  ])('maps %s to %s', (message, problem) => {
+  ] as const)('maps %s to %s', (message, problem) => {
     expect(classifyCreateProjectError(message)).toBe(problem)
   })
 

@@ -70,7 +70,12 @@
       "returns": "Rendements",
       "yield": "Rendement",
       "historyChartLabel": "Historique : {label}",
-      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures."
+      "snapshotsNote": "Instantanés indexés, {start} – {end}. Les rendements historiques ne garantissent pas les performances futures.",
+      "failed": "Impossible de charger les performances historiques. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
+      "showDataTable": "Voir le tableau de données",
+      "hideDataTable": "Masquer le tableau de données",
+      "dateColumn": "Date"
     },
     "TransactionsDrawer": {
       "title": "Activité des transactions",
@@ -152,6 +157,7 @@
     "formula": "rendement attendu = investissement × (crédit + vert) ÷ 200",
     "rowRegistry": "ProjectRegistry",
     "rowVault": "InvestmentVault",
+    "contractNotConfigured": "Non configuré pour ce déploiement",
     "rowCadence": "Cadence des mises à jour de l'oracle",
     "rowCadenceValue": "quotidienne",
     "rowAudit": "Audit indépendant",
@@ -615,6 +621,7 @@
     "backAriaHidden": "←",
     "backLabel": "Retour aux projets",
     "verifiedSince": "Créateur vérifié · depuis {since}",
+    "verifiedCreator": "Créateur vérifié",
     "verifiedMetadata": "Métadonnées vérifiées",
     "metadataMismatch": "Discordance des métadonnées",
     "unverifiedMetadata": "Métadonnées non vérifiées",
@@ -626,7 +633,8 @@
     "greenHistory": "Score vert au fil du temps",
     "scoreGaugeAria": "{label} : {value} sur {max}",
     "onChainNote": "chaque mise à jour oracle est sur la chaîne ↗",
-    "verifiedAgo": "vérifié il y a 2h ↗",
+    "lastScoreObservation": "Dernière observation : {date}",
+    "scoreDateUnknown": "Date inconnue",
     "fundingTitle": "Chronologie de financement",
     "fundingGoalLabel": "{raised} collectés sur un objectif de {goal}",
     "contributionTitle": "Contribution de ce projet",
@@ -641,7 +649,13 @@
     "yieldHistory": "Historique des rendements",
     "yieldLabel": "Rendement",
     "yieldHelpLabel": "À propos du rendement de l’obligation",
-    "yieldHelp": "Il s’agit du rendement indicatif actuel de l’obligation. Touchez pour en savoir plus ; ce rendement n’est pas garanti."
+    "yieldHelp": "Il s’agit du rendement indicatif actuel de l’obligation. Touchez pour en savoir plus ; ce rendement n’est pas garanti.",
+    "missingInfoNotice": "Certains détails de ce projet ne sont pas disponibles dans le registre. Seuls les scores vérifiés sur la chaîne sont affichés.",
+    "creatorUnavailable": "Informations sur le créateur indisponibles",
+    "storyUnavailable": "Aucune description du projet n'est disponible.",
+    "scoreHistoryUnavailable": "Aucun historique de scores sur la chaîne n'est encore disponible pour ce projet.",
+    "fundingUnavailable": "Informations de financement indisponibles.",
+    "priceHistoryUnavailable": "Aucune observation de prix ou de rendement n'est disponible pour ce projet."
   },
   "PriceHistory": {
     "title": "Cours de l'obligation",
@@ -743,6 +757,8 @@
   "YieldAlert": {
     "modalTitle": "Configurer une alerte de rendement",
     "editTitle": "Modifier l’alerte de rendement",
+    "selectAlertLabel": "Choisir une alerte",
+    "newAlert": "Nouvelle alerte",
     "conditionLabel": "Alerter quand le rendement va",
     "thresholdLabel": "Seuil",
     "operatorAbove": "au-dessus de",

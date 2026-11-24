@@ -9,8 +9,10 @@ test('wallet connect and disconnect respect the withdraw route guard', async ({ 
   await expect(page.getByRole('heading', { name: 'Withdraw from the pool' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Account' }).click()
-  await page.getByRole('button', { name: 'Disconnect' }).click()
-  await page.getByRole('button', { name: 'Yes, disconnect' }).click()
+  const accountMenu = page.getByRole('menu')
+  await accountMenu.getByRole('menuitem', { name: 'Disconnect', exact: true }).click()
+  await accountMenu.getByRole('menuitem', { name: 'Yes, disconnect' }).click()
+  await expect(page.getByRole('button', { name: 'Account' })).toBeHidden()
 
   await page.goto('/withdraw')
   await expect(page).toHaveURL(/\/connect\?next=%2Fwithdraw/)

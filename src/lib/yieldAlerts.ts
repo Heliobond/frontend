@@ -5,6 +5,7 @@
 // `YieldAlertProvider`.
 
 import { type Project } from '../data'
+import { knownScores } from './score'
 
 export const YIELD_ALERTS_STORAGE_KEY = 'hb-yield-alerts'
 
@@ -34,6 +35,31 @@ export interface TriggeredAlert {
   currentYield: number
 }
 
+/**
+ * Runtime guard for persisted or remotely synced alerts. Storage is untrusted:
+ * older/corrupted records can carry an operator other than `above`/`below`,
+ * which `evaluateAlerts` would otherwise treat as `below` and turn into a real
+ * notification. Display fields are required because toasts and the modal show
+ * them directly.
+ */
+export function isValidAlert(value: unknown): value is YieldAlert {
+  if (typeof value !== 'object' || value === null) return false
+  const alert = value as Record<string, unknown>
+  return (
+    typeof alert.id === 'string' &&
+    alert.id.length > 0 &&
+    typeof alert.bondId === 'number' &&
+    Number.isFinite(alert.bondId) &&
+    typeof alert.bondName === 'string' &&
+    alert.bondName.trim().length > 0 &&
+    typeof alert.threshold === 'number' &&
+    Number.isFinite(alert.threshold) &&
+    (alert.operator === 'above' || alert.operator === 'below') &&
+    typeof alert.createdAt === 'string' &&
+    alert.createdAt.length > 0
+  )
+}
+
 /** Read the saved alerts. Returns [] when storage is empty or unreadable. */
 export function readAlerts(): YieldAlert[] {
   if (typeof window === 'undefined') return []
@@ -42,14 +68,7 @@ export function readAlerts(): YieldAlert[] {
     if (!stored) return []
     const parsed: unknown = JSON.parse(stored)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (a): a is YieldAlert =>
-        typeof a === 'object' &&
-        a !== null &&
-        typeof a.id === 'string' &&
-        typeof a.bondId === 'number' &&
-        typeof a.threshold === 'number',
-    )
+    return parsed.filter(isValidAlert)
   } catch {
     return []
   }
@@ -135,7 +154,9 @@ function revisionTime(alert: YieldAlert): number {
 export function mergeAlerts(local: YieldAlert[], remote: YieldAlert[]): YieldAlert[] {
   const byId = new Map<string, YieldAlert>()
 
-  for (const alert of Array.isArray(remote) ? remote : []) byId.set(alert.id, alert)
+  for (const alert of Array.isArray(remote) ? remote : []) {
+    if (isValidAlert(alert)) byId.set(alert.id, alert)
+  }
   for (const alert of Array.isArray(local) ? local : []) {
     const serverAlert = byId.get(alert.id)
     if (!serverAlert || revisionTime(alert) > revisionTime(serverAlert)) {
@@ -152,7 +173,8 @@ export function mergeAlerts(local: YieldAlert[], remote: YieldAlert[]): YieldAle
  * distinct trackable value.
  */
 export function getEffectiveYield(project: Pick<Project, 'credit' | 'green'>): number {
-  return (project.credit + project.green) / 2
+  const scores = knownScores(project.credit, project.green)
+  return scores.length === 0 ? 0 : scores.reduce((sum, score) => sum + score, 0) / scores.length
 }
 
 /**
@@ -167,6 +189,10 @@ export function evaluateAlerts(alerts: YieldAlert[], projects: Project[]): Trigg
   const triggered: TriggeredAlert[] = []
 
   for (const alert of alerts) {
+    // Defense in depth: a malformed record can also arrive from a remote merge
+    // before storage is re-read, and must never become a `below` notification.
+    if (!isValidAlert(alert)) continue
+
     const project = projects.find((p) => p.id === alert.bondId)
     if (!project) continue
 

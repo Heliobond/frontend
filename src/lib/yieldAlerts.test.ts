@@ -1,6 +1,6 @@
 // Unit tests for yield alerts module
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from '@/test/bun'
 import {
   readAlerts,
   writeAlerts,
@@ -11,6 +11,7 @@ import {
   getEffectiveYield,
   evaluateAlerts,
   generateAlertId,
+  isValidAlert,
   mergeAlerts,
   type YieldAlert,
   YIELD_ALERTS_STORAGE_KEY,
@@ -70,13 +71,30 @@ describe('yieldAlerts', () => {
           createdAt: '2024-01-01',
         },
         { invalid: 'object' }, // missing required fields
-        { id: '2', bondId: 2, threshold: 3, operator: 'below', createdAt: '2024-01-02' }, // missing bondName (optional)
+        { id: '2', bondId: 2, threshold: 3, operator: 'below', createdAt: '2024-01-02' }, // missing bondName
       ]
       mockLocalStorage[YIELD_ALERTS_STORAGE_KEY] = JSON.stringify(stored)
       const alerts = readAlerts()
-      expect(alerts).toHaveLength(2)
+      expect(alerts).toHaveLength(1)
       expect(alerts[0].id).toBe('1')
-      expect(alerts[1].id).toBe('2')
+    })
+
+    it('drops a malformed operator but keeps valid entries beside it', () => {
+      const valid: YieldAlert = {
+        id: 'valid',
+        bondId: 1,
+        bondName: 'Valid bond',
+        threshold: 5,
+        operator: 'above',
+        createdAt: '2024-01-01',
+      }
+      const stored = [
+        { ...valid, id: 'bad-operator', operator: 'sideways' },
+        { ...valid, id: 'missing-name', bondName: undefined },
+        valid,
+      ]
+      mockLocalStorage[YIELD_ALERTS_STORAGE_KEY] = JSON.stringify(stored)
+      expect(readAlerts()).toEqual([valid])
     })
 
     it('should parse valid alerts correctly', () => {
@@ -280,6 +298,42 @@ describe('yieldAlerts', () => {
       expect(triggered).toHaveLength(1)
     })
 
+    it('never fires a below-threshold toast for an unknown operator', () => {
+      const alerts = [
+        {
+          id: 'malformed',
+          bondId: 2,
+          bondName: 'Test Bond',
+          threshold: 100,
+          operator: 'sideways',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ] as unknown as YieldAlert[]
+      expect(evaluateAlerts(alerts, mockProjects)).toHaveLength(0)
+    })
+
+    it('skips malformed records but still evaluates valid ones beside them', () => {
+      const alerts = [
+        {
+          id: 'malformed',
+          bondId: 2,
+          bondName: 'Test Bond',
+          threshold: 100,
+          operator: 'sideways',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 'valid',
+          bondId: 2,
+          bondName: 'Test Bond',
+          threshold: 40,
+          operator: 'below',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
+      ] as unknown as YieldAlert[]
+      expect(evaluateAlerts(alerts, mockProjects).map((t) => t.alert.id)).toEqual(['valid'])
+    })
+
     it('should skip alerts for projects that do not exist', () => {
       const alerts: YieldAlert[] = [
         {
@@ -421,6 +475,40 @@ describe('yieldAlerts', () => {
         { ...base, threshold: 8, updatedAt: '2026-01-03T00:00:00.000Z' },
       ]
       expect(mergeAlerts(local, remote)).toEqual([remote[0]])
+    })
+
+    it('does not accept a malformed remote alert', () => {
+      const malformed = { ...base, id: 'remote-bad', operator: 'sideways' } as unknown as YieldAlert
+      expect(mergeAlerts([], [malformed])).toEqual([])
+    })
+  })
+
+  describe('isValidAlert', () => {
+    const base: YieldAlert = {
+      id: 'alert-1',
+      bondId: 1,
+      bondName: 'Test Bond',
+      threshold: 5,
+      operator: 'above',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    }
+
+    it('accepts a fully formed alert', () => {
+      expect(isValidAlert(base)).toBe(true)
+    })
+
+    it.each([
+      ['an unknown operator', { operator: 'sideways' }],
+      ['a missing display name', { bondName: '' }],
+      ['a non-finite threshold', { threshold: Number.NaN }],
+      ['a missing id', { id: '' }],
+    ])('rejects %s', (_label, patch) => {
+      expect(isValidAlert({ ...base, ...patch })).toBe(false)
+    })
+
+    it('rejects values that are not objects', () => {
+      expect(isValidAlert(null)).toBe(false)
+      expect(isValidAlert('alert')).toBe(false)
     })
   })
 
