@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState, useEffect, type ReactNode } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
-import { ProjectCard, Tag, Card, UploadIcon, Button } from '@/components'
+import { ProjectCard, Tag, Card, UploadIcon, Button, AddressChip } from '@/components'
 import {
   cardTitle,
   subtle,
@@ -76,6 +76,7 @@ export interface ProjectBuilderProps {
  */
 export function ProjectBuilder({ onApply, draft, onDraftChange }: ProjectBuilderProps = {}) {
   const t = useTranslations('Creator')
+  const tTransactions = useTranslations('Components.TransactionsDrawer')
   const tContract = useTranslations('ContractErrors')
   const locale = useLocale()
   const { address, sign } = useWallet()
@@ -93,6 +94,7 @@ export function ProjectBuilder({ onApply, draft, onDraftChange }: ProjectBuilder
   const [metadataHash, setMetadataHash] = useState<{ json: string; hash: Uint8Array } | null>(null)
   const [hashUnavailable, setHashUnavailable] = useState(false)
   const [publish, setPublish] = useState<PublishState>({ status: 'idle' })
+  const explorerUrl = publish.status === 'published' ? getExplorerTxUrl(publish.hash) : undefined
   const goalErrorId = useId()
   const uriErrorId = useId()
   const maturityErrorId = useId()
@@ -524,14 +526,18 @@ export function ProjectBuilder({ onApply, draft, onDraftChange }: ProjectBuilder
           >
             <p style={{ ...subtle, margin: 0 }}>
               {t('publishSuccess', { id: publish.projectId })}{' '}
-              <a
-                href={getExplorerTxUrl(publish.hash)}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'var(--ink)', fontWeight: 600 }}
-              >
-                {t('publishViewTx')}
-              </a>
+              {explorerUrl ? (
+                <a
+                  href={explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: 'var(--ink)', fontWeight: 600 }}
+                >
+                  {t('publishViewTx')}
+                </a>
+              ) : (
+                <AddressChip value={publish.hash} label={tTransactions('transactionHash')} />
+              )}
             </p>
           </div>
         )}

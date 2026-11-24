@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@/test/bun'
-import { Sparkline, boundSeries } from './Sparkline'
+import { Sparkline } from './Sparkline'
 import { render } from '@testing-library/react'
 
 describe('Sparkline', () => {
@@ -198,17 +198,28 @@ describe('Sparkline', () => {
 })
 
 describe('Sparkline long series', () => {
-  it('bounds rendered nodes and keeps first, last and extrema', () => {
-    const series = Array.from({ length: 50_000 }, (_, i) => (i === 25_000 ? 1_000_000 : i % 100))
-    const bounded = boundSeries(series)
-    expect(bounded.length).toBeLessThanOrEqual(130)
-    expect(bounded[0]).toBe(series[0])
-    expect(bounded[bounded.length - 1]).toBe(series[series.length - 1])
-    expect(Math.max(...bounded)).toBe(1_000_000)
-  })
+  it('bounds rendered points and keeps endpoints and extrema at their original positions', () => {
+    const series = Array<number>(200_000).fill(0)
+    series[0] = 5
+    series[170_000] = 100
+    series[180_000] = -100
+    series[series.length - 1] = -5
+    const { container } = render(<Sparkline points={series} />)
+    const samples = [...container.querySelectorAll('circle[fill="transparent"]')]
+    const findObservation = (value: number) =>
+      samples.find((circle) => circle.textContent === String(value))
+    const vertexCount = container
+      .querySelector('polyline')
+      ?.getAttribute('points')
+      ?.split(' ').length
 
-  it('renders long input with a bounded number of circles', () => {
-    const { container } = render(<Sparkline points={Array.from({ length: 200_000 }, (_, i) => i)} />)
-    expect(container.querySelectorAll('circle').length).toBeLessThanOrEqual(130)
+    expect(samples.length).toBeLessThanOrEqual(120)
+    expect(vertexCount).toBe(samples.length)
+    expect(samples[0]).toHaveTextContent(/^5$/)
+    expect(samples.at(-1)).toHaveTextContent(/^-5$/)
+    expect(Number(findObservation(100)?.getAttribute('cx'))).toBeCloseTo(109.4005)
+    expect(Number(findObservation(-100)?.getAttribute('cx'))).toBeCloseTo(115.6006)
+    expect(findObservation(100)).toHaveAttribute('cy', '4')
+    expect(findObservation(-100)).toHaveAttribute('cy', '32')
   })
 })

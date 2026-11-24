@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@/test/bun'
+import { describe, it, expect, vi } from '@/test/bun'
 import {
   validateNetwork,
   getExplorerTxUrl,
@@ -52,6 +52,28 @@ describe('network configuration', () => {
     expect(getExplorerUrl(tx)).toContain(`/tx/${tx}`)
     expect(getExplorerUrl(addr)).toContain(`/account/${addr}`)
     expect(getExplorerUrl('short-val')).toBeUndefined()
+  })
+})
+
+describe('explorers use the configured Stellar passphrase (#1066)', () => {
+  it.each([
+    ['public', '', 'https://stellar.expert/explorer/public'],
+    ['testnet', '', 'https://stellar.expert/explorer/testnet'],
+    ['testnet', 'Standalone Network ; February 2017', undefined],
+  ])('uses %s %j to select %s', async (label, passphrase, base) => {
+    vi.stubEnv('NEXT_PUBLIC_STELLAR_NETWORK', label)
+    vi.stubEnv('NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE', passphrase)
+    vi.resetModules()
+    const network = await import('./network')
+    const hash = 'f'.repeat(64)
+    const address = 'G' + 'A'.repeat(55)
+
+    expect(network.getExplorerTxUrl(hash)).toBe(base && `${base}/tx/${hash}`)
+    expect(network.getExplorerAccountUrl(address)).toBe(base && `${base}/account/${address}`)
+    expect(network.getExplorerUrl(hash)).toBe(base && `${base}/tx/${hash}`)
+    expect(network.getExplorerTxUrl(hash, 'testnet')).toBe(
+      base && `https://stellar.expert/explorer/testnet/tx/${hash}`,
+    )
   })
 })
 

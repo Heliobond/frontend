@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import {
+  AddressChip,
   Badge,
   Button,
   DemoDataBadge,
@@ -19,7 +20,7 @@ import { getEffectiveYield } from '../lib/yieldAlerts'
 import { formatDecimal, formatMoney, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
 import { translateContractError } from '../lib/contractErrors'
-import { getExplorerUrl } from '../config/network'
+import { getExplorerUrl, isTransactionHash } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
 
 import { type Project } from '../data'
@@ -57,6 +58,7 @@ export const ProjectDetail = memo(function ProjectDetail({
   children,
 }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
+  const tTransactions = useTranslations('Components.TransactionsDrawer')
   const tc = useTranslations('Common')
   const tPrice = useTranslations('PriceHistory')
   const tErr = useTranslations('ContractErrors')
@@ -588,7 +590,16 @@ export const ProjectDetail = memo(function ProjectDetail({
                       {(() => {
                         const explorerUrl = getExplorerUrl(event.hash)
                         if (!explorerUrl) {
-                          return <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
+                          return isTransactionHash(event.hash) ? (
+                            <AddressChip
+                              value={event.hash}
+                              lead={4}
+                              tail={4}
+                              label={tTransactions('transactionHash')}
+                            />
+                          ) : (
+                            <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
+                          )
                         }
                         return (
                           <a

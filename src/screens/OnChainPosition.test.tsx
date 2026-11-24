@@ -39,7 +39,7 @@ const { usePortfolio } = await import('../hooks/usePortfolio')
 const vault = await import('../wallet/vault')
 const { notifyTransactionConfirmed } = await import('../wallet/vaultEvents')
 const { vaultEventStream } = await import('../lib/websocket')
-const { getExplorerTxUrl } = await import('../config/network')
+const networkConfig = await import('../config/network')
 const { TransactionPendingError } = await import('../wallet/transactions')
 
 const portfolio = (shares: number) => ({
@@ -179,12 +179,35 @@ describe('OnChainPosition - Claim yield flow and live updates (#590, #605)', () 
     await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1))
 
     const notification = mockToast.mock.lastCall?.[0]
-    expect(notification).toMatchObject({ tone: 'solar', href: getExplorerTxUrl(hash) })
+    expect(notification).toMatchObject({
+      tone: 'solar',
+      href: networkConfig.getExplorerTxUrl(hash),
+    })
     render(notification.action)
     expect(screen.getByRole('link', { name: /explorer/i })).toHaveAttribute(
       'href',
-      getExplorerTxUrl(hash),
+      networkConfig.getExplorerTxUrl(hash),
     )
+    expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
+  })
+
+  it('offers a copyable pending claim hash without a retry when no explorer exists', async () => {
+    const hash = 'a'.repeat(64)
+    vi.spyOn(networkConfig, 'getExplorerTxUrl').mockReturnValue(undefined)
+    vi.spyOn(networkConfig, 'getExplorerUrl').mockReturnValue(undefined)
+    vi.mocked(vault.fetchPortfolio).mockResolvedValue(portfolio(100))
+    vi.mocked(vault.submitClaimYield).mockRejectedValue(new TransactionPendingError(hash))
+    render(<PositionHarness />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /claim yield/i }))
+    await waitFor(() => expect(mockToast).toHaveBeenCalledTimes(1))
+
+    const notification = mockToast.mock.lastCall?.[0]
+    expect(notification).toMatchObject({ tone: 'solar', href: undefined })
+    render(notification.action)
+    expect(screen.getByTitle(hash)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Copy transaction hash' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /explorer/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /retry/i })).toBeNull()
   })
 

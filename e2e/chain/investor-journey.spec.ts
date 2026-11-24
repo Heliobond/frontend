@@ -56,6 +56,7 @@ async function amountIn(page: Page, testId: string): Promise<number> {
 test('connect → explore → project → deposit → portfolio → withdraw → claim yield', async ({
   page,
 }) => {
+  expect(env('NEXT_PUBLIC_USDC_SAC_ID')).toBe(env('E2E_USDC_SAC'))
   await injectTestWallet(page)
 
   await test.step('explore and open a project', async () => {
@@ -82,12 +83,19 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     await expect(
       page.getByRole('heading', { name: 'How much would you like to invest?' }),
     ).toBeVisible()
-    await page.locator('input').first().fill('150')
+    await expect(page.getByText('Balance 1000.00 USDC', { exact: true })).toBeVisible()
+    await page.getByRole('textbox', { name: 'Amount', exact: true }).fill('150')
     await page.getByRole('button', { name: /invest 150 usdc/i }).click()
     await page.getByRole('button', { name: /confirm in wallet/i }).click()
     await expect(page.getByRole('heading', { name: 'Welcome to the pool' })).toBeVisible({
       timeout: 90_000,
     })
+
+    await page.getByRole('button', { name: 'Transaction activity history' }).click()
+    const activity = page.getByRole('dialog')
+    await expect(activity.getByRole('button', { name: 'Copy transaction hash' })).toBeVisible()
+    await expect(activity.getByRole('link', { name: /stellar expert/i })).toHaveCount(0)
+    await page.keyboard.press('Escape')
   })
 
   await test.step('portfolio shows the minted shares', async () => {
@@ -95,6 +103,11 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     await expect(page).toHaveURL(/\/portfolio/)
     // 150 USDC minus the 0.5% insurance premium, minted 1:1 into an empty vault.
     await expect(page.getByTestId('onchain-shares')).toContainText('149.25')
+  })
+
+  await test.step('deposit debits 150 USDC from the wallet', async () => {
+    await page.goto('/deposit')
+    await expect(page.getByText('Balance 850.00 USDC', { exact: true })).toBeVisible()
   })
 
   await test.step('withdraw reaches the contract (deposit lock-up applies)', async () => {

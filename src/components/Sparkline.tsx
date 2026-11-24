@@ -16,36 +16,32 @@ export interface SparklineProps {
   style?: CSSProperties
 }
 
-/** Upper bound on rendered observations; longer series are reduced below. */
-export const MAX_RENDERED_POINTS = 120
+const MAX_RENDERED_POINTS = 120
 
-/**
- * Reduces `values` to at most ~MAX_RENDERED_POINTS entries, always keeping the
- * first and last observations and each bucket's minimum and maximum.
- */
-export function boundSeries(values: readonly number[], max = MAX_RENDERED_POINTS): number[] {
-  if (values.length <= max) return [...values]
-  const buckets = Math.max(1, Math.floor((max - 2) / 2))
-  const size = (values.length - 2) / buckets
-  const out: number[] = [values[0]]
-  for (let b = 0; b < buckets; b++) {
-    const from = 1 + Math.floor(b * size)
-    const to = Math.min(values.length - 1, 1 + Math.floor((b + 1) * size))
-    let lo = from
-    let hi = from
-    for (let i = from; i < to; i++) {
-      if (values[i] < values[lo]) lo = i
-      if (values[i] > values[hi]) hi = i
+/** Select both extrema per bucket, in their original order and position. */
+function sampleIndices(points: readonly number[]): number[] {
+  if (points.length <= MAX_RENDERED_POINTS) return points.map((_, index) => index)
+  const buckets = (MAX_RENDERED_POINTS - 2) / 2
+  const interior = points.length - 2
+  const indices = [0]
+  for (let bucket = 0; bucket < buckets; bucket++) {
+    const start = 1 + Math.floor((bucket * interior) / buckets)
+    const end = 1 + Math.floor(((bucket + 1) * interior) / buckets)
+    let low = start
+    let high = start
+    for (let i = start + 1; i < end; i++) {
+      if (points[i] < points[low]) low = i
+      if (points[i] > points[high]) high = i
     }
-    if (lo <= hi) out.push(values[lo], ...(hi !== lo ? [values[hi]] : []))
-    else out.push(values[hi], values[lo])
+    indices.push(Math.min(low, high))
+    if (low !== high) indices.push(Math.max(low, high))
   }
-  out.push(values[values.length - 1])
-  return out
+  indices.push(points.length - 1)
+  return indices
 }
 
 function Sparkline({
-  points: rawPoints,
+  points,
   width = 132,
   height = 36,
   color = 'var(--ink-40)',
@@ -57,25 +53,22 @@ function Sparkline({
   const innerW = Math.max(1, width - pad * 2)
   const innerH = Math.max(1, height - pad * 2)
 
-  const points = boundSeries(rawPoints)
-  const n = points.length
-  let min = 0
-  let max = 1
-  if (n) {
-    min = points[0]
-    max = points[0]
-    for (const v of points) {
-      if (v < min) min = v
-      if (v > max) max = v
-    }
+  const samples = sampleIndices(points)
+  const n = samples.length
+  let min = points[0] ?? 0
+  let max = points[0] ?? 1
+  for (const index of samples) {
+    min = Math.min(min, points[index])
+    max = Math.max(max, points[index])
   }
   const span = max - min || 1 // avoid divide-by-zero on a flat line
 
-  const coords = points.map((value, i) => {
-    const x = pad + (n > 1 ? (i / (n - 1)) * innerW : innerW / 2)
+  const coords = samples.map((index) => {
+    const value = points[index]
+    const x = pad + (n > 1 ? (index / (points.length - 1)) * innerW : innerW / 2)
     // higher value sits higher on screen (smaller y)
     const y = pad + (n > 1 ? (1 - (value - min) / span) * innerH : innerH / 2)
-    return { x, y }
+    return { index, value, x, y }
   })
 
   const polyPoints = coords.map((c) => `${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(' ')
@@ -116,12 +109,12 @@ function Sparkline({
           stroke="var(--canvas)"
           strokeWidth={1.5}
         >
-          <title>{points[points.length - 1]}</title>
+          <title>{last.value}</title>
         </circle>
       )}
-      {coords.map((C, i) => (
-        <circle key={i} cx={C.x} cy={C.y} r={6} fill="transparent">
-          <title>{points[i]}</title>
+      {coords.map(({ index, value, x, y }) => (
+        <circle key={index} cx={x} cy={y} r={6} fill="transparent">
+          <title>{value}</title>
         </circle>
       ))}
     </svg>
