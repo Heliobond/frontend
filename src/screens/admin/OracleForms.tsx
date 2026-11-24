@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button, FormField, FormInput, FormSelect, sanitizeAmount } from '@/components'
 import {
@@ -104,14 +104,27 @@ export function OracleForms({
   const target = projects.find((p) => p.id === scoreId)
   const fundTarget = projects.find((p) => p.id === fundId)
 
+  const currentScoreDraft = useRef({ id: scoreId, credit, green })
+  const currentFundDraft = useRef({ id: fundId, amount })
+  currentScoreDraft.current = { id: scoreId, credit, green }
+  currentFundDraft.current = { id: fundId, amount }
+
   // Inputs stay filled on failure, so the admin can retry. They clear only on success.
   const submitScores = async () => {
     if (!target || !scoresValid || scoresDisabledReason || scorePending) return
+    const submittedDraft = currentScoreDraft.current
     setScorePending(true)
     try {
       if (await onPushScores(scoreId, clampScore(credit), clampScore(green))) {
-        setCredit('')
-        setGreen('')
+        const current = currentScoreDraft.current
+        if (
+          current.id === submittedDraft.id &&
+          current.credit === submittedDraft.credit &&
+          current.green === submittedDraft.green
+        ) {
+          setCredit('')
+          setGreen('')
+        }
       }
     } finally {
       setScorePending(false)
@@ -120,9 +133,15 @@ export function OracleForms({
 
   const submitFund = async () => {
     if (!fundTarget || !fundValid || fundPending) return
+    const submittedDraft = currentFundDraft.current
     setFundPending(true)
     try {
-      if (await onFund(fundId, amountN)) setAmount('')
+      if (await onFund(fundId, amountN)) {
+        const current = currentFundDraft.current
+        if (current.id === submittedDraft.id && current.amount === submittedDraft.amount) {
+          setAmount('')
+        }
+      }
     } finally {
       setFundPending(false)
     }
