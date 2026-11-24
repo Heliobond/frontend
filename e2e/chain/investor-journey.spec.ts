@@ -96,6 +96,9 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     await expect(activity.getByRole('button', { name: 'Copy transaction hash' })).toBeVisible()
     await expect(activity.getByRole('link', { name: /stellar expert/i })).toHaveCount(0)
     await page.keyboard.press('Escape')
+
+    await page.goto('/deposit')
+    await expect(page.getByText('Balance 850.00 USDC', { exact: true })).toBeVisible()
   })
 
   await test.step('portfolio shows the minted shares', async () => {
@@ -103,11 +106,6 @@ test('connect → explore → project → deposit → portfolio → withdraw →
     await expect(page).toHaveURL(/\/portfolio/)
     // 150 USDC minus the 0.5% insurance premium, minted 1:1 into an empty vault.
     await expect(page.getByTestId('onchain-shares')).toContainText('149.25')
-  })
-
-  await test.step('deposit debits 150 USDC from the wallet', async () => {
-    await page.goto('/deposit')
-    await expect(page.getByText('Balance 850.00 USDC', { exact: true })).toBeVisible()
   })
 
   await test.step('withdraw reaches the contract (deposit lock-up applies)', async () => {
