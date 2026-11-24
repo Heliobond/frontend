@@ -1,5 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
-import { describe, it, expect } from '@/test/bun'
+import { describe, it, expect, vi } from '@/test/bun'
 import {
   searchBondsByName,
   sortBondsByYield,
