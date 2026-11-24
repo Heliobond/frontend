@@ -61,17 +61,24 @@ function parseNetwork(raw: string | null): AppNetwork | null {
  */
 export function readSession(): StoredSession {
   const store = storage()
-  if (!store) return { ...UNREAD_SESSION }
+  if (!store) return memorySession ? { ...memorySession } : { ...UNREAD_SESSION }
   try {
-    return {
+    const stored = {
       address: store.getItem(ADDRESS_KEY) ?? '',
       walletId: store.getItem(WALLET_KEY),
       network: parseNetwork(store.getItem(NETWORK_KEY)),
     }
+    return !stored.address && memorySession ? { ...memorySession } : stored
   } catch {
-    return { ...UNREAD_SESSION }
+    return memorySession ? { ...memorySession } : { ...UNREAD_SESSION }
   }
 }
+
+/**
+ * Session held in memory for this page visit when storage cannot be used, so
+ * connecting still works. It is lost on reload, which is intended.
+ */
+let memorySession: StoredSession | null = null
 
 /** No session on the server: the first client render must match the server HTML. */
 export function getServerSession(): StoredSession {
@@ -127,25 +134,31 @@ function publish(): void {
  */
 export function saveSession(address: string, walletId: string): void {
   const store = storage()
-  if (!store) return
-  try {
-    store.setItem(ADDRESS_KEY, address)
-    store.setItem(WALLET_KEY, walletId)
-  } catch {
-    /* Storage may be full or disabled; the session still works for this tab. */
+  let persisted = false
+  if (store) {
+    try {
+      store.setItem(ADDRESS_KEY, address)
+      store.setItem(WALLET_KEY, walletId)
+      persisted = true
+    } catch {
+      /* Storage may be full or disabled; fall back to memory below. */
+    }
   }
+  memorySession = persisted ? null : { address, walletId, network: readSession().network }
   publish()
 }
 
 export function clearSession(): void {
   clearUserData()
+  memorySession = null
   const store = storage()
-  if (!store) return
-  try {
-    store.removeItem(ADDRESS_KEY)
-    store.removeItem(WALLET_KEY)
-  } catch {
-    /* ignore */
+  if (store) {
+    try {
+      store.removeItem(ADDRESS_KEY)
+      store.removeItem(WALLET_KEY)
+    } catch {
+      /* ignore */
+    }
   }
   publish()
 }

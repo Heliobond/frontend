@@ -153,6 +153,7 @@ describe('wallet session store', () => {
     })
     expect(() => saveSession(ADDRESS, 'freighter')).not.toThrow()
     setItem.mockRestore()
+    clearSession()
   })
 
   it('survives storage that throws on read', () => {
@@ -161,5 +162,22 @@ describe('wallet session store', () => {
     })
     expect(readSession()).toEqual({ address: '', walletId: null, network: null })
     getItem.mockRestore()
+  })
+})
+
+describe('in-memory fallback when storage throws', () => {
+  it('keeps the demo session for this visit and clears it on disconnect', () => {
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    try {
+      saveSession('GDEMO', DEMO_WALLET_ID)
+      expect(getSession().address).toBe('GDEMO')
+      expect(getSession().walletId).toBe(DEMO_WALLET_ID)
+    } finally {
+      spy.mockRestore()
+    }
+    clearSession()
+    expect(readSession().address).toBe('')
   })
 })
