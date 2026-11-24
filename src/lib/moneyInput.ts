@@ -5,6 +5,23 @@ const MAX_FRACTION_DIGITS = 2
 
 /** One compiled grammar per locale — Intl lookups are too slow to repeat per keystroke. */
 const grammarCache = new Map<string, RegExp>()
+const separatorCache = new Map<string, { group: string; decimal: string }>()
+
+const ARABIC_INDIC_ZERO = 0x0660
+const EXTENDED_ARABIC_INDIC_ZERO = 0x06f0
+
+/**
+ * Converts Arabic-Indic digits (U+0660–0669, U+06F0–06F9) to ASCII digits and
+ * the Arabic decimal (U+066B) and thousands (U+066C) separators to the locale's
+ * Latin-digit separators, so one grammar validates every input form.
+ */
+function normalizeNativeDigits(value: string, separators: { group: string; decimal: string }): string {
+  return value
+    .replace(/[\u0660-\u0669]/g, (ch) => String(ch.charCodeAt(0) - ARABIC_INDIC_ZERO))
+    .replace(/[\u06f0-\u06f9]/g, (ch) => String(ch.charCodeAt(0) - EXTENDED_ARABIC_INDIC_ZERO))
+    .replace(/\u066b/g, separators.decimal)
+    .replace(/\u066c/g, separators.group)
+}
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -26,6 +43,7 @@ function moneyGrammar(localeCode: string): RegExp {
   )
   const group = parts.find((part) => part.type === 'group')?.value ?? ','
   const decimal = parts.find((part) => part.type === 'decimal')?.value ?? '.'
+  separatorCache.set(localeCode, { group, decimal })
   const groupPattern = /\s/.test(group) ? '\\s' : escapeRegExp(group)
 
   const grammar = new RegExp(
@@ -44,7 +62,10 @@ function moneyGrammar(localeCode: string): RegExp {
  * O(n) time in the input length; O(1) space beyond the per-locale grammar cache.
  */
 export function parseMoneyInput(value: string, locale: string): number | null {
-  const match = moneyGrammar(getLocaleCode(locale)).exec(value.trim())
+  const localeCode = getLocaleCode(locale)
+  const grammar = moneyGrammar(localeCode)
+  const normalized = normalizeNativeDigits(value.trim(), separatorCache.get(localeCode)!)
+  const match = grammar.exec(normalized)
   if (!match) return null
   const [, integer, fraction = ''] = match
   return Number(`${integer.replace(/\D/g, '')}.${fraction}`)

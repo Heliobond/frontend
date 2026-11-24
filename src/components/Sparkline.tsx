@@ -16,8 +16,36 @@ export interface SparklineProps {
   style?: CSSProperties
 }
 
+/** Upper bound on rendered observations; longer series are reduced below. */
+export const MAX_RENDERED_POINTS = 120
+
+/**
+ * Reduces `values` to at most ~MAX_RENDERED_POINTS entries, always keeping the
+ * first and last observations and each bucket's minimum and maximum.
+ */
+export function boundSeries(values: readonly number[], max = MAX_RENDERED_POINTS): number[] {
+  if (values.length <= max) return [...values]
+  const buckets = Math.max(1, Math.floor((max - 2) / 2))
+  const size = (values.length - 2) / buckets
+  const out: number[] = [values[0]]
+  for (let b = 0; b < buckets; b++) {
+    const from = 1 + Math.floor(b * size)
+    const to = Math.min(values.length - 1, 1 + Math.floor((b + 1) * size))
+    let lo = from
+    let hi = from
+    for (let i = from; i < to; i++) {
+      if (values[i] < values[lo]) lo = i
+      if (values[i] > values[hi]) hi = i
+    }
+    if (lo <= hi) out.push(values[lo], ...(hi !== lo ? [values[hi]] : []))
+    else out.push(values[hi], values[lo])
+  }
+  out.push(values[values.length - 1])
+  return out
+}
+
 function Sparkline({
-  points,
+  points: rawPoints,
   width = 132,
   height = 36,
   color = 'var(--ink-40)',
@@ -29,9 +57,18 @@ function Sparkline({
   const innerW = Math.max(1, width - pad * 2)
   const innerH = Math.max(1, height - pad * 2)
 
+  const points = boundSeries(rawPoints)
   const n = points.length
-  const min = n ? Math.min(...points) : 0
-  const max = n ? Math.max(...points) : 1
+  let min = 0
+  let max = 1
+  if (n) {
+    min = points[0]
+    max = points[0]
+    for (const v of points) {
+      if (v < min) min = v
+      if (v > max) max = v
+    }
+  }
   const span = max - min || 1 // avoid divide-by-zero on a flat line
 
   const coords = points.map((value, i) => {

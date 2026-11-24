@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@/test/bun'
-import { Sparkline } from './Sparkline'
+import { Sparkline, boundSeries } from './Sparkline'
 import { render } from '@testing-library/react'
 
 describe('Sparkline', () => {
@@ -194,5 +194,21 @@ describe('Sparkline', () => {
       const polyline = container.querySelector('polyline')
       expect(polyline).toBeInTheDocument()
     })
+  })
+})
+
+describe('Sparkline long series', () => {
+  it('bounds rendered nodes and keeps first, last and extrema', () => {
+    const series = Array.from({ length: 50_000 }, (_, i) => (i === 25_000 ? 1_000_000 : i % 100))
+    const bounded = boundSeries(series)
+    expect(bounded.length).toBeLessThanOrEqual(130)
+    expect(bounded[0]).toBe(series[0])
+    expect(bounded[bounded.length - 1]).toBe(series[series.length - 1])
+    expect(Math.max(...bounded)).toBe(1_000_000)
+  })
+
+  it('renders long input with a bounded number of circles', () => {
+    const { container } = render(<Sparkline points={Array.from({ length: 200_000 }, (_, i) => i)} />)
+    expect(container.querySelectorAll('circle').length).toBeLessThanOrEqual(130)
   })
 })
