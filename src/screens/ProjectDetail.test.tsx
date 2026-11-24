@@ -456,6 +456,12 @@ describe('ProjectDetail price movement and creator attribution', () => {
     expect(screen.queryByText(/% of par/)).not.toBeInTheDocument()
   })
 
+  it('does not show a percentage or fictional target when the funding goal is unknown', () => {
+    renderWith({ fundingGoal: 0, fundedAmount: 0 })
+    expect(screen.getByText('Funding information unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('0%')).not.toBeInTheDocument()
+  })
+
   it('does not invent a membership year when the creator has none (#1071)', () => {
     renderWith({ creator: { name: 'GABC…WXYZ', verified: true } })
     expect(screen.getByText('Verified creator')).toBeInTheDocument()

@@ -471,7 +471,7 @@ export function mapOnChainProject(
   const green = toScore(raw.green_impact)
   const lastVerifiedAt = Number(raw.last_update_timestamp) * 1000
 
-  const fundingGoal = metadata?.fundingGoal ?? 1000000
+  const fundingGoal = metadata?.fundingGoal ?? 0
 
   return {
     id,
