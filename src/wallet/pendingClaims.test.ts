@@ -5,6 +5,7 @@ import {
   removePendingClaim,
   clearPendingClaims,
   PENDING_CLAIMS_STORAGE_KEY,
+  subscribePendingClaims,
 } from './pendingClaims'
 
 describe('pendingClaims storage', () => {
@@ -124,5 +125,30 @@ describe('pendingClaims storage', () => {
     const claims = getPendingClaims()
     expect(claims).toHaveLength(1)
     expect(claims[0].id).toBe('claim-valid')
+  })
+})
+
+describe('subscribePendingClaims cross-tab updates', () => {
+  it('notifies on a storage event for the claims key', () => {
+    let calls = 0
+    const unsubscribe = subscribePendingClaims(() => calls++)
+    window.dispatchEvent(new StorageEvent('storage', { key: PENDING_CLAIMS_STORAGE_KEY }))
+    expect(calls).toBe(1)
+    unsubscribe()
+  })
+
+  it('ignores storage events for unrelated keys', () => {
+    let calls = 0
+    const unsubscribe = subscribePendingClaims(() => calls++)
+    window.dispatchEvent(new StorageEvent('storage', { key: 'something-else' }))
+    expect(calls).toBe(0)
+    unsubscribe()
+  })
+
+  it('stops notifying after unsubscribe', () => {
+    let calls = 0
+    subscribePendingClaims(() => calls++)()
+    window.dispatchEvent(new StorageEvent('storage', { key: PENDING_CLAIMS_STORAGE_KEY }))
+    expect(calls).toBe(0)
   })
 })

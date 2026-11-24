@@ -17,8 +17,17 @@ const STORAGE_KEY = PENDING_CLAIMS_STORAGE_KEY
 const CHANGE_EVENT = 'hb-pending-claims-change'
 
 export function subscribePendingClaims(listener: () => void): () => void {
+  // Another tab claiming funds only reaches this one as a `storage` event.
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== STORAGE_KEY) return
+    listener()
+  }
   window.addEventListener(CHANGE_EVENT, listener)
-  return () => window.removeEventListener(CHANGE_EVENT, listener)
+  window.addEventListener('storage', onStorage)
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, listener)
+    window.removeEventListener('storage', onStorage)
+  }
 }
 
 export function getPendingClaims(address?: string): PendingClaim[] {
