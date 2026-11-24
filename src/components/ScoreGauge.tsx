@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react'
+import { formatScore, isKnownScore } from '../lib/score'
 
 /**
  * Heliobond ScoreGauge — the signature sun-arc meter. A 270° arc (gap at the
@@ -6,7 +7,7 @@ import { type CSSProperties } from 'react'
  * meaning never lives in the arc alone (a11y + color-blind safe).
  */
 export interface ScoreGaugeProps {
-  /** The current numeric score value to display on the arc. Defaults to 0. */
+  /** The current numeric score value; `undefined` means "not scored yet". */
   value?: number
   /** The maximum possible score value. Defaults to 100. */
   max?: number
@@ -31,7 +32,7 @@ export interface ScoreGaugeProps {
 }
 
 export function ScoreGauge({
-  value = 0,
+  value,
   max = 100,
   label,
   ariaValueLabel,
@@ -47,15 +48,17 @@ export function ScoreGauge({
   const cy = size / 2
   const r = size / 2 - stroke / 2 - 2
   const C = 2 * Math.PI * r
-  const fraction = Math.max(0, Math.min(1, value / max))
+  const known = isKnownScore(value)
+  const fraction = known ? Math.max(0, Math.min(1, value / max)) : 0
 
   const trackLen = 0.75 * C
-  const valueLen = fraction * trackLen
+  const valueLen = known ? fraction * trackLen : 0
 
   // dot at value angle: start 135deg, sweep 270deg clockwise (screen coords)
   const angle = (135 + fraction * 270) * (Math.PI / 180)
   const dotX = cx + r * Math.cos(angle)
   const dotY = cy + r * Math.sin(angle)
+  const shownValue = formatScore(value)
 
   return (
     <div
@@ -67,7 +70,14 @@ export function ScoreGauge({
           height={size}
           viewBox={`0 0 ${size} ${size}`}
           role="img"
-          aria-label={ariaValueLabel ?? (label ? `${label}: ${value}/${max}` : `${value}/${max}`)}
+          aria-label={
+            ariaValueLabel ??
+            (known
+              ? label
+                ? `${label}: ${value}/${max}`
+                : `${value}/${max}`
+              : `${label ? `${label}: ` : ''}${shownValue}`)
+          }
         >
           <circle
             cx={cx}
@@ -91,14 +101,16 @@ export function ScoreGauge({
             strokeDasharray={`${valueLen} ${C - valueLen}`}
             transform={`rotate(135 ${cx} ${cy})`}
           />
-          <circle
-            cx={dotX}
-            cy={dotY}
-            r={stroke * 0.78}
-            fill="var(--solar)"
-            stroke="var(--ink)"
-            strokeWidth={2}
-          />
+          {known && (
+            <circle
+              cx={dotX}
+              cy={dotY}
+              r={stroke * 0.78}
+              fill="var(--solar)"
+              stroke="var(--ink)"
+              strokeWidth={2}
+            />
+          )}
         </svg>
         {showValue && (
           <div
@@ -111,11 +123,12 @@ export function ScoreGauge({
               justifyContent: 'center',
               fontFamily: 'var(--font-data)',
               fontWeight: 600,
-              fontSize: size * 0.22,
-              color: 'var(--ink)',
+              // "Unavailable" is longer than a two-digit score — keep it inside the arc.
+              fontSize: known ? size * 0.22 : Math.max(9, size * 0.12),
+              color: known ? 'var(--ink)' : 'var(--ink-60)',
             }}
           >
-            {value}
+            {shownValue}
           </div>
         )}
       </div>

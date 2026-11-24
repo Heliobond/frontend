@@ -6,7 +6,7 @@
  * two properties that matter — the key is added on the server, and the route
  * cannot be used to reach arbitrary backend endpoints.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from '@/test/bun'
 
 type Route = typeof import('./route')
 

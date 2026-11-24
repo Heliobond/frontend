@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   Badge,
   Button,
@@ -14,14 +14,20 @@ import {
 } from '../components'
 import { Sparkline as SparklineUnmemoized } from '../components/Sparkline'
 const Sparkline = memo(SparklineUnmemoized)
-import { formatDecimal, formatMoney } from '../lib/format'
+import { formatScore } from '../lib/score'
+import { getEffectiveYield } from '../lib/yieldAlerts'
+import { formatDecimal, formatMoney, formatSignedChange, PRICE_DECIMALS } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
 import { translateContractError } from '../lib/contractErrors'
 import { getExplorerUrl } from '../config/network'
 import { shortAddress } from '../wallet/WalletProvider'
 
 import { type Project } from '../data'
-import { type ProjectDetail as ProjectDetailData } from '../data/projectDetails'
+import {
+  type MissingDetailSection,
+  type ProjectDetail as ProjectDetailData,
+  type ScorePoint,
+} from '../data/projectDetails'
 import { type MetadataVerificationStatus } from '../wallet/registry'
 import { type ProjectSource } from '../lib/api'
 
@@ -52,6 +58,7 @@ export const ProjectDetail = memo(function ProjectDetail({
 }: ProjectDetailProps) {
   const t = useTranslations('ProjectDetail')
   const tc = useTranslations('Common')
+  const tPrice = useTranslations('PriceHistory')
   const tErr = useTranslations('ContractErrors')
   const tErrors = useTranslations('Errors')
   const [investmentUrl, setInvestmentUrl] = useState<string | null>(null)
@@ -106,14 +113,30 @@ export const ProjectDetail = memo(function ProjectDetail({
   }
   // Flat selectors — destructure the nested detail ONCE here instead of
   // drilling five levels (`detail.scoreHistory.credit.map`, `detail.creator.*`)
-  // at every use site.
-  const { name: creatorName, since: creatorSince } = detail.creator
-  const { credit: creditPoints, green: greenPoints } = detail.scoreHistory
-  const creditHistory = useMemo(() => creditPoints.map((p) => p.value), [creditPoints])
-  const greenHistory = useMemo(() => greenPoints.map((p) => p.value), [greenPoints])
+  // at every use site. Backend-only projects have no fixture sections, so the
+  // fallbacks keep the page renderable even if a caller passes a partial detail.
+  const missingSections = detail.missingSections ?? []
+  const isMissing = (section: MissingDetailSection): boolean => missingSections.includes(section)
+  const {
+    name: creatorName,
+    since: creatorSince,
+    verified: creatorVerified,
+  } = detail.creator ?? {
+    name: '',
+    since: '',
+  }
+  const { credit: creditPoints, green: greenPoints } = detail.scoreHistory ?? {
+    credit: [],
+    green: [],
+  }
   return (
     <main id="main-content" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 96px' }}>
       <DemoDataBadge source={source} style={{ marginBottom: 16 }} />
+      {missingSections.length > 0 && (
+        <div role="status" style={{ ...cardStyle, marginBottom: 16 }}>
+          {t('missingInfoNotice')}
+        </div>
+      )}
       {onBack && (
         <button
           type="button"
@@ -162,9 +185,11 @@ export const ProjectDetail = memo(function ProjectDetail({
           }}
         >
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Badge tone="growth" icon={<ShieldCheckIcon />}>
-              {t('verifiedSince', { since: creatorSince })}
-            </Badge>
+            {!isMissing('creator') && creatorVerified && (
+              <Badge tone="growth" icon={<ShieldCheckIcon />}>
+                {creatorSince ? t('verifiedSince', { since: creatorSince }) : t('verifiedCreator')}
+              </Badge>
+            )}
             {verifiedMetadata === 'verified' && (
               <Badge tone="growth" icon={<ShieldCheckIcon />}>
                 {t('verifiedMetadata')}
@@ -183,7 +208,7 @@ export const ProjectDetail = memo(function ProjectDetail({
             <YieldAlertButton
               bondId={project.id}
               bondName={project.name}
-              currentYield={(project.credit + project.green) / 2}
+              currentYield={getEffectiveYield(project)}
               size="md"
             />
             <WatchlistButton bondId={project.id} bondName={project.name} size="md" />
@@ -234,7 +259,7 @@ export const ProjectDetail = memo(function ProjectDetail({
         </span>
       </section>
 
-      {/* Creator line + story */}
+      {/* Creator line + story, or an explicit missing-information state */}
       <div style={{ marginBottom: 32 }}>
         <div
           style={{
@@ -244,7 +269,13 @@ export const ProjectDetail = memo(function ProjectDetail({
             marginBottom: 10,
           }}
         >
-          {t('builtBy')} <b style={{ color: 'var(--ink)' }}>{creatorName}</b>
+          {isMissing('creator') ? (
+            t('creatorUnavailable')
+          ) : (
+            <>
+              {t('builtBy')} <b style={{ color: 'var(--ink)' }}>{creatorName}</b>
+            </>
+          )}
         </div>
         <p
           style={{
@@ -256,7 +287,7 @@ export const ProjectDetail = memo(function ProjectDetail({
             maxWidth: 640,
           }}
         >
-          {detail.story}
+          {isMissing('story') ? t('storyUnavailable') : detail.story}
         </p>
       </div>
 
@@ -267,53 +298,93 @@ export const ProjectDetail = memo(function ProjectDetail({
           <ScoreColumn
             value={project.credit}
             label={t('creditLabel')}
-            history={creditHistory}
+            history={creditPoints}
             sparkLabel={t('creditHistory')}
-            onChainNote={t('onChainNote')}
-            verifiedAgo={t('verifiedAgo')}
+            onChainNote={isMissing('scoreHistory') ? '' : t('onChainNote')}
+            live={source === 'registry'}
           />
           <ScoreColumn
             value={project.green}
             label={t('greenLabel')}
-            history={greenHistory}
+            history={greenPoints}
             sparkLabel={t('greenHistory')}
-            onChainNote={t('onChainNote')}
-            verifiedAgo={t('verifiedAgo')}
+            onChainNote={isMissing('scoreHistory') ? '' : t('onChainNote')}
+            live={source === 'registry'}
           />
         </div>
+        {isMissing('scoreHistory') && (
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--type-caption)',
+              color: 'var(--ink-60)',
+              margin: '12px 0 0',
+            }}
+          >
+            {t('scoreHistoryUnavailable')}
+          </p>
+        )}
       </section>
 
       {/* Bond pricing history */}
       <section style={{ marginBottom: 40 }}>
         <h2 style={sectionTitle}>{t('pricingTitle')}</h2>
         <div style={cardStyle}>
-          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-            <div
+          {isMissing('priceHistory') ? (
+            <p
               style={{
-                flex: '1 1 240px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-data)',
+                color: 'var(--ink-60)',
+                margin: 0,
               }}
             >
-              <Sparkline
-                points={detail.priceHistory.map((p) => p.price)}
-                aria-label={t('priceHistory')}
-              />
-              <span
+              {t('priceHistoryUnavailable')}
+            </p>
+          ) : (
+            <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+              <div
                 style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-data)',
-                  fontWeight: 600,
-                  color: 'var(--ink)',
+                  flex: '1 1 240px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {detail.priceHistory.length > 0
-                  ? formatMoney(detail.priceHistory[detail.priceHistory.length - 1].price)
-                  : '—'}
-              </span>
-              {detail.priceHistory.length > 1 && (
+                <Sparkline
+                  points={detail.priceHistory.map((p) => p.price)}
+                  aria-label={t('priceHistory')}
+                />
+                <span
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-data)',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {detail.priceHistory.length > 0
+                    ? `${formatDecimal(
+                        detail.priceHistory[detail.priceHistory.length - 1].price,
+                        PRICE_DECIMALS,
+                      )}${tPrice('priceUnit')}`
+                    : '—'}
+                </span>
+                {detail.priceHistory.length > 1 && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-data)',
+                      fontSize: 'var(--type-fine)',
+                      color: 'var(--ink-40)',
+                    }}
+                  >
+                    {formatSignedChange(
+                      detail.priceHistory[0].price,
+                      detail.priceHistory[detail.priceHistory.length - 1].price,
+                    )}
+                  </span>
+                )}
                 <span
                   style={{
                     fontFamily: 'var(--font-data)',
@@ -321,54 +392,56 @@ export const ProjectDetail = memo(function ProjectDetail({
                     color: 'var(--ink-40)',
                   }}
                 >
-                  {detail.priceHistory[detail.priceHistory.length - 1].price >=
-                  detail.priceHistory[0].price
-                    ? '+'
-                    : '-'}
-                  {formatMoney(
-                    Math.abs(
-                      detail.priceHistory[detail.priceHistory.length - 1].price -
-                        detail.priceHistory[0].price,
-                    ),
-                  )}
+                  {t('priceLabel')}
                 </span>
-              )}
-              <span
+              </div>
+              <div
                 style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-fine)',
-                  color: 'var(--ink-40)',
+                  flex: '1 1 240px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {t('priceLabel')}
-              </span>
-            </div>
-            <div
-              style={{
-                flex: '1 1 240px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <Sparkline
-                points={detail.priceHistory.map((p) => p.yield)}
-                aria-label={t('yieldHistory')}
-              />
-              <span
-                style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-data)',
-                  fontWeight: 600,
-                  color: 'var(--ink)',
-                }}
-              >
-                {detail.priceHistory.length > 0
-                  ? `${formatDecimal(detail.priceHistory[detail.priceHistory.length - 1].yield, 2)}%`
-                  : '—'}
-              </span>
-              {detail.priceHistory.length > 1 && (
+                <Sparkline
+                  points={detail.priceHistory.map((p) => p.yield)}
+                  aria-label={t('yieldHistory')}
+                />
+                <span
+                  style={{
+                    fontFamily: 'var(--font-data)',
+                    fontSize: 'var(--type-data)',
+                    fontWeight: 600,
+                    color: 'var(--ink)',
+                  }}
+                >
+                  {detail.priceHistory.length > 0
+                    ? `${formatDecimal(detail.priceHistory[detail.priceHistory.length - 1].yield, 2)}%`
+                    : '—'}
+                </span>
+                {detail.priceHistory.length > 1 && (
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-data)',
+                      fontSize: 'var(--type-fine)',
+                      color: 'var(--ink-40)',
+                    }}
+                  >
+                    {detail.priceHistory[detail.priceHistory.length - 1].yield >=
+                    detail.priceHistory[0].yield
+                      ? '+'
+                      : '-'}
+                    {formatDecimal(
+                      Math.abs(
+                        detail.priceHistory[detail.priceHistory.length - 1].yield -
+                          detail.priceHistory[0].yield,
+                      ),
+                      2,
+                    )}
+                    %
+                  </span>
+                )}
                 <span
                   style={{
                     fontFamily: 'var(--font-data)',
@@ -376,166 +449,163 @@ export const ProjectDetail = memo(function ProjectDetail({
                     color: 'var(--ink-40)',
                   }}
                 >
-                  {detail.priceHistory[detail.priceHistory.length - 1].yield >=
-                  detail.priceHistory[0].yield
-                    ? '+'
-                    : '-'}
-                  {formatDecimal(
-                    Math.abs(
-                      detail.priceHistory[detail.priceHistory.length - 1].yield -
-                        detail.priceHistory[0].yield,
-                    ),
-                    2,
-                  )}
-                  %
+                  {t('yieldLabel')}
                 </span>
-              )}
-              <span
-                style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: 'var(--type-fine)',
-                  color: 'var(--ink-40)',
-                }}
-              >
-                {t('yieldLabel')}
-              </span>
-              <InfoTooltip label={t('yieldHelpLabel')} content={t('yieldHelp')} />
+                <InfoTooltip label={t('yieldHelpLabel')} content={t('yieldHelp')} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* Funding timeline */}
       <section style={{ marginBottom: 40 }}>
         <h2 style={sectionTitle}>{t('fundingTitle')}</h2>
-        <div style={{ ...cardStyle, paddingBottom: 16 }}>
-          {(() => {
-            const goal = detail.fundingGoal
-            const raised = detail.fundedAmount
-            const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0
-            return (
-              <>
-                <div
-                  style={{
-                    height: 8,
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'var(--ink-06)',
-                    border: '1px solid var(--ink-12)',
-                    overflow: 'hidden',
-                    marginBottom: 10,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${pct}%`,
-                      height: '100%',
-                      background: 'var(--solar)',
-                    }}
-                  />
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-small)',
-                    color: 'var(--ink-60)',
-                    marginBottom: 14,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: 'var(--font-data)',
-                      color: 'var(--ink)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {pct}%
-                  </span>{' '}
-                  {t('fundingGoalLabel', {
-                    raised: formatMoney(raised),
-                    goal: formatMoney(goal),
-                  })}
-                </div>
-              </>
-            )
-          })()}
-        </div>
-        <div style={{ ...cardStyle, paddingTop: 0 }}>
-          {detail.fundingTimeline.map((event, i) => (
-            <div
-              key={event.hash}
+        {isMissing('fundingTimeline') ? (
+          <div style={cardStyle}>
+            <p
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 16,
-                padding: '14px 0',
-                borderTop: i ? '1px solid var(--ink-12)' : 'none',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--type-data)',
+                color: 'var(--ink-60)',
+                margin: 0,
               }}
             >
-              <div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-data)',
-                    fontWeight: 600,
-                    color: 'var(--ink)',
-                  }}
-                >
-                  {event.label}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--type-caption)',
-                    color: 'var(--ink-60)',
-                    marginTop: 2,
-                  }}
-                >
-                  {event.date}
-                </div>
-              </div>
-              <div style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-data)',
-                    fontWeight: 600,
-                    fontSize: 'var(--type-data)',
-                    color: 'var(--ink)',
-                    fontFeatureSettings: '"tnum" 1',
-                  }}
-                >
-                  {event.amount}
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-data)',
-                    fontSize: 'var(--type-eyebrow)',
-                    color: 'var(--ink-40)',
-                    marginTop: 2,
-                  }}
-                >
-                  {(() => {
-                    const explorerUrl = getExplorerUrl(event.hash)
-                    if (!explorerUrl) {
-                      return <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
-                    }
-                    return (
-                      <a
-                        href={explorerUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={event.hash}
-                        style={{ color: 'inherit', textDecoration: 'none' }}
+              {t('fundingUnavailable')}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div style={{ ...cardStyle, paddingBottom: 16 }}>
+              {(() => {
+                const goal = detail.fundingGoal
+                const raised = detail.fundedAmount
+                const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0
+                return (
+                  <>
+                    <div
+                      style={{
+                        height: 8,
+                        borderRadius: 'var(--radius-pill)',
+                        background: 'var(--ink-06)',
+                        border: '1px solid var(--ink-12)',
+                        overflow: 'hidden',
+                        marginBottom: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: `${pct}%`,
+                          height: '100%',
+                          background: 'var(--solar)',
+                        }}
+                      />
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 'var(--type-small)',
+                        color: 'var(--ink-60)',
+                        marginBottom: 14,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: 'var(--font-data)',
+                          color: 'var(--ink)',
+                          fontWeight: 600,
+                        }}
                       >
-                        {shortAddress(event.hash, 4, 4)} ↗
-                      </a>
-                    )
-                  })()}
-                </div>
-              </div>
+                        {pct}%
+                      </span>{' '}
+                      {t('fundingGoalLabel', {
+                        raised: formatMoney(raised),
+                        goal: formatMoney(goal),
+                      })}
+                    </div>
+                  </>
+                )
+              })()}
             </div>
-          ))}
-        </div>
+            <div style={{ ...cardStyle, paddingTop: 0 }}>
+              {detail.fundingTimeline.map((event, i) => (
+                <div
+                  key={event.hash}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    gap: 16,
+                    padding: '14px 0',
+                    borderTop: i ? '1px solid var(--ink-12)' : 'none',
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 'var(--type-data)',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      {event.label}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: 'var(--type-caption)',
+                        color: 'var(--ink-60)',
+                        marginTop: 2,
+                      }}
+                    >
+                      {event.date}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-data)',
+                        fontWeight: 600,
+                        fontSize: 'var(--type-data)',
+                        color: 'var(--ink)',
+                        fontFeatureSettings: '"tnum" 1',
+                      }}
+                    >
+                      {event.amount}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-data)',
+                        fontSize: 'var(--type-eyebrow)',
+                        color: 'var(--ink-40)',
+                        marginTop: 2,
+                      }}
+                    >
+                      {(() => {
+                        const explorerUrl = getExplorerUrl(event.hash)
+                        if (!explorerUrl) {
+                          return <span title={event.hash}>{shortAddress(event.hash, 4, 4)}</span>
+                        }
+                        return (
+                          <a
+                            href={explorerUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={event.hash}
+                            style={{ color: 'inherit', textDecoration: 'none' }}
+                          >
+                            {shortAddress(event.hash, 4, 4)} ↗
+                          </a>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* This project's contribution + how it's calculated */}
@@ -553,8 +623,8 @@ export const ProjectDetail = memo(function ProjectDetail({
           >
             {t.rich('contributionBody', {
               b: (c) => <b style={{ color: 'var(--ink)' }}>{c}</b>,
-              credit: project.credit,
-              green: project.green,
+              credit: formatScore(project.credit),
+              green: formatScore(project.green),
             })}
           </p>
           <details style={{ borderTop: '1px solid var(--ink-12)', paddingTop: 14 }}>
@@ -700,16 +770,29 @@ const ScoreColumn = memo(function ScoreColumn({
   history,
   sparkLabel,
   onChainNote,
-  verifiedAgo,
+  live,
 }: {
-  value: number
+  value?: number
   label: string
-  history: number[]
+  history: ScorePoint[]
   sparkLabel: string
   onChainNote: string
-  verifiedAgo: string
+  live: boolean
 }) {
   const t = useTranslations('ProjectDetail')
+  const locale = useLocale()
+  const values = useMemo(() => history.map((point) => point.value), [history])
+  const month = new Intl.DateTimeFormat(locale, {
+    year: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  })
+  const observationDate = (point?: ScorePoint) =>
+    point?.observedAt != null
+      ? month.format(point.observedAt)
+      : ((!live ? point?.date : undefined) ?? t('scoreDateUnknown'))
+  const latest = t('lastScoreObservation', { date: observationDate(history.at(-1)) })
+
   return (
     <div
       style={{
@@ -728,12 +811,12 @@ const ScoreColumn = memo(function ScoreColumn({
       <ScoreGauge
         value={value}
         label={label}
-        ariaValueLabel={t('scoreGaugeAria', { label, value, max: 100 })}
+        ariaValueLabel={t('scoreGaugeAria', { label, value: formatScore(value), max: 100 })}
         size={140}
         stroke={11}
       />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-        <Sparkline points={history} aria-label={sparkLabel} />
+        <Sparkline points={values} aria-label={sparkLabel} />
         <span
           style={{
             fontFamily: 'var(--font-data)',
@@ -744,17 +827,27 @@ const ScoreColumn = memo(function ScoreColumn({
         >
           {onChainNote}
         </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-data)',
-            fontSize: 'var(--type-fine)',
-            color: 'var(--ink-40)',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {verifiedAgo}
-        </span>
+        {history.length > 0 ? (
+          <details style={scoreObservationStyle}>
+            <summary style={{ cursor: 'pointer' }}>{latest}</summary>
+            <ul style={{ margin: '6px 0 0', paddingInlineStart: 18 }}>
+              {history.map((point) => (
+                <li key={point.hash}>
+                  {observationDate(point)} · {point.value}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : (
+          <span style={scoreObservationStyle}>{latest}</span>
+        )}
       </div>
     </div>
   )
 })
+
+const scoreObservationStyle: CSSProperties = {
+  fontFamily: 'var(--font-data)',
+  fontSize: 'var(--type-fine)',
+  color: 'var(--ink-60)',
+}

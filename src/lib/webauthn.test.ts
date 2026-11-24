@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from '@/test/bun'
 import { loginBiometric, registerBiometric } from './webauthn'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from '@/test/bun'
 import en from '../../messages/en.json'
 import fr from '../../messages/fr.json'
 import es from '../../messages/es.json'
@@ -166,6 +166,7 @@ const IDENTICAL_ALLOWLIST = new Set<string>([
   'Components.Toast.toneNeutral',
   'Components.Toast.toneError',
   'Components.Toast.statusLabel',
+  'Components.PortfolioPerformanceChart.dateColumn',
   'Creator.typeSolar',
   'Deposit.maxChip',
   'Withdraw.maxChip',

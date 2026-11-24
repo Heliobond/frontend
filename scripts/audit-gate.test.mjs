@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from '@/test/bun'
 import { evaluateAudit } from './audit-gate.mjs'
 
 const TODAY = new Date('2026-10-22T12:00:00Z')
