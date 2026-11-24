@@ -12,22 +12,37 @@
 #
 #   # Or building directly from Heliobond/contracts git repository:
 #   CONTRACTS_REF=main ./scripts/contracts/update-specs.sh
+#   # Or building a committed revision of a local checkout without modifying it:
+#   CONTRACTS_DIR=/path/to/contracts ./scripts/contracts/update-specs.sh
 #
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-CONTRACTS_DIR="${CONTRACTS_DIR:-$REPO_ROOT/.e2e/contracts}"
-CONTRACTS_REF="${CONTRACTS_REF:-main}"
+EXTERNAL_CHECKOUT="${CONTRACTS_DIR:-}"
+REQUESTED_REF="${CONTRACTS_REF:-}"
+CONTRACTS_DIR="${EXTERNAL_CHECKOUT:-$REPO_ROOT/.e2e/contracts}"
+CONTRACTS_REF="${REQUESTED_REF:-main}"
 OUT_DIR="${OUT_DIR:-$REPO_ROOT/src/test/fixtures/contracts}"
 LOCAL_WASM_DIR="$REPO_ROOT/../contracts/target/wasm32-unknown-unknown/release"
 
 log() { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
 
+BUILD_DIR=""
+STAGE_DIR=""
+cleanup() {
+  if [ -n "$STAGE_DIR" ]; then rm -rf -- "$STAGE_DIR"; fi
+  if [ -n "$BUILD_DIR" ]; then rm -rf -- "$BUILD_DIR"; fi
+}
+trap cleanup EXIT
+
 mkdir -p "$OUT_DIR"
 
-if [ -n "${CONTRACTS_WASM_DIR:-}" ] || [ -f "$LOCAL_WASM_DIR/investment_vault.wasm" ]; then
+if [ -n "${CONTRACTS_WASM_DIR:-}" ] || {
+  [ -z "$REQUESTED_REF" ] && [ -z "$EXTERNAL_CHECKOUT" ] &&
+    [ -f "$LOCAL_WASM_DIR/investment_vault.wasm" ];
+}; then
   WASM_DIR="${CONTRACTS_WASM_DIR:-$LOCAL_WASM_DIR}"
   log "Using prebuilt WASMs from $WASM_DIR"
   if [ -d "$WASM_DIR/../../../.git" ]; then
@@ -36,14 +51,22 @@ if [ -n "${CONTRACTS_WASM_DIR:-}" ] || [ -f "$LOCAL_WASM_DIR/investment_vault.wa
     COMMIT_SHA="${CONTRACTS_COMMIT_SHA:-$CONTRACTS_REF}"
   fi
 else
-  log "Checking/cloning Heliobond/contracts@$CONTRACTS_REF"
-  if [ ! -d "$CONTRACTS_DIR/.git" ]; then
-    mkdir -p "$(dirname "$CONTRACTS_DIR")"
-    git clone --depth 1 --branch "$CONTRACTS_REF" https://github.com/Heliobond/contracts "$CONTRACTS_DIR"
+  if [ -n "$EXTERNAL_CHECKOUT" ]; then
+    COMMIT_SHA="$(git -C "$EXTERNAL_CHECKOUT" rev-parse --verify --end-of-options "${REQUESTED_REF:-HEAD}^{commit}")"
+    BUILD_DIR="$(mktemp -d "${TMPDIR:-/tmp}/heliobond-contracts.XXXXXX")"
+    # Build the committed source without touching the user's checkout, index or refs.
+    git clone --shared --no-checkout -- "$EXTERNAL_CHECKOUT" "$BUILD_DIR"
+    CONTRACTS_DIR="$BUILD_DIR"
   else
-    (cd "$CONTRACTS_DIR" && git fetch origin "$CONTRACTS_REF" && git checkout "$CONTRACTS_REF")
+    log "Fetching Heliobond/contracts@$CONTRACTS_REF"
+    if [ ! -e "$CONTRACTS_DIR/.git" ]; then
+      git init "$CONTRACTS_DIR"
+      git -C "$CONTRACTS_DIR" remote add origin https://github.com/Heliobond/contracts
+    fi
+    git -C "$CONTRACTS_DIR" fetch --depth 1 -- origin "$CONTRACTS_REF"
+    COMMIT_SHA="$(git -C "$CONTRACTS_DIR" rev-parse 'FETCH_HEAD^{commit}')"
   fi
-  COMMIT_SHA="$(cd "$CONTRACTS_DIR" && git rev-parse HEAD)"
+  git -C "$CONTRACTS_DIR" checkout --detach "$COMMIT_SHA"
 
   log "Building contracts in $CONTRACTS_DIR"
   (cd "$CONTRACTS_DIR" && stellar contract build)
@@ -69,7 +92,6 @@ done
 # rename, not a copy.
 FIXTURES=(investment_vault.spec.json project_registry.spec.json COMMIT_SHA)
 STAGE_DIR="$(mktemp -d "$OUT_DIR/.stage.XXXXXX")"
-trap 'rm -rf "$STAGE_DIR"' EXIT
 
 log "Extracting contract specifications via stellar CLI"
 stellar contract info interface --wasm "$WASM_DIR/investment_vault.wasm" --output json-formatted > "$STAGE_DIR/investment_vault.spec.json"

@@ -129,10 +129,13 @@ describe('pendingClaims storage', () => {
 })
 
 describe('subscribePendingClaims cross-tab updates', () => {
+  const dispatchStorage = (key: string | null, storageArea = window.localStorage) =>
+    window.dispatchEvent(new StorageEvent('storage', { key, storageArea }))
+
   it('notifies on a storage event for the claims key', () => {
     let calls = 0
     const unsubscribe = subscribePendingClaims(() => calls++)
-    window.dispatchEvent(new StorageEvent('storage', { key: PENDING_CLAIMS_STORAGE_KEY }))
+    dispatchStorage(PENDING_CLAIMS_STORAGE_KEY)
     expect(calls).toBe(1)
     unsubscribe()
   })
@@ -140,7 +143,8 @@ describe('subscribePendingClaims cross-tab updates', () => {
   it('ignores storage events for unrelated keys', () => {
     let calls = 0
     const unsubscribe = subscribePendingClaims(() => calls++)
-    window.dispatchEvent(new StorageEvent('storage', { key: 'something-else' }))
+    dispatchStorage('something-else')
+    dispatchStorage(PENDING_CLAIMS_STORAGE_KEY, window.sessionStorage)
     expect(calls).toBe(0)
     unsubscribe()
   })
@@ -148,7 +152,7 @@ describe('subscribePendingClaims cross-tab updates', () => {
   it('stops notifying after unsubscribe', () => {
     let calls = 0
     subscribePendingClaims(() => calls++)()
-    window.dispatchEvent(new StorageEvent('storage', { key: PENDING_CLAIMS_STORAGE_KEY }))
+    dispatchStorage(PENDING_CLAIMS_STORAGE_KEY)
     expect(calls).toBe(0)
   })
 })

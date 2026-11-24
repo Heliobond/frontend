@@ -29,7 +29,8 @@ const { act, fireEvent, render, screen, waitFor } = await import('@/test/render'
 const { Portfolio } = await import('./Portfolio')
 const vault = await import('../wallet/vault')
 const { notifyTransactionConfirmed } = await import('../wallet/vaultEvents')
-const { addPendingClaim, clearPendingClaims } = await import('../wallet/pendingClaims')
+const { addPendingClaim, clearPendingClaims, PENDING_CLAIMS_STORAGE_KEY } =
+  await import('../wallet/pendingClaims')
 
 describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
   beforeEach(() => {
@@ -75,6 +76,24 @@ describe('Portfolio — Connected Wallet On-Chain Integration (#589)', () => {
 
     act(() => addPendingClaim({ id: 'tx', hash: 'tx', timestamp: 1, address: mockWallet.address }))
     expect(screen.getByText('1 queued FIFO claim awaiting vault liquidity.')).toBeInTheDocument()
+  })
+
+  it('drops another tab’s claimed withdrawal without reacting to unrelated storage events', () => {
+    vi.stubEnv('NEXT_PUBLIC_VAULT_CONTRACT_ID', '')
+    addPendingClaim({ id: 'tx', hash: 'tx', timestamp: 1, address: mockWallet.address })
+    render(<Portfolio onWithdraw={vi.fn()} onDeposit={vi.fn()} />)
+
+    localStorage.removeItem(PENDING_CLAIMS_STORAGE_KEY)
+    const dispatchStorage = (key: string) =>
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }))
+      })
+
+    dispatchStorage('unrelated')
+    expect(screen.getByText('1 queued FIFO claim awaiting vault liquidity.')).toBeInTheDocument()
+
+    dispatchStorage(PENDING_CLAIMS_STORAGE_KEY)
+    expect(screen.getByText(/No queued withdrawals/i)).toBeInTheDocument()
   })
 
   it('renders when the browser denies access to localStorage', () => {

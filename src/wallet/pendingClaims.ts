@@ -20,6 +20,11 @@ export function subscribePendingClaims(listener: () => void): () => void {
   // Another tab claiming funds only reaches this one as a `storage` event.
   const onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== STORAGE_KEY) return
+    try {
+      if (event.storageArea !== window.localStorage) return
+    } catch {
+      return
+    }
     listener()
   }
   window.addEventListener(CHANGE_EVENT, listener)
