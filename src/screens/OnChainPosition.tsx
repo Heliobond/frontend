@@ -4,7 +4,7 @@ import { TransactionPendingError } from '../wallet/transactions'
 
 import { useState, type CSSProperties } from 'react'
 import { useTranslations } from 'next-intl'
-import { Button, Card, StatBlock, useToast } from '../components'
+import { AddressChip, Button, Card, StatBlock, useToast } from '../components'
 import { getExplorerTxUrl } from '../config/network'
 import { formatDecimal } from '../lib/format'
 import { parseErrorCode } from '../lib/errorMessages'
@@ -23,6 +23,7 @@ export function OnChainPosition({
   positionUnavailable,
 }: Pick<UsePortfolioResult, 'portfolio' | 'claimableYield' | 'positionUnavailable'>) {
   const t = useTranslations('Portfolio')
+  const tTransactions = useTranslations('Components.TransactionsDrawer')
   const tErrors = useTranslations('Errors')
   const { address, isDemo, sign } = useWallet()
   const { toast } = useToast()
@@ -46,7 +47,11 @@ export function OnChainPosition({
         title: t('onchainClaimedTitle'),
         message: t('onchainClaimedBody'),
         href: explorerUrl,
-        action: explorerLink(explorerUrl, t('onchainViewExplorer')),
+        action: explorerUrl ? (
+          explorerLink(explorerUrl, t('onchainViewExplorer'))
+        ) : (
+          <AddressChip value={hash} label={tTransactions('transactionHash')} />
+        ),
       })
     } catch (e) {
       const isPending = e instanceof TransactionPendingError
@@ -61,6 +66,8 @@ export function OnChainPosition({
         href: explorerUrl,
         action: explorerUrl ? (
           explorerLink(explorerUrl, t('onchainViewExplorer'))
+        ) : isPending ? (
+          <AddressChip value={e.hash} label={tTransactions('transactionHash')} />
         ) : (
           <button
             type="button"

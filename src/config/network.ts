@@ -111,22 +111,35 @@ export async function getHorizonServer(url: string = HORIZON_URL) {
   return new Horizon.Server(url, { allowHttp: allowHttpFor(url) })
 }
 
-export const EXPLORER_BASE_URL: string = DEFAULT_EXPLORER_URLS[STELLAR_NETWORK]
+const explorerNetwork =
+  NETWORK_PASSPHRASE === PASSPHRASES.public
+    ? 'public'
+    : NETWORK_PASSPHRASE === PASSPHRASES.testnet
+      ? 'testnet'
+      : undefined
+
+export const EXPLORER_BASE_URL = explorerNetwork && DEFAULT_EXPLORER_URLS[explorerNetwork]
 
 export const isTestnet: boolean = STELLAR_NETWORK === 'testnet'
 export const isPublic: boolean = STELLAR_NETWORK === 'public'
 
-export function getExplorerTxUrl(hash: string): string {
-  return `${EXPLORER_BASE_URL}/tx/${hash}`
+export function getExplorerTxUrl(hash: string, network?: StellarNetworkName): string | undefined {
+  // A standalone transaction may be recorded with the "testnet" wallet label.
+  if (!explorerNetwork) return undefined
+  return `${DEFAULT_EXPLORER_URLS[network ?? explorerNetwork]}/tx/${hash}`
 }
 
-export function getExplorerAccountUrl(address: string): string {
-  return `${EXPLORER_BASE_URL}/account/${address}`
+export function getExplorerAccountUrl(address: string): string | undefined {
+  return EXPLORER_BASE_URL && `${EXPLORER_BASE_URL}/account/${address}`
+}
+
+export function isTransactionHash(value: string): boolean {
+  return /^[0-9a-fA-F]{64}$/.test(value)
 }
 
 export function getExplorerUrl(value: string): string | undefined {
   if (!value) return undefined
-  if (/^[0-9a-fA-F]{64}$/.test(value)) {
+  if (isTransactionHash(value)) {
     return getExplorerTxUrl(value)
   }
   if (/^[GCM][A-Z0-9]{55}$/.test(value)) {

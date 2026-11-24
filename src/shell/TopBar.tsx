@@ -603,6 +603,7 @@ function WalletMenu({
   const { toast } = useToast()
   const router = useRouter()
   const { disconnect } = useWallet()
+  const explorerUrl = getExplorerAccountUrl(address)
 
   useEffect(() => {
     router.prefetch('/watchlist')
@@ -861,12 +862,12 @@ function WalletMenu({
           >
             {copied ? t('copied') : t('copyAddress')}
           </MenuItem>
-          {!isDemo && (
+          {!isDemo && explorerUrl && (
             <MenuLink
               ref={(el) => {
                 itemRefs.current.push(el)
               }}
-              href={getExplorerAccountUrl(address)}
+              href={explorerUrl}
             >
               {t('viewOnExplorer')}
             </MenuLink>
